@@ -1,0 +1,14 @@
+linters:
+  enable:
+    - gofmt
+    - gocritic
+    - goimports
+    - lll
+    - reassign
+    - stylecheck
+    - unconvert
+
+linters-settings:
+  lll:
+    line-length: 100
+    tab-width: 4

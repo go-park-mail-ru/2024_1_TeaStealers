@@ -4,8 +4,9 @@ build:
 run: build
 	./.bin
 
+.PHONY: lint
 lint:
-	golangci-lint run
+	golangci-lint run -- config=.golangci.yaml
 
 test:
-	go test ./...
+	go test -race ./...
