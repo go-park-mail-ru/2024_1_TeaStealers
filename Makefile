@@ -3,3 +3,9 @@ build:
 
 run: build
 	./.bin
+
+lint:
+	golangci-lint run
+
+test:
+	go test ./...
