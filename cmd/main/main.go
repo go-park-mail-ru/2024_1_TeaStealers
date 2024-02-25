@@ -26,7 +26,7 @@ func main() {
 	signal.Notify(signalCh, syscall.SIGINT, syscall.SIGTERM)
 
 	go func() {
-		log.Print("Start server on %s\n", srv.Addr)
+		log.Printf("Start server on %s\n", srv.Addr)
 		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			log.Fatalf("listen: %s\n", err)
 		}
@@ -39,7 +39,8 @@ func main() {
 	defer cancel()
 
 	if err := srv.Shutdown(ctx); err != nil {
-		log.Fatalf("Server shutdown failed: %v\n", err)
+		log.Panic("Server shutdown failed: ", err, '\n')
+
 	}
 }
 

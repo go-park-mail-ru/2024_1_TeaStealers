@@ -1,12 +1,12 @@
-build:
+build_:
 	go build -o ./.bin cmd/main/main.go
 
-run: build
+run: build_
 	./.bin
 
 .PHONY: lint
 lint:
-	golangci-lint run -- config=.golangci.yaml
+	golangci-lint run --config=.golangci.yaml
 
 test:
 	go test -race ./...
