@@ -1,6 +1,9 @@
 package main
 
 import (
+	"2024_1_TeaStealers/internal/pkg/auth/delivery"
+	"2024_1_TeaStealers/internal/pkg/auth/repo"
+	"2024_1_TeaStealers/internal/pkg/auth/usecase"
 	"context"
 	"fmt"
 	"log"
@@ -16,6 +19,10 @@ import (
 func main() {
 	r := mux.NewRouter().PathPrefix("/api").Subrouter()
 	r.HandleFunc("/ping", pingPongHandler).Methods(http.MethodGet)
+
+	repo := repo.NewRepository()
+	usecase := usecase.NewUsecase(repo)
+	authHandler := delivery.NewHandler(usecase)
 
 	srv := &http.Server{
 		Addr:    ":8080",
