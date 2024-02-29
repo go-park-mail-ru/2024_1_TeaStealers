@@ -1,6 +1,6 @@
 name: CI
 
-on: 
+on:
   push:
     branches:
       - dev
@@ -19,12 +19,13 @@ jobs:
         with:
           go-version: '1.21.x'
 
-      - name: Golangci-lint
-        run: make lint
+      - name: golangci-lint
+        uses: golangci/golangci-lint-action@v3
 
   test:
     name: Tests
     runs-on: ubuntu-latest
+    needs: lint
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -51,7 +52,7 @@ jobs:
           host: ${{ secrets.HOST }}
           username: ${{ secrets.USERNAME }}
           key: ${{ secrets.PRIVATE_KEY }}
-          script: cd /home/${{ secrets.USERNAME }}/ && git pull
+          script: cd /home/${{ secrets.USERNAME }}/2024_1_TeaStealers/ && git pull
 
       - name: Build containers
         uses: appleboy/ssh-action@master
@@ -59,7 +60,7 @@ jobs:
           host: ${{ secrets.HOST }}
           username: ${{ secrets.USERNAME }}
           key: ${{ secrets.PRIVATE_KEY }}
-          script: cd /home/${{ secrets.USERNAME }}/ && sudo docker-compose build
+          script: cd /home/${{ secrets.USERNAME }}/2024_1_TeaStealers/ && docker compose build
 
       - name: Restart service
         uses: appleboy/ssh-action@master
@@ -67,4 +68,4 @@ jobs:
           host: ${{ secrets.HOST }}
           username: ${{ secrets.USERNAME }}
           key: ${{ secrets.PRIVATE_KEY }}
-          script: cd /home/${{ secrets.USERNAME }}/ && sudo docker-compose down && sudo docker-compose up -d
+          script: cd /home/${{ secrets.USERNAME }}/2024_1_TeaStealers/ && docker compose down && docker compose up -d
