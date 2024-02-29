@@ -2,20 +2,19 @@ package auth
 
 import (
 	"2024_1_TeaStealers/internal/models"
+	"context"
+	"time"
 )
 
-type Usecase interface {
-	Register(email, password string) (*models.User, error)
-	Login(email, password string) error
-	ResetPassword(email string) error
+type AuthUsecase interface {
+	SignUp(context.Context, *models.UserLoginData) (*models.User, string, time.Time, error)
+	Login(context.Context, *models.UserLoginData) (*models.User, string, time.Time, error)
 }
 
-type Repository interface {
-	Create(user *models.User) error
-	UpdateInfo(user *models.User) error
-	Delete(user *models.User) error
-	ReadByJWT(session []byte) error
-	GetByEmail(email string) (*models.User, error)
+type AuthRepo interface {
+	CreateUser(ctx context.Context, newUser *models.User) error
+	CheckUser(ctx context.Context, login string, passwordHash string) (*models.User, error)
+	GetUserByLogin(cts context.Context, login string) (*models.User, error)
 }
 
 // func (r *User) Register(email, password string) (*User, error) {

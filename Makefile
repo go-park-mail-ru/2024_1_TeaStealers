@@ -10,3 +10,6 @@ lint:
 
 test:
 	go test -race ./...
+
+dev-compose:
+	docker compose -f "dev-docker-compose.yaml" up -d

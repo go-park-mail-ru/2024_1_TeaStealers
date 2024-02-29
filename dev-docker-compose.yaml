@@ -1,0 +1,18 @@
+version: "3.3"
+services:
+  db:
+    container_name: postgres
+    image: postgres:latest
+    restart: always
+    volumes:
+      - type: volume
+        source: postgresdb-data
+        target: /var/lib/postgresql/data
+    env_file:
+      - ./.env
+    ports:
+      - ${DB_PORT}:5432
+
+volumes:
+  postgresdb-data:
+    driver: local

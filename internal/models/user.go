@@ -1,12 +1,17 @@
 package models
 
-import "time"
+import (
+	"github.com/satori/uuid"
+)
 
 type User struct {
-	ID           int64     `json:"ID"`
-	CreatedAt    time.Time `json:"created_at"`
-	FirstName    string    `json:"First_Name"`
-	LastName     string    `json:"Last_name"`
-	Email        string    `json:"email"`
-	PasswordHash []byte    `json:"-"`
+	ID           uuid.UUID `json:"id"`
+	Login        string    `json:"login"`
+	Phone        string    `json:"phone"`
+	PasswordHash string    `json:"-"`
+}
+
+type UserLoginData struct {
+	Login    string `json:"login"`
+	Password string `json:"password"`
 }
