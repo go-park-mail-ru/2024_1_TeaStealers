@@ -4,6 +4,7 @@ import (
 	authH "2024_1_TeaStealers/internal/pkg/auth/delivery"
 	authR "2024_1_TeaStealers/internal/pkg/auth/repo"
 	authUc "2024_1_TeaStealers/internal/pkg/auth/usecase"
+	"2024_1_TeaStealers/internal/pkg/middleware"
 	"context"
 	"database/sql"
 	"fmt"
@@ -40,9 +41,9 @@ func main() {
 	autHandler := authH.NewAuthHandler(authUsecase)
 
 	auth := r.PathPrefix("/auth").Subrouter()
-	auth.HandleFunc("/signup", autHandler.SignUp).Methods(http.MethodPost)
-	auth.HandleFunc("/login", autHandler.Login).Methods(http.MethodPost)
-	auth.HandleFunc("/logout", autHandler.Logout).Methods(http.MethodGet)
+	auth.HandleFunc("/signup", autHandler.SignUp).Methods(http.MethodPost, http.MethodOptions)
+	auth.HandleFunc("/login", autHandler.Login).Methods(http.MethodPost, http.MethodOptions)
+	auth.Handle("/logout", middleware.JwtMiddleware(http.HandlerFunc(autHandler.Logout))).Methods(http.MethodGet, http.MethodOptions)
 
 	srv := &http.Server{
 		Addr:              ":8080",

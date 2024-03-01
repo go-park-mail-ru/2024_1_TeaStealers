@@ -16,7 +16,7 @@ func NewRepository(db *sql.DB) *AuthRepo {
 }
 
 func (r *AuthRepo) CreateUser(ctx context.Context, user *models.User) error {
-	insert := `INSERT INTO users (id, login, phone, passwordHash) VALUES ($1, $2, $3, $4)`
+	insert := `INSERT INTO users (id, login, phone, password_hash) VALUES ($1, $2, $3, $4)`
 
 	if _, err := r.db.ExecContext(ctx, insert, user.ID, user.Login, user.Phone, user.PasswordHash); err != nil {
 		return err
