@@ -33,7 +33,6 @@ func (h *AuthHandler) SignUp(w http.ResponseWriter, r *http.Request) {
 	}
 
 	http.SetCookie(w, tokenCookie(cookieName, token, exp))
-	w.Header().Set("Authorization", "Bearer "+token)
 
 	if err = utils.WriteResponse(w, http.StatusCreated, newUser); err != nil {
 		utils.WriteError(w, http.StatusInternalServerError, err.Error())
@@ -53,7 +52,6 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 	}
 
 	http.SetCookie(w, tokenCookie(cookieName, token, exp))
-	w.Header().Set("Authorization", "Bearer "+token)
 
 	if err = utils.WriteResponse(w, http.StatusOK, user); err != nil {
 		utils.WriteError(w, http.StatusInternalServerError, err.Error())
@@ -61,7 +59,6 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *AuthHandler) Logout(w http.ResponseWriter, r *http.Request) {
-	w.Header().Del("Authorization")
 	http.SetCookie(w, &http.Cookie{
 		Name:  cookieName,
 		Value: "",

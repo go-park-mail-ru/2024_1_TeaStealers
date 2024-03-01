@@ -2,13 +2,17 @@ package middleware
 
 import (
 	"2024_1_TeaStealers/internal/models"
+	"context"
+	"errors"
 	"fmt"
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/satori/uuid"
 	"net/http"
 	"os"
-	"strings"
 	"time"
 )
+
+const CookieName = "jwt-tean"
 
 func GenerateToken(user *models.User) (string, time.Time, error) {
 	exp := time.Now().Add(time.Hour * 24)
@@ -35,17 +39,12 @@ func ParseToken(token string) (*jwt.Token, error) {
 
 func JwtMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		header := r.Header.Get("Authorization")
-		if header == "" {
+		cookie, err := r.Cookie(CookieName)
+		if err != nil {
 			w.WriteHeader(http.StatusUnauthorized)
 			return
 		}
-		headerParts := strings.Split(header, " ")
-		if len(headerParts) != 2 || headerParts[0] != "Bearer" {
-			w.WriteHeader(http.StatusUnauthorized)
-			return
-		}
-		token := headerParts[1]
+		token := cookie.Value
 
 		claims, err := ParseToken(token)
 		if err != nil {
@@ -63,6 +62,38 @@ func JwtMiddleware(next http.Handler) http.Handler {
 			return
 		}
 
+		payload, err := ParsePayload(claims)
+		if err != nil {
+			w.WriteHeader(http.StatusUnauthorized)
+			return
+		}
+
+		r = r.WithContext(context.WithValue(r.Context(), "payload", payload))
+
 		next.ServeHTTP(w, r)
 	})
+}
+
+func ParsePayload(claims *jwt.Token) (*models.JwtPayload, error) {
+	payloadMap, ok := claims.Claims.(jwt.MapClaims)
+	if !ok {
+		return nil, errors.New("invalid format (claims)")
+	}
+	idStr, ok := payloadMap["id"].(string)
+	if !ok {
+		return nil, errors.New("incorrect id")
+	}
+	login, ok := payloadMap["login"].(string)
+	if !ok {
+		return nil, errors.New("incorrect login")
+	}
+	id, err := uuid.FromString(idStr)
+	if err != nil {
+		return nil, errors.New("incorrect id")
+	}
+
+	return &models.JwtPayload{
+		ID:    id,
+		Login: login,
+	}, nil
 }
