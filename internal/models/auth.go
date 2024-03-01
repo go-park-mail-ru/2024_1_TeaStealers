@@ -1,13 +1,9 @@
 package models
 
-import "github.com/satori/uuid"
-
-type JwtPayload struct {
-	ID    uuid.UUID
-	Login string
-}
-
+// UserLoginData represents user information for login and signup
 type UserLoginData struct {
-	Login    string `json:"login"`
+	// Login stands for users nickname
+	Login string `json:"login"`
+	// Password stands for users password
 	Password string `json:"password"`
 }

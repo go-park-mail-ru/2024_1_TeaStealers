@@ -9,14 +9,18 @@ import (
 	"time"
 )
 
+// AuthHandler handles HTTP requests for user authentication.
 type AuthHandler struct {
+	// uc represents the usecase interface for authentication.
 	uc auth.AuthUsecase
 }
 
+// NewAuthHandler creates a new instance of AuthHandler.
 func NewAuthHandler(uc auth.AuthUsecase) *AuthHandler {
 	return &AuthHandler{uc: uc}
 }
 
+// SignUp handles the request for registering a new user.
 func (h *AuthHandler) SignUp(w http.ResponseWriter, r *http.Request) {
 	data := models.UserLoginData{}
 
@@ -38,6 +42,7 @@ func (h *AuthHandler) SignUp(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// Login handles the request for user login.
 func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 	data := models.UserLoginData{}
 	if err := utils.ReadRequestData(r, &data); err != nil {
@@ -57,6 +62,7 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// Logout handles the request for user logout.
 func (h *AuthHandler) Logout(w http.ResponseWriter, r *http.Request) {
 	http.SetCookie(w, &http.Cookie{
 		Name:  middleware.CookieName,
@@ -65,6 +71,7 @@ func (h *AuthHandler) Logout(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+// tokenCookie creates a new cookie for storing the authentication token.
 func tokenCookie(name, token string, exp time.Time) *http.Cookie {
 	return &http.Cookie{
 		Name:     name,

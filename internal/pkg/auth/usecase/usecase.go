@@ -3,7 +3,7 @@ package usecase
 import (
 	"2024_1_TeaStealers/internal/models"
 	"2024_1_TeaStealers/internal/pkg/auth"
-	"2024_1_TeaStealers/internal/pkg/middleware"
+	"2024_1_TeaStealers/internal/pkg/jwt"
 	"context"
 	"crypto/sha1"
 	"encoding/hex"
@@ -11,19 +11,21 @@ import (
 	"time"
 )
 
+// AuthUsecase represents the usecase for authentication.
 type AuthUsecase struct {
 	repo auth.AuthRepo
 }
 
+// NewAuthUsecase creates a new instance of AuthUsecase.
 func NewAuthUsecase(repo auth.AuthRepo) *AuthUsecase {
 	return &AuthUsecase{repo: repo}
 }
 
+// SignUp handles the user registration process.
 func (u *AuthUsecase) SignUp(ctx context.Context, data *models.UserLoginData) (*models.User, string, time.Time, error) {
 	newUser := &models.User{
 		ID:           uuid.NewV4(),
 		Login:        data.Login,
-		Phone:        "",
 		PasswordHash: generateHashString(data.Password),
 	}
 
@@ -31,7 +33,7 @@ func (u *AuthUsecase) SignUp(ctx context.Context, data *models.UserLoginData) (*
 		return nil, "", time.Now(), err
 	}
 
-	token, exp, err := middleware.GenerateToken(newUser)
+	token, exp, err := jwt.GenerateToken(newUser)
 	if err != nil {
 		return nil, "", time.Now(), err
 	}
@@ -39,13 +41,14 @@ func (u *AuthUsecase) SignUp(ctx context.Context, data *models.UserLoginData) (*
 	return newUser, token, exp, nil
 }
 
+// Login handles the user login process.
 func (u *AuthUsecase) Login(ctx context.Context, data *models.UserLoginData) (*models.User, string, time.Time, error) {
 	user, err := u.repo.CheckUser(ctx, data.Login, generateHashString(data.Password))
 	if err != nil {
 		return nil, "", time.Now(), err
 	}
 
-	token, exp, err := middleware.GenerateToken(user)
+	token, exp, err := jwt.GenerateToken(user)
 	if err != nil {
 		return nil, "", time.Now(), err
 	}
@@ -53,6 +56,7 @@ func (u *AuthUsecase) Login(ctx context.Context, data *models.UserLoginData) (*m
 	return user, token, exp, nil
 }
 
+// generateHashString returns a hash string for the given input string.
 func generateHashString(s string) string {
 	h := sha1.New()
 	h.Write([]byte(s))

@@ -11,5 +11,8 @@ lint:
 test:
 	go test -race ./...
 
-dev-compose:
+dev-compose-up:
 	docker compose -f "dev-docker-compose.yaml" up -d
+
+dev-compose-down:
+	docker compose -f "dev-docker-compose.yaml" down
