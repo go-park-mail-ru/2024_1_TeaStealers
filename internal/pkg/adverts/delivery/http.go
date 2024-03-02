@@ -1,0 +1,39 @@
+package delivery
+
+import (
+	"2024_1_TeaStealers/internal/models"
+	"2024_1_TeaStealers/internal/pkg/adverts"
+	"2024_1_TeaStealers/internal/pkg/utils"
+	"net/http"
+)
+
+// AdvertHandler handles HTTP requests for manage advert.
+type AdvertHandler struct {
+	// uc represents the usecase interface for manage advert.
+	uc adverts.AdvertUsecase
+}
+
+// NewAdvertHandler creates a new instance of AdvertHandler.
+func NewAdvertHandler(uc adverts.AdvertUsecase) *AdvertHandler {
+	return &AdvertHandler{uc: uc}
+}
+
+// CreateAdvert handles the request for creating a new advert.
+func (h *AdvertHandler) CreateAdvert(w http.ResponseWriter, r *http.Request) {
+	data := models.AdvertCreateData{}
+
+	if err := utils.ReadRequestData(r, &data); err != nil {
+		utils.WriteError(w, http.StatusBadRequest, "incorrect data format")
+		return
+	}
+
+	newAdvert, err := h.uc.CreateAdvert(r.Context(), &data)
+	if err != nil {
+		utils.WriteError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	if err = utils.WriteResponse(w, http.StatusCreated, newAdvert); err != nil {
+		utils.WriteError(w, http.StatusInternalServerError, err.Error())
+	}
+}

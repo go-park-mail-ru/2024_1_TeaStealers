@@ -1,9 +1,18 @@
 package main
 
 import (
+	advertH "2024_1_TeaStealers/internal/pkg/adverts/delivery"
+	advertR "2024_1_TeaStealers/internal/pkg/adverts/repo"
+	advertUc "2024_1_TeaStealers/internal/pkg/adverts/usecase"
 	authH "2024_1_TeaStealers/internal/pkg/auth/delivery"
 	authR "2024_1_TeaStealers/internal/pkg/auth/repo"
 	authUc "2024_1_TeaStealers/internal/pkg/auth/usecase"
+	buildingH "2024_1_TeaStealers/internal/pkg/buildings/delivery"
+	buildingR "2024_1_TeaStealers/internal/pkg/buildings/repo"
+	buildingUc "2024_1_TeaStealers/internal/pkg/buildings/usecase"
+	companyH "2024_1_TeaStealers/internal/pkg/companies/delivery"
+	companyR "2024_1_TeaStealers/internal/pkg/companies/repo"
+	companyUc "2024_1_TeaStealers/internal/pkg/companies/usecase"
 	"2024_1_TeaStealers/internal/pkg/middleware"
 	"context"
 	"database/sql"
@@ -43,6 +52,27 @@ func main() {
 	auth.HandleFunc("/signup", autHandler.SignUp).Methods(http.MethodPost, http.MethodOptions)
 	auth.HandleFunc("/login", autHandler.Login).Methods(http.MethodPost, http.MethodOptions)
 	auth.Handle("/logout", middleware.JwtMiddleware(http.HandlerFunc(autHandler.Logout))).Methods(http.MethodGet, http.MethodOptions)
+
+	companyRepo := companyR.NewRepository(db)
+	companyUsecase := companyUc.NewCompanyUsecase(companyRepo)
+	companyHandler := companyH.NewCompanyHandler(companyUsecase)
+
+	companyApi := r.PathPrefix("/company").Subrouter()
+	companyApi.HandleFunc("/create", companyHandler.CreateCompany).Methods(http.MethodPost)
+
+	buildingRepo := buildingR.NewRepository(db)
+	buildingUsecase := buildingUc.NewBuildingUsecase(buildingRepo)
+	buildingHandler := buildingH.NewBuildingHandler(buildingUsecase)
+
+	buildingApi := r.PathPrefix("/building").Subrouter()
+	buildingApi.HandleFunc("/create", buildingHandler.CreateBuilding).Methods(http.MethodPost)
+
+	advertRepo := advertR.NewRepository(db)
+	advertUsecase := advertUc.NewAdvertUsecase(advertRepo)
+	advertHandler := advertH.NewAdvertHandler(advertUsecase)
+
+	advertApi := r.PathPrefix("/advert").Subrouter()
+	advertApi.HandleFunc("/create", advertHandler.CreateAdvert).Methods(http.MethodPost)
 
 	srv := &http.Server{
 		Addr:              ":8080",

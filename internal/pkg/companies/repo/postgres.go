@@ -17,11 +17,11 @@ func NewRepository(db *sql.DB) *CompanyRepo {
 }
 
 // CreateCompany creates a new company in the database.
-func (r *CompanyRepo) CreateCompany(ctx context.Context, user *models.Company) error {
-	//insert := `INSERT INTO companies (id, login, password_hash) VALUES ($1, $2, $3, $4)`
+func (r *CompanyRepo) CreateCompany(ctx context.Context, company *models.Company) error {
+	insert := `INSERT INTO companies (id, name, phone, description, data_creation, is_deleted) VALUES ($1, $2, $3, $4, $5, $6)`
 
-	//if _, err := r.db.ExecContext(ctx, insert, user.ID, user.Login, user.PasswordHash); err != nil {
-	//	return err
-	//}
+	if _, err := r.db.ExecContext(ctx, insert, company.ID, company.Name, company.Phone, company.Descpription, company.DataCreation, company.IsDeleted); err != nil {
+		return err
+	}
 	return nil
 }

@@ -19,3 +19,11 @@ type Building struct {
 	// isDeleted means is the building deleted?.
 	IsDeleted bool `json:"isdeleted"`
 }
+
+// BuildingCreateData represents building information for location and description
+type BuildingCreateData struct {
+	// Location is the location of the building.
+	Location string `json:"location"`
+	// Description is the description of the building.
+	Descpription string `json:"description"`
+}
