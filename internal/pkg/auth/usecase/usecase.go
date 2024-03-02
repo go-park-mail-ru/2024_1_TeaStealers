@@ -7,8 +7,9 @@ import (
 	"context"
 	"crypto/sha1"
 	"encoding/hex"
-	"github.com/satori/uuid"
 	"time"
+
+	"github.com/satori/uuid"
 )
 
 // AuthUsecase represents the usecase for authentication.

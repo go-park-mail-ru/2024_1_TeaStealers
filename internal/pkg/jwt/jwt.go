@@ -4,10 +4,11 @@ import (
 	"2024_1_TeaStealers/internal/models"
 	"errors"
 	"fmt"
-	"github.com/golang-jwt/jwt/v5"
-	"github.com/satori/uuid"
 	"os"
 	"time"
+
+	"github.com/golang-jwt/jwt/v5"
+	"github.com/satori/uuid"
 )
 
 // GenerateToken returns a new JWT token for the given user.
