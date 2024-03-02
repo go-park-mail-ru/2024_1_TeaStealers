@@ -4,6 +4,8 @@ import (
 	"2024_1_TeaStealers/internal/models"
 	"context"
 	"database/sql"
+
+	"github.com/satori/uuid"
 )
 
 // BuildingRepo represents a repository for buildings.
@@ -24,4 +26,20 @@ func (r *BuildingRepo) CreateBuilding(ctx context.Context, building *models.Buil
 		return err
 	}
 	return nil
+}
+
+// GetBuildingById retrieves a building from the database by their id.
+func (r *BuildingRepo) GetBuildingById(ctx context.Context, id uuid.UUID) (*models.Building, error) {
+	query := `SELECT * FROM buildings WHERE id = $1`
+
+	res := r.db.QueryRowContext(ctx, query, id)
+
+	building := &models.Building{
+		ID: id,
+	}
+	if err := res.Scan(&building.ID, &building.Location, &building.Descpription, &building.DataCreation, &building.IsDeleted); err != nil {
+		return nil, err
+	}
+
+	return building, nil
 }

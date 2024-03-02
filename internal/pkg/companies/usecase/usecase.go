@@ -37,3 +37,12 @@ func (u *CompanyUsecase) CreateCompany(ctx context.Context, data *models.Company
 
 	return newCompany, nil
 }
+
+// GetCompanyById handles the company getting process.
+func (u *CompanyUsecase) GetCompanyById(ctx context.Context, id uuid.UUID) (findCompany *models.Company, err error) {
+	if findCompany, err = u.repo.GetCompanyById(ctx, id); err != nil {
+		return nil, err
+	}
+
+	return findCompany, nil
+}

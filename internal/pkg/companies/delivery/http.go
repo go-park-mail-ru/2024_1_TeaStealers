@@ -5,6 +5,8 @@ import (
 	"2024_1_TeaStealers/internal/pkg/companies"
 	"2024_1_TeaStealers/internal/pkg/utils"
 	"net/http"
+
+	"github.com/satori/uuid"
 )
 
 // CompanyHandler handles HTTP requests for manage company.
@@ -34,6 +36,31 @@ func (h *CompanyHandler) CreateCompany(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err = utils.WriteResponse(w, http.StatusCreated, newCompany); err != nil {
+		utils.WriteError(w, http.StatusInternalServerError, err.Error())
+	}
+}
+
+// GetCompanyById handles the request for retrieving a company by its Id.
+func (h *CompanyHandler) GetCompanyById(w http.ResponseWriter, r *http.Request) {
+	id := r.URL.Query().Get("id")
+	if id == "" {
+		utils.WriteError(w, http.StatusBadRequest, "id parameter is required")
+		return
+	}
+
+	companyId, err := uuid.FromString(id)
+	if err != nil {
+		utils.WriteError(w, http.StatusBadRequest, "invalid id parameter")
+		return
+	}
+
+	company, err := h.uc.GetCompanyById(r.Context(), companyId)
+	if err != nil {
+		utils.WriteError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	if err = utils.WriteResponse(w, http.StatusOK, company); err != nil {
 		utils.WriteError(w, http.StatusInternalServerError, err.Error())
 	}
 }

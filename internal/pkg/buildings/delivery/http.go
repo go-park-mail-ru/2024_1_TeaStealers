@@ -5,6 +5,8 @@ import (
 	"2024_1_TeaStealers/internal/pkg/buildings"
 	"2024_1_TeaStealers/internal/pkg/utils"
 	"net/http"
+
+	"github.com/satori/uuid"
 )
 
 // BuildingHandler handles HTTP requests for manage building.
@@ -34,6 +36,31 @@ func (h *BuildingHandler) CreateBuilding(w http.ResponseWriter, r *http.Request)
 	}
 
 	if err = utils.WriteResponse(w, http.StatusCreated, newBuilding); err != nil {
+		utils.WriteError(w, http.StatusInternalServerError, err.Error())
+	}
+}
+
+// GetBuildingById handles the request for retrieving a building by its Id.
+func (h *BuildingHandler) GetBuildingById(w http.ResponseWriter, r *http.Request) {
+	id := r.URL.Query().Get("id")
+	if id == "" {
+		utils.WriteError(w, http.StatusBadRequest, "id parameter is required")
+		return
+	}
+
+	buildingId, err := uuid.FromString(id)
+	if err != nil {
+		utils.WriteError(w, http.StatusBadRequest, "invalid id parameter")
+		return
+	}
+
+	building, err := h.uc.GetBuildingById(r.Context(), buildingId)
+	if err != nil {
+		utils.WriteError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	if err = utils.WriteResponse(w, http.StatusOK, building); err != nil {
 		utils.WriteError(w, http.StatusInternalServerError, err.Error())
 	}
 }

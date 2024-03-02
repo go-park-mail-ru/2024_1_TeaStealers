@@ -59,6 +59,7 @@ func main() {
 
 	companyApi := r.PathPrefix("/company").Subrouter()
 	companyApi.HandleFunc("/create", companyHandler.CreateCompany).Methods(http.MethodPost)
+	companyApi.HandleFunc("/get", companyHandler.GetCompanyById).Methods(http.MethodGet)
 
 	buildingRepo := buildingR.NewRepository(db)
 	buildingUsecase := buildingUc.NewBuildingUsecase(buildingRepo)
@@ -66,6 +67,7 @@ func main() {
 
 	buildingApi := r.PathPrefix("/building").Subrouter()
 	buildingApi.HandleFunc("/create", buildingHandler.CreateBuilding).Methods(http.MethodPost)
+	buildingApi.HandleFunc("/get", buildingHandler.GetBuildingById).Methods(http.MethodGet)
 
 	advertRepo := advertR.NewRepository(db)
 	advertUsecase := advertUc.NewAdvertUsecase(advertRepo)
@@ -73,6 +75,7 @@ func main() {
 
 	advertApi := r.PathPrefix("/advert").Subrouter()
 	advertApi.HandleFunc("/create", advertHandler.CreateAdvert).Methods(http.MethodPost)
+	advertApi.HandleFunc("/get", advertHandler.GetAdvertById).Methods(http.MethodGet)
 
 	srv := &http.Server{
 		Addr:              ":8080",

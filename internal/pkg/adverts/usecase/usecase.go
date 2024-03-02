@@ -41,3 +41,12 @@ func (u *AdvertUsecase) CreateAdvert(ctx context.Context, data *models.AdvertCre
 
 	return newAdvert, nil
 }
+
+// GetBuildingById handles the building getting process.
+func (u *AdvertUsecase) GetAdvertById(ctx context.Context, id uuid.UUID) (findAdvert *models.Advert, err error) {
+	if findAdvert, err = u.repo.GetAdvertById(ctx, id); err != nil {
+		return nil, err
+	}
+
+	return findAdvert, nil
+}

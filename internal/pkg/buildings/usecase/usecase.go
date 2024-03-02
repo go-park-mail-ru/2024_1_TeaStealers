@@ -36,3 +36,12 @@ func (u *BuildingUsecase) CreateBuilding(ctx context.Context, data *models.Build
 
 	return newBuilding, nil
 }
+
+// GetBuildingById handles the building getting process.
+func (u *BuildingUsecase) GetBuildingById(ctx context.Context, id uuid.UUID) (findBuilding *models.Building, err error) {
+	if findBuilding, err = u.repo.GetBuildingById(ctx, id); err != nil {
+		return nil, err
+	}
+
+	return findBuilding, nil
+}

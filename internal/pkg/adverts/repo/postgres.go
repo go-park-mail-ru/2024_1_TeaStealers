@@ -4,6 +4,8 @@ import (
 	"2024_1_TeaStealers/internal/models"
 	"context"
 	"database/sql"
+
+	"github.com/satori/uuid"
 )
 
 // AdvertRepo represents a repository for adverts.
@@ -24,4 +26,21 @@ func (r *AdvertRepo) CreateAdvert(ctx context.Context, advert *models.Advert) er
 		return err
 	}
 	return nil
+}
+
+// GetAdvertById retrieves a advert from the database by their id.
+func (r *AdvertRepo) GetAdvertById(ctx context.Context, id uuid.UUID) (*models.Advert, error) {
+	query := `SELECT * FROM adverts WHERE id = $1`
+
+	res := r.db.QueryRowContext(ctx, query, id)
+
+	advert := &models.Advert{
+		ID: id,
+	}
+
+	if err := res.Scan(&advert.ID, &advert.UserId, &advert.Phone, &advert.Descpription, &advert.BuildingId, &advert.CompanyId, &advert.Price, &advert.Location, &advert.DataCreation, &advert.IsDeleted); err != nil {
+		return nil, err
+	}
+
+	return advert, nil
 }

@@ -4,6 +4,8 @@ import (
 	"2024_1_TeaStealers/internal/models"
 	"context"
 	"database/sql"
+
+	"github.com/satori/uuid"
 )
 
 // CompanyRepo represents a repository for companies.
@@ -24,4 +26,20 @@ func (r *CompanyRepo) CreateCompany(ctx context.Context, company *models.Company
 		return err
 	}
 	return nil
+}
+
+// GetCompanyById retrieves a company from the database by their id.
+func (r *CompanyRepo) GetCompanyById(ctx context.Context, id uuid.UUID) (*models.Company, error) {
+	query := `SELECT * FROM companies WHERE id = $1`
+
+	res := r.db.QueryRowContext(ctx, query, id)
+
+	company := &models.Company{
+		ID: id,
+	}
+	if err := res.Scan(&company.ID, &company.Name, &company.Phone, &company.Descpription, &company.DataCreation, &company.IsDeleted); err != nil {
+		return nil, err
+	}
+
+	return company, nil
 }

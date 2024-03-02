@@ -5,6 +5,8 @@ import (
 	"2024_1_TeaStealers/internal/pkg/adverts"
 	"2024_1_TeaStealers/internal/pkg/utils"
 	"net/http"
+
+	"github.com/satori/uuid"
 )
 
 // AdvertHandler handles HTTP requests for manage advert.
@@ -34,6 +36,31 @@ func (h *AdvertHandler) CreateAdvert(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err = utils.WriteResponse(w, http.StatusCreated, newAdvert); err != nil {
+		utils.WriteError(w, http.StatusInternalServerError, err.Error())
+	}
+}
+
+// GetAdverById handles the request for retrieving a advert by its Id.
+func (h *AdvertHandler) GetAdvertById(w http.ResponseWriter, r *http.Request) {
+	id := r.URL.Query().Get("id")
+	if id == "" {
+		utils.WriteError(w, http.StatusBadRequest, "id parameter is required")
+		return
+	}
+
+	advertId, err := uuid.FromString(id)
+	if err != nil {
+		utils.WriteError(w, http.StatusBadRequest, "invalid id parameter")
+		return
+	}
+
+	advert, err := h.uc.GetAdvertById(r.Context(), advertId)
+	if err != nil {
+		utils.WriteError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	if err = utils.WriteResponse(w, http.StatusOK, advert); err != nil {
 		utils.WriteError(w, http.StatusInternalServerError, err.Error())
 	}
 }
