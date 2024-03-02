@@ -22,7 +22,6 @@ import (
 
 func main() {
 	_ = godotenv.Load()
-	//postgres.Open(dsn.FromEnv()), &gorm.Config{}
 	db, err := sql.Open("postgres", fmt.Sprintf("postgres://%v:%v@%v:%v/%v?sslmode=disable",
 		os.Getenv("DB_USER"),
 		os.Getenv("DB_PASS"),
