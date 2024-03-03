@@ -43,3 +43,28 @@ func (r *CompanyRepo) GetCompanyById(ctx context.Context, id uuid.UUID) (*models
 
 	return company, nil
 }
+
+// GetCompaniesList retrieves a companies from the database.
+func (r *CompanyRepo) GetCompaniesList(ctx context.Context) ([]*models.Company, error) {
+	query := `SELECT * FROM companies`
+	rows, err := r.db.QueryContext(ctx, query)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	companies := []*models.Company{}
+	for rows.Next() {
+		company := &models.Company{}
+		err := rows.Scan(&company.ID, &company.Name, &company.Phone, &company.Descpription, &company.DataCreation, &company.IsDeleted)
+		if err != nil {
+			return nil, err
+		}
+		companies = append(companies, company)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return companies, nil
+}

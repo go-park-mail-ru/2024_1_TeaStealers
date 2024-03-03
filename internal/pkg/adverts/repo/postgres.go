@@ -44,3 +44,28 @@ func (r *AdvertRepo) GetAdvertById(ctx context.Context, id uuid.UUID) (*models.A
 
 	return advert, nil
 }
+
+// GetAdvertsList retrieves a adverts from the database.
+func (r *AdvertRepo) GetAdvertsList(ctx context.Context) ([]*models.Advert, error) {
+	query := `SELECT * FROM adverts`
+	rows, err := r.db.QueryContext(ctx, query)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	adverts := []*models.Advert{}
+	for rows.Next() {
+		advert := &models.Advert{}
+		err := rows.Scan(&advert.ID, &advert.UserId, &advert.Phone, &advert.Descpription, &advert.BuildingId, &advert.CompanyId, &advert.Price, &advert.Location, &advert.DataCreation, &advert.IsDeleted)
+		if err != nil {
+			return nil, err
+		}
+		adverts = append(adverts, advert)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return adverts, nil
+}

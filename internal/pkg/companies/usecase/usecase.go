@@ -46,3 +46,12 @@ func (u *CompanyUsecase) GetCompanyById(ctx context.Context, id uuid.UUID) (find
 
 	return findCompany, nil
 }
+
+// GetCompaniesList handles the companies getting process.
+func (u *CompanyUsecase) GetCompaniesList(ctx context.Context) (findCompanies []*models.Company, err error) {
+	if findCompanies, err = u.repo.GetCompaniesList(ctx); err != nil {
+		return nil, err
+	}
+
+	return findCompanies, nil
+}

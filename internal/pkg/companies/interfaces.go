@@ -11,10 +11,12 @@ import (
 type CompanyUsecase interface {
 	CreateCompany(ctx context.Context, data *models.CompanyCreateData) (*models.Company, error)
 	GetCompanyById(ctx context.Context, id uuid.UUID) (findCompany *models.Company, err error)
+	GetCompaniesList(ctx context.Context) (findCompanies []*models.Company, err error)
 }
 
 // CompanyRepo represents the repository interface for manage companies.
 type CompanyRepo interface {
 	CreateCompany(ctx context.Context, company *models.Company) error
 	GetCompanyById(ctx context.Context, id uuid.UUID) (*models.Company, error)
+	GetCompaniesList(ctx context.Context) ([]*models.Company, error)
 }

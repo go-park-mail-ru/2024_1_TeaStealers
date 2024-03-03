@@ -50,3 +50,12 @@ func (u *AdvertUsecase) GetAdvertById(ctx context.Context, id uuid.UUID) (findAd
 
 	return findAdvert, nil
 }
+
+// GetAdvertsList handles the adverts getting process.
+func (u *AdvertUsecase) GetAdvertsList(ctx context.Context) (findAdverts []*models.Advert, err error) {
+	if findAdverts, err = u.repo.GetAdvertsList(ctx); err != nil {
+		return nil, err
+	}
+
+	return findAdverts, nil
+}

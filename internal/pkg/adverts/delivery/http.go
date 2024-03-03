@@ -64,3 +64,16 @@ func (h *AdvertHandler) GetAdvertById(w http.ResponseWriter, r *http.Request) {
 		utils.WriteError(w, http.StatusInternalServerError, err.Error())
 	}
 }
+
+// GetAdvertsList handles the request for retrieving an adverts.
+func (h *AdvertHandler) GetAdvertsList(w http.ResponseWriter, r *http.Request) {
+	adverts, err := h.uc.GetAdvertsList(r.Context())
+	if err != nil {
+		utils.WriteError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	if err = utils.WriteResponse(w, http.StatusOK, adverts); err != nil {
+		utils.WriteError(w, http.StatusInternalServerError, err.Error())
+	}
+}

@@ -45,3 +45,12 @@ func (u *BuildingUsecase) GetBuildingById(ctx context.Context, id uuid.UUID) (fi
 
 	return findBuilding, nil
 }
+
+// GetBuildingsList handles the buildings getting process.
+func (u *BuildingUsecase) GetBuildingsList(ctx context.Context) (findBuildings []*models.Building, err error) {
+	if findBuildings, err = u.repo.GetBuildingsList(ctx); err != nil {
+		return nil, err
+	}
+
+	return findBuildings, nil
+}

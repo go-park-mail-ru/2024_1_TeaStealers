@@ -43,3 +43,28 @@ func (r *BuildingRepo) GetBuildingById(ctx context.Context, id uuid.UUID) (*mode
 
 	return building, nil
 }
+
+// GetBuildingsList retrieves a companies from the database.
+func (r *BuildingRepo) GetBuildingsList(ctx context.Context) ([]*models.Building, error) {
+	query := `SELECT * FROM buildings`
+	rows, err := r.db.QueryContext(ctx, query)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	buildings := []*models.Building{}
+	for rows.Next() {
+		building := &models.Building{}
+		err := rows.Scan(&building.ID, &building.Location, &building.Descpription, &building.DataCreation, &building.IsDeleted)
+		if err != nil {
+			return nil, err
+		}
+		buildings = append(buildings, building)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return buildings, nil
+}

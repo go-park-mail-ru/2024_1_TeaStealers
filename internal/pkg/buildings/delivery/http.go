@@ -64,3 +64,16 @@ func (h *BuildingHandler) GetBuildingById(w http.ResponseWriter, r *http.Request
 		utils.WriteError(w, http.StatusInternalServerError, err.Error())
 	}
 }
+
+// GetBuildingsList handles the request for retrieving a buildings.
+func (h *BuildingHandler) GetBuildingsList(w http.ResponseWriter, r *http.Request) {
+	companies, err := h.uc.GetBuildingsList(r.Context())
+	if err != nil {
+		utils.WriteError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	if err = utils.WriteResponse(w, http.StatusOK, companies); err != nil {
+		utils.WriteError(w, http.StatusInternalServerError, err.Error())
+	}
+}

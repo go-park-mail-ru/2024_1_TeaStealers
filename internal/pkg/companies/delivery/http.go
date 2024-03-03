@@ -64,3 +64,17 @@ func (h *CompanyHandler) GetCompanyById(w http.ResponseWriter, r *http.Request) 
 		utils.WriteError(w, http.StatusInternalServerError, err.Error())
 	}
 }
+
+// GetCompaniesList handles the request for retrieving a companies.
+func (h *CompanyHandler) GetCompaniesList(w http.ResponseWriter, r *http.Request) {
+
+	companies, err := h.uc.GetCompaniesList(r.Context())
+	if err != nil {
+		utils.WriteError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	if err = utils.WriteResponse(w, http.StatusOK, companies); err != nil {
+		utils.WriteError(w, http.StatusInternalServerError, err.Error())
+	}
+}
