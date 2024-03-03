@@ -68,3 +68,15 @@ func (r *BuildingRepo) GetBuildingsList(ctx context.Context) ([]*models.Building
 
 	return buildings, nil
 }
+
+// DeleteBuildingById set is_deleted on true on a building from the database by their id.
+func (r *BuildingRepo) DeleteBuildingById(ctx context.Context, id uuid.UUID) error {
+	query := `UPDATE buildings SET is_deleted = true WHERE id = $1`
+
+	_, err := r.db.ExecContext(ctx, query, id)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}

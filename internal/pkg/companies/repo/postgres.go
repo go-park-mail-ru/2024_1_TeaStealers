@@ -68,3 +68,15 @@ func (r *CompanyRepo) GetCompaniesList(ctx context.Context) ([]*models.Company, 
 
 	return companies, nil
 }
+
+// DeleteCompanyById set is_deleted on true on a company from the database by their id.
+func (r *CompanyRepo) DeleteCompanyById(ctx context.Context, id uuid.UUID) error {
+	query := `UPDATE companies SET is_deleted = true WHERE id = $1`
+
+	_, err := r.db.ExecContext(ctx, query, id)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}

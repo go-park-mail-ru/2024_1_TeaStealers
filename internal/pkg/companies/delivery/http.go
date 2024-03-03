@@ -78,3 +78,28 @@ func (h *CompanyHandler) GetCompaniesList(w http.ResponseWriter, r *http.Request
 		utils.WriteError(w, http.StatusInternalServerError, err.Error())
 	}
 }
+
+// DeleteCompanyById handles the request for deleting a company by its Id.
+func (h *CompanyHandler) DeleteCompanyById(w http.ResponseWriter, r *http.Request) {
+	id := r.URL.Query().Get("id")
+	if id == "" {
+		utils.WriteError(w, http.StatusBadRequest, "id parameter is required")
+		return
+	}
+
+	companyId, err := uuid.FromString(id)
+	if err != nil {
+		utils.WriteError(w, http.StatusBadRequest, "invalid id parameter")
+		return
+	}
+
+	err = h.uc.DeleteCompanyById(r.Context(), companyId)
+	if err != nil {
+		utils.WriteError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	if err = utils.WriteResponse(w, http.StatusOK, "DELETED company by id: "+id); err != nil {
+		utils.WriteError(w, http.StatusInternalServerError, err.Error())
+	}
+}

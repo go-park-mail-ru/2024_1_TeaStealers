@@ -55,3 +55,12 @@ func (u *CompanyUsecase) GetCompaniesList(ctx context.Context) (findCompanies []
 
 	return findCompanies, nil
 }
+
+// DeleteCompanyById handles the deleting company process.
+func (u *CompanyUsecase) DeleteCompanyById(ctx context.Context, id uuid.UUID) (err error) {
+	if err = u.repo.DeleteCompanyById(ctx, id); err != nil {
+		return err
+	}
+
+	return nil
+}

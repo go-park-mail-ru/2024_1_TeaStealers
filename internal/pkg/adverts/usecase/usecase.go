@@ -42,7 +42,7 @@ func (u *AdvertUsecase) CreateAdvert(ctx context.Context, data *models.AdvertCre
 	return newAdvert, nil
 }
 
-// GetBuildingById handles the building getting process.
+// GetAdvertById handles the advert getting process.
 func (u *AdvertUsecase) GetAdvertById(ctx context.Context, id uuid.UUID) (findAdvert *models.Advert, err error) {
 	if findAdvert, err = u.repo.GetAdvertById(ctx, id); err != nil {
 		return nil, err
@@ -58,4 +58,13 @@ func (u *AdvertUsecase) GetAdvertsList(ctx context.Context) (findAdverts []*mode
 	}
 
 	return findAdverts, nil
+}
+
+// DeleteAdvertById handles the deleting advert process.
+func (u *AdvertUsecase) DeleteAdvertById(ctx context.Context, id uuid.UUID) (err error) {
+	if err = u.repo.DeleteAdvertById(ctx, id); err != nil {
+		return err
+	}
+
+	return nil
 }

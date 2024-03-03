@@ -54,3 +54,12 @@ func (u *BuildingUsecase) GetBuildingsList(ctx context.Context) (findBuildings [
 
 	return findBuildings, nil
 }
+
+// DeleteBuildingById handles the deleting building process.
+func (u *BuildingUsecase) DeleteBuildingById(ctx context.Context, id uuid.UUID) (err error) {
+	if err = u.repo.DeleteBuildingById(ctx, id); err != nil {
+		return err
+	}
+
+	return nil
+}

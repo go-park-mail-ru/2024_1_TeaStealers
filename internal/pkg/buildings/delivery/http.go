@@ -77,3 +77,28 @@ func (h *BuildingHandler) GetBuildingsList(w http.ResponseWriter, r *http.Reques
 		utils.WriteError(w, http.StatusInternalServerError, err.Error())
 	}
 }
+
+// DeleteBuildingById handles the request for deleting a building by its Id.
+func (h *BuildingHandler) DeleteBuildingById(w http.ResponseWriter, r *http.Request) {
+	id := r.URL.Query().Get("id")
+	if id == "" {
+		utils.WriteError(w, http.StatusBadRequest, "id parameter is required")
+		return
+	}
+
+	advertId, err := uuid.FromString(id)
+	if err != nil {
+		utils.WriteError(w, http.StatusBadRequest, "invalid id parameter")
+		return
+	}
+
+	err = h.uc.DeleteBuildingById(r.Context(), advertId)
+	if err != nil {
+		utils.WriteError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	if err = utils.WriteResponse(w, http.StatusOK, "DELETED building by id: "+id); err != nil {
+		utils.WriteError(w, http.StatusInternalServerError, err.Error())
+	}
+}

@@ -69,3 +69,15 @@ func (r *AdvertRepo) GetAdvertsList(ctx context.Context) ([]*models.Advert, erro
 
 	return adverts, nil
 }
+
+// DeleteAdvertById set is_deleted on true on an advert from the database by their id.
+func (r *AdvertRepo) DeleteAdvertById(ctx context.Context, id uuid.UUID) error {
+	query := `UPDATE adverts SET is_deleted = true WHERE id = $1`
+
+	_, err := r.db.ExecContext(ctx, query, id)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
