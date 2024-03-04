@@ -33,6 +33,7 @@ func main() {
 	}
 
 	r := mux.NewRouter().PathPrefix("/api").Subrouter()
+	r.Use(middleware.CORSMiddleware)
 	r.HandleFunc("/ping", pingPongHandler).Methods(http.MethodGet)
 
 	authRepo := authR.NewRepository(db)
