@@ -32,6 +32,13 @@ import (
 	_ "github.com/lib/pq"
 )
 
+// @title Sample Project API
+// @version 1.0
+// @description This is a sample server Tean server.
+
+// @host 0.0.0.0:8080
+// @BasePath /api
+// @schemes http https
 func main() {
 	_ = godotenv.Load()
 	db, err := sql.Open("postgres", fmt.Sprintf("postgres://%v:%v@%v:%v/%v?sslmode=disable",

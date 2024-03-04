@@ -8,6 +8,7 @@ import (
 	"net/http"
 
 	"github.com/satori/uuid"
+	_ "github.com/swaggo/http-swagger"
 )
 
 // BuildingHandler handles HTTP requests for manage building.
@@ -21,7 +22,14 @@ func NewBuildingHandler(uc buildings.BuildingUsecase) *BuildingHandler {
 	return &BuildingHandler{uc: uc}
 }
 
-// CreateBuilding handles the request for creating a new building.
+// @Summary Create a building
+// @Description Create a new building based on the provided data
+// @Accept json
+// @Produce json
+// @Param buildingData body models.BuildingCreateData true "Data for creating a building"
+// @Success 201 {object} models.Building "Returns the created building"
+// @Failure 400
+// @Router /building/create [post]
 func (h *BuildingHandler) CreateBuilding(w http.ResponseWriter, r *http.Request) {
 	data := models.BuildingCreateData{}
 
@@ -41,7 +49,14 @@ func (h *BuildingHandler) CreateBuilding(w http.ResponseWriter, r *http.Request)
 	}
 }
 
-// GetBuildingById handles the request for retrieving a building by its Id.
+// @Summary Get building by ID
+// @Description Get a building by its ID
+// @Tags buildings
+// @Accept json
+// @Produce json
+// @Param id query string true "Building ID"
+// @Success 200 {object} models.Building
+// @Router /building/get/by/id [get]
 func (h *BuildingHandler) GetBuildingById(w http.ResponseWriter, r *http.Request) {
 	id := r.URL.Query().Get("id")
 	if id == "" {
@@ -66,7 +81,13 @@ func (h *BuildingHandler) GetBuildingById(w http.ResponseWriter, r *http.Request
 	}
 }
 
-// GetBuildingsList handles the request for retrieving a buildings.
+// @Summary Get list of buildings
+// @Description Get a list of buildings
+// @Tags buildings
+// @Accept json
+// @Produce json
+// @Success 200 {array} models.Building
+// @Router /building/get/list [get]
 func (h *BuildingHandler) GetBuildingsList(w http.ResponseWriter, r *http.Request) {
 	companies, err := h.uc.GetBuildingsList(r.Context())
 	if err != nil {
@@ -79,7 +100,14 @@ func (h *BuildingHandler) GetBuildingsList(w http.ResponseWriter, r *http.Reques
 	}
 }
 
-// DeleteBuildingById handles the request for deleting a building by its Id.
+// @Summary Delete building by ID
+// @Description Delete a building by its ID
+// @Tags buildings
+// @Accept json
+// @Produce json
+// @Param id query string true "Building ID"
+// @Success 200 {string} string "Building deleted successfully"
+// @Router /building/delete/by/id [delete]
 func (h *BuildingHandler) DeleteBuildingById(w http.ResponseWriter, r *http.Request) {
 	id := r.URL.Query().Get("id")
 	if id == "" {
@@ -104,7 +132,16 @@ func (h *BuildingHandler) DeleteBuildingById(w http.ResponseWriter, r *http.Requ
 	}
 }
 
-// UpdateBuildingById handles the request for updating a building by its Id.
+// @Summary Update building by ID
+// @Description Update a building by its ID
+// @Tags buildings
+// @Accept json
+// @Produce json
+// @Param id query string true "Building ID"
+// @Param body body map[string]interface{} true "Updated building data"
+// @Success 200 {string} string "Building updated successfully"
+// @Router /building/update/by/id [put]
+// @Router /building/update/by/id [post]
 func (h *BuildingHandler) UpdateBuildingById(w http.ResponseWriter, r *http.Request) {
 	id := r.URL.Query().Get("id")
 	if id == "" {
