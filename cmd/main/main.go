@@ -13,6 +13,9 @@ import (
 	companyH "2024_1_TeaStealers/internal/pkg/companies/delivery"
 	companyR "2024_1_TeaStealers/internal/pkg/companies/repo"
 	companyUc "2024_1_TeaStealers/internal/pkg/companies/usecase"
+	imageH "2024_1_TeaStealers/internal/pkg/images/delivery"
+	imageR "2024_1_TeaStealers/internal/pkg/images/repo"
+	imageUc "2024_1_TeaStealers/internal/pkg/images/usecase"
 	"2024_1_TeaStealers/internal/pkg/middleware"
 	"context"
 	"database/sql"
@@ -85,6 +88,15 @@ func main() {
 	advertApi.HandleFunc("/get/list", advertHandler.GetAdvertsList).Methods(http.MethodGet)
 	advertApi.HandleFunc("/delete/by/id", advertHandler.DeleteAdvertById).Methods(http.MethodDelete, http.MethodPost)
 	advertApi.HandleFunc("/update/by/id", advertHandler.UpdateAdvertById).Methods(http.MethodPost, http.MethodPut)
+
+	imageRepo := imageR.NewRepository(db)
+	imageUsecase := imageUc.NewImageUsecase(imageRepo)
+	imageHandler := imageH.NewImageHandler(imageUsecase)
+
+	imageApi := r.PathPrefix("/image").Subrouter()
+	imageApi.HandleFunc("/create", imageHandler.CreateImage).Methods(http.MethodPost)
+	imageApi.HandleFunc("/get/list/by/advert/id", imageHandler.GetImagesByAdvertId).Methods(http.MethodGet)
+	imageApi.HandleFunc("/delete/by/id", imageHandler.DeleteImageById).Methods(http.MethodDelete, http.MethodPost)
 
 	srv := &http.Server{
 		Addr:              ":8080",
