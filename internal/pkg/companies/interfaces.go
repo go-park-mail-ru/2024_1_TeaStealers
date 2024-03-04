@@ -13,6 +13,7 @@ type CompanyUsecase interface {
 	GetCompanyById(ctx context.Context, id uuid.UUID) (findCompany *models.Company, err error)
 	GetCompaniesList(ctx context.Context) (findCompanies []*models.Company, err error)
 	DeleteCompanyById(ctx context.Context, id uuid.UUID) (err error)
+	UpdateCompanyById(ctx context.Context, body map[string]interface{}, id uuid.UUID) (err error)
 }
 
 // CompanyRepo represents the repository interface for manage companies.
@@ -21,4 +22,5 @@ type CompanyRepo interface {
 	GetCompanyById(ctx context.Context, id uuid.UUID) (*models.Company, error)
 	GetCompaniesList(ctx context.Context) ([]*models.Company, error)
 	DeleteCompanyById(ctx context.Context, id uuid.UUID) error
+	UpdateCompanyById(ctx context.Context, values []interface{}, updates []string) (err error)
 }

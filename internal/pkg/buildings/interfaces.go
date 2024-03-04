@@ -13,6 +13,7 @@ type BuildingUsecase interface {
 	GetBuildingById(ctx context.Context, id uuid.UUID) (findBuilding *models.Building, err error)
 	GetBuildingsList(ctx context.Context) (findBuildings []*models.Building, err error)
 	DeleteBuildingById(ctx context.Context, id uuid.UUID) (err error)
+	UpdateBuildingById(ctx context.Context, body map[string]interface{}, id uuid.UUID) (err error)
 }
 
 // BuildingRepo represents the repository interface for manage buildings.
@@ -21,4 +22,5 @@ type BuildingRepo interface {
 	GetBuildingById(ctx context.Context, id uuid.UUID) (*models.Building, error)
 	GetBuildingsList(ctx context.Context) ([]*models.Building, error)
 	DeleteBuildingById(ctx context.Context, id uuid.UUID) error
+	UpdateBuildingById(ctx context.Context, values []interface{}, updates []string) (err error)
 }

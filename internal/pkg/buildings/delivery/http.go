@@ -4,6 +4,7 @@ import (
 	"2024_1_TeaStealers/internal/models"
 	"2024_1_TeaStealers/internal/pkg/buildings"
 	"2024_1_TeaStealers/internal/pkg/utils"
+	"encoding/json"
 	"net/http"
 
 	"github.com/satori/uuid"
@@ -99,6 +100,37 @@ func (h *BuildingHandler) DeleteBuildingById(w http.ResponseWriter, r *http.Requ
 	}
 
 	if err = utils.WriteResponse(w, http.StatusOK, "DELETED building by id: "+id); err != nil {
+		utils.WriteError(w, http.StatusInternalServerError, err.Error())
+	}
+}
+
+// UpdateBuildingById handles the request for updating a building by its Id.
+func (h *BuildingHandler) UpdateBuildingById(w http.ResponseWriter, r *http.Request) {
+	id := r.URL.Query().Get("id")
+	if id == "" {
+		utils.WriteError(w, http.StatusBadRequest, "id parameter is required")
+		return
+	}
+
+	buildingId, err := uuid.FromString(id)
+	if err != nil {
+		utils.WriteError(w, http.StatusBadRequest, "invalid id parameter")
+		return
+	}
+
+	var body map[string]interface{}
+
+	if err = json.NewDecoder(r.Body).Decode(&body); err != nil {
+		utils.WriteError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	if err = h.uc.UpdateBuildingById(r.Context(), body, buildingId); err != nil {
+		utils.WriteError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	if err = utils.WriteResponse(w, http.StatusOK, "UPDATED building by id: "+id); err != nil {
 		utils.WriteError(w, http.StatusInternalServerError, err.Error())
 	}
 }

@@ -4,6 +4,7 @@ import (
 	"2024_1_TeaStealers/internal/models"
 	"2024_1_TeaStealers/internal/pkg/companies"
 	"2024_1_TeaStealers/internal/pkg/utils"
+	"encoding/json"
 	"net/http"
 
 	"github.com/satori/uuid"
@@ -100,6 +101,37 @@ func (h *CompanyHandler) DeleteCompanyById(w http.ResponseWriter, r *http.Reques
 	}
 
 	if err = utils.WriteResponse(w, http.StatusOK, "DELETED company by id: "+id); err != nil {
+		utils.WriteError(w, http.StatusInternalServerError, err.Error())
+	}
+}
+
+// UpdateCompanyById handles the request for updating a company by its Id.
+func (h *CompanyHandler) UpdateCompanyById(w http.ResponseWriter, r *http.Request) {
+	id := r.URL.Query().Get("id")
+	if id == "" {
+		utils.WriteError(w, http.StatusBadRequest, "id parameter is required")
+		return
+	}
+
+	companyId, err := uuid.FromString(id)
+	if err != nil {
+		utils.WriteError(w, http.StatusBadRequest, "invalid id parameter")
+		return
+	}
+
+	var body map[string]interface{}
+
+	if err = json.NewDecoder(r.Body).Decode(&body); err != nil {
+		utils.WriteError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	if err = h.uc.UpdateCompanyById(r.Context(), body, companyId); err != nil {
+		utils.WriteError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	if err = utils.WriteResponse(w, http.StatusOK, "UPDATED company by id: "+id); err != nil {
 		utils.WriteError(w, http.StatusInternalServerError, err.Error())
 	}
 }

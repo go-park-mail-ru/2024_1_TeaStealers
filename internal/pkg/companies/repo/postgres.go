@@ -4,6 +4,8 @@ import (
 	"2024_1_TeaStealers/internal/models"
 	"context"
 	"database/sql"
+	"fmt"
+	"strings"
 
 	"github.com/satori/uuid"
 )
@@ -74,6 +76,17 @@ func (r *CompanyRepo) DeleteCompanyById(ctx context.Context, id uuid.UUID) error
 	query := `UPDATE companies SET is_deleted = true WHERE id = $1`
 
 	_, err := r.db.ExecContext(ctx, query, id)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// UpdateCompanyById updates fields company from the database by their id.
+func (r *CompanyRepo) UpdateCompanyById(ctx context.Context, values []interface{}, updates []string) (err error) {
+	query := fmt.Sprintf("UPDATE companies SET %s WHERE id = $%d", strings.Join(updates, ", "), len(values))
+	_, err = r.db.ExecContext(ctx, query, values...)
 	if err != nil {
 		return err
 	}

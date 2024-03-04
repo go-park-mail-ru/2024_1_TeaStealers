@@ -62,6 +62,7 @@ func main() {
 	companyApi.HandleFunc("/get/by/id", companyHandler.GetCompanyById).Methods(http.MethodGet)
 	companyApi.HandleFunc("/get/list", companyHandler.GetCompaniesList).Methods(http.MethodGet)
 	companyApi.HandleFunc("/delete/by/id", companyHandler.DeleteCompanyById).Methods(http.MethodDelete, http.MethodPost)
+	companyApi.HandleFunc("/update/by/id", companyHandler.UpdateCompanyById).Methods(http.MethodPost, http.MethodPut)
 
 	buildingRepo := buildingR.NewRepository(db)
 	buildingUsecase := buildingUc.NewBuildingUsecase(buildingRepo)
@@ -72,6 +73,7 @@ func main() {
 	buildingApi.HandleFunc("/get/by/id", buildingHandler.GetBuildingById).Methods(http.MethodGet)
 	buildingApi.HandleFunc("/get/list", buildingHandler.GetBuildingsList).Methods(http.MethodGet)
 	buildingApi.HandleFunc("/delete/by/id", buildingHandler.DeleteBuildingById).Methods(http.MethodDelete, http.MethodPost)
+	buildingApi.HandleFunc("/update/by/id", buildingHandler.UpdateBuildingById).Methods(http.MethodPost, http.MethodPut)
 
 	advertRepo := advertR.NewRepository(db)
 	advertUsecase := advertUc.NewAdvertUsecase(advertRepo)
@@ -82,6 +84,7 @@ func main() {
 	advertApi.HandleFunc("/get/by/id", advertHandler.GetAdvertById).Methods(http.MethodGet)
 	advertApi.HandleFunc("/get/list", advertHandler.GetAdvertsList).Methods(http.MethodGet)
 	advertApi.HandleFunc("/delete/by/id", advertHandler.DeleteAdvertById).Methods(http.MethodDelete, http.MethodPost)
+	advertApi.HandleFunc("/update/by/id", advertHandler.UpdateAdvertById).Methods(http.MethodPost, http.MethodPut)
 
 	srv := &http.Server{
 		Addr:              ":8080",

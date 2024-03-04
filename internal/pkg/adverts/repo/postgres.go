@@ -4,6 +4,8 @@ import (
 	"2024_1_TeaStealers/internal/models"
 	"context"
 	"database/sql"
+	"fmt"
+	"strings"
 
 	"github.com/satori/uuid"
 )
@@ -75,6 +77,17 @@ func (r *AdvertRepo) DeleteAdvertById(ctx context.Context, id uuid.UUID) error {
 	query := `UPDATE adverts SET is_deleted = true WHERE id = $1`
 
 	_, err := r.db.ExecContext(ctx, query, id)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// UpdateAdvertById updates fields advert from the database by their id.
+func (r *AdvertRepo) UpdateAdvertById(ctx context.Context, values []interface{}, updates []string) (err error) {
+	query := fmt.Sprintf("UPDATE adverts SET %s WHERE id = $%d", strings.Join(updates, ", "), len(values))
+	_, err = r.db.ExecContext(ctx, query, values...)
 	if err != nil {
 		return err
 	}

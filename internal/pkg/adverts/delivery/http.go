@@ -4,6 +4,7 @@ import (
 	"2024_1_TeaStealers/internal/models"
 	"2024_1_TeaStealers/internal/pkg/adverts"
 	"2024_1_TeaStealers/internal/pkg/utils"
+	"encoding/json"
 	"net/http"
 
 	"github.com/satori/uuid"
@@ -99,6 +100,37 @@ func (h *AdvertHandler) DeleteAdvertById(w http.ResponseWriter, r *http.Request)
 	}
 
 	if err = utils.WriteResponse(w, http.StatusOK, "DELETED advert by id: "+id); err != nil {
+		utils.WriteError(w, http.StatusInternalServerError, err.Error())
+	}
+}
+
+// UpdateAdvertById handles the request for updating a advert by its Id.
+func (h *AdvertHandler) UpdateAdvertById(w http.ResponseWriter, r *http.Request) {
+	id := r.URL.Query().Get("id")
+	if id == "" {
+		utils.WriteError(w, http.StatusBadRequest, "id parameter is required")
+		return
+	}
+
+	advertId, err := uuid.FromString(id)
+	if err != nil {
+		utils.WriteError(w, http.StatusBadRequest, "invalid id parameter")
+		return
+	}
+
+	var body map[string]interface{}
+
+	if err = json.NewDecoder(r.Body).Decode(&body); err != nil {
+		utils.WriteError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	if err = h.uc.UpdateAdvertById(r.Context(), body, advertId); err != nil {
+		utils.WriteError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	if err = utils.WriteResponse(w, http.StatusOK, "UPDATED advert by id: "+id); err != nil {
 		utils.WriteError(w, http.StatusInternalServerError, err.Error())
 	}
 }
