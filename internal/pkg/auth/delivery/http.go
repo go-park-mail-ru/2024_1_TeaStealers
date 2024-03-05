@@ -58,7 +58,7 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 
 	http.SetCookie(w, tokenCookie(middleware.CookieName, token, exp))
 
-	if err = utils.WriteResponse(w, http.StatusOK, user); err != nil {
+	if err := utils.WriteResponse(w, http.StatusOK, user); err != nil {
 		utils.WriteError(w, http.StatusInternalServerError, err.Error())
 	}
 }
@@ -70,6 +70,9 @@ func (h *AuthHandler) Logout(w http.ResponseWriter, r *http.Request) {
 		Value: "",
 		Path:  "/",
 	})
+	if err := utils.WriteResponse(w, http.StatusOK, "success logout"); err != nil {
+		utils.WriteError(w, http.StatusInternalServerError, err.Error())
+	}
 }
 
 func (h *AuthHandler) CheckAuth(w http.ResponseWriter, r *http.Request) {
