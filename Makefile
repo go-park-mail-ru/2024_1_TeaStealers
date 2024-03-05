@@ -1,3 +1,14 @@
+OS := $(shell uname -s)
+
+include .env
+
+ifeq ($(OS), Linux)
+	DOCKER_COMPOSE := docker compose
+endif
+ifeq ($(OS), Darwin)
+	DOCKER_COMPOSE := docker-compose
+endif
+
 build_:
 	go build -o ./.bin cmd/main/main.go
 
@@ -11,8 +22,20 @@ lint:
 test:
 	go test -race ./...
 
+migrate-lib:
+	go get -tags 'postgres' -u github.com/golang-migrate/migrate/v4/cmd/migrate/
+
+create-migration:
+	migrate create -dir migrations -ext sql -seq $(TABLE_NAME)
+
+migrate-up:
+	migrate -path migrations -database "postgres://$(DB_USER):$(DB_PASS)@$(DB_HOST):$(DB_PORT)/$(DB_NAME)?sslmode=disable" up
+
+migrate-down:
+	migrate -path migrations -database "postgres://$(DB_USER):$(DB_PASS)@$(DB_HOST):$(DB_PORT)/$(DB_NAME)?sslmode=disable" down
+
 dev-compose-up:
-	docker compose -f "dev-docker-compose.yaml" up -d
+	$(DOCKER_COMPOSE) -f "dev-docker-compose.yaml" up -d
 
 dev-compose-down:
-	docker compose -f "dev-docker-compose.yaml" down
+	$(DOCKER_COMPOSE) -f "dev-docker-compose.yaml" down
