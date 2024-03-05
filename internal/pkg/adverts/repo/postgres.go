@@ -72,6 +72,54 @@ func (r *AdvertRepo) GetAdvertsList(ctx context.Context) ([]*models.Advert, erro
 	return adverts, nil
 }
 
+func (r *AdvertRepo) GetAdvertsWithImages(ctx context.Context) ([]*models.AdvertWithImages, error) {
+	adverts, err := r.GetAdvertsList(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	advertsWithImages := []*models.AdvertWithImages{}
+	for _, advert := range adverts {
+		images, err := r.GetImagesByAdvertId(ctx, advert.ID)
+		if err != nil {
+			return nil, err
+		}
+
+		advertWithImages := &models.AdvertWithImages{
+			Advert: advert,
+			Images: images,
+		}
+		advertsWithImages = append(advertsWithImages, advertWithImages)
+	}
+
+	return advertsWithImages, nil
+}
+
+func (r *AdvertRepo) GetImagesByAdvertId(ctx context.Context, advertId uuid.UUID) ([]*models.Image, error) {
+	query := `SELECT id, advert_id, filename, priority, data_creation, is_deleted FROM images WHERE advert_id = $1`
+
+	rows, err := r.db.QueryContext(ctx, query, advertId)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	images := []*models.Image{}
+	for rows.Next() {
+		image := &models.Image{}
+		err := rows.Scan(&image.ID, &image.AdvertId, &image.Filename, &image.Priority, &image.DataCreation, &image.IsDeleted)
+		if err != nil {
+			return nil, err
+		}
+		images = append(images, image)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return images, nil
+}
+
 // DeleteAdvertById set is_deleted on true on an advert from the database by their id.
 func (r *AdvertRepo) DeleteAdvertById(ctx context.Context, id uuid.UUID) error {
 	query := `UPDATE adverts SET is_deleted = true WHERE id = $1`

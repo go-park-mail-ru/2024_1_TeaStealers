@@ -60,6 +60,15 @@ func (u *AdvertUsecase) GetAdvertsList(ctx context.Context) (findAdverts []*mode
 	return findAdverts, nil
 }
 
+// GetAdvertsList handles the adverts getting process.
+func (u *AdvertUsecase) GetAdvertsListWithImages(ctx context.Context) (findAdverts []*models.AdvertWithImages, err error) {
+	if findAdverts, err = u.repo.GetAdvertsWithImages(ctx); err != nil {
+		return nil, err
+	}
+
+	return findAdverts, nil
+}
+
 // DeleteAdvertById handles the deleting advert process.
 func (u *AdvertUsecase) DeleteAdvertById(ctx context.Context, id uuid.UUID) (err error) {
 	if err = u.repo.DeleteAdvertById(ctx, id); err != nil {

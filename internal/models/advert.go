@@ -47,3 +47,8 @@ type AdvertCreateData struct {
 	// Location is the location of the object in advert.
 	Location string `json:"location"`
 }
+
+type AdvertWithImages struct {
+	Advert *Advert  `json:"advert"`
+	Images []*Image `json:"images"`
+}
