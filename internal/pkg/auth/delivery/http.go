@@ -5,6 +5,7 @@ import (
 	"2024_1_TeaStealers/internal/pkg/auth"
 	"2024_1_TeaStealers/internal/pkg/middleware"
 	"2024_1_TeaStealers/internal/pkg/utils"
+	"errors"
 	"net/http"
 	"time"
 )
@@ -69,6 +70,27 @@ func (h *AuthHandler) Logout(w http.ResponseWriter, r *http.Request) {
 		Value: "",
 		Path:  "/",
 	})
+}
+
+func (h *AuthHandler) CheckAuth(w http.ResponseWriter, r *http.Request) {
+	tokenCookie, err := r.Cookie(middleware.CookieName)
+	if err != nil {
+		if errors.Is(err, http.ErrNoCookie) {
+			utils.WriteError(w, http.StatusUnauthorized, "token cookie not found")
+			return
+		}
+		utils.WriteError(w, http.StatusUnauthorized, "fail to get token cookie")
+		return
+	}
+
+	id, err := h.uc.CheckAuth(r.Context(), tokenCookie.Value)
+	if err != nil {
+		utils.WriteError(w, http.StatusUnauthorized, "jws token is invalid")
+		return
+	}
+	if err = utils.WriteResponse(w, http.StatusOK, id); err != nil {
+		utils.WriteError(w, http.StatusInternalServerError, err.Error())
+	}
 }
 
 // tokenCookie creates a new cookie for storing the authentication token.
