@@ -43,6 +43,7 @@ func main() {
 	auth.HandleFunc("/signup", autHandler.SignUp).Methods(http.MethodPost, http.MethodOptions)
 	auth.HandleFunc("/login", autHandler.Login).Methods(http.MethodPost, http.MethodOptions)
 	auth.Handle("/logout", middleware.JwtMiddleware(http.HandlerFunc(autHandler.Logout))).Methods(http.MethodGet, http.MethodOptions)
+	auth.HandleFunc("/check_auth", autHandler.CheckAuth).Methods(http.MethodGet, http.MethodOptions)
 
 	srv := &http.Server{
 		Addr:              ":8080",

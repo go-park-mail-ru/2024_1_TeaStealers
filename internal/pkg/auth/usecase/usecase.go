@@ -56,6 +56,19 @@ func (u *AuthUsecase) Login(ctx context.Context, data *models.UserLoginData) (*m
 	return user, token, exp, nil
 }
 
+// CheckAuth checking autorizing
+func (u *AuthUsecase) CheckAuth(ctx context.Context, token string) (uuid.UUID, error) {
+	claims, err := jwt.ParseToken(token)
+	if err != nil {
+		return uuid.Nil, err
+	}
+	id, err := jwt.ParseId(claims)
+	if err != nil {
+		return uuid.Nil, err
+	}
+	return id, nil
+}
+
 // generateHashString returns a hash string for the given input string.
 func generateHashString(s string) string {
 	h := sha1.New()
