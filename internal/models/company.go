@@ -31,13 +31,3 @@ type CompanyCreateData struct {
 	// Descpription stands for company description
 	Descpription string `json:"description"`
 }
-
-// CompanyUpdateData represents company information for name, phone and description
-type CompanyUpdateData struct {
-	// Name stands for company name
-	Name *string `json:"name,omitempty"`
-	// Phone stands for company phone
-	Phone *int `json:"phone,omitempty"`
-	// Descpription stands for company description
-	Descpription *string `json:"description,omitempty"`
-}
