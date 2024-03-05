@@ -1,7 +1,5 @@
 OS := $(shell uname -s)
 
-include .env
-
 ifeq ($(OS), Linux)
 	DOCKER_COMPOSE := docker compose
 endif
