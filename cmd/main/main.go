@@ -86,6 +86,7 @@ func main() {
 	advertApi.Handle("/create", middleware.JwtMiddleware(http.HandlerFunc(advertHandler.CreateAdvert))).Methods(http.MethodPost)
 	advertApi.HandleFunc("/get/by/id", advertHandler.GetAdvertById).Methods(http.MethodGet)
 	advertApi.HandleFunc("/get/list", advertHandler.GetAdvertsList).Methods(http.MethodGet)
+	advertApi.HandleFunc("/get/list/with/images", advertHandler.GetAdvertsWithImages).Methods(http.MethodGet)
 	advertApi.Handle("/delete/by/id", middleware.JwtMiddleware(http.HandlerFunc(advertHandler.DeleteAdvertById))).Methods(http.MethodDelete, http.MethodPost)
 	advertApi.Handle("/update/by/id", middleware.JwtMiddleware(http.HandlerFunc(advertHandler.UpdateAdvertById))).Methods(http.MethodPost, http.MethodPut)
 

@@ -79,6 +79,19 @@ func (h *AdvertHandler) GetAdvertsList(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// GetAdvertsListWithImages handles the request for retrieving an adverts with images.
+func (h *AdvertHandler) GetAdvertsWithImages(w http.ResponseWriter, r *http.Request) {
+	adverts, err := h.uc.GetAdvertsListWithImages(r.Context())
+	if err != nil {
+		utils.WriteError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	if err = utils.WriteResponse(w, http.StatusOK, adverts); err != nil {
+		utils.WriteError(w, http.StatusInternalServerError, err.Error())
+	}
+}
+
 // DeleteAdvertById handles the request for deleting an advert by its Id.
 func (h *AdvertHandler) DeleteAdvertById(w http.ResponseWriter, r *http.Request) {
 	id := r.URL.Query().Get("id")
