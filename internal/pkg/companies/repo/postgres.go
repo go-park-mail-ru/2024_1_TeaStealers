@@ -32,7 +32,7 @@ func (r *CompanyRepo) CreateCompany(ctx context.Context, company *models.Company
 
 // GetCompanyById retrieves a company from the database by their id.
 func (r *CompanyRepo) GetCompanyById(ctx context.Context, id uuid.UUID) (*models.Company, error) {
-	query := `SELECT * FROM companies WHERE id = $1`
+	query := `SELECT id, name, phone, description, data_creation, is_deleted FROM companies WHERE id = $1`
 
 	res := r.db.QueryRowContext(ctx, query, id)
 
@@ -48,7 +48,7 @@ func (r *CompanyRepo) GetCompanyById(ctx context.Context, id uuid.UUID) (*models
 
 // GetCompaniesList retrieves a companies from the database.
 func (r *CompanyRepo) GetCompaniesList(ctx context.Context) ([]*models.Company, error) {
-	query := `SELECT * FROM companies`
+	query := `SELECT id, name, phone, description, data_creation, is_deleted FROM companies`
 	rows, err := r.db.QueryContext(ctx, query)
 	if err != nil {
 		return nil, err
@@ -84,7 +84,20 @@ func (r *CompanyRepo) DeleteCompanyById(ctx context.Context, id uuid.UUID) error
 }
 
 // UpdateCompanyById updates fields company from the database by their id.
-func (r *CompanyRepo) UpdateCompanyById(ctx context.Context, values []interface{}, updates []string) (err error) {
+func (r *CompanyRepo) UpdateCompanyById(ctx context.Context, body map[string]interface{}, id uuid.UUID) (err error) {
+	var updates []string
+	var values []interface{}
+	i := 1
+	for key, value := range body {
+		if key == "id" {
+			return fmt.Errorf("ID is not changeable")
+		}
+		updates = append(updates, fmt.Sprintf("%s = $%d", key, i))
+		values = append(values, value)
+		i++
+	}
+	values = append(values, id)
+
 	query := fmt.Sprintf("UPDATE companies SET %s WHERE id = $%d", strings.Join(updates, ", "), len(values))
 	_, err = r.db.ExecContext(ctx, query, values...)
 	if err != nil {

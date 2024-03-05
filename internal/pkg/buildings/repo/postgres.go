@@ -32,7 +32,7 @@ func (r *BuildingRepo) CreateBuilding(ctx context.Context, building *models.Buil
 
 // GetBuildingById retrieves a building from the database by their id.
 func (r *BuildingRepo) GetBuildingById(ctx context.Context, id uuid.UUID) (*models.Building, error) {
-	query := `SELECT * FROM buildings WHERE id = $1`
+	query := `SELECT id, location, description, data_creation, is_deleted FROM buildings WHERE id = $1`
 
 	res := r.db.QueryRowContext(ctx, query, id)
 
@@ -48,7 +48,7 @@ func (r *BuildingRepo) GetBuildingById(ctx context.Context, id uuid.UUID) (*mode
 
 // GetBuildingsList retrieves a companies from the database.
 func (r *BuildingRepo) GetBuildingsList(ctx context.Context) ([]*models.Building, error) {
-	query := `SELECT * FROM buildings`
+	query := `SELECT id, location, description, data_creation, is_deleted FROM buildings`
 	rows, err := r.db.QueryContext(ctx, query)
 	if err != nil {
 		return nil, err
@@ -84,7 +84,20 @@ func (r *BuildingRepo) DeleteBuildingById(ctx context.Context, id uuid.UUID) err
 }
 
 // UpdateBuildingById updates fields building from the database by their id.
-func (r *BuildingRepo) UpdateBuildingById(ctx context.Context, values []interface{}, updates []string) (err error) {
+func (r *BuildingRepo) UpdateBuildingById(ctx context.Context, body map[string]interface{}, id uuid.UUID) (err error) {
+	var updates []string
+	var values []interface{}
+	i := 1
+	for key, value := range body {
+		if key == "id" {
+			return fmt.Errorf("ID is not changeable")
+		}
+		updates = append(updates, fmt.Sprintf("%s = $%d", key, i))
+		values = append(values, value)
+		i++
+	}
+	values = append(values, id)
+
 	query := fmt.Sprintf("UPDATE buildings SET %s WHERE id = $%d", strings.Join(updates, ", "), len(values))
 	_, err = r.db.ExecContext(ctx, query, values...)
 	if err != nil {

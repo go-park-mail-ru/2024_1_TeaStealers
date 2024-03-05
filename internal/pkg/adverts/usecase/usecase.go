@@ -4,7 +4,6 @@ import (
 	"2024_1_TeaStealers/internal/models"
 	"2024_1_TeaStealers/internal/pkg/adverts"
 	"context"
-	"fmt"
 
 	"time"
 
@@ -72,20 +71,7 @@ func (u *AdvertUsecase) DeleteAdvertById(ctx context.Context, id uuid.UUID) (err
 
 // UpdateAdvertById handles the updating advert process.
 func (u *AdvertUsecase) UpdateAdvertById(ctx context.Context, body map[string]interface{}, id uuid.UUID) (err error) {
-	var updates []string
-	var values []interface{}
-	i := 1
-	for key, value := range body {
-		if key == "id" {
-			return fmt.Errorf("ID is not changeable")
-		}
-		updates = append(updates, fmt.Sprintf("%s = $%d", key, i))
-		values = append(values, value)
-		i++
-	}
-	values = append(values, id)
-
-	if err = u.repo.UpdateAdvertById(ctx, values, updates); err != nil {
+	if err = u.repo.UpdateAdvertById(ctx, body, id); err != nil {
 		return err
 	}
 

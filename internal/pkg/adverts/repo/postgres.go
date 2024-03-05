@@ -32,7 +32,7 @@ func (r *AdvertRepo) CreateAdvert(ctx context.Context, advert *models.Advert) er
 
 // GetAdvertById retrieves a advert from the database by their id.
 func (r *AdvertRepo) GetAdvertById(ctx context.Context, id uuid.UUID) (*models.Advert, error) {
-	query := `SELECT * FROM adverts WHERE id = $1`
+	query := `SELECT id, user_id, phone, description, building_id, company_id, price, location, data_creation, is_deleted FROM adverts WHERE id = $1`
 
 	res := r.db.QueryRowContext(ctx, query, id)
 
@@ -49,7 +49,7 @@ func (r *AdvertRepo) GetAdvertById(ctx context.Context, id uuid.UUID) (*models.A
 
 // GetAdvertsList retrieves a adverts from the database.
 func (r *AdvertRepo) GetAdvertsList(ctx context.Context) ([]*models.Advert, error) {
-	query := `SELECT * FROM adverts`
+	query := `SELECT id, user_id, phone, description, building_id, company_id, price, location, data_creation, is_deleted FROM adverts`
 	rows, err := r.db.QueryContext(ctx, query)
 	if err != nil {
 		return nil, err
@@ -85,7 +85,20 @@ func (r *AdvertRepo) DeleteAdvertById(ctx context.Context, id uuid.UUID) error {
 }
 
 // UpdateAdvertById updates fields advert from the database by their id.
-func (r *AdvertRepo) UpdateAdvertById(ctx context.Context, values []interface{}, updates []string) (err error) {
+func (r *AdvertRepo) UpdateAdvertById(ctx context.Context, body map[string]interface{}, id uuid.UUID) (err error) {
+	var updates []string
+	var values []interface{}
+	i := 1
+	for key, value := range body {
+		if key == "id" {
+			return fmt.Errorf("ID is not changeable")
+		}
+		updates = append(updates, fmt.Sprintf("%s = $%d", key, i))
+		values = append(values, value)
+		i++
+	}
+	values = append(values, id)
+
 	query := fmt.Sprintf("UPDATE adverts SET %s WHERE id = $%d", strings.Join(updates, ", "), len(values))
 	_, err = r.db.ExecContext(ctx, query, values...)
 	if err != nil {

@@ -13,7 +13,7 @@ type Image struct {
 	// Filename is the filename of the image.
 	Filename string `json:"path"`
 	// AdvertId is the id of the advert to which the image belongs.
-	AdvertId uuid.UUID `json:"advertid"`
+	AdvertId uuid.UUID `json:"advertId"`
 	// Priority is the priority image locations.
 	Priority int `json:"priority"`
 	// DataCreation is the time of adding a record to the database.
@@ -25,7 +25,7 @@ type Image struct {
 // ImageCreateData represents image information for advertId, priority
 type ImageCreateData struct {
 	// AdvertId stands which id of advert this image standing
-	AdvertId uuid.UUID `json:"advertid"`
+	AdvertId uuid.UUID `json:"advertId"`
 	// Priority stands for company priority
 	Priority int `json:"priority"`
 }

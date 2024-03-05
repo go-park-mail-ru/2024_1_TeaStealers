@@ -30,7 +30,7 @@ func (r *ImageRepo) CreateImage(ctx context.Context, image *models.Image) error 
 
 // GetImagesByAdvertId retrieves a image from the database by advert id.
 func (r *ImageRepo) GetImagesByAdvertId(ctx context.Context, advertId uuid.UUID) ([]*models.Image, error) {
-	query := `SELECT * FROM images WHERE advert_id = $1`
+	query := `SELECT id, advert_id, filename, priority, data_creation, is_deleted FROM images WHERE advert_id = $1`
 
 	rows, err := r.db.QueryContext(ctx, query, advertId)
 	if err != nil {

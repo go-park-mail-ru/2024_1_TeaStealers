@@ -22,5 +22,5 @@ type AdvertRepo interface {
 	GetAdvertById(ctx context.Context, id uuid.UUID) (*models.Advert, error)
 	GetAdvertsList(ctx context.Context) ([]*models.Advert, error)
 	DeleteAdvertById(ctx context.Context, id uuid.UUID) error
-	UpdateAdvertById(ctx context.Context, values []interface{}, updates []string) (err error)
+	UpdateAdvertById(ctx context.Context, body map[string]interface{}, id uuid.UUID) (err error)
 }

@@ -4,7 +4,6 @@ import (
 	"2024_1_TeaStealers/internal/models"
 	"2024_1_TeaStealers/internal/pkg/buildings"
 	"context"
-	"fmt"
 
 	"time"
 
@@ -67,20 +66,7 @@ func (u *BuildingUsecase) DeleteBuildingById(ctx context.Context, id uuid.UUID) 
 
 // UpdateBuildingById handles the updating building process.
 func (u *BuildingUsecase) UpdateBuildingById(ctx context.Context, body map[string]interface{}, id uuid.UUID) (err error) {
-	var updates []string
-	var values []interface{}
-	i := 1
-	for key, value := range body {
-		if key == "id" {
-			return fmt.Errorf("ID is not changeable")
-		}
-		updates = append(updates, fmt.Sprintf("%s = $%d", key, i))
-		values = append(values, value)
-		i++
-	}
-	values = append(values, id)
-
-	if err = u.repo.UpdateBuildingById(ctx, values, updates); err != nil {
+	if err = u.repo.UpdateBuildingById(ctx, body, id); err != nil {
 		return err
 	}
 

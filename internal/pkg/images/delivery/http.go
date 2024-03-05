@@ -4,9 +4,11 @@ import (
 	"2024_1_TeaStealers/internal/models"
 	"2024_1_TeaStealers/internal/pkg/images"
 	"2024_1_TeaStealers/internal/pkg/utils"
+	"fmt"
 	"io"
 	"net/http"
 	"os"
+	"path/filepath"
 	"strconv"
 
 	"github.com/satori/uuid"
@@ -43,14 +45,19 @@ func ParseImageAndData(r *http.Request) (models.ImageCreateData, uuid.UUID, erro
 		return models.ImageCreateData{}, uuid.UUID{}, err
 	}
 
-	file, _, err := r.FormFile("file")
+	file, fileHeader, err := r.FormFile("file")
+	extension := filepath.Ext(fileHeader.Filename)
+	if extension != ".jpg" && extension != ".jpeg" && extension != ".png" {
+		return models.ImageCreateData{}, uuid.UUID{}, fmt.Errorf("Incorrect extension of file")
+	}
+
 	if err != nil {
 		return models.ImageCreateData{}, uuid.UUID{}, err
 	}
 	defer file.Close()
 
 	idImage := uuid.NewV4()
-	imagePath := os.Getenv("BASE_DIR") + advertId.String() + "|" + idImage.String() + ".jpg"
+	imagePath := os.Getenv("BASE_DIR") + advertId.String() + "|" + idImage.String() + extension
 	dst, err := os.Create(imagePath)
 	if err != nil {
 		return models.ImageCreateData{}, uuid.UUID{}, err

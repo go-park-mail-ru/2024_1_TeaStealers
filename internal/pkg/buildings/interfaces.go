@@ -22,5 +22,5 @@ type BuildingRepo interface {
 	GetBuildingById(ctx context.Context, id uuid.UUID) (*models.Building, error)
 	GetBuildingsList(ctx context.Context) ([]*models.Building, error)
 	DeleteBuildingById(ctx context.Context, id uuid.UUID) error
-	UpdateBuildingById(ctx context.Context, values []interface{}, updates []string) (err error)
+	UpdateBuildingById(ctx context.Context, body map[string]interface{}, id uuid.UUID) (err error)
 }
