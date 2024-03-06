@@ -7,7 +7,9 @@ import (
 	"encoding/json"
 	"net/http"
 
+	"github.com/gorilla/mux"
 	"github.com/satori/uuid"
+	_ "github.com/swaggo/http-swagger"
 )
 
 // BuildingHandler handles HTTP requests for manage building.
@@ -21,7 +23,16 @@ func NewBuildingHandler(uc buildings.BuildingUsecase) *BuildingHandler {
 	return &BuildingHandler{uc: uc}
 }
 
-// CreateBuilding handles the request for creating a new building.
+// @Summary Create a new building
+// @Description Create a new building
+// @Tags buildings
+// @Accept json
+// @Produce json
+// @Param input body models.BuildingCreateData true "Building data"
+// @Success 201 {object} models.Building
+// @Failure 400 {string} string "Incorrect data format"
+// @Failure 500 {string} string "Internal server error"
+// @Router /buildings/ [post]
 func (h *BuildingHandler) CreateBuilding(w http.ResponseWriter, r *http.Request) {
 	data := models.BuildingCreateData{}
 
@@ -41,9 +52,20 @@ func (h *BuildingHandler) CreateBuilding(w http.ResponseWriter, r *http.Request)
 	}
 }
 
-// GetBuildingById handles the request for retrieving a building by its Id.
+// @Summary Get building by ID
+// @Description Get building by ID
+// @Tags buildings
+// @Accept json
+// @Produce json
+// @Param id path string true "Building ID"
+// @Success 200 {object} models.Building
+// @Failure 400 {string} string "Invalid ID parameter"
+// @Failure 404 {string} string "Building not found"
+// @Failure 500 {string} string "Internal server error"
+// @Router /buildings/{id} [get]
 func (h *BuildingHandler) GetBuildingById(w http.ResponseWriter, r *http.Request) {
-	id := r.URL.Query().Get("id")
+	vars := mux.Vars(r)
+	id := vars["id"]
 	if id == "" {
 		utils.WriteError(w, http.StatusBadRequest, "id parameter is required")
 		return
@@ -66,7 +88,14 @@ func (h *BuildingHandler) GetBuildingById(w http.ResponseWriter, r *http.Request
 	}
 }
 
-// GetBuildingsList handles the request for retrieving a buildings.
+// @Summary Get list of buildings
+// @Description Get list of buildings
+// @Tags buildings
+// @Accept json
+// @Produce json
+// @Success 200 {array} models.Building
+// @Failure 500 {string} string "Internal server error"
+// @Router /buildings/list/ [get]
 func (h *BuildingHandler) GetBuildingsList(w http.ResponseWriter, r *http.Request) {
 	companies, err := h.uc.GetBuildingsList(r.Context())
 	if err != nil {
@@ -79,9 +108,19 @@ func (h *BuildingHandler) GetBuildingsList(w http.ResponseWriter, r *http.Reques
 	}
 }
 
-// DeleteBuildingById handles the request for deleting a building by its Id.
+// @Summary Delete building by ID
+// @Description Delete building by ID
+// @Tags buildings
+// @Accept json
+// @Produce json
+// @Param id path string true "Building ID"
+// @Success 200 {string} string "DELETED building"
+// @Failure 400 {string} string "Invalid ID parameter"
+// @Failure 500 {string} string "Internal server error"
+// @Router /buildings/{id} [delete]
 func (h *BuildingHandler) DeleteBuildingById(w http.ResponseWriter, r *http.Request) {
-	id := r.URL.Query().Get("id")
+	vars := mux.Vars(r)
+	id := vars["id"]
 	if id == "" {
 		utils.WriteError(w, http.StatusBadRequest, "id parameter is required")
 		return
@@ -104,9 +143,20 @@ func (h *BuildingHandler) DeleteBuildingById(w http.ResponseWriter, r *http.Requ
 	}
 }
 
-// UpdateBuildingById handles the request for updating a building by its Id.
+// @Summary Update building by ID
+// @Description Update building by ID
+// @Tags buildings
+// @Accept json
+// @Produce json
+// @Param id path string true "Building ID"
+// @Param body body map[string]interface{} true "Building data"
+// @Success 200 {string} string "UPDATED building"
+// @Failure 400 {string} string "Invalid ID parameter or incorrect data format"
+// @Failure 500 {string} string "Internal server error"
+// @Router /buildings/{id} [post]
 func (h *BuildingHandler) UpdateBuildingById(w http.ResponseWriter, r *http.Request) {
-	id := r.URL.Query().Get("id")
+	vars := mux.Vars(r)
+	id := vars["id"]
 	if id == "" {
 		utils.WriteError(w, http.StatusBadRequest, "id parameter is required")
 		return

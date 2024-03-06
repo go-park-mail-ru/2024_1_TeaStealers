@@ -37,3 +37,6 @@ dev-compose-up:
 
 dev-compose-down:
 	$(DOCKER_COMPOSE) -f "dev-docker-compose.yaml" down
+
+swagger:
+	swag init -g cmd/main/main.go
