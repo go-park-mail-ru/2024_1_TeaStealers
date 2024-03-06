@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - dev
-      - main
 
 jobs:
   lint:
@@ -45,6 +44,7 @@ jobs:
     name: Deploy App
     runs-on: ubuntu-latest
     needs: test
+    if: github.ref == 'refs/head/test'
     steps:
       - name: Pull code
         uses: appleboy/ssh-action@master
