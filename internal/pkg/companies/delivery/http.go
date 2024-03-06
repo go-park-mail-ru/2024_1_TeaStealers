@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"net/http"
 
+	"github.com/gorilla/mux"
 	"github.com/satori/uuid"
 )
 
@@ -21,7 +22,16 @@ func NewCompanyHandler(uc companies.CompanyUsecase) *CompanyHandler {
 	return &CompanyHandler{uc: uc}
 }
 
-// CreateCompany handles the request for creating a new company.
+// @Summary Create a new company
+// @Description Create a new company
+// @Tags companies
+// @Accept json
+// @Produce json
+// @Param input body models.CompanyCreateData true "Company data"
+// @Success 201 {object} models.Company
+// @Failure 400 {string} string "Incorrect data format"
+// @Failure 500 {string} string "Internal server error"
+// @Router /companies [post]
 func (h *CompanyHandler) CreateCompany(w http.ResponseWriter, r *http.Request) {
 	data := models.CompanyCreateData{}
 
@@ -41,9 +51,20 @@ func (h *CompanyHandler) CreateCompany(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// GetCompanyById handles the request for retrieving a company by its Id.
+// @Summary Get company by ID
+// @Description Get company by ID
+// @Tags companies
+// @Accept json
+// @Produce json
+// @Param id path string true "Company ID"
+// @Success 200 {object} models.Company
+// @Failure 400 {string} string "Invalid ID parameter"
+// @Failure 404 {string} string "Company not found"
+// @Failure 500 {string} string "Internal server error"
+// @Router /companies/{id} [get]
 func (h *CompanyHandler) GetCompanyById(w http.ResponseWriter, r *http.Request) {
-	id := r.URL.Query().Get("id")
+	vars := mux.Vars(r)
+	id := vars["id"]
 	if id == "" {
 		utils.WriteError(w, http.StatusBadRequest, "id parameter is required")
 		return
@@ -66,7 +87,14 @@ func (h *CompanyHandler) GetCompanyById(w http.ResponseWriter, r *http.Request) 
 	}
 }
 
-// GetCompaniesList handles the request for retrieving a companies.
+// @Summary Get list of companies
+// @Description Get list of companies
+// @Tags companies
+// @Accept json
+// @Produce json
+// @Success 200 {array} models.Company
+// @Failure 500 {string} string "Internal server error"
+// @Router /companies/list/ [get]
 func (h *CompanyHandler) GetCompaniesList(w http.ResponseWriter, r *http.Request) {
 
 	companies, err := h.uc.GetCompaniesList(r.Context())
@@ -80,9 +108,19 @@ func (h *CompanyHandler) GetCompaniesList(w http.ResponseWriter, r *http.Request
 	}
 }
 
-// DeleteCompanyById handles the request for deleting a company by its Id.
+// @Summary Delete company by ID
+// @Description Delete company by ID
+// @Tags companies
+// @Accept json
+// @Produce json
+// @Param id path string true "Company ID"
+// @Success 200 {string} string "DELETED company"
+// @Failure 400 {string} string "Invalid ID parameter"
+// @Failure 500 {string} string "Internal server error"
+// @Router /companies/{id} [delete]
 func (h *CompanyHandler) DeleteCompanyById(w http.ResponseWriter, r *http.Request) {
-	id := r.URL.Query().Get("id")
+	vars := mux.Vars(r)
+	id := vars["id"]
 	if id == "" {
 		utils.WriteError(w, http.StatusBadRequest, "id parameter is required")
 		return
@@ -105,9 +143,20 @@ func (h *CompanyHandler) DeleteCompanyById(w http.ResponseWriter, r *http.Reques
 	}
 }
 
-// UpdateCompanyById handles the request for updating a company by its Id.
+// @Summary Update company by ID
+// @Description Update company by ID
+// @Tags companies
+// @Accept json
+// @Produce json
+// @Param id path string true "Company ID"
+// @Param body body map[string]interface{} true "Company data"
+// @Success 200 {string} string "UPDATED company"
+// @Failure 400 {string} string "Invalid ID parameter or incorrect data format"
+// @Failure 500 {string} string "Internal server error"
+// @Router /companies/{id} [post]
 func (h *CompanyHandler) UpdateCompanyById(w http.ResponseWriter, r *http.Request) {
-	id := r.URL.Query().Get("id")
+	vars := mux.Vars(r)
+	id := vars["id"]
 	if id == "" {
 		utils.WriteError(w, http.StatusBadRequest, "id parameter is required")
 		return

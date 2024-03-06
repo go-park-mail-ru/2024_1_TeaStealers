@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"net/http"
 
+	"github.com/gorilla/mux"
 	"github.com/satori/uuid"
 )
 
@@ -21,7 +22,16 @@ func NewAdvertHandler(uc adverts.AdvertUsecase) *AdvertHandler {
 	return &AdvertHandler{uc: uc}
 }
 
-// CreateAdvert handles the request for creating a new advert.
+// @Summary Create a new advert
+// @Description Create a new advert
+// @Tags adverts
+// @Accept json
+// @Produce json
+// @Param input body models.AdvertCreateData true "Advert data"
+// @Success 201 {object} models.Advert
+// @Failure 400 {string} string "Incorrect data format"
+// @Failure 500 {string} string "Internal server error"
+// @Router /adverts/ [post]
 func (h *AdvertHandler) CreateAdvert(w http.ResponseWriter, r *http.Request) {
 	data := models.AdvertCreateData{}
 
@@ -41,9 +51,20 @@ func (h *AdvertHandler) CreateAdvert(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// GetAdverById handles the request for retrieving a advert by its Id.
+// @Summary Get advert by ID
+// @Description Get advert by ID
+// @Tags adverts
+// @Accept json
+// @Produce json
+// @Param id path string true "Advert ID"
+// @Success 200 {object} models.Advert
+// @Failure 400 {string} string "Invalid ID parameter"
+// @Failure 404 {string} string "Advert not found"
+// @Failure 500 {string} string "Internal server error"
+// @Router /adverts/{id} [get]
 func (h *AdvertHandler) GetAdvertById(w http.ResponseWriter, r *http.Request) {
-	id := r.URL.Query().Get("id")
+	vars := mux.Vars(r)
+	id := vars["id"]
 	if id == "" {
 		utils.WriteError(w, http.StatusBadRequest, "id parameter is required")
 		return
@@ -66,7 +87,14 @@ func (h *AdvertHandler) GetAdvertById(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// GetAdvertsList handles the request for retrieving an adverts.
+// @Summary Get list of adverts
+// @Description Get list of adverts
+// @Tags adverts
+// @Accept json
+// @Produce json
+// @Success 200 {array} models.Advert
+// @Failure 500 {string} string "Internal server error"
+// @Router /adverts/list/ [get]
 func (h *AdvertHandler) GetAdvertsList(w http.ResponseWriter, r *http.Request) {
 	adverts, err := h.uc.GetAdvertsList(r.Context())
 	if err != nil {
@@ -79,22 +107,19 @@ func (h *AdvertHandler) GetAdvertsList(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// GetAdvertsListWithImages handles the request for retrieving an adverts with images.
-func (h *AdvertHandler) GetAdvertsWithImages(w http.ResponseWriter, r *http.Request) {
-	adverts, err := h.uc.GetAdvertsListWithImages(r.Context())
-	if err != nil {
-		utils.WriteError(w, http.StatusInternalServerError, err.Error())
-		return
-	}
-
-	if err = utils.WriteResponse(w, http.StatusOK, adverts); err != nil {
-		utils.WriteError(w, http.StatusInternalServerError, err.Error())
-	}
-}
-
-// DeleteAdvertById handles the request for deleting an advert by its Id.
+// @Summary Delete advert by ID
+// @Description Delete advert by ID
+// @Tags adverts
+// @Accept json
+// @Produce json
+// @Param id path string true "Advert ID"
+// @Success 200 {string} string "DELETED advert"
+// @Failure 400 {string} string "Invalid ID parameter"
+// @Failure 500 {string} string "Internal server error"
+// @Router /adverts/{id} [delete]
 func (h *AdvertHandler) DeleteAdvertById(w http.ResponseWriter, r *http.Request) {
-	id := r.URL.Query().Get("id")
+	vars := mux.Vars(r)
+	id := vars["id"]
 	if id == "" {
 		utils.WriteError(w, http.StatusBadRequest, "id parameter is required")
 		return
@@ -117,9 +142,20 @@ func (h *AdvertHandler) DeleteAdvertById(w http.ResponseWriter, r *http.Request)
 	}
 }
 
-// UpdateAdvertById handles the request for updating a advert by its Id.
+// @Summary Update advert by ID
+// @Description Update advert by ID
+// @Tags adverts
+// @Accept json
+// @Produce json
+// @Param id path string true "Advert ID"
+// @Param body body map[string]interface{} true "Advert data"
+// @Success 200 {string} string "UPDATED advert"
+// @Failure 400 {string} string "Invalid ID parameter or incorrect data format"
+// @Failure 500 {string} string "Internal server error"
+// @Router /adverts/{id} [post]
 func (h *AdvertHandler) UpdateAdvertById(w http.ResponseWriter, r *http.Request) {
-	id := r.URL.Query().Get("id")
+	vars := mux.Vars(r)
+	id := vars["id"]
 	if id == "" {
 		utils.WriteError(w, http.StatusBadRequest, "id parameter is required")
 		return

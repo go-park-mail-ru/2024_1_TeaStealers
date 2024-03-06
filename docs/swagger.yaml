@@ -1,0 +1,660 @@
+basePath: /api
+definitions:
+  models.Advert:
+    properties:
+      buildingid:
+        description: BuildingId is the id of the building to which the advert belongs.
+        type: string
+      companyid:
+        description: CompanyId is the id of the company to which the advert belongs.
+        type: string
+      datacreation:
+        description: DataCreation is the time of adding a record to the database.
+        type: string
+      description:
+        description: Description is the description of the advert.
+        type: string
+      id:
+        description: ID uniquely identifies the advert.
+        type: string
+      isdeleted:
+        description: isDeleted means is the advert deleted?.
+        type: boolean
+      location:
+        description: Location is the location of the object in advert.
+        type: string
+      phone:
+        description: Phone is the phone of the owner advert.
+        type: integer
+      price:
+        description: Price is the price of the object in advert.
+        type: number
+      userid:
+        description: UserId uniquely identifies who owns the advert.
+        type: string
+    type: object
+  models.AdvertCreateData:
+    properties:
+      buildingid:
+        description: BuildingId is the id of the building to which the advert belongs.
+        type: string
+      companyid:
+        description: CompanyId is the id of the company to which the advert belongs.
+        type: string
+      description:
+        description: Description is the description of the advert.
+        type: string
+      location:
+        description: Location is the location of the object in advert.
+        type: string
+      phone:
+        description: Phone is the phone of the owner advert.
+        type: integer
+      price:
+        description: Price is the price of the object in advert.
+        type: number
+      userid:
+        description: UserId uniquely identifies who owns the advert.
+        type: string
+    type: object
+  models.Building:
+    properties:
+      datacreation:
+        description: DataCreation is the time of adding a record to the database.
+        type: string
+      description:
+        description: Description is the description of the building.
+        type: string
+      id:
+        description: ID uniquely identifies the building.
+        type: string
+      isdeleted:
+        description: isDeleted means is the building deleted?.
+        type: boolean
+      location:
+        description: Location is the location of the building.
+        type: string
+    type: object
+  models.BuildingCreateData:
+    properties:
+      description:
+        description: Description is the description of the building.
+        type: string
+      location:
+        description: Location is the location of the building.
+        type: string
+    type: object
+  models.Company:
+    properties:
+      datacreation:
+        description: DataCreation is the time of adding a record to the database.
+        type: string
+      description:
+        description: Description is the description of the company.
+        type: string
+      id:
+        description: ID uniquely identifies the company.
+        type: string
+      isdeleted:
+        description: isDeleted means is the company deleted?.
+        type: boolean
+      name:
+        description: Name is the name of the company.
+        type: string
+      phone:
+        description: Phone is the phone of the company.
+        type: integer
+    type: object
+  models.CompanyCreateData:
+    properties:
+      description:
+        description: Descpription stands for company description
+        type: string
+      name:
+        description: Name stands for company name
+        type: string
+      phone:
+        description: Phone stands for company phone
+        type: integer
+    type: object
+  models.User:
+    properties:
+      id:
+        description: ID uniquely identifies the user.
+        type: string
+      login:
+        description: Login is the username of the user.
+        type: string
+    type: object
+  models.UserLoginData:
+    properties:
+      login:
+        description: Login stands for users nickname
+        type: string
+      password:
+        description: Password stands for users password
+        type: string
+    type: object
+host: 0.0.0.0:8080
+info:
+  contact: {}
+  description: This is a sample server Tean server.
+  title: Sample Project API
+  version: "1.0"
+paths:
+  /adverts/:
+    post:
+      consumes:
+      - application/json
+      description: Create a new advert
+      parameters:
+      - description: Advert data
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/models.AdvertCreateData'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/models.Advert'
+        "400":
+          description: Incorrect data format
+          schema:
+            type: string
+        "500":
+          description: Internal server error
+          schema:
+            type: string
+      summary: Create a new advert
+      tags:
+      - adverts
+  /adverts/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete advert by ID
+      parameters:
+      - description: Advert ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: DELETED advert
+          schema:
+            type: string
+        "400":
+          description: Invalid ID parameter
+          schema:
+            type: string
+        "500":
+          description: Internal server error
+          schema:
+            type: string
+      summary: Delete advert by ID
+      tags:
+      - adverts
+    get:
+      consumes:
+      - application/json
+      description: Get advert by ID
+      parameters:
+      - description: Advert ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Advert'
+        "400":
+          description: Invalid ID parameter
+          schema:
+            type: string
+        "404":
+          description: Advert not found
+          schema:
+            type: string
+        "500":
+          description: Internal server error
+          schema:
+            type: string
+      summary: Get advert by ID
+      tags:
+      - adverts
+    post:
+      consumes:
+      - application/json
+      description: Update advert by ID
+      parameters:
+      - description: Advert ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Advert data
+        in: body
+        name: body
+        required: true
+        schema:
+          additionalProperties: true
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: UPDATED advert
+          schema:
+            type: string
+        "400":
+          description: Invalid ID parameter or incorrect data format
+          schema:
+            type: string
+        "500":
+          description: Internal server error
+          schema:
+            type: string
+      summary: Update advert by ID
+      tags:
+      - adverts
+  /adverts/list/:
+    get:
+      consumes:
+      - application/json
+      description: Get list of adverts
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.Advert'
+            type: array
+        "500":
+          description: Internal server error
+          schema:
+            type: string
+      summary: Get list of adverts
+      tags:
+      - adverts
+  /auth/login:
+    post:
+      consumes:
+      - application/json
+      description: User login
+      parameters:
+      - description: User login data
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/models.UserLoginData'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.User'
+        "400":
+          description: Incorrect password or login
+          schema:
+            type: string
+        "500":
+          description: Internal server error
+          schema:
+            type: string
+      summary: User login
+      tags:
+      - auth
+  /auth/logout:
+    get:
+      description: User logout
+      responses:
+        "200":
+          description: Logged out
+          schema:
+            type: string
+      summary: User logout
+      tags:
+      - auth
+  /auth/signup:
+    post:
+      consumes:
+      - application/json
+      description: Register a new user
+      parameters:
+      - description: User data
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/models.UserLoginData'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/models.User'
+        "400":
+          description: Incorrect data format
+          schema:
+            type: string
+        "500":
+          description: Internal server error
+          schema:
+            type: string
+      summary: Register a new user
+      tags:
+      - auth
+  /buildings/:
+    post:
+      consumes:
+      - application/json
+      description: Create a new building
+      parameters:
+      - description: Building data
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/models.BuildingCreateData'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/models.Building'
+        "400":
+          description: Incorrect data format
+          schema:
+            type: string
+        "500":
+          description: Internal server error
+          schema:
+            type: string
+      summary: Create a new building
+      tags:
+      - buildings
+  /buildings/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete building by ID
+      parameters:
+      - description: Building ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: DELETED building
+          schema:
+            type: string
+        "400":
+          description: Invalid ID parameter
+          schema:
+            type: string
+        "500":
+          description: Internal server error
+          schema:
+            type: string
+      summary: Delete building by ID
+      tags:
+      - buildings
+    get:
+      consumes:
+      - application/json
+      description: Get building by ID
+      parameters:
+      - description: Building ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Building'
+        "400":
+          description: Invalid ID parameter
+          schema:
+            type: string
+        "404":
+          description: Building not found
+          schema:
+            type: string
+        "500":
+          description: Internal server error
+          schema:
+            type: string
+      summary: Get building by ID
+      tags:
+      - buildings
+    post:
+      consumes:
+      - application/json
+      description: Update building by ID
+      parameters:
+      - description: Building ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Building data
+        in: body
+        name: body
+        required: true
+        schema:
+          additionalProperties: true
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: UPDATED building
+          schema:
+            type: string
+        "400":
+          description: Invalid ID parameter or incorrect data format
+          schema:
+            type: string
+        "500":
+          description: Internal server error
+          schema:
+            type: string
+      summary: Update building by ID
+      tags:
+      - buildings
+  /buildings/list/:
+    get:
+      consumes:
+      - application/json
+      description: Get list of buildings
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.Building'
+            type: array
+        "500":
+          description: Internal server error
+          schema:
+            type: string
+      summary: Get list of buildings
+      tags:
+      - buildings
+  /companies:
+    post:
+      consumes:
+      - application/json
+      description: Create a new company
+      parameters:
+      - description: Company data
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/models.CompanyCreateData'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/models.Company'
+        "400":
+          description: Incorrect data format
+          schema:
+            type: string
+        "500":
+          description: Internal server error
+          schema:
+            type: string
+      summary: Create a new company
+      tags:
+      - companies
+  /companies/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete company by ID
+      parameters:
+      - description: Company ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: DELETED company
+          schema:
+            type: string
+        "400":
+          description: Invalid ID parameter
+          schema:
+            type: string
+        "500":
+          description: Internal server error
+          schema:
+            type: string
+      summary: Delete company by ID
+      tags:
+      - companies
+    get:
+      consumes:
+      - application/json
+      description: Get company by ID
+      parameters:
+      - description: Company ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Company'
+        "400":
+          description: Invalid ID parameter
+          schema:
+            type: string
+        "404":
+          description: Company not found
+          schema:
+            type: string
+        "500":
+          description: Internal server error
+          schema:
+            type: string
+      summary: Get company by ID
+      tags:
+      - companies
+    post:
+      consumes:
+      - application/json
+      description: Update company by ID
+      parameters:
+      - description: Company ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Company data
+        in: body
+        name: body
+        required: true
+        schema:
+          additionalProperties: true
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: UPDATED company
+          schema:
+            type: string
+        "400":
+          description: Invalid ID parameter or incorrect data format
+          schema:
+            type: string
+        "500":
+          description: Internal server error
+          schema:
+            type: string
+      summary: Update company by ID
+      tags:
+      - companies
+  /companies/list/:
+    get:
+      consumes:
+      - application/json
+      description: Get list of companies
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.Company'
+            type: array
+        "500":
+          description: Internal server error
+          schema:
+            type: string
+      summary: Get list of companies
+      tags:
+      - companies
+schemes:
+- http
+- https
+swagger: "2.0"

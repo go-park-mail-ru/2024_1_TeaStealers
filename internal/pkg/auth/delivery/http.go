@@ -21,7 +21,16 @@ func NewAuthHandler(uc auth.AuthUsecase) *AuthHandler {
 	return &AuthHandler{uc: uc}
 }
 
-// SignUp handles the request for registering a new user.
+// @Summary Register a new user
+// @Description Register a new user
+// @Tags auth
+// @Accept json
+// @Produce json
+// @Param input body models.UserLoginData true "User data"
+// @Success 201 {object} models.User
+// @Failure 400 {string} string "Incorrect data format"
+// @Failure 500 {string} string "Internal server error"
+// @Router /auth/signup [post]
 func (h *AuthHandler) SignUp(w http.ResponseWriter, r *http.Request) {
 	data := models.UserLoginData{}
 
@@ -43,7 +52,16 @@ func (h *AuthHandler) SignUp(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// Login handles the request for user login.
+// @Summary User login
+// @Description User login
+// @Tags auth
+// @Accept json
+// @Produce json
+// @Param input body models.UserLoginData true "User login data"
+// @Success 200 {object} models.User
+// @Failure 400 {string} string "Incorrect password or login"
+// @Failure 500 {string} string "Internal server error"
+// @Router /auth/login [post]
 func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 	data := models.UserLoginData{}
 	if err := utils.ReadRequestData(r, &data); err != nil {
@@ -63,7 +81,11 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// Logout handles the request for user logout.
+// @Summary User logout
+// @Description User logout
+// @Tags auth
+// @Success 200 {string} string "Logged out"
+// @Router /auth/logout [get]
 func (h *AuthHandler) Logout(w http.ResponseWriter, r *http.Request) {
 	http.SetCookie(w, &http.Cookie{
 		Name:  middleware.CookieName,
