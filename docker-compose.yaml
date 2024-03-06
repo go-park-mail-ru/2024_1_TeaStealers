@@ -1,0 +1,26 @@
+version: "3.9"
+
+services:
+  main:
+    container_name: mainService
+    build:
+      context: .
+      dockerfile: ./build/main.Dockerfile
+    ports:
+      - '8080:8080'
+  db:
+    container_name: postgres
+    image: postgres:latest
+    restart: always
+    volumes:
+      - type: volume
+        source: postgresdb-data
+        target: /var/lib/postgresql/data
+    env_file:
+      - ./.env
+    ports:
+      - ${DB_PORT}:5432
+
+volumes:
+  postgresdb-data:
+    driver: local
