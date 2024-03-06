@@ -6,11 +6,7 @@ import (
 	"net/http"
 )
 
-// WriteError writes an error response with the specified status code and message.
-//func WriteError(w http.ResponseWriter, statusCode int, message string) {
-//	w.WriteHeader(statusCode)
-//	fmt.Fprintln(w, message)
-
+// WriteError prints error in json
 func WriteError(w http.ResponseWriter, statusCode int, message string) {
 	w.Header().Set("Content-Type", "application/json")
 	errorResponse := struct {
