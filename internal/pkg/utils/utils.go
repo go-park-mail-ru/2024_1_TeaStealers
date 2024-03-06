@@ -2,15 +2,34 @@ package utils
 
 import (
 	"encoding/json"
-	"fmt"
 	"io"
 	"net/http"
 )
 
 // WriteError writes an error response with the specified status code and message.
+//func WriteError(w http.ResponseWriter, statusCode int, message string) {
+//	w.WriteHeader(statusCode)
+//	fmt.Fprintln(w, message)
+
 func WriteError(w http.ResponseWriter, statusCode int, message string) {
+	w.Header().Set("Content-Type", "application/json")
+	errorResponse := struct {
+		Message string `json:"message"`
+	}{
+		Message: message,
+	}
+	resp, err := json.Marshal(errorResponse)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
 	w.WriteHeader(statusCode)
-	fmt.Fprintln(w, message)
+
+	_, err = w.Write(resp)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
 }
 
 // WriteResponse writes a JSON response with the specified status code and data.
