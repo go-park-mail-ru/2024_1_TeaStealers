@@ -54,11 +54,10 @@ func main() {
 		panic("failed to connect database" + err.Error())
 	}
 
-	http.HandleFunc("/docs/", httpSwagger.WrapHandler)
-
 	r := mux.NewRouter().PathPrefix("/api").Subrouter()
 	r.Use(middleware.CORSMiddleware)
 	r.HandleFunc("/ping", pingPongHandler).Methods(http.MethodGet)
+	r.PathPrefix("/docs/").Handler(httpSwagger.WrapHandler)
 
 	authRepo := authR.NewRepository(db)
 	authUsecase := authUc.NewAuthUsecase(authRepo)
