@@ -1,7 +1,7 @@
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'typePlacementAdvert') THEN
-        CREATE TYPE typePlacementAdvert AS ENUM ('House', 'Flat');
+        CREATE TYPE typePlacementAdvert AS ENUM ('Sale', 'Rent');
     END IF;
 END $$;
 

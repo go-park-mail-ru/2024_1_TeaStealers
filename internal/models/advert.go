@@ -3,52 +3,41 @@ package models
 import (
 	"time"
 
-	"github.com/satori/uuid"
+	"github.com/google/uuid"
 )
 
-// Advert represents advert information
+// TypePlacementAdvert represents the type of placement for an advert.
+type TypePlacementAdvert string
+
+const (
+	// TypePlacementSale represents a sale placement.
+	TypePlacementSale TypePlacementAdvert = "Sale"
+	// TypePlacementRent represents a rent placement.
+	TypePlacementRent TypePlacementAdvert = "Rent"
+)
+
+// Advert represents an advertisement.
 type Advert struct {
-	// ID uniquely identifies the advert.
+	// ID is the unique identifier for the advert.
 	ID uuid.UUID `json:"id"`
-	// UserId uniquely identifies who owns the advert.
-	UserId uuid.UUID `json:"userId"`
-	// Phone is the phone of the owner advert.
-	Phone int `json:"phone"`
+	// UserID is the identifier of the user who created the advert.
+	UserID uuid.UUID `json:"userId"`
+	// AdvertTypeID is the identifier of the advert type.
+	AdvertTypeID uuid.UUID `json:"advertTypeId"`
+	// AdvertTypePlacement is the placement type of the advert (Sale/Rent).
+	AdvertTypePlacement TypePlacementAdvert `json:"advertTypePlacement"`
+	// Title is the title of the advert.
+	Title string `json:"title"`
 	// Description is the description of the advert.
-	Descpription string `json:"description"`
-	// BuildingId is the id of the building to which the advert belongs.
-	BuildingId uuid.UUID `json:"buildingId"`
-	// CompanyId is the id of the company to which the advert belongs.
-	CompanyId uuid.UUID `json:"companyId"`
-	// Price is the price of the object in advert.
-	Price float64 `json:"price"`
-	// Location is the location of the object in advert.
-	Location string `json:"location"`
-	// DataCreation is the time of adding a record to the database.
-	DataCreation time.Time `json:"datacreation"`
-	// isDeleted means is the advert deleted?.
-	IsDeleted bool `json:"isdeleted"`
-}
-
-// AdvertCreateData represents building information for userid, phone, description, buildingid, companyid, price and location
-type AdvertCreateData struct {
-	// UserId uniquely identifies who owns the advert.
-	UserId uuid.UUID `json:"userId"`
-	// Phone is the phone of the owner advert.
-	Phone int `json:"phone"`
-	// Description is the description of the advert.
-	Descpription string `json:"description"`
-	// BuildingId is the id of the building to which the advert belongs.
-	BuildingId uuid.UUID `json:"buildingId"`
-	// CompanyId is the id of the company to which the advert belongs.
-	CompanyId uuid.UUID `json:"companyId"`
-	// Price is the price of the object in advert.
-	Price float64 `json:"price"`
-	// Location is the location of the object in advert.
-	Location string `json:"location"`
-}
-
-type AdvertWithImages struct {
-	Advert *Advert  `json:"advert"`
-	Images []*Image `json:"images"`
+	Description string `json:"description"`
+	// Phone is the phone number associated with the advert.
+	Phone string `json:"phone"`
+	// IsAgent indicates whether the advert is posted by an agent.
+	IsAgent bool `json:"isAgent"`
+	// Priority is the priority level of the advert.
+	Priority int `json:"priority"`
+	// DateCreation is the date when the advert was created.
+	DateCreation time.Time `json:"-"`
+	// IsDeleted is a flag indicating whether the advert is deleted.
+	IsDeleted bool `json:"-"`
 }

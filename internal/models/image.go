@@ -3,29 +3,21 @@ package models
 import (
 	"time"
 
-	"github.com/satori/uuid"
+	"github.com/google/uuid"
 )
 
-// Image represents image information
+// Image represents an image associated with an advert.
 type Image struct {
-	// ID uniquely identifies the images.
+	// ID is the unique identifier for the image.
 	ID uuid.UUID `json:"id"`
-	// Filename is the filename of the image.
-	Filename string `json:"path"`
-	// AdvertId is the id of the advert to which the image belongs.
-	AdvertId uuid.UUID `json:"advertId"`
-	// Priority is the priority image locations.
+	// AdvertID is the identifier of the advert to which the image belongs.
+	AdvertID uuid.UUID `json:"advertId"`
+	// Photo is the filename of the image.
+	Photo string `json:"photo"`
+	// Priority is the priority of the image.
 	Priority int `json:"priority"`
-	// DataCreation is the time of adding a record to the database.
-	DataCreation time.Time `json:"datacreation"`
-	// isDeleted means is the image deleted?.
-	IsDeleted bool `json:"isdeleted"`
-}
-
-// ImageCreateData represents image information for advertId, priority
-type ImageCreateData struct {
-	// AdvertId stands which id of advert this image standing
-	AdvertId uuid.UUID `json:"advertId"`
-	// Priority stands for company priority
-	Priority int `json:"priority"`
+	// DateCreation is the date when the image was published.
+	DateCreation time.Time `json:"-"`
+	// IsDeleted is a flag indicating whether the image is deleted.
+	IsDeleted bool `json:"-"`
 }
