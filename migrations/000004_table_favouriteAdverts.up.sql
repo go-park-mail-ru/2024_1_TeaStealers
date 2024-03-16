@@ -1,0 +1,7 @@
+CREATE TABLE IF NOT EXISTS favouriteAdverts (
+    id UUID NOT NULL PRIMARY KEY,
+    userId UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    advertId UUID NOT NULL REFERENCES adverts(id) ON DELETE CASCADE,
+    isDeleted BOOLEAN NOT NULL DEFAULT FALSE,
+    UNIQUE(userId, advertId)
+);
