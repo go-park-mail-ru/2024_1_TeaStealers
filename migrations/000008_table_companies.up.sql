@@ -5,6 +5,6 @@ CREATE TABLE IF NOT EXISTS companies (
     yearFounded SMALLINT NOT NULL,
     phone TEXT CONSTRAINT phone_length CHECK ( char_length(photo) <= 20) NOT NULL UNIQUE,
     description TEXT NOT NULL,
-    dateCreation DATE NOT NULL DEFAULT NOW(),
+    dateCreation TIMESTAMP NOT NULL DEFAULT NOW(),
     isDeleted BOOLEAN NOT NULL DEFAULT FALSE
 );
