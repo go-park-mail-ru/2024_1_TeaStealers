@@ -34,7 +34,7 @@ migrate-up:
 	migrate -path migrations -database "postgres://$(DB_USER):$(DB_PASS)@localhost:$(DB_PORT)/$(DB_NAME)?sslmode=disable" up
 
 migrate-down:
-	migrate -path migrations -database "postgres://$(DB_USER):$(DB_PASS)@$localhost:$(DB_PORT)/$(DB_NAME)?sslmode=disable" down
+	migrate -path migrations -database "postgres://$(DB_USER):$(DB_PASS)@localhost:$(DB_PORT)/$(DB_NAME)?sslmode=disable" down
 
 dev-compose-up:
 	$(DOCKER_COMPOSE) -f "dev-docker-compose.yaml" up -d
