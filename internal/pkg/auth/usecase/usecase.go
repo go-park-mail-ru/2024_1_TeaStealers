@@ -23,10 +23,11 @@ func NewAuthUsecase(repo auth.AuthRepo) *AuthUsecase {
 }
 
 // SignUp handles the user registration process.
-func (u *AuthUsecase) SignUp(ctx context.Context, data *models.UserLoginData) (*models.User, string, time.Time, error) {
+func (u *AuthUsecase) SignUp(ctx context.Context, data *models.UserSignUpData) (*models.User, string, time.Time, error) {
 	newUser := &models.User{
-		ID: uuid.NewV4(),
-		//Login:        data.Login,
+		ID:           uuid.NewV4(),
+		Email:        data.Email,
+		Phone:        data.Phone,
 		PasswordHash: generateHashString(data.Password),
 	}
 

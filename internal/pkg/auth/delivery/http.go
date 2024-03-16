@@ -32,7 +32,7 @@ func NewAuthHandler(uc auth.AuthUsecase) *AuthHandler {
 // @Failure 500 {string} string "Internal server error"
 // @Router /auth/signup [post]
 func (h *AuthHandler) SignUp(w http.ResponseWriter, r *http.Request) {
-	data := models.UserLoginData{}
+	data := models.UserSignUpData{}
 
 	if err := utils.ReadRequestData(r, &data); err != nil {
 		utils.WriteError(w, http.StatusBadRequest, "incorrect data format")

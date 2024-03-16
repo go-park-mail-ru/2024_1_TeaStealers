@@ -13,17 +13,18 @@ import (
 
 // GenerateToken returns a new JWT token for the given user.
 func GenerateToken(user *models.User) (string, time.Time, error) {
-	/*exp := time.Now().Add(time.Hour * 24)
+	exp := time.Now().Add(time.Hour * 24)
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"id":    user.ID,
-		"login": user.Login,
+		"email": user.Email,
+		"phone": user.Phone,
 		"exp":   exp.Unix(),
 	})
 	tokenStr, err := token.SignedString([]byte(os.Getenv("JWT_SECRET")))
 	if err != nil {
 		return "", time.Now(), err
-	}*/
-	return "", time.Now(), nil // tokenStr и exp поменял
+	}
+	return tokenStr, exp, nil
 }
 
 // ParseToken parses the provided JWT token string and returns the parsed token.
