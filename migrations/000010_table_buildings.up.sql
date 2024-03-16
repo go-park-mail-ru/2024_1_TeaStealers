@@ -10,9 +10,9 @@ END $$;
 CREATE TABLE IF NOT EXISTS buildings (
     id UUID NOT NULL PRIMARY KEY,
     complexId UUID NULL REFERENCES complexes(id) ON DELETE SET NULL,
-    floor INTEGER NOT NULL,
+    floor SMALLINT NOT NULL,
     material materialBuilding DEFAULT NULL,
-    adress TEXT CONSTRAINT name_length CHECK ( char_length(adress) <= 255) NOT NULL UNIQUE,
+    adress TEXT CONSTRAINT adress_length CHECK ( char_length(adress) <= 255) NOT NULL UNIQUE,
     adressPoint GEOGRAPHY(Point, 4326) NOT NULL UNIQUE,
     yearCreation SMALLINT NOT NULL,
     dateCreation TIMESTAMP NOT NULL DEFAULT NOW(),
