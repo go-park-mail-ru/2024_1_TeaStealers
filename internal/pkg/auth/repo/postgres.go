@@ -19,17 +19,16 @@ func NewRepository(db *sql.DB) *AuthRepo {
 
 // CreateUser creates a new user in the database.
 func (r *AuthRepo) CreateUser(ctx context.Context, user *models.User) error {
-	insert := `INSERT INTO users (id, login, password_hash) VALUES ($1, $2, $3)`
-
+	/*;insert := `INSERT INTO users (id, login, password_hash) VALUES ($1, $2, $3)`
 	if _, err := r.db.ExecContext(ctx, insert, user.ID, user.Login, user.PasswordHash); err != nil {
 		return err
-	}
+	}*/
 	return nil
 }
 
 // GetUserByLogin retrieves a user from the database by their login.
 func (r *AuthRepo) GetUserByLogin(ctx context.Context, login string) (*models.User, error) {
-	query := `SELECT id, login, password_hash FROM users WHERE login = $1`
+	/*query := `SELECT id, login, password_hash FROM users WHERE login = $1`
 
 	res := r.db.QueryRowContext(ctx, query, login)
 
@@ -39,8 +38,8 @@ func (r *AuthRepo) GetUserByLogin(ctx context.Context, login string) (*models.Us
 	if err := res.Scan(&user.ID, &user.Login, &user.PasswordHash); err != nil {
 		return nil, err
 	}
-
-	return user, nil
+	*/
+	return &models.User{}, nil //user поменял
 }
 
 // CheckUser checks if the user with the given login and password hash exists in the database.

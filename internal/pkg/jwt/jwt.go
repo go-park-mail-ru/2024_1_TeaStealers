@@ -4,15 +4,16 @@ import (
 	"2024_1_TeaStealers/internal/models"
 	"errors"
 	"fmt"
-	"github.com/golang-jwt/jwt/v5"
-	"github.com/satori/uuid"
 	"os"
 	"time"
+
+	"github.com/golang-jwt/jwt/v5"
+	"github.com/satori/uuid"
 )
 
 // GenerateToken returns a new JWT token for the given user.
 func GenerateToken(user *models.User) (string, time.Time, error) {
-	exp := time.Now().Add(time.Hour * 24)
+	/*exp := time.Now().Add(time.Hour * 24)
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"id":    user.ID,
 		"login": user.Login,
@@ -21,8 +22,8 @@ func GenerateToken(user *models.User) (string, time.Time, error) {
 	tokenStr, err := token.SignedString([]byte(os.Getenv("JWT_SECRET")))
 	if err != nil {
 		return "", time.Now(), err
-	}
-	return tokenStr, exp, nil
+	}*/
+	return "", time.Now(), nil // tokenStr и exp поменял
 }
 
 // ParseToken parses the provided JWT token string and returns the parsed token.

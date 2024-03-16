@@ -7,8 +7,9 @@ import (
 	"context"
 	"crypto/sha1"
 	"encoding/hex"
-	"github.com/satori/uuid"
 	"time"
+
+	"github.com/satori/uuid"
 )
 
 // AuthUsecase represents the usecase for authentication.
@@ -24,8 +25,8 @@ func NewAuthUsecase(repo auth.AuthRepo) *AuthUsecase {
 // SignUp handles the user registration process.
 func (u *AuthUsecase) SignUp(ctx context.Context, data *models.UserLoginData) (*models.User, string, time.Time, error) {
 	newUser := &models.User{
-		ID:           uuid.NewV4(),
-		Login:        data.Login,
+		ID: uuid.NewV4(),
+		//Login:        data.Login,
 		PasswordHash: generateHashString(data.Password),
 	}
 
