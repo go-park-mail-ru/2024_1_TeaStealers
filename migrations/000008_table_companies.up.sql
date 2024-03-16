@@ -1,5 +1,5 @@
 CREATE TABLE IF NOT EXISTS companies (
-    id UUID PRIMARY KEY,
+    id UUID NOT NULL PRIMARY KEY,
     photo TEXT CONSTRAINT photo_length CHECK ( char_length(photo) <= 255) NOT NULL,
     name TEXT CONSTRAINT name_length CHECK ( char_length(photo) <= 255) NOT NULL UNIQUE,
     yearFounded SMALLINT NOT NULL,

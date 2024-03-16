@@ -6,7 +6,7 @@ BEGIN
 END $$;
 
 CREATE TABLE IF NOT EXISTS complexes (
-    id UUID PRIMARY KEY,
+    id UUID NOT NULL PRIMARY KEY,
     companyId UUID NOT NULL REFERENCES companies(id) ON DELETE CASCADE,
     name TEXT CONSTRAINT name_length CHECK ( char_length(name) <= 255) NOT NULL UNIQUE,    
     adress TEXT CONSTRAINT adress_length CHECK ( char_length(adress) <= 512) NOT NULL,

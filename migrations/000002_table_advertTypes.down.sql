@@ -1,0 +1,2 @@
+DROP TABLE IF EXISTS advertTypes;
+DROP TYPE IF EXISTS advertTypeAdvert

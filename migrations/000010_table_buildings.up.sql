@@ -8,7 +8,7 @@ BEGIN
 END $$;
 
 CREATE TABLE IF NOT EXISTS buildings (
-    id UUID PRIMARY KEY,
+    id UUID NOT NULL PRIMARY KEY,
     complexId UUID NULL REFERENCES complexes(id) ON DELETE SET NULL,
     floor INTEGER NOT NULL,
     material materialBuilding DEFAULT NULL,
