@@ -5,6 +5,7 @@ CREATE TABLE IF NOT EXISTS flats (
     floor SMALLINT DEFAULT NULL,
     ceilingHeight FLOAT DEFAULT NULL,
     squareGeneral FLOAT DEFAULT NULL,
+    roomCount SMALLINT DEFAULT NULL,
     squareResidential FLOAT DEFAULT NULL,
     apartament BOOLEAN DEFAULT NULL,
     dateCreation TIMESTAMP NOT NULL DEFAULT NOW(),

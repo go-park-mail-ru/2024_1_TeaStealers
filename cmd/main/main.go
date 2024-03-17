@@ -71,8 +71,10 @@ func main() {
 	advertHandler := advertsH.NewAdvertHandler(advertUsecase)
 
 	advert := r.PathPrefix("/adverts").Subrouter()
-	advert.HandleFunc("/house", advertHandler.CreateHouseAdvert).Methods(http.MethodPost, http.MethodOptions)
-	advert.HandleFunc("/flat", advertHandler.CreateFlatAdvert).Methods(http.MethodPost, http.MethodOptions)
+	advert.HandleFunc("/houses", advertHandler.CreateHouseAdvert).Methods(http.MethodPost, http.MethodOptions)
+	advert.HandleFunc("/flats", advertHandler.CreateFlatAdvert).Methods(http.MethodPost, http.MethodOptions)
+	advert.HandleFunc("/houses/squarelist/", advertHandler.GetHouseSquareAdvertsList).Methods(http.MethodGet, http.MethodOptions)
+	advert.HandleFunc("/flats/squarelist/", advertHandler.GetFlatSquareAdvertsList).Methods(http.MethodGet, http.MethodOptions)
 
 	srv := &http.Server{
 		Addr:              ":8080",

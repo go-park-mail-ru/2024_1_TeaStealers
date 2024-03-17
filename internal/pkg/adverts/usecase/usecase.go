@@ -8,7 +8,7 @@ import (
 	"github.com/satori/uuid"
 )
 
-// AdvertUsecase represents the usecase for authentication.
+// AdvertUsecase represents the usecase for adverts using.
 type AdvertUsecase struct {
 	repo adverts.AdvertRepo
 }
@@ -56,6 +56,7 @@ func (u *AdvertUsecase) CreateFlatAdvert(ctx context.Context, data *models.Adver
 		ID:                uuid.NewV4(),
 		BuildingID:        building.ID,
 		AdvertTypeID:      newAdvertType.ID,
+		RoomCount:         data.RoomCount,
 		Floor:             data.Floor,
 		CeilingHeight:     data.CeilingHeight,
 		SquareGeneral:     data.SquareGeneral,
@@ -107,18 +108,24 @@ func (u *AdvertUsecase) CreateHouseAdvert(ctx context.Context, data *models.Adve
 		Priority:       1, // Разобраться в будущем, как это менять за деньги(money)
 	}
 
-	newBuilding := &models.Building{
-		ID:           uuid.NewV4(),
-		Floor:        data.FloorGeneral,
-		Material:     data.Material,
-		Address:      data.Address,
-		AddressPoint: data.AddressPoint,
-		YearCreation: data.YearCreation,
+	building, err := u.repo.CheckExistsBuilding(ctx, data.Address)
+	if err != nil {
+		building = &models.Building{
+			ID:           uuid.NewV4(),
+			Floor:        data.FloorGeneral,
+			Material:     data.Material,
+			Address:      data.Address,
+			AddressPoint: data.AddressPoint,
+			YearCreation: data.YearCreation,
+		}
+		if err := u.repo.CreateBuilding(ctx, building); err != nil {
+			return nil, err
+		}
 	}
 
 	newHouse := &models.House{
 		ID:            uuid.NewV4(),
-		BuildingID:    newBuilding.ID,
+		BuildingID:    building.ID,
 		AdvertTypeID:  newAdvertType.ID,
 		CeilingHeight: data.CeilingHeight,
 		SquareArea:    data.SquareArea,
@@ -139,10 +146,6 @@ func (u *AdvertUsecase) CreateHouseAdvert(ctx context.Context, data *models.Adve
 		return nil, err
 	}
 
-	if err := u.repo.CreateBuilding(ctx, newBuilding); err != nil {
-		return nil, err
-	}
-
 	if err := u.repo.CreateHouse(ctx, newHouse); err != nil {
 		return nil, err
 	}
@@ -156,4 +159,22 @@ func (u *AdvertUsecase) CreateHouseAdvert(ctx context.Context, data *models.Adve
 	}
 
 	return newAdvert, nil
+}
+
+// GetHouseSquareAdvertsList handles the square house adverts getting process.
+func (u *AdvertUsecase) GetHouseSquareAdvertsList(ctx context.Context) (foundAdverts []*models.AdvertSquareData, err error) {
+	if foundAdverts, err = u.repo.GetHouseSquareAdvertsList(ctx); err != nil {
+		return nil, err
+	}
+
+	return foundAdverts, nil
+}
+
+// GetFlatSquareAdvertsList handles the square flat adverts getting process.
+func (u *AdvertUsecase) GetFlatSquareAdvertsList(ctx context.Context) (foundAdverts []*models.AdvertSquareData, err error) {
+	if foundAdverts, err = u.repo.GetFlatSquareAdvertsList(ctx); err != nil {
+		return nil, err
+	}
+
+	return foundAdverts, nil
 }
