@@ -7,7 +7,7 @@ import (
 )
 
 // WriteError prints error in json
-func WriteError(w http.ResponseWriter, statusCode int, message string) error {
+func WriteError(w http.ResponseWriter, statusCode int, message string) {
 	errorResponse := struct {
 		Message string `json:"message"`
 	}{
@@ -15,18 +15,26 @@ func WriteError(w http.ResponseWriter, statusCode int, message string) error {
 	}
 	resp, err := json.Marshal(errorResponse)
 	if err != nil {
-		return err
+		return
 	}
 
 	w.WriteHeader(statusCode)
 	_, _ = w.Write(resp)
 
-	return nil
+	return
 }
 
 // WriteResponse writes a JSON response with the specified status code and data.
 func WriteResponse(w http.ResponseWriter, statusCode int, response interface{}) error {
-	resp, err := json.Marshal(response)
+	respSuccess := struct {
+		StatusCode int         `json:"statusCode"`
+		Message    string      `json:"message,omitempty"`
+		Payload    interface{} `json:"payload"`
+	}{
+		StatusCode: statusCode,
+		Payload:    response,
+	}
+	resp, err := json.Marshal(respSuccess)
 	if err != nil {
 		return err
 	}

@@ -7,6 +7,9 @@ import (
 	authH "2024_1_TeaStealers/internal/pkg/auth/delivery"
 	authR "2024_1_TeaStealers/internal/pkg/auth/repo"
 	authUc "2024_1_TeaStealers/internal/pkg/auth/usecase"
+	imageH "2024_1_TeaStealers/internal/pkg/images/delivery/http"
+	imageR "2024_1_TeaStealers/internal/pkg/images/repo"
+	imageUc "2024_1_TeaStealers/internal/pkg/images/usecase"
 	"2024_1_TeaStealers/internal/pkg/middleware"
 	"context"
 	"database/sql"
@@ -70,9 +73,16 @@ func main() {
 	advertUsecase := advertsUc.NewAdvertUsecase(advertRepo)
 	advertHandler := advertsH.NewAdvertHandler(advertUsecase)
 
+	imageRepo := imageR.NewRepository(db)
+	imageUsecase := imageUc.NewImageUsecase(imageRepo)
+	imageHandler := imageH.NewImageHandler(imageUsecase)
+
 	advert := r.PathPrefix("/adverts").Subrouter()
 	advert.HandleFunc("/house", advertHandler.CreateHouseAdvert).Methods(http.MethodPost, http.MethodOptions)
 	advert.HandleFunc("/flat", advertHandler.CreateFlatAdvert).Methods(http.MethodPost, http.MethodOptions)
+	advert.HandleFunc("/image", imageHandler.UploadImage).Methods(http.MethodPost, http.MethodOptions)
+	advert.HandleFunc("/{id}/image", imageHandler.GetAdvertImages).Methods(http.MethodGet, http.MethodOptions)
+	advert.HandleFunc("/{id}/image", imageHandler.DeleteImage).Methods(http.MethodDelete, http.MethodOptions)
 
 	srv := &http.Server{
 		Addr:              ":8080",

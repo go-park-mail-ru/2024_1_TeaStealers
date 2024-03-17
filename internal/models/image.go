@@ -21,3 +21,13 @@ type Image struct {
 	// IsDeleted is a flag indicating whether the image is deleted.
 	IsDeleted bool `json:"-"`
 }
+
+// ImageResp represents an image response.
+type ImageResp struct {
+	// ID is the unique identifier for the image.
+	ID uuid.UUID `json:"id"`
+	// Photo is the filename of the image.
+	Photo string `json:"photo"`
+	// Priority is the priority of the image.
+	Priority int `json:"priority"`
+}
