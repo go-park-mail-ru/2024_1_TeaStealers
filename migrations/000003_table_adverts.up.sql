@@ -12,7 +12,7 @@ CREATE TABLE IF NOT EXISTS adverts (
     advertTypePlacement typePlacementAdvert NOT NULL,
     title TEXT CONSTRAINT title_length CHECK ( char_length(title) <= 127) NOT NULL,
     description TEXT NOT NULL,
-    phone TEXT CONSTRAINT phone_length CHECK ( char_length(phone) <= 20) NOT NULL UNIQUE,
+    phone TEXT CONSTRAINT phone_length CHECK ( char_length(phone) <= 20) NOT NULL,
     isAgent BOOLEAN NOT NULL,
     priority SMALLINT NOT NULL DEFAULT 1,
     dateCreation TIMESTAMP NOT NULL DEFAULT NOW(),

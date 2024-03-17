@@ -3,7 +3,7 @@ package models
 import (
 	"time"
 
-	"github.com/google/uuid"
+	"github.com/satori/uuid"
 )
 
 // PriceChange represents a change in the price of an advert.

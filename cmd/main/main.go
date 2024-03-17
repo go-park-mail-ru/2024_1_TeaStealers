@@ -1,6 +1,9 @@
 package main
 
 import (
+	advertsH "2024_1_TeaStealers/internal/pkg/adverts/delivery"
+	advertsR "2024_1_TeaStealers/internal/pkg/adverts/repo"
+	advertsUc "2024_1_TeaStealers/internal/pkg/adverts/usecase"
 	authH "2024_1_TeaStealers/internal/pkg/auth/delivery"
 	authR "2024_1_TeaStealers/internal/pkg/auth/repo"
 	authUc "2024_1_TeaStealers/internal/pkg/auth/usecase"
@@ -56,6 +59,14 @@ func main() {
 	auth.HandleFunc("/login", autHandler.Login).Methods(http.MethodPost, http.MethodOptions)
 	auth.Handle("/logout", middleware.JwtMiddleware(http.HandlerFunc(autHandler.Logout))).Methods(http.MethodGet, http.MethodOptions)
 	auth.HandleFunc("/check_auth", autHandler.CheckAuth).Methods(http.MethodGet, http.MethodOptions)
+
+	advertRepo := advertsR.NewRepository(db)
+	advertUsecase := advertsUc.NewAdvertUsecase(advertRepo)
+	advertHandler := advertsH.NewAdvertHandler(advertUsecase)
+
+	advert := r.PathPrefix("/adverts").Subrouter()
+	advert.HandleFunc("/house", advertHandler.CreateHouseAdvert).Methods(http.MethodPost, http.MethodOptions)
+	advert.HandleFunc("/flat", advertHandler.CreateFlatAdvert).Methods(http.MethodPost, http.MethodOptions)
 
 	srv := &http.Server{
 		Addr:              ":8080",

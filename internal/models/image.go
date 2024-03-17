@@ -3,7 +3,7 @@ package models
 import (
 	"time"
 
-	"github.com/google/uuid"
+	"github.com/satori/uuid"
 )
 
 // Image represents an image associated with an advert.

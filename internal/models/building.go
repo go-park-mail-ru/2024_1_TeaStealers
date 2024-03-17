@@ -3,7 +3,7 @@ package models
 import (
 	"time"
 
-	"github.com/google/uuid"
+	"github.com/satori/uuid"
 )
 
 // MaterialBuilding represents the material of a building.

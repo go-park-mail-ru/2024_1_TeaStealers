@@ -3,7 +3,7 @@ package models
 import (
 	"time"
 
-	"github.com/google/uuid"
+	"github.com/satori/uuid"
 )
 
 // ClassHouse represents the class of a house in a complex.

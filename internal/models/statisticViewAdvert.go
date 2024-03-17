@@ -3,7 +3,7 @@ package models
 import (
 	"time"
 
-	"github.com/google/uuid"
+	"github.com/satori/uuid"
 )
 
 // StatisticViewAdvert represents a view statistic for an advert by a user.

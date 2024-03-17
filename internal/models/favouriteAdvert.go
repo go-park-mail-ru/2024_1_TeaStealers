@@ -1,7 +1,7 @@
 package models
 
 import (
-	"github.com/google/uuid"
+	"github.com/satori/uuid"
 )
 
 // FavouriteAdvert represents a favourite advert for a user.
