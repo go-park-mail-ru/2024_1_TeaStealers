@@ -83,12 +83,12 @@ VALUES
 ('eb60d0a7-f098-432f-8c42-f86cfa3d3019', 2, '1717 Walnut St', ST_GeographyFromText('POINT(-122.35500 47.65700)'), 2008),
 ('26e4898a-7f75-4dd1-997d-646f7f44417d', 4, '1919 Spruce St', ST_GeographyFromText('POINT(-122.35600 47.65800)'), 2012);
 
-INSERT INTO flats (id, buildingId, advertTypeId, floor, ceilingHeight, squareGeneral, squareResidential)
+INSERT INTO flats (id, buildingId, advertTypeId, floor, ceilingHeight, squareGeneral, roomCount, squareResidential)
 VALUES
-('58c04b88-1f2e-4f17-a4ee-2b4792d67972', '0b5a13eb-f7f5-45de-8a78-8d2e4fb9e433', '6389b3d1-2bf3-43a0-bf1c-f55b51bc1a10', 4, 2.5, 100.0, 80.0),
-('3c4efb65-3d5e-4ec4-862f-62f62b224444', '89d4e5c6-0f43-4047-bf8a-3ed4c2571d86', 'fce05975-6c87-49a1-b59e-739ec2274c16', 3, 2.7, 120.0, 100.0),
-('8c9e50b8-91a0-485b-8a4f-cc4f71b5d555', '1fc85c82-8ef3-4c61-983b-0630e5b29913', 'a2bf19b5-cc77-458e-8676-6286c89b9f01', 5, 2.6, 80.0, 60.0),
-('40f5f022-6eb6-4c16-8ed5-66ef3b8b6666', '26e4898a-7f75-4dd1-997d-646f7f44417d', 'db0b0a75-8a45-4777-85f5-16e8c29b9353', 4, 2.8, 150.0, 120.0);
+('58c04b88-1f2e-4f17-a4ee-2b4792d67972', '0b5a13eb-f7f5-45de-8a78-8d2e4fb9e433', '6389b3d1-2bf3-43a0-bf1c-f55b51bc1a10', 4, 2.5, 100.0, 5, 80.0),
+('3c4efb65-3d5e-4ec4-862f-62f62b224444', '89d4e5c6-0f43-4047-bf8a-3ed4c2571d86', 'fce05975-6c87-49a1-b59e-739ec2274c16', 3, 2.7, 120.0, 6, 100.0),
+('8c9e50b8-91a0-485b-8a4f-cc4f71b5d555', '1fc85c82-8ef3-4c61-983b-0630e5b29913', 'a2bf19b5-cc77-458e-8676-6286c89b9f01', 5, 2.6, 80.0, 4, 60.0),
+('40f5f022-6eb6-4c16-8ed5-66ef3b8b6666', '26e4898a-7f75-4dd1-997d-646f7f44417d', 'db0b0a75-8a45-4777-85f5-16e8c29b9353', 4, 2.8, 150.0, 3, 120.0);
 
 INSERT INTO houses (id, buildingId, advertTypeId, ceilingHeight, squareArea, squareHouse, bedroomCount, statusArea, cottage, statusHome)
 VALUES

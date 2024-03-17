@@ -55,3 +55,29 @@ func (h *AdvertHandler) CreateHouseAdvert(w http.ResponseWriter, r *http.Request
 		utils.WriteError(w, http.StatusInternalServerError, err.Error())
 	}
 }
+
+// GetHouseSquareAdvertsList handles the request for retrieving a square house adverts.
+func (h *AdvertHandler) GetHouseSquareAdvertsList(w http.ResponseWriter, r *http.Request) {
+	adverts, err := h.uc.GetHouseSquareAdvertsList(r.Context())
+	if err != nil {
+		utils.WriteError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	if err = utils.WriteResponse(w, http.StatusOK, adverts); err != nil {
+		utils.WriteError(w, http.StatusInternalServerError, err.Error())
+	}
+}
+
+// GetFlatSquareAdvertsList handles the request for retrieving a square flat adverts.
+func (h *AdvertHandler) GetFlatSquareAdvertsList(w http.ResponseWriter, r *http.Request) {
+	adverts, err := h.uc.GetFlatSquareAdvertsList(r.Context())
+	if err != nil {
+		utils.WriteError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	if err = utils.WriteResponse(w, http.StatusOK, adverts); err != nil {
+		utils.WriteError(w, http.StatusInternalServerError, err.Error())
+	}
+}

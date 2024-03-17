@@ -64,6 +64,8 @@ type AdvertFlatCreateData struct {
 	CeilingHeight float64 `json:"ceilingHeight"`
 	// SquareGeneral is the general square of the flat.
 	SquareGeneral float64 `json:"squareGeneral"`
+	// RoomCount is the how many rooms in flat
+	RoomCount int `json:"roomCount"`
 	// SquareResidential is the residential square of the flat.
 	SquareResidential float64 `json:"squareResidential"`
 	// Apartment indicates if the flat is an apartment.
@@ -125,4 +127,24 @@ type AdvertHouseCreateData struct {
 	AddressPoint string `json:"addressPoint"`
 	// YearCreation is the year when the building was created.
 	YearCreation int `json:"yearCreation"`
+}
+
+// AdvertSquareData represents the structure of the JSON data for square advert.
+type AdvertSquareData struct {
+	// ID is the unique identifier for the advert.
+	ID uuid.UUID `json:"advertId"`
+	// TypeAdvert represents the type of the advertisement (House/Flat).
+	TypeAdvert string `json:"typeAdvert"`
+	// Photo is the filename of the photo.
+	Photo string `json:"photo"`
+	// TypeSale represents the sale type of the advertisement (Sale/Rent).
+	TypeSale string `json:"typeSale"`
+	// Address is the address of the advertisement.
+	Address string `json:"adress"`
+	// Properties contains additional properties for houses or flats.
+	Properties map[string]interface{} `json:"properties"`
+	// Price is the price of the advertisement.
+	Price int `json:"price"`
+	// DateCreation is the date when the advert was created.
+	DateCreation time.Time `json:"dateCreation"`
 }

@@ -75,9 +75,126 @@ func (r *AdvertRepo) CreateHouse(ctx context.Context, newHouse *models.House) er
 
 // CreateFlat creates a new flat in the database.
 func (r *AdvertRepo) CreateFlat(ctx context.Context, newFlat *models.Flat) error {
-	insert := `INSERT INTO flats (id, buildingid, adverttypeid, floor, ceilingheight, squaregeneral, squareresidential, apartament) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`
-	if _, err := r.db.ExecContext(ctx, insert, newFlat.ID, newFlat.BuildingID, newFlat.AdvertTypeID, newFlat.Floor, newFlat.CeilingHeight, newFlat.SquareGeneral, newFlat.SquareResidential, newFlat.Apartment); err != nil {
+	insert := `INSERT INTO flats (id, buildingid, adverttypeid, floor, ceilingheight, squaregeneral, roomcount, squareresidential, apartament) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`
+	if _, err := r.db.ExecContext(ctx, insert, newFlat.ID, newFlat.BuildingID, newFlat.AdvertTypeID, newFlat.Floor, newFlat.CeilingHeight, newFlat.SquareGeneral, newFlat.RoomCount, newFlat.SquareResidential, newFlat.Apartment); err != nil {
 		return err
 	}
 	return nil
+}
+
+// GetHouseSquareAdvertsList retrieves a square house adverts from the database.
+func (r *AdvertRepo) GetHouseSquareAdvertsList(ctx context.Context) ([]*models.AdvertSquareData, error) {
+	query := `SELECT
+    a.id,
+    at.adverttype,
+    COALESCE(i.photo, '') as photo,
+    a.adverttypeplacement,
+    b.adress,
+    h.cottage,
+    h.squarehouse,
+    h.squarearea,
+    h.bedroomcount,
+    b.floor,
+    pc.price,
+    a.datecreation
+FROM adverts AS a LEFT JOIN
+    LATERAL(
+        SELECT *
+        FROM pricechanges AS pc
+        WHERE pc.advertid = a.id
+        ORDER BY pc.datecreation DESC
+        LIMIT 1
+    ) AS pc
+    ON true
+INNER JOIN adverttypes AS at ON a.adverttypeid = at.id
+INNER JOIN houses AS h ON at.id = h.adverttypeid
+INNER JOIN buildings AS b ON h.buildingid = b.id
+LEFT JOIN images AS i ON a.id = i.advertid
+ORDER BY a.datecreation DESC;`
+	rows, err := r.db.QueryContext(ctx, query)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	squareAdverts := []*models.AdvertSquareData{}
+	for rows.Next() {
+		squareAdvert := &models.AdvertSquareData{}
+		var cottage bool
+		var squareHouse, squareArea float64
+		var bedroomCount, floor int
+		err := rows.Scan(&squareAdvert.ID, &squareAdvert.TypeAdvert, &squareAdvert.Photo, &squareAdvert.TypeSale, &squareAdvert.Address, &cottage, &squareHouse, &squareArea, &bedroomCount, &floor, &squareAdvert.Price, &squareAdvert.DateCreation)
+		if err != nil {
+			return nil, err
+		}
+		squareAdvert.Properties = make(map[string]interface{})
+		squareAdvert.Properties["cottage"] = cottage
+		squareAdvert.Properties["squareHouse"] = squareHouse
+		squareAdvert.Properties["squareArea"] = squareArea
+		squareAdvert.Properties["bedroomCount"] = bedroomCount
+		squareAdvert.Properties["floor"] = floor
+		squareAdverts = append(squareAdverts, squareAdvert)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return squareAdverts, nil
+}
+
+// GetFlatSquareAdvertsList retrieves a square Flat adverts from the database.
+func (r *AdvertRepo) GetFlatSquareAdvertsList(ctx context.Context) ([]*models.AdvertSquareData, error) {
+	query := `SELECT
+    a.id,
+    at.adverttype,
+    COALESCE(i.photo, '') as photo,
+    a.adverttypeplacement,
+    b.adress,
+    f.floor,
+    f.squaregeneral,
+    f.roomcount,
+    b.floor AS floorgeneral,
+    pc.price,
+    a.datecreation
+FROM adverts AS a LEFT JOIN
+    LATERAL(
+        SELECT *
+        FROM pricechanges AS pc
+        WHERE pc.advertid = a.id
+        ORDER BY pc.datecreation DESC
+        LIMIT 1
+    ) AS pc
+    ON true
+INNER JOIN adverttypes AS at ON a.adverttypeid = at.id
+INNER JOIN flats AS f ON at.id = f.adverttypeid
+INNER JOIN buildings AS b ON f.buildingid = b.id
+LEFT JOIN images AS i ON a.id = i.advertid
+ORDER BY a.datecreation DESC;`
+	rows, err := r.db.QueryContext(ctx, query)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	squareAdverts := []*models.AdvertSquareData{}
+	for rows.Next() {
+		squareAdvert := &models.AdvertSquareData{}
+		var floor, floorGeneral, roomCount int
+		var squareGenereal float64
+		err := rows.Scan(&squareAdvert.ID, &squareAdvert.TypeAdvert, &squareAdvert.Photo, &squareAdvert.TypeSale, &squareAdvert.Address, &floor, &squareGenereal, &roomCount, &floorGeneral, &squareAdvert.Price, &squareAdvert.DateCreation)
+		if err != nil {
+			return nil, err
+		}
+		squareAdvert.Properties = make(map[string]interface{})
+		squareAdvert.Properties["floor"] = floor
+		squareAdvert.Properties["floorGeneral"] = floorGeneral
+		squareAdvert.Properties["squareGeneral"] = squareGenereal
+		squareAdvert.Properties["roomCount"] = roomCount
+		squareAdverts = append(squareAdverts, squareAdvert)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return squareAdverts, nil
 }
