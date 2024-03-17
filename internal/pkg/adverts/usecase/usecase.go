@@ -20,6 +20,12 @@ func NewAdvertUsecase(repo adverts.AdvertRepo) *AdvertUsecase {
 
 // CreateFlatAdvert handles the creation advert process.
 func (u *AdvertUsecase) CreateFlatAdvert(ctx context.Context, data *models.AdvertFlatCreateData) (*models.Advert, error) {
+	tx, err := u.repo.BeginTx(ctx)
+	if err != nil {
+		return nil, err
+	}
+	defer tx.Rollback()
+
 	newAdvertType := &models.AdvertType{
 		ID:         uuid.NewV4(),
 		AdvertType: data.AdvertTypePlacement,
@@ -47,7 +53,7 @@ func (u *AdvertUsecase) CreateFlatAdvert(ctx context.Context, data *models.Adver
 			AddressPoint: data.AddressPoint,
 			YearCreation: data.YearCreation,
 		}
-		if err := u.repo.CreateBuilding(ctx, building); err != nil {
+		if err := u.repo.CreateBuilding(ctx, tx, building); err != nil {
 			return nil, err
 		}
 	}
@@ -70,19 +76,24 @@ func (u *AdvertUsecase) CreateFlatAdvert(ctx context.Context, data *models.Adver
 		Price:    data.Price,
 	}
 
-	if err := u.repo.CreateAdvertType(ctx, newAdvertType); err != nil {
+	if err := u.repo.CreateAdvertType(ctx, tx, newAdvertType); err != nil {
 		return nil, err
 	}
 
-	if err := u.repo.CreateFlat(ctx, newFlat); err != nil {
+	if err := u.repo.CreateFlat(ctx, tx, newFlat); err != nil {
 		return nil, err
 	}
 
-	if err := u.repo.CreateAdvert(ctx, newAdvert); err != nil {
+	if err := u.repo.CreateAdvert(ctx, tx, newAdvert); err != nil {
 		return nil, err
 	}
 
-	if err := u.repo.CreatePriceChange(ctx, newPriceChange); err != nil {
+	if err := u.repo.CreatePriceChange(ctx, tx, newPriceChange); err != nil {
+		return nil, err
+	}
+
+	err = tx.Commit()
+	if err != nil {
 		return nil, err
 	}
 
@@ -91,6 +102,12 @@ func (u *AdvertUsecase) CreateFlatAdvert(ctx context.Context, data *models.Adver
 
 // CreateFlatAdvert handles the creation advert process.
 func (u *AdvertUsecase) CreateHouseAdvert(ctx context.Context, data *models.AdvertHouseCreateData) (*models.Advert, error) {
+	tx, err := u.repo.BeginTx(ctx)
+	if err != nil {
+		return nil, err
+	}
+	defer tx.Rollback()
+
 	newAdvertType := &models.AdvertType{
 		ID:         uuid.NewV4(),
 		AdvertType: data.AdvertTypePlacement,
@@ -118,7 +135,7 @@ func (u *AdvertUsecase) CreateHouseAdvert(ctx context.Context, data *models.Adve
 			AddressPoint: data.AddressPoint,
 			YearCreation: data.YearCreation,
 		}
-		if err := u.repo.CreateBuilding(ctx, building); err != nil {
+		if err := u.repo.CreateBuilding(ctx, tx, building); err != nil {
 			return nil, err
 		}
 	}
@@ -142,19 +159,24 @@ func (u *AdvertUsecase) CreateHouseAdvert(ctx context.Context, data *models.Adve
 		Price:    data.Price,
 	}
 
-	if err := u.repo.CreateAdvertType(ctx, newAdvertType); err != nil {
+	if err := u.repo.CreateAdvertType(ctx, tx, newAdvertType); err != nil {
 		return nil, err
 	}
 
-	if err := u.repo.CreateHouse(ctx, newHouse); err != nil {
+	if err := u.repo.CreateHouse(ctx, tx, newHouse); err != nil {
 		return nil, err
 	}
 
-	if err := u.repo.CreateAdvert(ctx, newAdvert); err != nil {
+	if err := u.repo.CreateAdvert(ctx, tx, newAdvert); err != nil {
 		return nil, err
 	}
 
-	if err := u.repo.CreatePriceChange(ctx, newPriceChange); err != nil {
+	if err := u.repo.CreatePriceChange(ctx, tx, newPriceChange); err != nil {
+		return nil, err
+	}
+
+	err = tx.Commit()
+	if err != nil {
 		return nil, err
 	}
 

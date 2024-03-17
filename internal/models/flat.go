@@ -18,7 +18,7 @@ type Flat struct {
 	Floor int `json:"floor"`
 	// CeilingHeight is the ceiling height of the flat.
 	CeilingHeight float64 `json:"ceilingHeight"`
-	// roomCount is the how many rooms in flat
+	// RoomCount is the how many rooms in flat
 	RoomCount int `json:"roomCount"`
 	// SquareGeneral is the general square of the flat.
 	SquareGeneral float64 `json:"squareGeneral"`
