@@ -19,4 +19,5 @@ type AdvertRepo interface {
 	CreateBuilding(ctx context.Context, newBuilding *models.Building) error
 	CreateHouse(ctx context.Context, newHouse *models.House) error
 	CreateFlat(ctx context.Context, newFlat *models.Flat) error
+	CheckExistsBuilding(ctx context.Context, adress string) (*models.Building, error)
 }

@@ -52,6 +52,18 @@ func (r *AdvertRepo) CreateBuilding(ctx context.Context, newBuilding *models.Bui
 	return nil
 }
 
+// CheckExistsBuilding check exists building.
+func (r *AdvertRepo) CheckExistsBuilding(ctx context.Context, adress string) (*models.Building, error) {
+	var building *models.Building
+	selectResp := `SELECT id, floor, material, adress, adresspoint, yearcreation FROM buildings WHERE adress = $1`
+
+	if err := r.db.QueryRowContext(ctx, selectResp, adress).Scan(building); err != nil {
+		return nil, err
+	}
+
+	return building, nil
+}
+
 // CreateHouse creates a new house in the database.
 func (r *AdvertRepo) CreateHouse(ctx context.Context, newHouse *models.House) error {
 	insert := `INSERT INTO houses (id, buildingid, adverttypeid, ceilingheight, squarearea, squarehouse, bedroomcount, statusarea, cottage, statushome) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`

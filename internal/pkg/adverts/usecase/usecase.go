@@ -37,18 +37,24 @@ func (u *AdvertUsecase) CreateFlatAdvert(ctx context.Context, data *models.Adver
 		Priority:       1, // Разобраться в будущем, как это менять за деньги(money)
 	}
 
-	newBuilding := &models.Building{ // Вообще должна быть проверка, что этого так называемого билдинга еще нет
-		ID:           uuid.NewV4(),
-		Floor:        data.FloorGeneral,
-		Material:     data.Material,
-		Address:      data.Address,
-		AddressPoint: data.AddressPoint,
-		YearCreation: data.YearCreation,
+	building, err := u.repo.CheckExistsBuilding(ctx, data.Address)
+	if err != nil {
+		building = &models.Building{
+			ID:           uuid.NewV4(),
+			Floor:        data.FloorGeneral,
+			Material:     data.Material,
+			Address:      data.Address,
+			AddressPoint: data.AddressPoint,
+			YearCreation: data.YearCreation,
+		}
+		if err := u.repo.CreateBuilding(ctx, building); err != nil {
+			return nil, err
+		}
 	}
 
 	newFlat := &models.Flat{
 		ID:                uuid.NewV4(),
-		BuildingID:        newBuilding.ID, // то есть сюда вставлять не всегда новый билдинг, тоже на подумать
+		BuildingID:        building.ID,
 		AdvertTypeID:      newAdvertType.ID,
 		Floor:             data.Floor,
 		CeilingHeight:     data.CeilingHeight,
@@ -64,10 +70,6 @@ func (u *AdvertUsecase) CreateFlatAdvert(ctx context.Context, data *models.Adver
 	}
 
 	if err := u.repo.CreateAdvertType(ctx, newAdvertType); err != nil {
-		return nil, err
-	}
-
-	if err := u.repo.CreateBuilding(ctx, newBuilding); err != nil {
 		return nil, err
 	}
 
