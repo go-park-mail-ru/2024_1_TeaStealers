@@ -41,7 +41,7 @@ func (h *AuthHandler) SignUp(w http.ResponseWriter, r *http.Request) {
 
 	newUser, token, exp, err := h.uc.SignUp(r.Context(), &data)
 	if err != nil {
-		utils.WriteError(w, http.StatusBadRequest, err.Error())
+		utils.WriteError(w, http.StatusBadRequest, "data already is used")
 		return
 	}
 

@@ -42,7 +42,7 @@ type Advert struct {
 	IsDeleted bool `json:"-"`
 }
 
-// AdvertCreateData represents a data for creation advertisement.
+// AdvertFlatCreateData represents a data for creation advertisement.
 type AdvertFlatCreateData struct {
 	// UserID is the identifier of the user who created the advert.
 	UserID uuid.UUID `json:"userId"`
@@ -83,7 +83,7 @@ type AdvertFlatCreateData struct {
 	// DateCreation is the date when the building was published.
 }
 
-// AdvertCreateData represents a data for creation advertisement.
+// AdvertHouseCreateData represents a data for creation advertisement.
 type AdvertHouseCreateData struct {
 	// UserID is the identifier of the user who created the advert.
 	UserID uuid.UUID `json:"userId"`

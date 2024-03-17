@@ -45,6 +45,12 @@ func main() {
 		panic("failed to connect database" + err.Error())
 	}
 
+	if err = db.Ping(); err != nil {
+		log.Println("fail ping postgres")
+		err = fmt.Errorf("error happened in db.Ping: %w", err)
+		log.Println(err)
+	}
+
 	r := mux.NewRouter().PathPrefix("/api").Subrouter()
 	r.Use(middleware.CORSMiddleware)
 	r.HandleFunc("/ping", pingPongHandler).Methods(http.MethodGet)
