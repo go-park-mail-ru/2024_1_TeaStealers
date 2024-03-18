@@ -24,6 +24,8 @@ services:
       - '8080:8080'
     env_file:
       - ./.env
+    volumes:
+      - "${BASE_DIR}:/docker-cian/images"
 
 volumes:
   postgresdb-data:

@@ -3,8 +3,10 @@ package usecase
 import (
 	"2024_1_TeaStealers/internal/models"
 	"2024_1_TeaStealers/internal/pkg/images"
+	"fmt"
 	"github.com/satori/uuid"
 	"io"
+	"os"
 	"path/filepath"
 )
 
@@ -21,14 +23,32 @@ func NewImageUsecase(repo images.ImageRepo) *ImageUsecase {
 // UploadImage upload image for advert
 func (u *ImageUsecase) UploadImage(file io.Reader, fileType string, advertUUID uuid.UUID) (*models.ImageResp, error) {
 	newId := uuid.NewV4()
-	directory := filepath.Join("advert", advertUUID.String())
+	fileName := newId.String() + fileType
+	subDirectory := filepath.Join("adverts", advertUUID.String())
+	directory := filepath.Join(os.Getenv("DOCKER_DIR"), subDirectory)
+	if err := os.MkdirAll(directory, 0755); err != nil {
+		return nil, err
+	}
+	destination, err := os.Create(directory + "/" + fileName)
+	if err != nil {
+		fmt.Println(err.Error())
+		return nil, err
+	}
+	defer destination.Close()
+
+	_, err = io.Copy(destination, file)
+	if err != nil {
+		fmt.Println(err.Error())
+
+		return nil, err
+	}
 	newImage := &models.Image{
 		ID:       newId,
 		AdvertID: advertUUID,
-		Photo:    filepath.Join(directory, newId.String()+fileType),
+		Photo:    subDirectory + "/" + fileName,
 		Priority: 1,
 	}
-	image, err := u.repo.StoreImage(file, newImage, directory)
+	image, err := u.repo.StoreImage(newImage)
 	if err != nil {
 		return nil, err
 	}

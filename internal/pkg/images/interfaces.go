@@ -15,7 +15,7 @@ type ImageUsecase interface {
 
 // ImagesRepo represents the repository interface for images for advert.
 type ImageRepo interface {
-	StoreImage(io.Reader, *models.Image, string) (*models.ImageResp, error)
+	StoreImage(*models.Image) (*models.ImageResp, error)
 	SelectImages(uuid.UUID) ([]*models.ImageResp, error)
 	DeleteImage(uuid.UUID) ([]*models.ImageResp, error)
 }
