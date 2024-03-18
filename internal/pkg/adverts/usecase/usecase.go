@@ -4,7 +4,6 @@ import (
 	"2024_1_TeaStealers/internal/models"
 	"2024_1_TeaStealers/internal/pkg/adverts"
 	"context"
-	"log"
 
 	"github.com/satori/uuid"
 )
@@ -224,8 +223,6 @@ func (u *AdvertUsecase) GetHouseRectangleAdvertsList(ctx context.Context) (found
 func (u *AdvertUsecase) GetAdvertById(ctx context.Context, id uuid.UUID) (foundAdvert *models.AdvertData, err error) {
 	var typeAdvert *models.AdvertTypeAdvert
 	typeAdvert, err = u.repo.GetTypeAdvertById(ctx, id)
-
-	log.Println(typeAdvert)
 
 	switch *typeAdvert {
 	case models.AdvertTypeFlat:
