@@ -148,3 +148,67 @@ type AdvertSquareData struct {
 	// DateCreation is the date when the advert was created.
 	DateCreation time.Time `json:"dateCreation"`
 }
+
+// AdvertRectangleData represents the structure of the JSON data for Rectangle advert.
+type AdvertRectangleData struct {
+	// ID is the unique identifier for the advert.
+	ID uuid.UUID `json:"advertId"`
+	// Title is the title of the advert.
+	Title string `json:"title"`
+	// Description is the description of the advert.
+	Description string `json:"description"`
+	// TypeAdvert represents the type of the advertisement (House/Flat).
+	TypeAdvert string `json:"typeAdvert"`
+	// Photo is the filename of the photo.
+	Photo string `json:"photo"`
+	// Phone is the phone number associated with the advert.
+	Phone string `json:"phone"`
+	// TypeSale represents the sale type of the advertisement (Sale/Rent).
+	TypeSale string `json:"typeSale"`
+	// Address is the address of the advertisement.
+	Address string `json:"adress"`
+	// Complex represents residential complex information.
+	// Complex map[string]interface{} `json:"complex"`
+	// Properties contains additional properties for houses or flats.
+	Properties map[string]interface{} `json:"properties"`
+	// Price is the price of the advertisement.
+	Price int `json:"price"`
+	// DateCreation is the date when the advert was created.
+	DateCreation time.Time `json:"dateCreation"`
+}
+
+// AdvertData represents the structure of the JSON data for advert.
+type AdvertData struct {
+	// ID is the unique identifier for the advert.
+	ID uuid.UUID `json:"advertId"`
+	// TypeAdvert represents the type of the advertisement (House/Flat).
+	TypeAdvert string `json:"typeAdvert"`
+	// TypeSale represents the sale type of the advertisement (Sale/Rent).
+	TypeSale string `json:"typeSale"`
+	// Title is the title of the advert.
+	Title string `json:"title"`
+	// Description is the description of the advert.
+	Description string `json:"description"`
+	// Price is the price of the advertisement.
+	Price int `json:"price"`
+	// Phone is the phone number associated with the advert.
+	Phone string `json:"phone"`
+	// IsAgent indicates whether the advert is posted by an agent.
+	IsAgent bool `json:"isAgent"`
+	// Address is the address of the advertisement.
+	Address string `json:"adress"`
+	// AddressPoint is the address of the advertisement.
+	AddressPoint string `json:"adressPoint"`
+	// Images contains filenames of photos for advert.
+	Images map[string]string `json:"images"`
+	// Properties contains additional properties for houses or flats.
+	Properties map[string]interface{} `json:"properties"`
+	// YearCreation is the year when the building was created.
+	YearCreation int `json:"yearCreation"`
+	// Material is the material of the building.
+	Material MaterialBuilding `json:"material"`
+	//Complex represents residential complex information.
+	Complex map[string]interface{} `json:"complex"`
+	// DateCreation is the date when the advert was created.
+	DateCreation time.Time `json:"dateCreation"`
+}

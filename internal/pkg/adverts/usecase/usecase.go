@@ -200,3 +200,32 @@ func (u *AdvertUsecase) GetFlatSquareAdvertsList(ctx context.Context) (foundAdve
 
 	return foundAdverts, nil
 }
+
+// GetFlatRectangleAdvertsList handles the rectangle flat adverts getting process.
+func (u *AdvertUsecase) GetFlatRectangleAdvertsList(ctx context.Context) (foundAdverts []*models.AdvertRectangleData, err error) {
+	if foundAdverts, err = u.repo.GetFlatRectangleAdvertsList(ctx); err != nil {
+		return nil, err
+	}
+
+	return foundAdverts, nil
+}
+
+// GetHouseRectangleAdvertsList handles the rectangle house adverts getting process.
+func (u *AdvertUsecase) GetHouseRectangleAdvertsList(ctx context.Context) (foundAdverts []*models.AdvertRectangleData, err error) {
+	if foundAdverts, err = u.repo.GetHouseRectangleAdvertsList(ctx); err != nil {
+		return nil, err
+	}
+
+	return foundAdverts, nil
+}
+
+// GetAdvertById handles the getting house advert process.
+func (u *AdvertUsecase) GetAdvertById(ctx context.Context, id uuid.UUID) (foundAdvert *models.AdvertData, err error) {
+	//Тут надо сделать get по advert, и смотря от advertType, сделать get либо по квартирам либо по домам
+	// Пока что работает только с Домами
+	if foundAdvert, err = u.repo.GetHouseAdvertById(ctx, id); err != nil {
+		return nil, err
+	}
+
+	return foundAdvert, nil
+}

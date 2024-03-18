@@ -4,6 +4,8 @@ import (
 	"2024_1_TeaStealers/internal/models"
 	"context"
 	"database/sql"
+
+	"github.com/satori/uuid"
 )
 
 // AdvertUsecase represents the usecase interface for adverts.
@@ -12,6 +14,9 @@ type AdvertUsecase interface {
 	CreateHouseAdvert(context.Context, *models.AdvertHouseCreateData) (*models.Advert, error)
 	GetHouseSquareAdvertsList(ctx context.Context) (foundAdverts []*models.AdvertSquareData, err error)
 	GetFlatSquareAdvertsList(ctx context.Context) (foundAdverts []*models.AdvertSquareData, err error)
+	GetFlatRectangleAdvertsList(ctx context.Context) (foundAdverts []*models.AdvertRectangleData, err error)
+	GetHouseRectangleAdvertsList(ctx context.Context) (foundAdverts []*models.AdvertRectangleData, err error)
+	GetAdvertById(ctx context.Context, id uuid.UUID) (foundAdvert *models.AdvertData, err error)
 }
 
 // AdvertRepo represents the repository interface for adverts.
@@ -26,4 +31,7 @@ type AdvertRepo interface {
 	CheckExistsBuilding(ctx context.Context, adress string) (*models.Building, error)
 	GetHouseSquareAdvertsList(ctx context.Context) ([]*models.AdvertSquareData, error)
 	GetFlatSquareAdvertsList(ctx context.Context) ([]*models.AdvertSquareData, error)
+	GetFlatRectangleAdvertsList(ctx context.Context) ([]*models.AdvertRectangleData, error)
+	GetHouseRectangleAdvertsList(ctx context.Context) ([]*models.AdvertRectangleData, error)
+	GetHouseAdvertById(ctx context.Context, id uuid.UUID) (*models.AdvertData, error)
 }

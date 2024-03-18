@@ -78,10 +78,13 @@ func main() {
 	imageHandler := imageH.NewImageHandler(imageUsecase)
 
 	advert := r.PathPrefix("/adverts").Subrouter()
+	advert.HandleFunc("/{id}", advertHandler.GetAdvertById).Methods(http.MethodGet, http.MethodOptions)
 	advert.HandleFunc("/houses", advertHandler.CreateHouseAdvert).Methods(http.MethodPost, http.MethodOptions)
 	advert.HandleFunc("/flats", advertHandler.CreateFlatAdvert).Methods(http.MethodPost, http.MethodOptions)
 	advert.HandleFunc("/houses/squarelist/", advertHandler.GetHouseSquareAdvertsList).Methods(http.MethodGet, http.MethodOptions)
 	advert.HandleFunc("/flats/squarelist/", advertHandler.GetFlatSquareAdvertsList).Methods(http.MethodGet, http.MethodOptions)
+	advert.HandleFunc("/flats/rectanglelist/", advertHandler.GetFlatRectangleAdvertsList).Methods(http.MethodGet, http.MethodOptions)
+	advert.HandleFunc("/houses/rectanglelist/", advertHandler.GetHouseRectangleAdvertsList).Methods(http.MethodGet, http.MethodOptions)
 	advert.HandleFunc("/image", imageHandler.UploadImage).Methods(http.MethodPost, http.MethodOptions)
 	advert.HandleFunc("/{id}/image", imageHandler.GetAdvertImages).Methods(http.MethodGet, http.MethodOptions)
 	advert.HandleFunc("/{id}/image", imageHandler.DeleteImage).Methods(http.MethodDelete, http.MethodOptions)
