@@ -218,3 +218,14 @@ func (u *AdvertUsecase) GetHouseRectangleAdvertsList(ctx context.Context) (found
 
 	return foundAdverts, nil
 }
+
+// GetAdvertById handles the getting house advert process.
+func (u *AdvertUsecase) GetAdvertById(ctx context.Context, id uuid.UUID) (foundAdvert *models.AdvertData, err error) {
+	//Тут надо сделать get по advert, и смотря от advertType, сделать get либо по квартирам либо по домам
+	// Пока что работает только с Домами
+	if foundAdvert, err = u.repo.GetHouseAdvertById(ctx, id); err != nil {
+		return nil, err
+	}
+
+	return foundAdvert, nil
+}

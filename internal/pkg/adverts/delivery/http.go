@@ -5,6 +5,9 @@ import (
 	"2024_1_TeaStealers/internal/pkg/adverts"
 	"2024_1_TeaStealers/internal/pkg/utils"
 	"net/http"
+
+	"github.com/gorilla/mux"
+	"github.com/satori/uuid"
 )
 
 // AdvertHandler handles HTTP requests for advert changes.
@@ -104,6 +107,32 @@ func (h *AdvertHandler) GetHouseRectangleAdvertsList(w http.ResponseWriter, r *h
 	}
 
 	if err = utils.WriteResponse(w, http.StatusOK, adverts); err != nil {
+		utils.WriteError(w, http.StatusInternalServerError, err.Error())
+	}
+}
+
+// GetAdvertById handles the request for getting advert by id
+func (h *AdvertHandler) GetAdvertById(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	id := vars["id"]
+	if id == "" {
+		utils.WriteError(w, http.StatusBadRequest, "id parameter is required")
+		return
+	}
+
+	advertId, err := uuid.FromString(id)
+	if err != nil {
+		utils.WriteError(w, http.StatusBadRequest, "invalid id parameter")
+		return
+	}
+
+	advertData, err := h.uc.GetAdvertById(r.Context(), advertId)
+	if err != nil {
+		utils.WriteError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	if err = utils.WriteResponse(w, http.StatusOK, advertData); err != nil {
 		utils.WriteError(w, http.StatusInternalServerError, err.Error())
 	}
 }
