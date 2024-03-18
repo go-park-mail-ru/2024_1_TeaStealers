@@ -34,4 +34,6 @@ type AdvertRepo interface {
 	GetFlatRectangleAdvertsList(ctx context.Context) ([]*models.AdvertRectangleData, error)
 	GetHouseRectangleAdvertsList(ctx context.Context) ([]*models.AdvertRectangleData, error)
 	GetHouseAdvertById(ctx context.Context, id uuid.UUID) (*models.AdvertData, error)
+	GetFlatAdvertById(ctx context.Context, id uuid.UUID) (*models.AdvertData, error)
+	GetTypeAdvertById(ctx context.Context, id uuid.UUID) (*models.AdvertTypeAdvert, error)
 }
