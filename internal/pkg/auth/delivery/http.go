@@ -72,6 +72,7 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 	user, token, exp, err := h.uc.Login(r.Context(), &data)
 	if err != nil {
 		utils.WriteError(w, http.StatusBadRequest, "incorrect password or login")
+		return
 	}
 
 	http.SetCookie(w, tokenCookie(middleware.CookieName, token, exp))

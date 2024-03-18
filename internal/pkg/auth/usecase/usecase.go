@@ -31,7 +31,8 @@ func (u *AuthUsecase) SignUp(ctx context.Context, data *models.UserSignUpData) (
 		PasswordHash: generateHashString(data.Password),
 	}
 
-	if err := u.repo.CreateUser(ctx, newUser); err != nil {
+	userResponse, err := u.repo.CreateUser(ctx, newUser)
+	if err != nil {
 		return nil, "", time.Now(), err
 	}
 
@@ -40,7 +41,7 @@ func (u *AuthUsecase) SignUp(ctx context.Context, data *models.UserSignUpData) (
 		return nil, "", time.Now(), err
 	}
 
-	return newUser, token, exp, nil
+	return userResponse, token, exp, nil
 }
 
 // Login handles the user login process.
@@ -64,7 +65,7 @@ func (u *AuthUsecase) CheckAuth(ctx context.Context, token string) (uuid.UUID, e
 	if err != nil {
 		return uuid.Nil, err
 	}
-	id, err := jwt.ParseId(claims)
+	id, _, err := jwt.ParseClaims(claims)
 	if err != nil {
 		return uuid.Nil, err
 	}
