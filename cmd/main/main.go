@@ -11,6 +11,9 @@ import (
 	imageR "2024_1_TeaStealers/internal/pkg/images/repo"
 	imageUc "2024_1_TeaStealers/internal/pkg/images/usecase"
 	"2024_1_TeaStealers/internal/pkg/middleware"
+	userH "2024_1_TeaStealers/internal/pkg/users/delivery"
+	userR "2024_1_TeaStealers/internal/pkg/users/repo"
+	userUc "2024_1_TeaStealers/internal/pkg/users/usecase"
 	"context"
 	"database/sql"
 	"fmt"
@@ -88,6 +91,13 @@ func main() {
 	advert.HandleFunc("/image", imageHandler.UploadImage).Methods(http.MethodPost, http.MethodOptions)
 	advert.HandleFunc("/{id}/image", imageHandler.GetAdvertImages).Methods(http.MethodGet, http.MethodOptions)
 	advert.HandleFunc("/{id}/image", imageHandler.DeleteImage).Methods(http.MethodDelete, http.MethodOptions)
+
+	userRepo := userR.NewRepository(db)
+	userUsecase := userUc.NewUserUsecase(userRepo)
+	userHandler := userH.NewUserHandler(userUsecase)
+
+	user := r.PathPrefix("/user").Subrouter()
+	user.Handle("/me", middleware.JwtMiddleware(http.HandlerFunc(userHandler.GetCurUser), authRepo)).Methods(http.MethodGet, http.MethodOptions)
 
 	srv := &http.Server{
 		Addr:              ":8080",
