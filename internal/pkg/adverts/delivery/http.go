@@ -81,3 +81,29 @@ func (h *AdvertHandler) GetFlatSquareAdvertsList(w http.ResponseWriter, r *http.
 		utils.WriteError(w, http.StatusInternalServerError, err.Error())
 	}
 }
+
+// GetFlatRectangleAdvertsList handles the request for retrieving a rectangle flat adverts.
+func (h *AdvertHandler) GetFlatRectangleAdvertsList(w http.ResponseWriter, r *http.Request) {
+	adverts, err := h.uc.GetFlatRectangleAdvertsList(r.Context())
+	if err != nil {
+		utils.WriteError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	if err = utils.WriteResponse(w, http.StatusOK, adverts); err != nil {
+		utils.WriteError(w, http.StatusInternalServerError, err.Error())
+	}
+}
+
+// GetHouseRectangleAdvertsList handles the request for retrieving a rectangle house adverts.
+func (h *AdvertHandler) GetHouseRectangleAdvertsList(w http.ResponseWriter, r *http.Request) {
+	adverts, err := h.uc.GetHouseRectangleAdvertsList(r.Context())
+	if err != nil {
+		utils.WriteError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	if err = utils.WriteResponse(w, http.StatusOK, adverts); err != nil {
+		utils.WriteError(w, http.StatusInternalServerError, err.Error())
+	}
+}

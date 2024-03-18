@@ -200,3 +200,21 @@ func (u *AdvertUsecase) GetFlatSquareAdvertsList(ctx context.Context) (foundAdve
 
 	return foundAdverts, nil
 }
+
+// GetFlatRectangleAdvertsList handles the rectangle flat adverts getting process.
+func (u *AdvertUsecase) GetFlatRectangleAdvertsList(ctx context.Context) (foundAdverts []*models.AdvertRectangleData, err error) {
+	if foundAdverts, err = u.repo.GetFlatRectangleAdvertsList(ctx); err != nil {
+		return nil, err
+	}
+
+	return foundAdverts, nil
+}
+
+// GetHouseRectangleAdvertsList handles the rectangle house adverts getting process.
+func (u *AdvertUsecase) GetHouseRectangleAdvertsList(ctx context.Context) (foundAdverts []*models.AdvertRectangleData, err error) {
+	if foundAdverts, err = u.repo.GetHouseRectangleAdvertsList(ctx); err != nil {
+		return nil, err
+	}
+
+	return foundAdverts, nil
+}

@@ -148,3 +148,31 @@ type AdvertSquareData struct {
 	// DateCreation is the date when the advert was created.
 	DateCreation time.Time `json:"dateCreation"`
 }
+
+// AdvertRectangleData represents the structure of the JSON data for Rectangle advert.
+type AdvertRectangleData struct {
+	// ID is the unique identifier for the advert.
+	ID uuid.UUID `json:"advertId"`
+	// Title is the title of the advert.
+	Title string `json:"title"`
+	// Description is the description of the advert.
+	Description string `json:"description"`
+	// TypeAdvert represents the type of the advertisement (House/Flat).
+	TypeAdvert string `json:"typeAdvert"`
+	// Photo is the filename of the photo.
+	Photo string `json:"photo"`
+	// Phone is the phone number associated with the advert.
+	Phone string `json:"phone"`
+	// TypeSale represents the sale type of the advertisement (Sale/Rent).
+	TypeSale string `json:"typeSale"`
+	// Address is the address of the advertisement.
+	Address string `json:"adress"`
+	// Complex represents residential complex information.
+	// Complex map[string]interface{} `json:"complex"`
+	// Properties contains additional properties for houses or flats.
+	Properties map[string]interface{} `json:"properties"`
+	// Price is the price of the advertisement.
+	Price int `json:"price"`
+	// DateCreation is the date when the advert was created.
+	DateCreation time.Time `json:"dateCreation"`
+}
