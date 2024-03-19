@@ -32,3 +32,11 @@ func (r *UserRepo) GetUserById(id uuid.UUID) (*models.User, error) {
 
 	return user, nil
 }
+
+func (r *UserRepo) UpdateUserPhoto(id uuid.UUID, fileName string) (string, error) {
+	query := `UPDATE users SET photo = $1 WHERE id = $2`
+	if _, err := r.db.Query(query, fileName, id); err != nil {
+		return "", err
+	}
+	return fileName, nil
+}

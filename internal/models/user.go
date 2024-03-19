@@ -31,3 +31,12 @@ type User struct {
 	// IsDeleted is deleted user.
 	IsDeleted bool `json:"-"`
 }
+
+type UserUpdatePassword struct {
+	// ID uniquely identifies the user.
+	ID uuid.UUID `json:"id"`
+	// OldPassword ...
+	OldPassword string `json:"oldPassword"`
+	// NewPassword ...
+	NewPassword string `json:"newPassword"`
+}
