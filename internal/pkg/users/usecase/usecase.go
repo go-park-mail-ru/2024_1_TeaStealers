@@ -3,7 +3,7 @@ package usecase
 import (
 	"2024_1_TeaStealers/internal/models"
 	"2024_1_TeaStealers/internal/pkg/users"
-	"fmt"
+	"errors"
 	"github.com/satori/uuid"
 	"io"
 	"os"
@@ -44,7 +44,6 @@ func (u *UserUsecase) UpdateUserPhoto(file io.Reader, fileType string, id uuid.U
 	defer destination.Close()
 	_, err = io.Copy(destination, file)
 	if err != nil {
-		fmt.Println(err.Error())
 		return "", err
 	}
 	fileName, err := u.repo.UpdateUserPhoto(id, subDirectory+"/"+newFileName)
@@ -52,4 +51,25 @@ func (u *UserUsecase) UpdateUserPhoto(file io.Reader, fileType string, id uuid.U
 		return "", nil
 	}
 	return fileName, nil
+}
+
+func (u *UserUsecase) DeleteUserPhoto(id uuid.UUID) error {
+	if err := u.repo.DeleteUserPhoto(id); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (u *UserUsecase) UpdateUserInfo(id uuid.UUID, data *models.UserUpdateData) (*models.User, error) {
+	if data.Phone == "" {
+		return nil, errors.New("phone cannot be empty")
+	}
+	if data.Email == "" {
+		return nil, errors.New("email cannot be empty")
+	}
+	user, err := u.repo.UpdateUserInfo(id, data)
+	if err != nil {
+		return nil, errors.New("this email or phone already in use")
+	}
+	return user, nil
 }

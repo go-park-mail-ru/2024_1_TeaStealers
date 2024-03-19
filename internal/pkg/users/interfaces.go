@@ -10,9 +10,8 @@ import (
 type UserUsecase interface {
 	GetUser(uuid.UUID) (*models.User, error)
 	UpdateUserPhoto(io.Reader, string, uuid.UUID) (string, error)
-	//GetUserById(uuid.UUID) (*models.User, error)
-	//UpdateUserInfo(*models.User) (*models.User, error)
-	//DeleteUserPhoto(uuid.UUID)
+	UpdateUserInfo(uuid.UUID, *models.UserUpdateData) (*models.User, error)
+	DeleteUserPhoto(uuid.UUID) error
 	//UpdateUserPasswrd(password *models.UserUpdatePassword) error //тут менять левел юзера + генерировать новый жвт
 }
 
@@ -20,7 +19,6 @@ type UserUsecase interface {
 type UserRepo interface {
 	GetUserById(uuid.UUID) (*models.User, error)
 	UpdateUserPhoto(uuid.UUID, string) (string, error)
-	//DeleteUserInfo()
-	//UpdateUserPhoto()
-	//UpdateUserPassword()
+	DeleteUserPhoto(uuid.UUID) error
+	UpdateUserInfo(uuid.UUID, *models.UserUpdateData) (*models.User, error)
 }

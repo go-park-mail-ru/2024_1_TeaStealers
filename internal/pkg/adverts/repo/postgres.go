@@ -64,10 +64,13 @@ func (r *AdvertRepo) CreateBuilding(ctx context.Context, tx *sql.Tx, newBuilding
 
 // CheckExistsBuilding check exists building.
 func (r *AdvertRepo) CheckExistsBuilding(ctx context.Context, adress string) (*models.Building, error) {
-	var building *models.Building
-	selectResp := `SELECT id, floor, material, adress, adresspoint, yearcreation FROM buildings WHERE adress = $1`
+	query := `SELECT id FROM buildings WHERE adress = $1`
 
-	if err := r.db.QueryRowContext(ctx, selectResp, adress).Scan(building); err != nil {
+	building := &models.Building{}
+
+	res := r.db.QueryRowContext(ctx, query, adress)
+
+	if err := res.Scan(&building.ID); err != nil {
 		return nil, err
 	}
 
@@ -375,63 +378,78 @@ func (r *AdvertRepo) GetHouseRectangleAdvertsList(ctx context.Context) ([]*model
 	return rectangleAdverts, nil
 }
 
+// GetTypeAdvertById return type of advert
+func (r *AdvertRepo) GetTypeAdvertById(ctx context.Context, id uuid.UUID) (*models.AdvertTypeAdvert, error) {
+	query := `SELECT at.adverttype FROM adverts AS a JOIN adverttypes AS at ON a.adverttypeid=at.id WHERE a.id = $1`
+
+	res := r.db.QueryRowContext(ctx, query, id)
+
+	var advertType *models.AdvertTypeAdvert
+
+	if err := res.Scan(&advertType); err != nil {
+		return nil, err
+	}
+
+	return advertType, nil
+}
+
 // GetHouseAdvertById retrieves full information about house advert from the database.
 func (r *AdvertRepo) GetHouseAdvertById(ctx context.Context, id uuid.UUID) (*models.AdvertData, error) {
 	query := `
 	SELECT
-    a.id,
-    at.adverttype,
-    a.adverttypeplacement,
-    a.title,
-    a.description,
-    pc.price,
-    a.phone,
-    a.isagent,
-    b.adress,
-    b.adresspoint,
-    h.ceilingheight,
-    h.squarearea,
-    h.squarehouse,
-    h.bedroomcount,
-    h.statusarea,
-    h.cottage,
-    h.statushome,
-	b.floor,
-    b.yearcreation,
-    COALESCE(b.material, 'Brick') as material,
-    a.datecreation,
-    cx.id AS complexid,
-    c.photo AS companyphoto,
-    c.name AS companyname,
-    cx.name AS complexname
-FROM
-    adverts AS a
-JOIN
-    adverttypes AS at ON a.adverttypeid = at.id
-JOIN
-    houses AS h ON h.adverttypeid = at.id
-JOIN
-    buildings AS b ON h.buildingid = b.id
-LEFT JOIN
-    complexes AS cx ON b.complexid = cx.id
-LEFT JOIN
-    companies AS c ON cx.companyid = c.id
-LEFT JOIN
-    LATERAL (
-        SELECT *
-        FROM pricechanges AS pc
-        WHERE pc.advertid = a.id
-        ORDER BY pc.datecreation DESC
-        LIMIT 1
-    ) AS pc ON TRUE
-WHERE
-    a.id = $1;`
+        a.id,
+        at.adverttype,
+        a.adverttypeplacement,
+        a.title,
+        a.description,
+        pc.price,
+        a.phone,
+        a.isagent,
+        b.adress,
+        b.adresspoint,
+        h.ceilingheight,
+        h.squarearea,
+        h.squarehouse,
+        h.bedroomcount,
+        h.statusarea,
+        h.cottage,
+        h.statushome,
+        b.floor,
+        b.yearcreation,
+        COALESCE(b.material, 'Brick') as material,
+        a.datecreation,
+        cx.id AS complexid,
+        c.photo AS companyphoto,
+        c.name AS companyname,
+        cx.name AS complexname
+    FROM
+        adverts AS a
+    JOIN
+        adverttypes AS at ON a.adverttypeid = at.id
+    JOIN
+        houses AS h ON h.adverttypeid = at.id
+    JOIN
+        buildings AS b ON h.buildingid = b.id
+    LEFT JOIN
+        complexes AS cx ON b.complexid = cx.id
+    LEFT JOIN
+        companies AS c ON cx.companyid = c.id
+    LEFT JOIN
+        LATERAL (
+            SELECT *
+            FROM pricechanges AS pc
+            WHERE pc.advertid = a.id
+            ORDER BY pc.datecreation DESC
+            LIMIT 1
+        ) AS pc ON TRUE
+    WHERE
+        a.id = $1;`
 	res := r.db.QueryRowContext(ctx, query, id)
 
 	advertData := &models.AdvertData{}
 	var cottage bool
-	var squareHouse, squareArea float64
-	var ceilingheight, bedroomCount, floor int
+	var squareHouse, squareArea, ceilingHeight float64
+	var bedroomCount, floor int
 	var statusArea models.StatusAreaHouse
 	var statusHome models.StatusHomeHouse
 	var complexId, companyPhoto, companyName, complexName sql.NullString
@@ -447,7 +465,7 @@ WHERE
 		&advertData.IsAgent,
 		&advertData.Address,
 		&advertData.AddressPoint,
-		&ceilingheight,
+		&ceilingHeight,
 		&squareArea,
 		&squareHouse,
 		&bedroomCount,
@@ -467,13 +485,118 @@ WHERE
 	}
 
 	advertData.Properties = make(map[string]interface{})
-	advertData.Properties["ceilingHeight"] = ceilingheight
+	advertData.Properties["ceilingHeight"] = ceilingHeight
 	advertData.Properties["squareArea"] = squareArea
 	advertData.Properties["squareHouse"] = squareHouse
 	advertData.Properties["bedroomCount"] = bedroomCount
 	advertData.Properties["statusArea"] = statusArea
 	advertData.Properties["cottage"] = cottage
 	advertData.Properties["statusHome"] = statusHome
+	advertData.Properties["floor"] = floor
+
+	advertData.Complex = make(map[string]interface{})
+	advertData.Complex["complexId"] = complexId
+	advertData.Complex["companyPhoto"] = companyPhoto
+	advertData.Complex["companyName"] = companyName
+	advertData.Complex["complexName"] = complexName
+
+	return advertData, nil
+}
+
+// GetFlatAdvertById retrieves full information about flat advert from the database.
+func (r *AdvertRepo) GetFlatAdvertById(ctx context.Context, id uuid.UUID) (*models.AdvertData, error) {
+	query := `
+	SELECT
+        a.id,
+        at.adverttype,
+        a.adverttypeplacement,
+        a.title,
+        a.description,
+        pc.price,
+        a.phone,
+        a.isagent,
+        b.adress,
+        b.adresspoint,
+        f.floor,
+        f.ceilingheight,
+        f.squaregeneral,
+        f.roomcount,
+        f.squareresidential,
+        f.apartament,
+        b.floor AS floorGeneral,
+        b.yearcreation,
+        COALESCE(b.material, 'Brick') as material,
+        a.datecreation,
+        cx.id AS complexid,
+        c.photo AS companyphoto,
+        c.name AS companyname,
+        cx.name AS complexname
+    FROM
+        adverts AS a
+    JOIN
+        adverttypes AS at ON a.adverttypeid = at.id
+    JOIN
+        flats AS f ON f.adverttypeid = at.id
+    JOIN
+        buildings AS b ON f.buildingid = b.id
+    LEFT JOIN
+        complexes AS cx ON b.complexid = cx.id
+    LEFT JOIN
+        companies AS c ON cx.companyid = c.id
+    LEFT JOIN
+        LATERAL (
+            SELECT *
+            FROM pricechanges AS pc
+            WHERE pc.advertid = a.id
+            ORDER BY pc.datecreation DESC
+            LIMIT 1
+        ) AS pc ON TRUE
+    WHERE
+        a.id = $1;`
+	res := r.db.QueryRowContext(ctx, query, id)
+
+	advertData := &models.AdvertData{}
+	var floor, floorGeneral, roomCount int
+	var squareGenereal, squareResidential, ceilingHeight float64
+	var apartament sql.NullBool
+	var complexId, companyPhoto, companyName, complexName sql.NullString
+
+	if err := res.Scan(
+		&advertData.ID,
+		&advertData.TypeAdvert,
+		&advertData.TypeSale,
+		&advertData.Title,
+		&advertData.Description,
+		&advertData.Price,
+		&advertData.Phone,
+		&advertData.IsAgent,
+		&advertData.Address,
+		&advertData.AddressPoint,
+		&floor,
+		&ceilingHeight,
+		&squareGenereal,
+		&roomCount,
+		&squareResidential,
+		&apartament,
+		&floorGeneral,
+		&advertData.YearCreation,
+		&advertData.Material,
+		&advertData.DateCreation,
+		&complexId,
+		&companyPhoto,
+		&companyName,
+		&complexName,
+	); err != nil {
+		return nil, err
+	}
+
+	advertData.Properties = make(map[string]interface{})
+	advertData.Properties["ceilingHeight"] = ceilingHeight
+	advertData.Properties["apartament"] = apartament
+	advertData.Properties["squareRedinetial"] = squareResidential
+	advertData.Properties["roomCount"] = roomCount
+	advertData.Properties["squareGeneral"] = squareGenereal
+	advertData.Properties["floorGeneral"] = floorGeneral
 	advertData.Properties["floor"] = floor
 
 	advertData.Complex = make(map[string]interface{})

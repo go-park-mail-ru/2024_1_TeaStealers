@@ -1,10 +1,10 @@
 package delivery
 
 import (
+	"2024_1_TeaStealers/internal/models"
 	"2024_1_TeaStealers/internal/pkg/middleware"
 	"2024_1_TeaStealers/internal/pkg/users"
 	"2024_1_TeaStealers/internal/pkg/utils"
-	"fmt"
 	"github.com/satori/uuid"
 	"net/http"
 	"path/filepath"
@@ -28,14 +28,15 @@ func (h *UserHandler) GetCurUser(w http.ResponseWriter, r *http.Request) {
 	UUID, ok := id.(uuid.UUID)
 	if !ok {
 		utils.WriteError(w, http.StatusBadRequest, "incorrect id")
+		return
 	}
-	fmt.Println(UUID)
 	userInfo, err := h.uc.GetUser(UUID)
 	if err != nil {
 		utils.WriteError(w, http.StatusBadRequest, "user is not exists")
 	}
 	if err := utils.WriteResponse(w, http.StatusOK, userInfo); err != nil {
 		utils.WriteError(w, http.StatusInternalServerError, "error write response")
+		return
 	}
 }
 
@@ -44,6 +45,7 @@ func (h *UserHandler) UpdateUserPhoto(w http.ResponseWriter, r *http.Request) {
 	UUID, ok := id.(uuid.UUID)
 	if !ok {
 		utils.WriteError(w, http.StatusBadRequest, "incorrect id")
+		return
 	}
 	if err := r.ParseMultipartForm(5 << 20); err != nil {
 		utils.WriteError(w, http.StatusBadRequest, "max size file 5 mb")
@@ -59,16 +61,60 @@ func (h *UserHandler) UpdateUserPhoto(w http.ResponseWriter, r *http.Request) {
 
 	allowedExtensions := []string{".jpg", ".jpeg", ".png"}
 	fileType := strings.ToLower(filepath.Ext(head.Filename))
-	fmt.Println(fileType)
 	if !slices.Contains(allowedExtensions, fileType) {
 		utils.WriteError(w, http.StatusBadRequest, "jpg, jpeg, png only")
+		return
 	}
 
 	fileName, err := h.uc.UpdateUserPhoto(file, fileType, UUID)
 	if err != nil {
 		utils.WriteError(w, http.StatusBadRequest, "failed upload file")
+		return
 	}
 	if err := utils.WriteResponse(w, http.StatusOK, fileName); err != nil {
+		utils.WriteError(w, http.StatusInternalServerError, "error write response")
+		return
+	}
+}
+
+func (h *UserHandler) DeleteUserPhoto(w http.ResponseWriter, r *http.Request) {
+	id := r.Context().Value(middleware.CookieName)
+	UUID, ok := id.(uuid.UUID)
+	if !ok {
+		utils.WriteError(w, http.StatusBadRequest, "incorrect id")
+		return
+	}
+	if err := h.uc.DeleteUserPhoto(UUID); err != nil {
+		utils.WriteError(w, http.StatusBadRequest, "error delete avatar")
+		return
+	}
+	if err := utils.WriteResponse(w, http.StatusOK, "success delete avatar"); err != nil {
+		utils.WriteError(w, http.StatusInternalServerError, "error write response")
+		return
+	}
+}
+
+func (h *UserHandler) UpdateUserInfo(w http.ResponseWriter, r *http.Request) {
+	id := r.Context().Value(middleware.CookieName)
+	UUID, ok := id.(uuid.UUID)
+	if !ok {
+		utils.WriteError(w, http.StatusBadRequest, "incorrect id")
+		return
+	}
+	data := &models.UserUpdateData{}
+
+	if err := utils.ReadRequestData(r, &data); err != nil {
+		utils.WriteError(w, http.StatusBadRequest, "Incorrect data format")
+		return
+	}
+
+	user, err := h.uc.UpdateUserInfo(UUID, data)
+	if err != nil {
+		utils.WriteError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	if err := utils.WriteResponse(w, http.StatusOK, user); err != nil {
 		utils.WriteError(w, http.StatusInternalServerError, "error write response")
 	}
 }
