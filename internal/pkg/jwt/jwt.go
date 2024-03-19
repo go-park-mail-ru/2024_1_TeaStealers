@@ -14,7 +14,6 @@ import (
 // GenerateToken returns a new JWT token for the given user.
 func GenerateToken(user *models.User) (string, time.Time, error) {
 	exp := time.Now().Add(time.Hour * 24)
-	fmt.Println(user)
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"id":    user.ID,
 		"level": user.LevelUpdate,

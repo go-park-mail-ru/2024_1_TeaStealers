@@ -5,7 +5,6 @@ import (
 	"context"
 	"database/sql"
 	"errors"
-	"fmt"
 	"github.com/satori/uuid"
 )
 
@@ -74,6 +73,5 @@ func (r *AuthRepo) GetUserLevelById(id uuid.UUID) (int, error) {
 	if err := res.Scan(&level); err != nil {
 		return 0, err
 	}
-	fmt.Println(level)
 	return level, nil
 }
