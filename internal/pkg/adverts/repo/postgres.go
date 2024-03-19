@@ -124,8 +124,15 @@ func (r *AdvertRepo) GetHouseSquareAdvertsList(ctx context.Context) ([]*models.A
         INNER JOIN adverttypes AS at ON a.adverttypeid = at.id
         INNER JOIN houses AS h ON at.id = h.adverttypeid
         INNER JOIN buildings AS b ON h.buildingid = b.id
-        LEFT JOIN images AS i ON a.id = i.advertid
-        ORDER BY a.datecreation DESC;
+		JOIN images AS i ON i.advertid = a.id
+		WHERE i.priority = (
+			SELECT MIN(priority)
+			FROM images
+			WHERE advertid = a.id
+				AND isdeleted = FALSE
+			)
+			AND i.isdeleted = FALSE
+		ORDER BY a.datecreation DESC;
     `
 	rows, err := r.db.QueryContext(ctx, query)
 	if err != nil {
@@ -186,7 +193,14 @@ func (r *AdvertRepo) GetFlatSquareAdvertsList(ctx context.Context) ([]*models.Ad
         INNER JOIN adverttypes AS at ON a.adverttypeid = at.id
         INNER JOIN flats AS f ON at.id = f.adverttypeid
         INNER JOIN buildings AS b ON f.buildingid = b.id
-        LEFT JOIN images AS i ON a.id = i.advertid
+        JOIN images AS i ON i.advertid = a.id
+		WHERE i.priority = (
+			SELECT MIN(priority)
+			FROM images
+			WHERE advertid = a.id
+				AND isdeleted = FALSE
+			)
+			AND i.isdeleted = FALSE
         ORDER BY a.datecreation DESC;
     `
 	rows, err := r.db.QueryContext(ctx, query)
@@ -249,7 +263,14 @@ func (r *AdvertRepo) GetFlatRectangleAdvertsList(ctx context.Context) ([]*models
         INNER JOIN adverttypes AS at ON a.adverttypeid = at.id
         INNER JOIN flats AS f ON at.id = f.adverttypeid
         INNER JOIN buildings AS b ON f.buildingid = b.id
-        LEFT JOIN images AS i ON a.id = i.advertid
+        JOIN images AS i ON i.advertid = a.id
+		WHERE i.priority = (
+			SELECT MIN(priority)
+			FROM images
+			WHERE advertid = a.id
+				AND isdeleted = FALSE
+			)
+			AND i.isdeleted = FALSE
         ORDER BY a.datecreation DESC;
     `
 	rows, err := r.db.QueryContext(ctx, query)
@@ -328,7 +349,14 @@ func (r *AdvertRepo) GetHouseRectangleAdvertsList(ctx context.Context) ([]*model
         INNER JOIN adverttypes AS at ON a.adverttypeid = at.id
         INNER JOIN houses AS h ON at.id = h.adverttypeid
         INNER JOIN buildings AS b ON h.buildingid = b.id
-        LEFT JOIN images AS i ON a.id = i.advertid
+        JOIN images AS i ON i.advertid = a.id
+		WHERE i.priority = (
+			SELECT MIN(priority)
+			FROM images
+			WHERE advertid = a.id
+				AND isdeleted = FALSE
+			)
+			AND i.isdeleted = FALSE
         ORDER BY a.datecreation DESC;
     `
 	rows, err := r.db.QueryContext(ctx, query)
@@ -606,4 +634,117 @@ func (r *AdvertRepo) GetFlatAdvertById(ctx context.Context, id uuid.UUID) (*mode
 	advertData.Complex["complexName"] = complexName
 
 	return advertData, nil
+}
+
+// GetSquareAdverts retrieves square adverts from the database.
+func (r *AdvertRepo) GetSquareAdverts(ctx context.Context, pageSize, offset int) ([]*models.AdvertSquareData, error) {
+	query := `
+	SELECT
+    a.id,
+    at.adverttype,
+    a.adverttypeplacement,
+	i.photo,
+    pc.price,
+    a.datecreation
+FROM
+    adverts AS a
+    JOIN adverttypes AS at ON a.adverttypeid = at.id
+    LEFT JOIN LATERAL (
+        SELECT *
+        FROM pricechanges AS pc
+        WHERE pc.advertid = a.id
+        ORDER BY pc.datecreation DESC
+        LIMIT 1
+    ) AS pc ON TRUE
+	JOIN images AS i ON i.advertid = a.id
+	WHERE i.priority = (
+		SELECT MIN(priority)
+		FROM images
+		WHERE advertid = a.id
+			AND isdeleted = FALSE
+		)
+		AND i.isdeleted = FALSE
+	ORDER BY
+    a.datecreation DESC
+LIMIT $1
+OFFSET $2;`
+	queryFlat := `
+	SELECT 
+	f.squaregeneral,
+	 f.floor,
+ b.adress,
+	 b.floor AS floorgeneral,
+	 f.roomcount
+ FROM
+	 adverts AS a
+	 JOIN adverttypes AS at ON a.adverttypeid = at.id
+	 JOIN flats AS f ON f.adverttypeid=at.id
+ JOIN buildings AS b ON f.buildingid=b.id
+ WHERE a.id=$1
+ ORDER BY
+	 a.datecreation DESC;`
+	queryHouse := `
+	SELECT 
+        b.adress,
+        h.cottage,
+        h.squarehouse,
+        h.squarearea,
+        h.bedroomcount,
+        b.floor
+ FROM
+         adverts AS a
+         JOIN adverttypes AS at ON a.adverttypeid = at.id
+         JOIN houses AS h ON h.adverttypeid=at.id
+ JOIN buildings AS b ON h.buildingid=b.id
+ WHERE a.id=$1
+ ORDER BY
+         a.datecreation DESC;`
+	rows, err := r.db.Query(query, pageSize, offset)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	squareAdverts := []*models.AdvertSquareData{}
+	for rows.Next() {
+		squareAdvert := &models.AdvertSquareData{}
+		err := rows.Scan(&squareAdvert.ID, &squareAdvert.TypeAdvert, &squareAdvert.TypeSale, &squareAdvert.Photo, &squareAdvert.Price, &squareAdvert.DateCreation)
+		if err != nil {
+			return nil, err
+		}
+		squareAdvert.Properties = make(map[string]interface{})
+		switch squareAdvert.TypeAdvert {
+		case string(models.AdvertTypeFlat):
+			var squareGeneral float64
+			var floor, floorGeneral, roomCount int
+			row := r.db.QueryRowContext(ctx, queryFlat, squareAdvert.ID)
+			if err := row.Scan(&squareGeneral, &floor, &squareAdvert.Address, &floorGeneral, &roomCount); err != nil {
+				return nil, err
+			}
+			squareAdvert.Properties["floor"] = floor
+			squareAdvert.Properties["floorGeneral"] = floorGeneral
+			squareAdvert.Properties["squareGeneral"] = squareGeneral
+			squareAdvert.Properties["roomCount"] = roomCount
+		case string(models.AdvertTypeHouse):
+			var cottage bool
+			var squareHouse, squareArea float64
+			var bedroomCount, floor int
+			row := r.db.QueryRowContext(ctx, queryHouse, squareAdvert.ID)
+			if err := row.Scan(&squareAdvert.Address, &cottage, &squareHouse, &squareArea, &bedroomCount, &floor); err != nil {
+				return nil, err
+			}
+			squareAdvert.Properties["cottage"] = cottage
+			squareAdvert.Properties["squareHouse"] = squareHouse
+			squareAdvert.Properties["squareArea"] = squareArea
+			squareAdvert.Properties["bedroomCount"] = bedroomCount
+			squareAdvert.Properties["floor"] = floor
+		}
+
+		squareAdverts = append(squareAdverts, squareAdvert)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return squareAdverts, nil
 }

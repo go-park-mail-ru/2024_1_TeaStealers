@@ -237,3 +237,12 @@ func (u *AdvertUsecase) GetAdvertById(ctx context.Context, id uuid.UUID) (foundA
 
 	return foundAdvert, nil
 }
+
+// GetSquareAdvertsList handles the square adverts getting process with paggination.
+func (u *AdvertUsecase) GetSquareAdvertsList(ctx context.Context, pageSize, offset int) (foundAdverts []*models.AdvertSquareData, err error) {
+	if foundAdverts, err = u.repo.GetSquareAdverts(ctx, pageSize, offset); err != nil {
+		return nil, err
+	}
+
+	return foundAdverts, nil
+}

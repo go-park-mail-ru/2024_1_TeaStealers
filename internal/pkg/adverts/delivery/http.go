@@ -5,6 +5,7 @@ import (
 	"2024_1_TeaStealers/internal/pkg/adverts"
 	"2024_1_TeaStealers/internal/pkg/utils"
 	"net/http"
+	"strconv"
 
 	"github.com/gorilla/mux"
 	"github.com/satori/uuid"
@@ -133,6 +134,34 @@ func (h *AdvertHandler) GetAdvertById(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err = utils.WriteResponse(w, http.StatusOK, advertData); err != nil {
+		utils.WriteError(w, http.StatusInternalServerError, err.Error())
+	}
+}
+
+// GetSquareAdvertsList handles the request for retrieving a square adverts.
+func (h *AdvertHandler) GetSquareAdvertsList(w http.ResponseWriter, r *http.Request) {
+	pageStr := r.URL.Query().Get("page")
+	sizeStr := r.URL.Query().Get("size")
+
+	// Преобразуем параметры в числа
+	page, err := strconv.Atoi(pageStr)
+	if err != nil {
+		page = 1
+	}
+	size, err := strconv.Atoi(sizeStr)
+	if err != nil {
+		size = 10
+	}
+
+	offset := (page - 1) * size
+
+	adverts, err := h.uc.GetSquareAdvertsList(r.Context(), size, offset)
+	if err != nil {
+		utils.WriteError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	if err = utils.WriteResponse(w, http.StatusOK, adverts); err != nil {
 		utils.WriteError(w, http.StatusInternalServerError, err.Error())
 	}
 }
