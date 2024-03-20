@@ -84,6 +84,8 @@ func main() {
 	advert.HandleFunc("/{id}", advertHandler.GetAdvertById).Methods(http.MethodGet, http.MethodOptions)
 	advert.HandleFunc("/houses", advertHandler.CreateHouseAdvert).Methods(http.MethodPost, http.MethodOptions)
 	advert.HandleFunc("/flats", advertHandler.CreateFlatAdvert).Methods(http.MethodPost, http.MethodOptions)
+	advert.HandleFunc("/squarelist/", advertHandler.GetSquareAdvertsList).Methods(http.MethodGet, http.MethodOptions)
+	advert.HandleFunc("/rectanglelist/", advertHandler.GetRectangeAdvertsList).Methods(http.MethodGet, http.MethodOptions)
 	advert.HandleFunc("/houses/squarelist/", advertHandler.GetHouseSquareAdvertsList).Methods(http.MethodGet, http.MethodOptions)
 	advert.HandleFunc("/flats/squarelist/", advertHandler.GetFlatSquareAdvertsList).Methods(http.MethodGet, http.MethodOptions)
 	advert.HandleFunc("/flats/rectanglelist/", advertHandler.GetFlatRectangleAdvertsList).Methods(http.MethodGet, http.MethodOptions)
@@ -101,6 +103,7 @@ func main() {
 	user.Handle("/avatar", middleware.JwtMiddleware(http.HandlerFunc(userHandler.UpdateUserPhoto), authRepo)).Methods(http.MethodPost, http.MethodOptions)
 	user.Handle("/avatar", middleware.JwtMiddleware(http.HandlerFunc(userHandler.DeleteUserPhoto), authRepo)).Methods(http.MethodDelete, http.MethodOptions)
 	user.Handle("/info", middleware.JwtMiddleware(http.HandlerFunc(userHandler.UpdateUserInfo), authRepo)).Methods(http.MethodPost, http.MethodOptions)
+	user.Handle("/password", middleware.JwtMiddleware(http.HandlerFunc(userHandler.UpdateUserPassword), authRepo)).Methods(http.MethodPost, http.MethodOptions)
 
 	srv := &http.Server{
 		Addr:              ":8080",

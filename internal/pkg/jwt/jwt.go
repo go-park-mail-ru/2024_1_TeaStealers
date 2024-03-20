@@ -4,6 +4,7 @@ import (
 	"2024_1_TeaStealers/internal/models"
 	"errors"
 	"fmt"
+	"net/http"
 	"os"
 	"time"
 
@@ -56,4 +57,15 @@ func ParseClaims(claims *jwt.Token) (uuid.UUID, int, error) {
 	}
 
 	return id, int(levelStr), nil
+}
+
+// TokenCookie creates a new cookie for storing the authentication token.
+func TokenCookie(name, token string, exp time.Time) *http.Cookie {
+	return &http.Cookie{
+		Name:     name,
+		Value:    token,
+		Expires:  exp,
+		Path:     "/",
+		HttpOnly: true,
+	}
 }

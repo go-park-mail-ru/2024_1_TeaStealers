@@ -3,6 +3,7 @@ package repo
 import (
 	"2024_1_TeaStealers/internal/models"
 	"database/sql"
+	"errors"
 	"github.com/satori/uuid"
 )
 
@@ -68,3 +69,32 @@ func (r *UserRepo) UpdateUserInfo(id uuid.UUID, data *models.UserUpdateData) (*m
 	user.Phone = photo.String
 	return user, nil
 }
+
+func (r *UserRepo) UpdateUserPassword(id uuid.UUID, newPasswordHash string) (int, error) {
+	query := `UPDATE users SET passwordhash=$1, levelupdate = levelupdate+1 WHERE id = $2`
+	if _, err := r.db.Query(query, newPasswordHash, id); err != nil {
+		return 0, err
+	}
+	querySelect := `SELECT levelupdate FROM users WHERE id = $1`
+	level := 0
+	res := r.db.QueryRow(querySelect, id)
+	if err := res.Scan(&level); err != nil {
+		return 0, err
+	}
+	return level, nil
+}
+
+func (r *UserRepo) CheckUserPassword(id uuid.UUID, passwordHash string) error {
+	passwordHashCur := ""
+	querySelect := `SELECT passwordhash FROM users WHERE id = $1`
+	res := r.db.QueryRow(querySelect, id)
+	if err := res.Scan(&passwordHashCur); err != nil {
+		return err
+	}
+	if passwordHashCur != passwordHash {
+		return errors.New("passwords don't match")
+	}
+	return nil
+}
+
+// ToDo: отдавать нового юзера, в юзкейсе генерировать новый жвт с новым уровнем, поменять функции
