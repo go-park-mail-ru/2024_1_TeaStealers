@@ -4,6 +4,7 @@ import (
 	"2024_1_TeaStealers/internal/models"
 	"context"
 	"database/sql"
+	"fmt"
 
 	"github.com/satori/uuid"
 )
@@ -747,4 +748,165 @@ OFFSET $2;`
 	}
 
 	return squareAdverts, nil
+}
+
+// GetRectangleAdverts retrieves rectangle adverts from the database with search.
+func (r *AdvertRepo) GetRectangleAdverts(ctx context.Context, advertFilter models.AdvertFilter) (*models.AdvertDataPage, error) {
+	query := `
+	SELECT
+    a.id,
+    a.title,
+    a.description,
+    at.adverttype,
+    CASE
+        WHEN at.adverttype = 'Flat' THEN f.roomcount
+        WHEN at.adverttype = 'House' THEN h.bedroomcount
+        ELSE NULL
+    END AS rcount,
+    a.phone,
+    a.adverttypeplacement,
+    b.adress,
+    pc.price,
+    i.photo,
+    a.datecreation
+FROM
+    adverts AS a
+JOIN
+    adverttypes AS at ON a.adverttypeid = at.id
+LEFT JOIN
+    flats AS f ON f.adverttypeid = at.id
+LEFT JOIN
+    houses AS h ON h.adverttypeid = at.id
+LEFT JOIN
+    buildings AS b ON (f.buildingid = b.id OR h.buildingid = b.id)
+LEFT JOIN LATERAL (
+    SELECT *
+    FROM pricechanges AS pc
+    WHERE pc.advertid = a.id
+    ORDER BY pc.datecreation DESC
+    LIMIT 1
+) AS pc ON TRUE
+JOIN images AS i ON i.advertid = a.id
+ WHERE i.priority = (
+	SELECT MIN(priority)
+	FROM images
+	WHERE advertid = a.id
+		AND isdeleted = FALSE
+)
+AND i.isdeleted = FALSE AND pc.price>=$1 AND pc.price<=$2 AND b.adress ILIKE $3 `
+	queryFlat := `
+	SELECT 
+	f.squaregeneral,
+	 f.floor,
+ b.adress,
+	 b.floor AS floorgeneral
+ FROM
+	 adverts AS a
+	 JOIN adverttypes AS at ON a.adverttypeid = at.id
+	 JOIN flats AS f ON f.adverttypeid=at.id
+ JOIN buildings AS b ON f.buildingid=b.id
+ WHERE a.id=$1
+ ORDER BY
+	 a.datecreation DESC;`
+	queryHouse := `
+	SELECT 
+        b.adress,
+        h.cottage,
+        h.squarehouse,
+        h.squarearea,
+        b.floor
+ FROM
+         adverts AS a
+         JOIN adverttypes AS at ON a.adverttypeid = at.id
+         JOIN houses AS h ON h.adverttypeid=at.id
+ JOIN buildings AS b ON h.buildingid=b.id
+ WHERE a.id=$1
+ ORDER BY
+         a.datecreation DESC;`
+
+	pageInfo := &models.PageInfo{}
+	var args []interface{}
+	i := 4
+	advertFilter.Address = "%" + advertFilter.Address + "%"
+	if advertFilter.AdvertType != "" {
+		query += "AND at.adverttype=$" + fmt.Sprint(i) + " "
+		args = append(args, advertFilter.AdvertType)
+		i++
+	}
+
+	if advertFilter.DealType != "" {
+		query += "AND a.adverttypeplacement=$" + fmt.Sprint(i) + " "
+		args = append(args, advertFilter.DealType)
+		i++
+	}
+	if advertFilter.RoomCount != 0 {
+		query = "SELECT * FROM (" + query + ") AS bobik WHERE rcount=$" + fmt.Sprint(i) + " "
+		args = append(args, advertFilter.RoomCount)
+		i++
+	}
+	queryCount := "SELECT COUNT(*) FROM (" + query + ") AS bibik;"
+	query += "ORDER BY datecreation DESC LIMIT $" + fmt.Sprint(i) + "OFFSET $" + fmt.Sprint(i+1) + ";"
+	rowCountQuery := r.db.QueryRowContext(ctx, queryCount, append([]interface{}{advertFilter.MinPrice, advertFilter.MaxPrice, advertFilter.Address}, args...)...)
+
+	if err := rowCountQuery.Scan(&pageInfo.TotalElements); err != nil {
+		return nil, err
+	}
+
+	args = append(args, advertFilter.Page, advertFilter.Offset)
+	rows, err := r.db.Query(query, append([]interface{}{advertFilter.MinPrice, advertFilter.MaxPrice, advertFilter.Address}, args...)...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	rectangleAdverts := []*models.AdvertRectangleData{}
+	for rows.Next() {
+		var roomCount int
+		rectangleAdvert := &models.AdvertRectangleData{}
+		err := rows.Scan(&rectangleAdvert.ID, &rectangleAdvert.Title, &rectangleAdvert.Description, &rectangleAdvert.TypeAdvert, &roomCount, &rectangleAdvert.Phone, &rectangleAdvert.TypeSale, &rectangleAdvert.Address, &rectangleAdvert.Price, &rectangleAdvert.Photo, &rectangleAdvert.DateCreation)
+		if err != nil {
+			return nil, err
+		}
+		rectangleAdvert.Properties = make(map[string]interface{})
+		switch rectangleAdvert.TypeAdvert {
+		case string(models.AdvertTypeFlat):
+			var squareGeneral float64
+			var floor, floorGeneral int
+			row := r.db.QueryRowContext(ctx, queryFlat, rectangleAdvert.ID)
+			if err := row.Scan(&squareGeneral, &floor, &rectangleAdvert.Address, &floorGeneral); err != nil {
+				return nil, err
+			}
+			rectangleAdvert.Properties["floor"] = floor
+			rectangleAdvert.Properties["floorGeneral"] = floorGeneral
+			rectangleAdvert.Properties["squareGeneral"] = squareGeneral
+			rectangleAdvert.Properties["roomCount"] = roomCount
+		case string(models.AdvertTypeHouse):
+			var cottage bool
+			var squareHouse, squareArea float64
+			var floor int
+			row := r.db.QueryRowContext(ctx, queryHouse, rectangleAdvert.ID)
+			if err := row.Scan(&rectangleAdvert.Address, &cottage, &squareHouse, &squareArea, &floor); err != nil {
+				return nil, err
+			}
+			rectangleAdvert.Properties["cottage"] = cottage
+			rectangleAdvert.Properties["squareHouse"] = squareHouse
+			rectangleAdvert.Properties["squareArea"] = squareArea
+			rectangleAdvert.Properties["bedroomCount"] = roomCount
+			rectangleAdvert.Properties["floor"] = floor
+		}
+
+		rectangleAdverts = append(rectangleAdverts, rectangleAdvert)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	pageInfo.PageSize = advertFilter.Page
+	pageInfo.TotalPages = pageInfo.TotalElements / pageInfo.PageSize
+	if pageInfo.TotalElements%pageInfo.PageSize != 0 {
+		pageInfo.TotalPages++
+	}
+	pageInfo.CurrentPage = (advertFilter.Offset / pageInfo.PageSize) + 1
+
+	return &models.AdvertDataPage{rectangleAdverts, pageInfo}, nil
 }

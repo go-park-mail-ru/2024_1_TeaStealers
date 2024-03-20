@@ -212,3 +212,34 @@ type AdvertData struct {
 	// DateCreation is the date when the advert was created.
 	DateCreation time.Time `json:"dateCreation"`
 }
+
+type AdvertFilter struct {
+	// MinPrice is the minimal price of the search advertisement.
+	MinPrice int64 `json:"minPrice"`
+	// MaxPrice is the maximum price of the search advertisement.
+	MaxPrice int64 `json:"maxPrice"`
+	// Offset is the offset search advertisement.
+	Offset int `json:"offset"`
+	// Page ...
+	Page int `json:"page"`
+	// RoomCount is the how many rooms need in advert
+	RoomCount int `json:"roomCount"`
+	// AdvertType represents the type of the search advertisement (House/Flat).
+	AdvertType string `json:"advertType"`
+	// DealType represents the deal type of the search advertisement (Sale/Rent).
+	DealType string `json:"dealType"`
+	// Address is the address of the search advertisement.
+	Address string `json:"adress"`
+}
+
+type PageInfo struct {
+	TotalElements int `json:"totalElements"`
+	TotalPages    int `json:"totalPages"`
+	CurrentPage   int `json:"currentPage"`
+	PageSize      int `json:"pageSize"`
+}
+
+type AdvertDataPage struct {
+	Adverts  []*AdvertRectangleData `json:"adverts"`
+	PageInfo *PageInfo              `json:"pageInfo"`
+}

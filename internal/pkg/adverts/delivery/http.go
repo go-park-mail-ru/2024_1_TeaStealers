@@ -143,7 +143,6 @@ func (h *AdvertHandler) GetSquareAdvertsList(w http.ResponseWriter, r *http.Requ
 	pageStr := r.URL.Query().Get("page")
 	sizeStr := r.URL.Query().Get("size")
 
-	// Преобразуем параметры в числа
 	page, err := strconv.Atoi(pageStr)
 	if err != nil {
 		page = 1
@@ -152,10 +151,79 @@ func (h *AdvertHandler) GetSquareAdvertsList(w http.ResponseWriter, r *http.Requ
 	if err != nil {
 		size = 10
 	}
+	err = nil
 
 	offset := (page - 1) * size
 
 	adverts, err := h.uc.GetSquareAdvertsList(r.Context(), size, offset)
+	if err != nil {
+		utils.WriteError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	if err = utils.WriteResponse(w, http.StatusOK, adverts); err != nil {
+		utils.WriteError(w, http.StatusInternalServerError, err.Error())
+	}
+}
+
+// GetRectangeAdvertsList handles the request for retrieving a rectangle adverts with search.
+func (h *AdvertHandler) GetRectangeAdvertsList(w http.ResponseWriter, r *http.Request) {
+	pageStr := r.URL.Query().Get("page")
+	sizeStr := r.URL.Query().Get("size")
+	advertType := r.URL.Query().Get("adverttype") // House/Advert
+	minPriceStr := r.URL.Query().Get("minprice")
+	maxPriceStr := r.URL.Query().Get("maxprice")
+	dealType := r.URL.Query().Get("dealtype") // Sale/Rent
+	roomCountStr := r.URL.Query().Get("roomcount")
+	adress := r.URL.Query().Get("adress")
+
+	page, err := strconv.Atoi(pageStr)
+	if err != nil {
+		page = 1000000
+		err = nil
+	}
+
+	size, err := strconv.Atoi(sizeStr)
+	if err != nil {
+		size = 0
+		err = nil
+	}
+	roomCount, err := strconv.Atoi(roomCountStr)
+	if err != nil {
+		roomCount = 0
+		err = nil
+	}
+	minPrice, err := strconv.ParseInt(minPriceStr, 10, 64)
+	if err != nil {
+		minPrice = 0
+		err = nil
+	}
+	maxPrice, err := strconv.ParseInt(maxPriceStr, 10, 64)
+	if err != nil {
+		maxPrice = 1000000000
+		err = nil
+	}
+
+	if advertType != "House" && advertType != "Flat" {
+		advertType = ""
+	}
+
+	if dealType != "Sale" && dealType != "Rent" {
+		dealType = ""
+	}
+
+	offset := (page - 1) * size
+
+	adverts, err := h.uc.GetRectangleAdvertsList(r.Context(), models.AdvertFilter{
+		MinPrice:   minPrice,
+		MaxPrice:   maxPrice,
+		Page:       page,
+		Offset:     offset,
+		RoomCount:  roomCount,
+		Address:    adress,
+		DealType:   dealType,
+		AdvertType: advertType,
+	})
 	if err != nil {
 		utils.WriteError(w, http.StatusInternalServerError, err.Error())
 		return
