@@ -3,11 +3,11 @@ package delivery
 import (
 	"2024_1_TeaStealers/internal/models"
 	"2024_1_TeaStealers/internal/pkg/auth"
+	"2024_1_TeaStealers/internal/pkg/jwt"
 	"2024_1_TeaStealers/internal/pkg/middleware"
 	"2024_1_TeaStealers/internal/pkg/utils"
 	"errors"
 	"net/http"
-	"time"
 )
 
 // AuthHandler handles HTTP requests for user authentication.
@@ -45,7 +45,7 @@ func (h *AuthHandler) SignUp(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	http.SetCookie(w, tokenCookie(middleware.CookieName, token, exp))
+	http.SetCookie(w, jwt.TokenCookie(middleware.CookieName, token, exp))
 
 	if err = utils.WriteResponse(w, http.StatusCreated, newUser); err != nil {
 		utils.WriteError(w, http.StatusInternalServerError, err.Error())
@@ -75,7 +75,7 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	http.SetCookie(w, tokenCookie(middleware.CookieName, token, exp))
+	http.SetCookie(w, jwt.TokenCookie(middleware.CookieName, token, exp))
 
 	if err := utils.WriteResponse(w, http.StatusOK, user); err != nil {
 		utils.WriteError(w, http.StatusInternalServerError, err.Error())
@@ -116,16 +116,5 @@ func (h *AuthHandler) CheckAuth(w http.ResponseWriter, r *http.Request) {
 	}
 	if err = utils.WriteResponse(w, http.StatusOK, id); err != nil {
 		utils.WriteError(w, http.StatusInternalServerError, err.Error())
-	}
-}
-
-// tokenCookie creates a new cookie for storing the authentication token.
-func tokenCookie(name, token string, exp time.Time) *http.Cookie {
-	return &http.Cookie{
-		Name:     name,
-		Value:    token,
-		Expires:  exp,
-		Path:     "/",
-		HttpOnly: true,
 	}
 }

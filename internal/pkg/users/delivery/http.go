@@ -2,6 +2,7 @@ package delivery
 
 import (
 	"2024_1_TeaStealers/internal/models"
+	"2024_1_TeaStealers/internal/pkg/jwt"
 	"2024_1_TeaStealers/internal/pkg/middleware"
 	"2024_1_TeaStealers/internal/pkg/users"
 	"2024_1_TeaStealers/internal/pkg/utils"
@@ -95,8 +96,7 @@ func (h *UserHandler) DeleteUserPhoto(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *UserHandler) UpdateUserInfo(w http.ResponseWriter, r *http.Request) {
-	id := r.Context().Value(middleware.CookieName)
-	UUID, ok := id.(uuid.UUID)
+	id, ok := r.Context().Value(middleware.CookieName).(uuid.UUID)
 	if !ok {
 		utils.WriteError(w, http.StatusBadRequest, "incorrect id")
 		return
@@ -108,13 +108,41 @@ func (h *UserHandler) UpdateUserInfo(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user, err := h.uc.UpdateUserInfo(UUID, data)
+	user, err := h.uc.UpdateUserInfo(id, data)
 	if err != nil {
 		utils.WriteError(w, http.StatusBadRequest, err.Error())
 		return
 	}
 
 	if err := utils.WriteResponse(w, http.StatusOK, user); err != nil {
+		utils.WriteError(w, http.StatusInternalServerError, "error write response")
+	}
+}
+
+func (h *UserHandler) UpdateUserPassword(w http.ResponseWriter, r *http.Request) {
+	id := r.Context().Value(middleware.CookieName)
+	UUID, ok := id.(uuid.UUID)
+	if !ok {
+		utils.WriteError(w, http.StatusBadRequest, "incorrect id")
+		return
+	}
+	data := &models.UserUpdatePassword{
+		ID: UUID,
+	}
+
+	if err := utils.ReadRequestData(r, &data); err != nil {
+		utils.WriteError(w, http.StatusBadRequest, "Incorrect data format")
+		return
+	}
+
+	token, exp, err := h.uc.UpdateUserPassword(data)
+	if err != nil {
+		utils.WriteError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	http.SetCookie(w, jwt.TokenCookie(middleware.CookieName, token, exp))
+
+	if err := utils.WriteResponse(w, http.StatusOK, "success update password"); err != nil {
 		utils.WriteError(w, http.StatusInternalServerError, "error write response")
 	}
 }

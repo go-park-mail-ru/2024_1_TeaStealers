@@ -1,7 +1,11 @@
 package utils
 
 import (
+	"2024_1_TeaStealers/internal/pkg/middleware"
+	"crypto/sha1"
+	"encoding/hex"
 	"encoding/json"
+	"github.com/satori/uuid"
 	"io"
 	"net/http"
 )
@@ -56,4 +60,20 @@ func ReadRequestData(r *http.Request, request interface{}) error {
 		return err
 	}
 	return nil
+}
+
+// GenerateHashString generate hash string
+func GenerateHashString(s string) string {
+	h := sha1.New()
+	h.Write([]byte(s))
+	return hex.EncodeToString(h.Sum(nil))
+}
+
+func GetIdUserByRequest(r *http.Request) uuid.UUID {
+	id := r.Context().Value(middleware.CookieName)
+	UUID, ok := id.(uuid.UUID)
+	if !ok {
+		return uuid.Nil
+	}
+	return UUID
 }
