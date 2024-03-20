@@ -103,6 +103,7 @@ func main() {
 	user.Handle("/avatar", middleware.JwtMiddleware(http.HandlerFunc(userHandler.UpdateUserPhoto), authRepo)).Methods(http.MethodPost, http.MethodOptions)
 	user.Handle("/avatar", middleware.JwtMiddleware(http.HandlerFunc(userHandler.DeleteUserPhoto), authRepo)).Methods(http.MethodDelete, http.MethodOptions)
 	user.Handle("/info", middleware.JwtMiddleware(http.HandlerFunc(userHandler.UpdateUserInfo), authRepo)).Methods(http.MethodPost, http.MethodOptions)
+	user.Handle("/myadverts", middleware.JwtMiddleware(http.HandlerFunc(advertHandler.GetUserAdverts), authRepo)).Methods(http.MethodGet, http.MethodOptions)
 
 	srv := &http.Server{
 		Addr:              ":8080",

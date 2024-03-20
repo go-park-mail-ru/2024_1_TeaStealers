@@ -910,3 +910,128 @@ AND i.isdeleted = FALSE AND pc.price>=$1 AND pc.price<=$2 AND b.adress ILIKE $3 
 
 	return &models.AdvertDataPage{rectangleAdverts, pageInfo}, nil
 }
+
+// GetRectangleAdvertsByUserId retrieves rectangle adverts from the database by user id.
+func (r *AdvertRepo) GetRectangleAdvertsByUserId(ctx context.Context, pageSize, offset int, userId uuid.UUID) ([]*models.AdvertRectangleData, error) {
+	query := `
+	SELECT
+    a.id,
+    a.title,
+    a.description,
+    at.adverttype,
+    CASE
+        WHEN at.adverttype = 'Flat' THEN f.roomcount
+        WHEN at.adverttype = 'House' THEN h.bedroomcount
+        ELSE NULL
+    END AS rcount,
+    a.phone,
+    a.adverttypeplacement,
+    b.adress,
+    pc.price,
+    i.photo,
+    a.datecreation
+FROM
+    adverts AS a
+JOIN
+    adverttypes AS at ON a.adverttypeid = at.id
+LEFT JOIN
+    flats AS f ON f.adverttypeid = at.id
+LEFT JOIN
+    houses AS h ON h.adverttypeid = at.id
+LEFT JOIN
+    buildings AS b ON (f.buildingid = b.id OR h.buildingid = b.id)
+LEFT JOIN LATERAL (
+    SELECT *
+    FROM pricechanges AS pc
+    WHERE pc.advertid = a.id
+    ORDER BY pc.datecreation DESC
+    LIMIT 1
+) AS pc ON TRUE
+JOIN images AS i ON i.advertid = a.id
+ WHERE i.priority = (
+	SELECT MIN(priority)
+	FROM images
+	WHERE advertid = a.id
+		AND isdeleted = FALSE
+)
+AND i.isdeleted = FALSE AND userid=$1 ORDER BY datecreation DESC LIMIT $2 OFFSET $3;`
+	queryFlat := `
+	SELECT 
+	f.squaregeneral,
+	 f.floor,
+ b.adress,
+	 b.floor AS floorgeneral
+ FROM
+	 adverts AS a
+	 JOIN adverttypes AS at ON a.adverttypeid = at.id
+	 JOIN flats AS f ON f.adverttypeid=at.id
+ JOIN buildings AS b ON f.buildingid=b.id
+ WHERE a.id=$1
+ ORDER BY
+	 a.datecreation DESC;`
+	queryHouse := `
+	SELECT 
+        b.adress,
+        h.cottage,
+        h.squarehouse,
+        h.squarearea,
+        b.floor
+ FROM
+         adverts AS a
+         JOIN adverttypes AS at ON a.adverttypeid = at.id
+         JOIN houses AS h ON h.adverttypeid=at.id
+ JOIN buildings AS b ON h.buildingid=b.id
+ WHERE a.id=$1
+ ORDER BY
+         a.datecreation DESC;`
+
+	rows, err := r.db.Query(query, userId, pageSize, offset)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	rectangleAdverts := []*models.AdvertRectangleData{}
+	for rows.Next() {
+		var roomCount int
+		rectangleAdvert := &models.AdvertRectangleData{}
+		err := rows.Scan(&rectangleAdvert.ID, &rectangleAdvert.Title, &rectangleAdvert.Description, &rectangleAdvert.TypeAdvert, &roomCount, &rectangleAdvert.Phone, &rectangleAdvert.TypeSale, &rectangleAdvert.Address, &rectangleAdvert.Price, &rectangleAdvert.Photo, &rectangleAdvert.DateCreation)
+		if err != nil {
+			return nil, err
+		}
+		rectangleAdvert.Properties = make(map[string]interface{})
+		switch rectangleAdvert.TypeAdvert {
+		case string(models.AdvertTypeFlat):
+			var squareGeneral float64
+			var floor, floorGeneral int
+			row := r.db.QueryRowContext(ctx, queryFlat, rectangleAdvert.ID)
+			if err := row.Scan(&squareGeneral, &floor, &rectangleAdvert.Address, &floorGeneral); err != nil {
+				return nil, err
+			}
+			rectangleAdvert.Properties["floor"] = floor
+			rectangleAdvert.Properties["floorGeneral"] = floorGeneral
+			rectangleAdvert.Properties["squareGeneral"] = squareGeneral
+			rectangleAdvert.Properties["roomCount"] = roomCount
+		case string(models.AdvertTypeHouse):
+			var cottage bool
+			var squareHouse, squareArea float64
+			var floor int
+			row := r.db.QueryRowContext(ctx, queryHouse, rectangleAdvert.ID)
+			if err := row.Scan(&rectangleAdvert.Address, &cottage, &squareHouse, &squareArea, &floor); err != nil {
+				return nil, err
+			}
+			rectangleAdvert.Properties["cottage"] = cottage
+			rectangleAdvert.Properties["squareHouse"] = squareHouse
+			rectangleAdvert.Properties["squareArea"] = squareArea
+			rectangleAdvert.Properties["bedroomCount"] = roomCount
+			rectangleAdvert.Properties["floor"] = floor
+		}
+
+		rectangleAdverts = append(rectangleAdverts, rectangleAdvert)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return rectangleAdverts, nil
+}

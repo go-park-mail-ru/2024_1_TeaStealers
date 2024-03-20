@@ -19,6 +19,7 @@ type AdvertUsecase interface {
 	GetAdvertById(ctx context.Context, id uuid.UUID) (foundAdvert *models.AdvertData, err error)
 	GetSquareAdvertsList(ctx context.Context, pageSize, offset int) (foundAdverts []*models.AdvertSquareData, err error)
 	GetRectangleAdvertsList(ctx context.Context, advertFilter models.AdvertFilter) (foundAdverts *models.AdvertDataPage, err error)
+	GetRectangleAdvertsByUserId(ctx context.Context, pageSize, offset int, userid uuid.UUID) (foundAdverts []*models.AdvertRectangleData, err error)
 }
 
 // AdvertRepo represents the repository interface for adverts.
@@ -40,4 +41,5 @@ type AdvertRepo interface {
 	GetTypeAdvertById(ctx context.Context, id uuid.UUID) (*models.AdvertTypeAdvert, error)
 	GetSquareAdverts(ctx context.Context, pageSize, offset int) ([]*models.AdvertSquareData, error)
 	GetRectangleAdverts(ctx context.Context, advertFilter models.AdvertFilter) (*models.AdvertDataPage, error)
+	GetRectangleAdvertsByUserId(ctx context.Context, pageSize, offset int, userId uuid.UUID) ([]*models.AdvertRectangleData, error)
 }

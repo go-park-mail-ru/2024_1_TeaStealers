@@ -255,3 +255,12 @@ func (u *AdvertUsecase) GetRectangleAdvertsList(ctx context.Context, advertFilte
 
 	return foundAdverts, nil
 }
+
+// GetRectangleAdvertsByUserId handles the rectangle adverts getting process with paggination.
+func (u *AdvertUsecase) GetRectangleAdvertsByUserId(ctx context.Context, pageSize, offset int, userid uuid.UUID) (foundAdverts []*models.AdvertRectangleData, err error) {
+	if foundAdverts, err = u.repo.GetRectangleAdvertsByUserId(ctx, pageSize, offset, userid); err != nil {
+		return nil, err
+	}
+
+	return foundAdverts, nil
+}

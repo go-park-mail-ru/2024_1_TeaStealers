@@ -3,6 +3,7 @@ package delivery
 import (
 	"2024_1_TeaStealers/internal/models"
 	"2024_1_TeaStealers/internal/pkg/adverts"
+	"2024_1_TeaStealers/internal/pkg/middleware"
 	"2024_1_TeaStealers/internal/pkg/utils"
 	"net/http"
 	"strconv"
@@ -231,5 +232,39 @@ func (h *AdvertHandler) GetRectangeAdvertsList(w http.ResponseWriter, r *http.Re
 
 	if err = utils.WriteResponse(w, http.StatusOK, adverts); err != nil {
 		utils.WriteError(w, http.StatusInternalServerError, err.Error())
+	}
+}
+
+func (h *AdvertHandler) GetUserAdverts(w http.ResponseWriter, r *http.Request) {
+	id := r.Context().Value(middleware.CookieName)
+	pageStr := r.URL.Query().Get("page")
+	sizeStr := r.URL.Query().Get("size")
+
+	page, err := strconv.Atoi(pageStr)
+	if err != nil {
+		page = 1000000
+		err = nil
+	}
+
+	size, err := strconv.Atoi(sizeStr)
+	if err != nil {
+		size = 0
+		err = nil
+	}
+
+	UUID, ok := id.(uuid.UUID)
+	if !ok {
+		utils.WriteError(w, http.StatusBadRequest, "incorrect id")
+		return
+	}
+
+	userAdverts := []*models.AdvertRectangleData{}
+	if userAdverts, err = h.uc.GetRectangleAdvertsByUserId(r.Context(), page, size, UUID); err != nil {
+		utils.WriteError(w, http.StatusBadRequest, "error getting user adverts")
+		return
+	}
+	if err := utils.WriteResponse(w, http.StatusOK, userAdverts); err != nil {
+		utils.WriteError(w, http.StatusInternalServerError, "error write response")
+		return
 	}
 }
