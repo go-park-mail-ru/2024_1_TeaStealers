@@ -276,6 +276,37 @@ func (u *AdvertUsecase) UpdateAdvertById(ctx context.Context, advertUpdateData *
 	return nil
 }
 
+// DeleteAdvertById handles the deleting advert process.
+func (u *AdvertUsecase) DeleteAdvertById(ctx context.Context, advertId uuid.UUID) (err error) {
+	tx, err := u.repo.BeginTx(ctx)
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+
+	typeAdvert, err := u.repo.GetTypeAdvertById(ctx, advertId)
+	if err != nil {
+		return err
+	}
+
+	switch *typeAdvert {
+	case models.AdvertTypeFlat:
+		if err = u.repo.DeleteFlatAdvertById(ctx, tx, advertId); err != nil {
+			return err
+		}
+	case models.AdvertTypeHouse:
+		if err = u.repo.DeleteHouseAdvertById(ctx, tx, advertId); err != nil {
+			return err
+		}
+	}
+	err = tx.Commit()
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 // GetSquareAdvertsList handles the square adverts getting process with paggination.
 func (u *AdvertUsecase) GetSquareAdvertsList(ctx context.Context, pageSize, offset int) (foundAdverts []*models.AdvertSquareData, err error) {
 	if foundAdverts, err = u.repo.GetSquareAdverts(ctx, pageSize, offset); err != nil {

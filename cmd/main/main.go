@@ -83,6 +83,7 @@ func main() {
 	advert := r.PathPrefix("/adverts").Subrouter()
 	advert.HandleFunc("/{id}", advertHandler.GetAdvertById).Methods(http.MethodGet, http.MethodOptions)
 	advert.HandleFunc("/{id}", advertHandler.UpdateAdvertById).Methods(http.MethodPost, http.MethodOptions)
+	advert.HandleFunc("/{id}", advertHandler.DeleteAdvertById).Methods(http.MethodDelete, http.MethodOptions)
 	advert.HandleFunc("/houses", advertHandler.CreateHouseAdvert).Methods(http.MethodPost, http.MethodOptions)
 	advert.HandleFunc("/flats", advertHandler.CreateFlatAdvert).Methods(http.MethodPost, http.MethodOptions)
 	advert.HandleFunc("/squarelist/", advertHandler.GetSquareAdvertsList).Methods(http.MethodGet, http.MethodOptions)

@@ -132,7 +132,7 @@ func (r *AdvertRepo) GetHouseSquareAdvertsList(ctx context.Context) ([]*models.A
 			WHERE advertid = a.id
 				AND isdeleted = FALSE
 			)
-			AND i.isdeleted = FALSE
+			AND i.isdeleted = FALSE AND a.isdeleted = TRUE
 		ORDER BY a.datecreation DESC;
     `
 	rows, err := r.db.QueryContext(ctx, query)
@@ -201,7 +201,7 @@ func (r *AdvertRepo) GetFlatSquareAdvertsList(ctx context.Context) ([]*models.Ad
 			WHERE advertid = a.id
 				AND isdeleted = FALSE
 			)
-			AND i.isdeleted = FALSE
+			AND i.isdeleted = FALSE AND a.isdeleted = FALSE
         ORDER BY a.datecreation DESC;
     `
 	rows, err := r.db.QueryContext(ctx, query)
@@ -271,7 +271,7 @@ func (r *AdvertRepo) GetFlatRectangleAdvertsList(ctx context.Context) ([]*models
 			WHERE advertid = a.id
 				AND isdeleted = FALSE
 			)
-			AND i.isdeleted = FALSE
+			AND i.isdeleted = FALSE AND a.isdeleted = FALSE
         ORDER BY a.datecreation DESC;
     `
 	rows, err := r.db.QueryContext(ctx, query)
@@ -357,7 +357,7 @@ func (r *AdvertRepo) GetHouseRectangleAdvertsList(ctx context.Context) ([]*model
 			WHERE advertid = a.id
 				AND isdeleted = FALSE
 			)
-			AND i.isdeleted = FALSE
+			AND i.isdeleted = FALSE AND a.isdeleted = FALSE
         ORDER BY a.datecreation DESC;
     `
 	rows, err := r.db.QueryContext(ctx, query)
@@ -472,7 +472,7 @@ func (r *AdvertRepo) GetHouseAdvertById(ctx context.Context, id uuid.UUID) (*mod
             LIMIT 1
         ) AS pc ON TRUE
     WHERE
-        a.id = $1;`
+        a.id = $1 AND a.isdeleted = FALSE;`
 	res := r.db.QueryRowContext(ctx, query, id)
 
 	advertData := &models.AdvertData{}
@@ -560,6 +560,96 @@ func (r *AdvertRepo) CheckExistsHouse(ctx context.Context, advertId uuid.UUID) (
 	}
 
 	return house, nil
+}
+
+// DeleteFlatAdvertById
+func (r *AdvertRepo) DeleteFlatAdvertById(ctx context.Context, tx *sql.Tx, advertId uuid.UUID) error {
+	queryGetIdTables := `
+	SELECT
+	at.id as adverttypeid,
+	f.id as flatid
+FROM
+	adverts AS a
+JOIN
+	adverttypes AS at ON a.adverttypeid = at.id
+JOIN
+	flats AS f ON f.adverttypeid = at.id
+	WHERE a.id=$1;`
+	res := tx.QueryRowContext(ctx, queryGetIdTables, advertId)
+
+	var advertTypeId, flatId uuid.UUID
+	if err := res.Scan(&advertTypeId, &flatId); err != nil {
+		return err
+	}
+
+	queryDeleteAdvertById := `UPDATE adverts SET isdeleted=true WHERE id=$1;`
+	queryDeleteAdvertTypeById := `UPDATE adverttypes SET isdeleted=true WHERE id=$1;`
+	queryDeleteFlatById := `UPDATE flats SET isdeleted=true WHERE id=$1;`
+	queryDeletePriceChanges := `UPDATE pricechanges SET isdeleted=true WHERE advertid=$1;`
+	queryDeleteImages := `UPDATE images SET isdeleted=true WHERE advertid=$1;`
+
+	if _, err := tx.Exec(queryDeleteAdvertById, advertId); err != nil {
+		return err
+	}
+	if _, err := tx.Exec(queryDeleteAdvertTypeById, advertTypeId); err != nil {
+		return err
+	}
+	if _, err := tx.Exec(queryDeleteFlatById, flatId); err != nil {
+		return err
+	}
+	if _, err := tx.Exec(queryDeletePriceChanges, advertId); err != nil {
+		return err
+	}
+	if _, err := tx.Exec(queryDeleteImages, advertId); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// DeleteHouseAdvertById
+func (r *AdvertRepo) DeleteHouseAdvertById(ctx context.Context, tx *sql.Tx, advertId uuid.UUID) error {
+	queryGetIdTables := `
+	SELECT
+	at.id as adverttypeid,
+	h.id as houseid
+FROM
+	adverts AS a
+JOIN
+	adverttypes AS at ON a.adverttypeid = at.id
+JOIN
+	houses AS h ON h.adverttypeid = at.id
+	WHERE a.id=$1;`
+	res := tx.QueryRowContext(ctx, queryGetIdTables, advertId)
+
+	var advertTypeId, houseId uuid.UUID
+	if err := res.Scan(&advertTypeId, &houseId); err != nil {
+		return err
+	}
+
+	queryDeleteAdvertById := `UPDATE adverts SET isdeleted=true WHERE id=$1;`
+	queryDeleteAdvertTypeById := `UPDATE adverttypes SET isdeleted=true WHERE id=$1;`
+	queryDeleteHouseById := `UPDATE houses SET isdeleted=true WHERE id=$1;`
+	queryDeletePriceChanges := `UPDATE pricechanges SET isdeleted=true WHERE advertid=$1;`
+	queryDeleteImages := `UPDATE images SET isdeleted=true WHERE advertid=$1;`
+
+	if _, err := tx.Exec(queryDeleteAdvertById, advertId); err != nil {
+		return err
+	}
+	if _, err := tx.Exec(queryDeleteAdvertTypeById, advertTypeId); err != nil {
+		return err
+	}
+	if _, err := tx.Exec(queryDeleteHouseById, houseId); err != nil {
+		return err
+	}
+	if _, err := tx.Exec(queryDeletePriceChanges, advertId); err != nil {
+		return err
+	}
+	if _, err := tx.Exec(queryDeleteImages, advertId); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // ChangeTypeAdvert
@@ -787,7 +877,7 @@ func (r *AdvertRepo) GetFlatAdvertById(ctx context.Context, id uuid.UUID) (*mode
             LIMIT 1
         ) AS pc ON TRUE
     WHERE
-        a.id = $1;`
+        a.id = $1 AND a.isdeleted = FALSE;`
 	res := r.db.QueryRowContext(ctx, query, id)
 
 	advertData := &models.AdvertData{}
@@ -887,7 +977,7 @@ OFFSET $2;`
 	 JOIN adverttypes AS at ON a.adverttypeid = at.id
 	 JOIN flats AS f ON f.adverttypeid=at.id
  JOIN buildings AS b ON f.buildingid=b.id
- WHERE a.id=$1
+ WHERE a.id=$1 AND a.isdeleted = FALSE
  ORDER BY
 	 a.datecreation DESC;`
 	queryHouse := `
@@ -999,7 +1089,7 @@ JOIN images AS i ON i.advertid = a.id
 	WHERE advertid = a.id
 		AND isdeleted = FALSE
 )
-AND i.isdeleted = FALSE AND pc.price>=$1 AND pc.price<=$2 AND b.adress ILIKE $3 `
+AND i.isdeleted = FALSE AND a.isdeleted = FALSE AND pc.price>=$1 AND pc.price<=$2 AND b.adress ILIKE $3 `
 	queryFlat := `
 	SELECT 
 	f.squaregeneral,
@@ -1160,7 +1250,7 @@ JOIN images AS i ON i.advertid = a.id
 	WHERE advertid = a.id
 		AND isdeleted = FALSE
 )
-AND i.isdeleted = FALSE AND userid=$1 ORDER BY datecreation DESC LIMIT $2 OFFSET $3;`
+AND i.isdeleted = FALSE AND a.isdeleted = FALSE AND userid=$1 ORDER BY datecreation DESC LIMIT $2 OFFSET $3;`
 	queryFlat := `
 	SELECT 
 	f.squaregeneral,

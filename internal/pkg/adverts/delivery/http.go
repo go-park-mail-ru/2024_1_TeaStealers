@@ -174,6 +174,32 @@ func (h *AdvertHandler) UpdateAdvertById(w http.ResponseWriter, r *http.Request)
 	}
 }
 
+// DeleteAdvertById handles the request for deleting advert by id
+func (h *AdvertHandler) DeleteAdvertById(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	id := vars["id"]
+	if id == "" {
+		utils.WriteError(w, http.StatusBadRequest, "id parameter is required")
+		return
+	}
+
+	advertId, err := uuid.FromString(id)
+	if err != nil {
+		utils.WriteError(w, http.StatusBadRequest, "invalid id parameter")
+		return
+	}
+
+	err = h.uc.DeleteAdvertById(r.Context(), advertId)
+	if err != nil {
+		utils.WriteError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	if err = utils.WriteResponse(w, http.StatusOK, "Advert Succesfully deleted"); err != nil {
+		utils.WriteError(w, http.StatusInternalServerError, err.Error())
+	}
+}
+
 // GetSquareAdvertsList handles the request for retrieving a square adverts.
 func (h *AdvertHandler) GetSquareAdvertsList(w http.ResponseWriter, r *http.Request) {
 	pageStr := r.URL.Query().Get("page")
