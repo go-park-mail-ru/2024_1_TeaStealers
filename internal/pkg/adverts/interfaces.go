@@ -20,6 +20,7 @@ type AdvertUsecase interface {
 	GetSquareAdvertsList(ctx context.Context, pageSize, offset int) (foundAdverts []*models.AdvertSquareData, err error)
 	GetRectangleAdvertsList(ctx context.Context, advertFilter models.AdvertFilter) (foundAdverts *models.AdvertDataPage, err error)
 	GetRectangleAdvertsByUserId(ctx context.Context, pageSize, offset int, userid uuid.UUID) (foundAdverts []*models.AdvertRectangleData, err error)
+	UpdateAdvertById(ctx context.Context, advertUpdateData *models.AdvertUpdateData) (err error)
 }
 
 // AdvertRepo represents the repository interface for adverts.
@@ -42,4 +43,7 @@ type AdvertRepo interface {
 	GetSquareAdverts(ctx context.Context, pageSize, offset int) ([]*models.AdvertSquareData, error)
 	GetRectangleAdverts(ctx context.Context, advertFilter models.AdvertFilter) (*models.AdvertDataPage, error)
 	GetRectangleAdvertsByUserId(ctx context.Context, pageSize, offset int, userId uuid.UUID) ([]*models.AdvertRectangleData, error)
+	UpdateFlatAdvertById(ctx context.Context, tx *sql.Tx, advertUpdateData *models.AdvertUpdateData) error
+	UpdateHouseAdvertById(ctx context.Context, tx *sql.Tx, advertUpdateData *models.AdvertUpdateData) error
+	ChangeTypeAdvert(ctx context.Context, tx *sql.Tx, advertId uuid.UUID) error
 }

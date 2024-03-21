@@ -139,6 +139,41 @@ func (h *AdvertHandler) GetAdvertById(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// UpdateAdvertById handles the request for update advert by id
+func (h *AdvertHandler) UpdateAdvertById(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	id := vars["id"]
+	if id == "" {
+		utils.WriteError(w, http.StatusBadRequest, "id parameter is required")
+		return
+	}
+
+	advertId, err := uuid.FromString(id)
+	if err != nil {
+		utils.WriteError(w, http.StatusBadRequest, "invalid id parameter")
+		return
+	}
+
+	data := models.AdvertUpdateData{}
+
+	if err := utils.ReadRequestData(r, &data); err != nil {
+		utils.WriteError(w, http.StatusBadRequest, "incorrect data format")
+		return
+	}
+
+	data.ID = advertId
+
+	err = h.uc.UpdateAdvertById(r.Context(), &data)
+	if err != nil {
+		utils.WriteError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	if err = utils.WriteResponse(w, http.StatusOK, "Advert Succesfully updated"); err != nil {
+		utils.WriteError(w, http.StatusInternalServerError, err.Error())
+	}
+}
+
 // GetSquareAdvertsList handles the request for retrieving a square adverts.
 func (h *AdvertHandler) GetSquareAdvertsList(w http.ResponseWriter, r *http.Request) {
 	pageStr := r.URL.Query().Get("page")

@@ -190,7 +190,7 @@ type AdvertData struct {
 	// Description is the description of the advert.
 	Description string `json:"description"`
 	// Price is the price of the advertisement.
-	Price int `json:"price"`
+	Price int64 `json:"price"`
 	// Phone is the phone number associated with the advert.
 	Phone string `json:"phone"`
 	// IsAgent indicates whether the advert is posted by an agent.
@@ -211,6 +211,36 @@ type AdvertData struct {
 	Complex map[string]interface{} `json:"complex"`
 	// DateCreation is the date when the advert was created.
 	DateCreation time.Time `json:"dateCreation"`
+}
+
+// AdvertUpdateData represents the structure of the JSON data for update advert.
+type AdvertUpdateData struct {
+	// ID is the unique identifier for the advert.
+	ID uuid.UUID `json:"-"`
+	// TypeAdvert represents the type of the advertisement (House/Flat).
+	TypeAdvert string `json:"typeAdvert"`
+	// TypeSale represents the sale type of the advertisement (Sale/Rent).
+	TypeSale string `json:"typeSale"`
+	// Title is the title of the advert.
+	Title string `json:"title"`
+	// Description is the description of the advert.
+	Description string `json:"description"`
+	// Price is the price of the advertisement.
+	Price int64 `json:"price"`
+	// Phone is the phone number associated with the advert.
+	Phone string `json:"phone"`
+	// IsAgent indicates whether the advert is posted by an agent.
+	IsAgent bool `json:"isAgent"`
+	// Address is the address of the advertisement.
+	Address string `json:"adress"`
+	// AddressPoint is the address of the advertisement.
+	AddressPoint string `json:"adressPoint"`
+	// Properties contains additional properties for houses or flats.
+	Properties map[string]interface{} `json:"properties"`
+	// YearCreation is the year when the building was created.
+	YearCreation int `json:"yearCreation"`
+	// Material is the material of the building.
+	Material MaterialBuilding `json:"material"`
 }
 
 type AdvertFilter struct {

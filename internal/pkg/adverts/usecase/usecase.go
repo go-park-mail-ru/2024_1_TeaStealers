@@ -238,6 +238,44 @@ func (u *AdvertUsecase) GetAdvertById(ctx context.Context, id uuid.UUID) (foundA
 	return foundAdvert, nil
 }
 
+// UpdateAdvertById handles the updating advert process.
+func (u *AdvertUsecase) UpdateAdvertById(ctx context.Context, advertUpdateData *models.AdvertUpdateData) (err error) {
+	typeAdvert := advertUpdateData.TypeAdvert
+	tx, err := u.repo.BeginTx(ctx)
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+
+	if typeAdvertOld, err := u.repo.GetTypeAdvertById(ctx, advertUpdateData.ID); err == nil {
+		if *typeAdvertOld != models.AdvertTypeAdvert(typeAdvert) {
+
+			if err = u.repo.ChangeTypeAdvert(ctx, tx, advertUpdateData.ID); err != nil {
+				return err
+			}
+		}
+	} else {
+		return err
+	}
+
+	switch models.AdvertTypeAdvert(typeAdvert) {
+	case models.AdvertTypeFlat:
+		if err = u.repo.UpdateFlatAdvertById(ctx, tx, advertUpdateData); err != nil {
+			return err
+		}
+	case models.AdvertTypeHouse:
+		if err = u.repo.UpdateHouseAdvertById(ctx, tx, advertUpdateData); err != nil {
+			return err
+		}
+	}
+	err = tx.Commit()
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 // GetSquareAdvertsList handles the square adverts getting process with paggination.
 func (u *AdvertUsecase) GetSquareAdvertsList(ctx context.Context, pageSize, offset int) (foundAdverts []*models.AdvertSquareData, err error) {
 	if foundAdverts, err = u.repo.GetSquareAdverts(ctx, pageSize, offset); err != nil {

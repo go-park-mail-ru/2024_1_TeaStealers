@@ -532,6 +532,212 @@ func (r *AdvertRepo) GetHouseAdvertById(ctx context.Context, id uuid.UUID) (*mod
 	return advertData, nil
 }
 
+// CheckExistsFlat check exists flat.
+func (r *AdvertRepo) CheckExistsFlat(ctx context.Context, advertId uuid.UUID) (*models.Flat, error) {
+	query := `SELECT f.id FROM adverts AS a JOIN adverttypes AS at ON a.adverttypeid=at.id JOIN flats AS f ON f.adverttypeid=at.id WHERE a.id = $1`
+
+	flat := &models.Flat{}
+
+	res := r.db.QueryRowContext(ctx, query, advertId)
+
+	if err := res.Scan(&flat.ID); err != nil {
+		return nil, err
+	}
+
+	return flat, nil
+}
+
+// CheckExistsHouse check exists flat.
+func (r *AdvertRepo) CheckExistsHouse(ctx context.Context, advertId uuid.UUID) (*models.House, error) {
+	query := `SELECT h.id FROM adverts AS a JOIN adverttypes AS at ON a.adverttypeid=at.id JOIN houses AS h ON h.adverttypeid=at.id WHERE a.id = $1;`
+
+	house := &models.House{}
+
+	res := r.db.QueryRowContext(ctx, query, advertId)
+
+	if err := res.Scan(&house.ID); err != nil {
+		return nil, err
+	}
+
+	return house, nil
+}
+
+// ChangeTypeAdvert
+func (r *AdvertRepo) ChangeTypeAdvert(ctx context.Context, tx *sql.Tx, advertId uuid.UUID) error {
+	query := `SELECT at.id, at.adverttype FROM adverts AS a JOIN adverttypes AS at ON a.adverttypeid=at.id WHERE a.id = $1;`
+	querySelectBuildingIdByFlat := `SELECT b.id FROM adverts AS a JOIN adverttypes AS at ON at.id=a.adverttypeid JOIN flats AS f ON f.adverttypeid=at.id JOIN buildings AS b ON f.buildingid=b.id WHERE a.id=$1`
+	querySelectBuildingIdByHouse := `SELECT b.id FROM adverts AS a JOIN adverttypes AS at ON at.id=a.adverttypeid JOIN houses AS h ON h.adverttypeid=at.id JOIN buildings AS b ON h.buildingid=b.id WHERE a.id=$1`
+	queryInsertFlat := `INSERT INTO flats (id, buildingId, advertTypeId, floor, ceilingHeight, squareGeneral, roomCount, squareResidential, apartament)
+	VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9);`
+	queryInsertHouse := `INSERT INTO houses (id, buildingId, advertTypeId, ceilingHeight, squareArea, squareHouse, bedroomCount, statusArea, cottage, statusHome)
+	VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10);`
+
+	var advertType models.AdvertTypeAdvert
+	var advertTypeId uuid.UUID
+	res := r.db.QueryRowContext(ctx, query, advertId)
+
+	if err := res.Scan(&advertTypeId, &advertType); err != nil {
+		return err
+	}
+	var buildingId uuid.UUID
+	switch advertType {
+	case models.AdvertTypeFlat:
+		if _, err := r.CheckExistsHouse(ctx, advertId); err != nil {
+
+			res := r.db.QueryRowContext(ctx, querySelectBuildingIdByFlat, advertId)
+
+			if err := res.Scan(&buildingId); err != nil {
+				return err
+			}
+
+			house := &models.House{}
+			if _, err := tx.Exec(queryInsertHouse, uuid.NewV4(), buildingId, advertTypeId, house.CeilingHeight, house.SquareArea, house.SquareHouse, house.BedroomCount, house.StatusArea, house.Cottage, house.StatusHome); err != nil {
+				return err
+			}
+		}
+	case models.AdvertTypeHouse:
+		if _, err := r.CheckExistsFlat(ctx, advertId); err != nil {
+			res := r.db.QueryRowContext(ctx, querySelectBuildingIdByHouse, advertId)
+
+			if err := res.Scan(&buildingId); err != nil {
+				return err
+			}
+
+			flat := &models.Flat{}
+			if _, err := tx.Exec(queryInsertFlat, uuid.NewV4(), buildingId, advertTypeId, flat.Floor, flat.CeilingHeight, flat.SquareGeneral, flat.RoomCount, flat.SquareResidential, flat.Apartment); err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
+}
+
+// UpdateHouseAdvertById update house advert from the database.
+func (r *AdvertRepo) UpdateHouseAdvertById(ctx context.Context, tx *sql.Tx, advertUpdateData *models.AdvertUpdateData) error {
+	queryGetIdTables := `
+	SELECT
+	at.id as adverttypeid,
+	b.id as buildingid,
+	h.id as houseid,
+	pc.price
+FROM
+	adverts AS a
+JOIN
+	adverttypes AS at ON a.adverttypeid = at.id
+JOIN
+	houses AS h ON h.adverttypeid = at.id
+JOIN
+	buildings AS b ON h.buildingid = b.id
+LEFT JOIN
+	LATERAL (
+		SELECT *
+		FROM pricechanges AS pc
+		WHERE pc.advertid = a.id
+		ORDER BY pc.datecreation DESC
+		LIMIT 1
+	) AS pc ON TRUE	
+	WHERE a.id=$1;`
+	res := tx.QueryRowContext(ctx, queryGetIdTables, advertUpdateData.ID)
+
+	var advertTypeId, buildingId, houseId uuid.UUID
+	var price int64
+	if err := res.Scan(&advertTypeId, &buildingId, &houseId, &price); err != nil {
+		return err
+	}
+
+	queryUpdateAdvertById := `UPDATE adverts SET adverttypeplacement=$1, title=$2, description=$3, phone=$4, isagent=$5 WHERE id=$6;`
+	queryUpdateAdvertTypeById := `UPDATE adverttypes SET adverttype=$1 WHERE id=$2;`
+	queryUpdateBuildingById := `UPDATE buildings SET floor=$1, material=$2, adress=$3, adresspoint=$4, yearcreation=$5 WHERE id=$6;`
+	queryUpdateHouseById := `UPDATE houses SET ceilingheight=$1, squarearea=$2, squarehouse=$3, bedroomcount=$4, statusarea=$5, cottage=$6, statushome=$7 WHERE id=$8;`
+
+	if _, err := tx.Exec(queryUpdateAdvertById, advertUpdateData.TypeSale, advertUpdateData.Title, advertUpdateData.Description, advertUpdateData.Phone, advertUpdateData.IsAgent, advertUpdateData.ID); err != nil {
+		return err
+	}
+	if _, err := tx.Exec(queryUpdateAdvertTypeById, advertUpdateData.TypeAdvert, advertTypeId); err != nil {
+		return err
+	}
+	if _, err := tx.Exec(queryUpdateBuildingById, advertUpdateData.Properties["floor"], advertUpdateData.Material, advertUpdateData.Address, advertUpdateData.AddressPoint, advertUpdateData.YearCreation, buildingId); err != nil {
+		return err
+	}
+	if _, err := tx.Exec(queryUpdateHouseById, advertUpdateData.Properties["ceilingHeight"], advertUpdateData.Properties["squareArea"], advertUpdateData.Properties["squareHouse"], advertUpdateData.Properties["bedroomCount"], advertUpdateData.Properties["statusArea"], advertUpdateData.Properties["cottage"], advertUpdateData.Properties["statusHome"], houseId); err != nil {
+		return err
+	}
+	if advertUpdateData.Price != price {
+		queryInsertPriceChange := `INSERT INTO pricechanges (id, advertId, price)
+		VALUES ($1, $2, $3)`
+		if _, err := tx.Exec(queryInsertPriceChange,
+			uuid.NewV4(), advertUpdateData.ID, advertUpdateData.Price); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+// UpdateFlatAdvertById update flat advert from the database.
+func (r *AdvertRepo) UpdateFlatAdvertById(ctx context.Context, tx *sql.Tx, advertUpdateData *models.AdvertUpdateData) error {
+	queryGetIdTables := `
+	SELECT
+	at.id as adverttypeid,
+	b.id as buildingid,
+	f.id as flatid,
+	pc.price
+FROM
+	adverts AS a
+JOIN
+	adverttypes AS at ON a.adverttypeid = at.id
+JOIN
+	flats AS f ON f.adverttypeid = at.id
+JOIN
+	buildings AS b ON f.buildingid = b.id
+LEFT JOIN
+	LATERAL (
+		SELECT *
+		FROM pricechanges AS pc
+		WHERE pc.advertid = a.id
+		ORDER BY pc.datecreation DESC
+		LIMIT 1
+	) AS pc ON TRUE	
+	WHERE a.id=$1;`
+
+	res := tx.QueryRowContext(ctx, queryGetIdTables, advertUpdateData.ID)
+
+	var advertTypeId, buildingId, flatId uuid.UUID
+	var price int64
+	if err := res.Scan(&advertTypeId, &buildingId, &flatId, &price); err != nil {
+		return err
+	}
+
+	queryUpdateAdvertById := `UPDATE adverts SET adverttypeplacement=$1, title=$2, description=$3, phone=$4, isagent=$5 WHERE id=$6;`
+	queryUpdateAdvertTypeById := `UPDATE adverttypes SET adverttype=$1 WHERE id=$2;`
+	queryUpdateBuildingById := `UPDATE buildings SET floor=$1, material=$2, adress=$3, adresspoint=$4, yearcreation=$5 WHERE id=$6;`
+	queryUpdateFlatById := `UPDATE flats SET floor=$1, ceilingheight=$2, squaregeneral=$3, roomcount=$4, squareresidential=$5, apartament=$6 WHERE id=$7;`
+
+	if _, err := tx.Exec(queryUpdateAdvertById, advertUpdateData.TypeSale, advertUpdateData.Title, advertUpdateData.Description, advertUpdateData.Phone, advertUpdateData.IsAgent, advertUpdateData.ID); err != nil {
+		return err
+	}
+	if _, err := tx.Exec(queryUpdateAdvertTypeById, advertUpdateData.TypeAdvert, advertTypeId); err != nil {
+		return err
+	}
+	if _, err := tx.Exec(queryUpdateBuildingById, advertUpdateData.Properties["floorGeneral"], advertUpdateData.Material, advertUpdateData.Address, advertUpdateData.AddressPoint, advertUpdateData.YearCreation, buildingId); err != nil {
+		return err
+	}
+	if _, err := tx.Exec(queryUpdateFlatById, advertUpdateData.Properties["floor"], advertUpdateData.Properties["ceilingHeight"], advertUpdateData.Properties["squareGeneral"], advertUpdateData.Properties["roomCount"], advertUpdateData.Properties["squareResidential"], advertUpdateData.Properties["apartament"], flatId); err != nil {
+		return err
+	}
+	if advertUpdateData.Price != price {
+		queryInsertPriceChange := `INSERT INTO pricechanges (id, advertId, price)
+		VALUES ($1, $2, $3)`
+		if _, err := tx.Exec(queryInsertPriceChange,
+			uuid.NewV4(), advertUpdateData.ID, advertUpdateData.Price); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
 // GetFlatAdvertById retrieves full information about flat advert from the database.
 func (r *AdvertRepo) GetFlatAdvertById(ctx context.Context, id uuid.UUID) (*models.AdvertData, error) {
 	query := `
@@ -622,7 +828,7 @@ func (r *AdvertRepo) GetFlatAdvertById(ctx context.Context, id uuid.UUID) (*mode
 	advertData.Properties = make(map[string]interface{})
 	advertData.Properties["ceilingHeight"] = ceilingHeight
 	advertData.Properties["apartament"] = apartament
-	advertData.Properties["squareRedinetial"] = squareResidential
+	advertData.Properties["squareResidential"] = squareResidential
 	advertData.Properties["roomCount"] = roomCount
 	advertData.Properties["squareGeneral"] = squareGenereal
 	advertData.Properties["floorGeneral"] = floorGeneral
