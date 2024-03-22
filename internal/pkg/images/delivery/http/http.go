@@ -4,12 +4,13 @@ import (
 	"2024_1_TeaStealers/internal/pkg/images"
 	"2024_1_TeaStealers/internal/pkg/utils"
 	"fmt"
-	"github.com/gorilla/mux"
-	"github.com/satori/uuid"
 	"net/http"
 	"path/filepath"
 	"slices"
 	"strings"
+
+	"github.com/gorilla/mux"
+	"github.com/satori/uuid"
 )
 
 // ImagesHandler handles HTTP requests for images.

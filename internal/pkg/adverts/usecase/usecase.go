@@ -325,9 +325,18 @@ func (u *AdvertUsecase) GetRectangleAdvertsList(ctx context.Context, advertFilte
 	return foundAdverts, nil
 }
 
-// GetRectangleAdvertsByUserId handles the rectangle adverts getting process with paggination.
-func (u *AdvertUsecase) GetRectangleAdvertsByUserId(ctx context.Context, pageSize, offset int, userid uuid.UUID) (foundAdverts []*models.AdvertRectangleData, err error) {
-	if foundAdverts, err = u.repo.GetRectangleAdvertsByUserId(ctx, pageSize, offset, userid); err != nil {
+// GetRectangleAdvertsByUserId handles the rectangle adverts getting process with paggination by userId.
+func (u *AdvertUsecase) GetRectangleAdvertsByUserId(ctx context.Context, pageSize, offset int, userId uuid.UUID) (foundAdverts []*models.AdvertRectangleData, err error) {
+	if foundAdverts, err = u.repo.GetRectangleAdvertsByUserId(ctx, pageSize, offset, userId); err != nil {
+		return nil, err
+	}
+
+	return foundAdverts, nil
+}
+
+// GetRectangleAdvertsByComplexId handles the rectangle adverts getting process with paggination by complexId.
+func (u *AdvertUsecase) GetRectangleAdvertsByComplexId(ctx context.Context, pageSize, offset int, comlexId uuid.UUID) (foundAdverts []*models.AdvertRectangleData, err error) {
+	if foundAdverts, err = u.repo.GetRectangleAdvertsByComplexId(ctx, pageSize, offset, comlexId); err != nil {
 		return nil, err
 	}
 

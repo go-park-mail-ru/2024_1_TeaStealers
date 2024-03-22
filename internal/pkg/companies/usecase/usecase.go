@@ -62,3 +62,13 @@ func (u *CompanyUsecase) UpdateCompanyPhoto(file io.Reader, fileType string, id 
 	}
 	return fileName, nil
 }
+
+// GetCompanyById handles the getting company advert process.
+func (u *CompanyUsecase) GetCompanyById(ctx context.Context, id uuid.UUID) (foundCompanyData *models.CompanyData, err error) {
+
+	if foundCompanyData, err = u.repo.GetCompanyById(ctx, id); err != nil {
+		return nil, err
+	}
+
+	return foundCompanyData, nil
+}

@@ -10,6 +10,9 @@ import (
 	companyH "2024_1_TeaStealers/internal/pkg/companies/delivery"
 	companyR "2024_1_TeaStealers/internal/pkg/companies/repo"
 	companyUc "2024_1_TeaStealers/internal/pkg/companies/usecase"
+	complexH "2024_1_TeaStealers/internal/pkg/complexes/delivery"
+	complexR "2024_1_TeaStealers/internal/pkg/complexes/repo"
+	complexUc "2024_1_TeaStealers/internal/pkg/complexes/usecase"
 	imageH "2024_1_TeaStealers/internal/pkg/images/delivery/http"
 	imageR "2024_1_TeaStealers/internal/pkg/images/repo"
 	imageUc "2024_1_TeaStealers/internal/pkg/images/usecase"
@@ -95,7 +98,7 @@ func main() {
 	advert.HandleFunc("/flats/squarelist/", advertHandler.GetFlatSquareAdvertsList).Methods(http.MethodGet, http.MethodOptions)
 	advert.HandleFunc("/flats/rectanglelist/", advertHandler.GetFlatRectangleAdvertsList).Methods(http.MethodGet, http.MethodOptions)
 	advert.HandleFunc("/houses/rectanglelist/", advertHandler.GetHouseRectangleAdvertsList).Methods(http.MethodGet, http.MethodOptions)
-	advert.HandleFunc("/image", imageHandler.UploadImage).Methods(http.MethodPost, http.MethodOptions)
+	advert.HandleFunc("/image/", imageHandler.UploadImage).Methods(http.MethodPost, http.MethodOptions)
 	advert.HandleFunc("/{id}/image", imageHandler.GetAdvertImages).Methods(http.MethodGet, http.MethodOptions)
 	advert.HandleFunc("/{id}/image", imageHandler.DeleteImage).Methods(http.MethodDelete, http.MethodOptions)
 
@@ -117,7 +120,19 @@ func main() {
 
 	company := r.PathPrefix("/companies").Subrouter()
 	company.HandleFunc("/", companyHandler.CreateCompany).Methods(http.MethodPost, http.MethodOptions)
+	company.HandleFunc("/{id}", companyHandler.GetCompanyById).Methods(http.MethodGet, http.MethodOptions)
 	company.HandleFunc("/images/{id}", companyHandler.UpdateCompanyPhoto).Methods(http.MethodPost, http.MethodOptions)
+
+	complexRepo := complexR.NewRepository(db)
+	complexUsecase := complexUc.NewComplexUsecase(complexRepo)
+	complexHandler := complexH.NewComplexHandler(complexUsecase)
+
+	complex := r.PathPrefix("/complexes").Subrouter()
+	complex.HandleFunc("/", complexHandler.CreateComplex).Methods(http.MethodPost, http.MethodOptions)
+	complex.HandleFunc("/{id}", complexHandler.GetComplexById).Methods(http.MethodGet, http.MethodOptions)
+	complex.HandleFunc("/{id}/rectanglelist/", advertHandler.GetComplexAdverts).Methods(http.MethodGet, http.MethodOptions)
+	complex.HandleFunc("/buildings", complexHandler.CreateBuilding).Methods(http.MethodPost, http.MethodOptions)
+	complex.HandleFunc("/images/{id}", complexHandler.UpdateComplexPhoto).Methods(http.MethodPost, http.MethodOptions)
 
 	srv := &http.Server{
 		Addr:              ":8080",

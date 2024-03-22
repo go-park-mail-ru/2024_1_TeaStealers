@@ -329,3 +329,43 @@ func (h *AdvertHandler) GetUserAdverts(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 }
+
+func (h *AdvertHandler) GetComplexAdverts(w http.ResponseWriter, r *http.Request) {
+	pageStr := r.URL.Query().Get("page")
+	sizeStr := r.URL.Query().Get("size")
+
+	page, err := strconv.Atoi(pageStr)
+	if err != nil {
+		page = 1000000
+		err = nil
+	}
+
+	size, err := strconv.Atoi(sizeStr)
+	if err != nil {
+		size = 0
+		err = nil
+	}
+
+	vars := mux.Vars(r)
+	id := vars["id"]
+	if id == "" {
+		utils.WriteError(w, http.StatusBadRequest, "id parameter is required")
+		return
+	}
+
+	complexId, err := uuid.FromString(id)
+	if err != nil {
+		utils.WriteError(w, http.StatusBadRequest, "invalid id parameter")
+		return
+	}
+
+	complexAdverts := []*models.AdvertRectangleData{}
+	if complexAdverts, err = h.uc.GetRectangleAdvertsByComplexId(r.Context(), page, size, complexId); err != nil {
+		utils.WriteError(w, http.StatusBadRequest, "error getting user adverts")
+		return
+	}
+	if err := utils.WriteResponse(w, http.StatusOK, complexAdverts); err != nil {
+		utils.WriteError(w, http.StatusInternalServerError, "error write response")
+		return
+	}
+}

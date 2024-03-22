@@ -45,3 +45,18 @@ func (r *CompanyRepo) UpdateCompanyPhoto(id uuid.UUID, fileName string) (string,
 	}
 	return fileName, nil
 }
+
+// GetCompanyById ...
+func (r *CompanyRepo) GetCompanyById(ctx context.Context, companyId uuid.UUID) (*models.CompanyData, error) {
+	query := `SELECT id, photo, name, yearfounded, phone, description FROM companies WHERE id = $1`
+
+	companyData := &models.CompanyData{}
+
+	res := r.db.QueryRowContext(ctx, query, companyId)
+
+	if err := res.Scan(&companyData.ID, &companyData.Photo, &companyData.Name, &companyData.YearFounded, &companyData.Phone, &companyData.Description); err != nil {
+		return nil, err
+	}
+
+	return companyData, nil
+}

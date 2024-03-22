@@ -85,3 +85,29 @@ func (h *CompanyHandler) UpdateCompanyPhoto(w http.ResponseWriter, r *http.Reque
 		return
 	}
 }
+
+// GetCompanyById handles the request for getting company by id
+func (h *CompanyHandler) GetCompanyById(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	id := vars["id"]
+	if id == "" {
+		utils.WriteError(w, http.StatusBadRequest, "id parameter is required")
+		return
+	}
+
+	companyId, err := uuid.FromString(id)
+	if err != nil {
+		utils.WriteError(w, http.StatusBadRequest, "invalid id parameter")
+		return
+	}
+
+	companyData, err := h.uc.GetCompanyById(r.Context(), companyId)
+	if err != nil {
+		utils.WriteError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	if err = utils.WriteResponse(w, http.StatusOK, companyData); err != nil {
+		utils.WriteError(w, http.StatusInternalServerError, err.Error())
+	}
+}
