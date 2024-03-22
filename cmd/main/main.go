@@ -7,6 +7,9 @@ import (
 	authH "2024_1_TeaStealers/internal/pkg/auth/delivery"
 	authR "2024_1_TeaStealers/internal/pkg/auth/repo"
 	authUc "2024_1_TeaStealers/internal/pkg/auth/usecase"
+	companyH "2024_1_TeaStealers/internal/pkg/companies/delivery"
+	companyR "2024_1_TeaStealers/internal/pkg/companies/repo"
+	companyUc "2024_1_TeaStealers/internal/pkg/companies/usecase"
 	imageH "2024_1_TeaStealers/internal/pkg/images/delivery/http"
 	imageR "2024_1_TeaStealers/internal/pkg/images/repo"
 	imageUc "2024_1_TeaStealers/internal/pkg/images/usecase"
@@ -107,6 +110,14 @@ func main() {
 	user.Handle("/info", middleware.JwtMiddleware(http.HandlerFunc(userHandler.UpdateUserInfo), authRepo)).Methods(http.MethodPost, http.MethodOptions)
 	user.Handle("/password", middleware.JwtMiddleware(http.HandlerFunc(userHandler.UpdateUserPassword), authRepo)).Methods(http.MethodPost, http.MethodOptions)
 	user.Handle("/myadverts", middleware.JwtMiddleware(http.HandlerFunc(advertHandler.GetUserAdverts), authRepo)).Methods(http.MethodGet, http.MethodOptions)
+
+	companyRepo := companyR.NewRepository(db)
+	companyUsecase := companyUc.NewCompanyUsecase(companyRepo)
+	companyHandler := companyH.NewCompanyHandler(companyUsecase)
+
+	company := r.PathPrefix("/companies").Subrouter()
+	company.HandleFunc("/", companyHandler.CreateCompany).Methods(http.MethodPost, http.MethodOptions)
+	company.HandleFunc("/images/{id}", companyHandler.UpdateCompanyPhoto).Methods(http.MethodPost, http.MethodOptions)
 
 	srv := &http.Server{
 		Addr:              ":8080",

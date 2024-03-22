@@ -25,3 +25,15 @@ type Company struct {
 	// IsDeleted is a flag indicating whether the company is deleted.
 	IsDeleted bool `json:"-"`
 }
+
+// CompanyCreateData represents a data for creation company.
+type CompanyCreateData struct {
+	// Name is the name of the company.
+	Name string `json:"name"`
+	// YearFounded is the year when the company was founded.
+	YearFounded int `json:"yearFounded"`
+	// Phone is the phone number of the company.
+	Phone string `json:"phone"`
+	// Description is the description of the company.
+	Description string `json:"description"`
+}
