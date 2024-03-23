@@ -134,5 +134,40 @@ func (h *ComplexHandler) GetComplexById(w http.ResponseWriter, r *http.Request) 
 	}
 }
 
-//TODO
-// Ручка на создание объявления по зданию (Пользователь скорее всего должен иметь статус владелец компании условно)
+func (h *ComplexHandler) CreateHouseAdvert(w http.ResponseWriter, r *http.Request) {
+	data := models.ComplexAdvertHouseCreateData{}
+
+	if err := utils.ReadRequestData(r, &data); err != nil {
+		utils.WriteError(w, http.StatusBadRequest, "Incorrect data format")
+		return
+	}
+
+	newAdvert, err := h.uc.CreateHouseAdvert(r.Context(), &data)
+	if err != nil {
+		utils.WriteError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	if err = utils.WriteResponse(w, http.StatusCreated, newAdvert); err != nil {
+		utils.WriteError(w, http.StatusInternalServerError, err.Error())
+	}
+}
+
+func (h *ComplexHandler) CreateFlatAdvert(w http.ResponseWriter, r *http.Request) {
+	data := models.ComplexAdvertFlatCreateData{}
+
+	if err := utils.ReadRequestData(r, &data); err != nil {
+		utils.WriteError(w, http.StatusBadRequest, "Incorrect data format")
+		return
+	}
+
+	newAdvert, err := h.uc.CreateFlatAdvert(r.Context(), &data)
+	if err != nil {
+		utils.WriteError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	if err = utils.WriteResponse(w, http.StatusCreated, newAdvert); err != nil {
+		utils.WriteError(w, http.StatusInternalServerError, err.Error())
+	}
+}

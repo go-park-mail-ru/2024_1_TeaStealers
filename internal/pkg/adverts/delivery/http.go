@@ -5,6 +5,7 @@ import (
 	"2024_1_TeaStealers/internal/pkg/adverts"
 	"2024_1_TeaStealers/internal/pkg/middleware"
 	"2024_1_TeaStealers/internal/pkg/utils"
+	"log"
 	"net/http"
 	"strconv"
 
@@ -361,7 +362,8 @@ func (h *AdvertHandler) GetComplexAdverts(w http.ResponseWriter, r *http.Request
 
 	complexAdverts := []*models.AdvertRectangleData{}
 	if complexAdverts, err = h.uc.GetRectangleAdvertsByComplexId(r.Context(), page, size, complexId); err != nil {
-		utils.WriteError(w, http.StatusBadRequest, "error getting user adverts")
+		log.Println(err)
+		utils.WriteError(w, http.StatusBadRequest, "error getting complex adverts")
 		return
 	}
 	if err := utils.WriteResponse(w, http.StatusOK, complexAdverts); err != nil {

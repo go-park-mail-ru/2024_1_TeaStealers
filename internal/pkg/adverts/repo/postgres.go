@@ -1343,7 +1343,7 @@ func (r *AdvertRepo) GetRectangleAdvertsByComplexId(ctx context.Context, pageSiz
     CASE
         WHEN at.adverttype = 'Flat' THEN f.roomcount
         WHEN at.adverttype = 'House' THEN h.bedroomcount
-        ELSE NULL
+        ELSE 0
     END AS rcount,
     a.phone,
     a.adverttypeplacement,
@@ -1368,7 +1368,7 @@ LEFT JOIN LATERAL (
     ORDER BY pc.datecreation DESC
     LIMIT 1
 ) AS pc ON TRUE
-JOIN images AS i ON i.advertid = a.id
+ JOIN images AS i ON i.advertid = a.id
  WHERE i.priority = (
 	SELECT MIN(priority)
 	FROM images

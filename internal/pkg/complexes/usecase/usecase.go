@@ -100,3 +100,142 @@ func (u *ComplexUsecase) GetComplexById(ctx context.Context, id uuid.UUID) (foun
 
 	return foundComplexData, nil
 }
+
+// CreateFlatAdvert handles the creation advert process.
+func (u *ComplexUsecase) CreateFlatAdvert(ctx context.Context, data *models.ComplexAdvertFlatCreateData) (*models.Advert, error) {
+	tx, err := u.repo.BeginTx(ctx)
+	if err != nil {
+		return nil, err
+	}
+	defer tx.Rollback()
+
+	newAdvertType := &models.AdvertType{
+		ID:         uuid.NewV4(),
+		AdvertType: data.AdvertTypePlacement,
+	}
+
+	newAdvert := &models.Advert{
+		ID:             uuid.NewV4(),
+		UserID:         data.UserID,
+		AdvertTypeID:   newAdvertType.ID,
+		AdvertTypeSale: data.AdvertTypeSale,
+		Title:          data.Title,
+		Description:    data.Description,
+		Phone:          data.Phone,
+		IsAgent:        data.IsAgent,
+		Priority:       1, // Разобраться в будущем, как это менять за деньги(money)
+	}
+
+	buildingId := data.BuildingID
+
+	newFlat := &models.Flat{
+		ID:                uuid.NewV4(),
+		BuildingID:        buildingId,
+		AdvertTypeID:      newAdvertType.ID,
+		RoomCount:         data.RoomCount,
+		Floor:             data.Floor,
+		CeilingHeight:     data.CeilingHeight,
+		SquareGeneral:     data.SquareGeneral,
+		SquareResidential: data.SquareResidential,
+		Apartment:         data.Apartment,
+	}
+
+	newPriceChange := &models.PriceChange{
+		ID:       uuid.NewV4(),
+		AdvertID: newAdvert.ID,
+		Price:    data.Price,
+	}
+
+	if err := u.repo.CreateAdvertType(ctx, tx, newAdvertType); err != nil {
+		return nil, err
+	}
+
+	if err := u.repo.CreateFlat(ctx, tx, newFlat); err != nil {
+		return nil, err
+	}
+
+	if err := u.repo.CreateAdvert(ctx, tx, newAdvert); err != nil {
+		return nil, err
+	}
+
+	if err := u.repo.CreatePriceChange(ctx, tx, newPriceChange); err != nil {
+		return nil, err
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		return nil, err
+	}
+
+	return newAdvert, nil
+}
+
+// CreateFlatAdvert handles the creation advert process.
+func (u *ComplexUsecase) CreateHouseAdvert(ctx context.Context, data *models.ComplexAdvertHouseCreateData) (*models.Advert, error) {
+	tx, err := u.repo.BeginTx(ctx)
+	if err != nil {
+		return nil, err
+	}
+	defer tx.Rollback()
+
+	newAdvertType := &models.AdvertType{
+		ID:         uuid.NewV4(),
+		AdvertType: data.AdvertTypePlacement,
+	}
+
+	newAdvert := &models.Advert{
+		ID:             uuid.NewV4(),
+		UserID:         data.UserID,
+		AdvertTypeID:   newAdvertType.ID,
+		AdvertTypeSale: data.AdvertTypeSale,
+		Title:          data.Title,
+		Description:    data.Description,
+		Phone:          data.Phone,
+		IsAgent:        data.IsAgent,
+		Priority:       1, // Разобраться в будущем, как это менять за деньги(money)
+	}
+
+	buildingId := data.BuildingID
+
+	newHouse := &models.House{
+		ID:            uuid.NewV4(),
+		BuildingID:    buildingId,
+		AdvertTypeID:  newAdvertType.ID,
+		CeilingHeight: data.CeilingHeight,
+		SquareArea:    data.SquareArea,
+		SquareHouse:   data.SquareHouse,
+		BedroomCount:  data.BedroomCount,
+		StatusArea:    data.StatusArea,
+		Cottage:       data.Cottage,
+		StatusHome:    data.StatusHome,
+	}
+
+	newPriceChange := &models.PriceChange{
+		ID:       uuid.NewV4(),
+		AdvertID: newAdvert.ID,
+		Price:    data.Price,
+	}
+
+	if err := u.repo.CreateAdvertType(ctx, tx, newAdvertType); err != nil {
+		return nil, err
+	}
+
+	if err := u.repo.CreateHouse(ctx, tx, newHouse); err != nil {
+		return nil, err
+	}
+
+	if err := u.repo.CreateAdvert(ctx, tx, newAdvert); err != nil {
+		return nil, err
+	}
+
+	if err := u.repo.CreatePriceChange(ctx, tx, newPriceChange); err != nil {
+		return nil, err
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		return nil, err
+	}
+
+	return newAdvert, nil
+}

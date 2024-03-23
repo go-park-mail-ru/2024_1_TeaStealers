@@ -81,3 +81,56 @@ func (r *ComplexRepo) GetComplexById(ctx context.Context, complexId uuid.UUID) (
 
 	return complexData, nil
 }
+
+func (r *ComplexRepo) BeginTx(ctx context.Context) (*sql.Tx, error) {
+	tx, err := r.db.BeginTx(ctx, nil)
+	if err != nil {
+		return nil, err
+	}
+	return tx, nil
+}
+
+// CreateAdvertType creates a new advertType in the database.
+func (r *ComplexRepo) CreateAdvertType(ctx context.Context, tx *sql.Tx, newAdvertType *models.AdvertType) error {
+	insert := `INSERT INTO adverttypes (id, adverttype) VALUES ($1, $2)`
+	if _, err := tx.ExecContext(ctx, insert, newAdvertType.ID, newAdvertType.AdvertType); err != nil {
+		return err
+	}
+	return nil
+}
+
+// CreateAdvert creates a new advert in the database.
+func (r *ComplexRepo) CreateAdvert(ctx context.Context, tx *sql.Tx, newAdvert *models.Advert) error {
+	insert := `INSERT INTO adverts (id, userid, adverttypeid, adverttypeplacement, title, description, phone, isagent, priority) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`
+	if _, err := tx.ExecContext(ctx, insert, newAdvert.ID, newAdvert.UserID, newAdvert.AdvertTypeID, newAdvert.AdvertTypeSale, newAdvert.Title, newAdvert.Description, newAdvert.Phone, newAdvert.IsAgent, newAdvert.Priority); err != nil {
+		return err
+	}
+	return nil
+}
+
+// CreatePriceChange creates a new price change in the database.
+func (r *ComplexRepo) CreatePriceChange(ctx context.Context, tx *sql.Tx, newPriceChange *models.PriceChange) error {
+	insert := `INSERT INTO pricechanges (id, advertid, price) VALUES ($1, $2, $3)`
+	if _, err := tx.ExecContext(ctx, insert, newPriceChange.ID, newPriceChange.AdvertID, newPriceChange.Price); err != nil {
+		return err
+	}
+	return nil
+}
+
+// CreateHouse creates a new house in the database.
+func (r *ComplexRepo) CreateHouse(ctx context.Context, tx *sql.Tx, newHouse *models.House) error {
+	insert := `INSERT INTO houses (id, buildingid, adverttypeid, ceilingheight, squarearea, squarehouse, bedroomcount, statusarea, cottage, statushome) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`
+	if _, err := tx.ExecContext(ctx, insert, newHouse.ID, newHouse.BuildingID, newHouse.AdvertTypeID, newHouse.CeilingHeight, newHouse.SquareArea, newHouse.SquareHouse, newHouse.BedroomCount, newHouse.StatusArea, newHouse.Cottage, newHouse.StatusHome); err != nil {
+		return err
+	}
+	return nil
+}
+
+// CreateFlat creates a new flat in the database.
+func (r *ComplexRepo) CreateFlat(ctx context.Context, tx *sql.Tx, newFlat *models.Flat) error {
+	insert := `INSERT INTO flats (id, buildingid, adverttypeid, floor, ceilingheight, squaregeneral, roomcount, squareresidential, apartament) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`
+	if _, err := tx.ExecContext(ctx, insert, newFlat.ID, newFlat.BuildingID, newFlat.AdvertTypeID, newFlat.Floor, newFlat.CeilingHeight, newFlat.SquareGeneral, newFlat.RoomCount, newFlat.SquareResidential, newFlat.Apartment); err != nil {
+		return err
+	}
+	return nil
+}
