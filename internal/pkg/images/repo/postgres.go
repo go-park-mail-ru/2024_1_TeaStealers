@@ -71,7 +71,7 @@ func (repo *ImageRepo) SelectImages(advertId uuid.UUID) ([]*models.ImageResp, er
 // DeleteImage delete image by id and return new list images for advert
 func (repo *ImageRepo) DeleteImage(idImage uuid.UUID) ([]*models.ImageResp, error) {
 	query := `UPDATE images SET isdeleted = true WHERE id = $1`
-	if _, err := repo.db.Query(query, idImage); err != nil {
+	if _, err := repo.db.Exec(query, idImage); err != nil {
 		return nil, err
 	}
 	var idAdvert string

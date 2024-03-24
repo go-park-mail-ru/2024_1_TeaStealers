@@ -17,9 +17,9 @@ type Image struct {
 	// Priority is the priority of the image.
 	Priority int `json:"priority"`
 	// DateCreation is the date when the image was published.
-	DateCreation time.Time `json:"-"`
+	DateCreation time.Time `json:"date_creation"`
 	// IsDeleted is a flag indicating whether the image is deleted.
-	IsDeleted bool `json:"-"`
+	IsDeleted bool `json:"is_deleted"`
 }
 
 // ImageResp represents an image response.
