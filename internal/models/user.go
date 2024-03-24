@@ -31,3 +31,27 @@ type User struct {
 	// IsDeleted is deleted user.
 	IsDeleted bool `json:"-"`
 }
+
+// UserUpdateData represents user update information
+type UserUpdateData struct {
+	// FirstName is the first name of user.
+	FirstName string `json:"firstName"`
+	// SecondName is the second name of user.
+	SecondName string `json:"secondName"`
+	// DateBirthday is the date birthday of user.
+	DateBirthday time.Time `json:"dateBirthday"`
+	// Phone is the phone of user.
+	Phone string `json:"phone"`
+	// Email is the email of user.
+	Email string `json:"email"`
+	// Photo is the filename of photo for user.
+}
+
+type UserUpdatePassword struct {
+	// ID uniquely identifies the user.
+	ID uuid.UUID `json:"id"`
+	// OldPassword ...
+	OldPassword string `json:"oldPassword"`
+	// NewPassword ...
+	NewPassword string `json:"newPassword"`
+}

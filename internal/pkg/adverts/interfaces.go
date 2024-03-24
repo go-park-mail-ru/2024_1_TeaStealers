@@ -17,6 +17,12 @@ type AdvertUsecase interface {
 	GetFlatRectangleAdvertsList(ctx context.Context) (foundAdverts []*models.AdvertRectangleData, err error)
 	GetHouseRectangleAdvertsList(ctx context.Context) (foundAdverts []*models.AdvertRectangleData, err error)
 	GetAdvertById(ctx context.Context, id uuid.UUID) (foundAdvert *models.AdvertData, err error)
+	GetSquareAdvertsList(ctx context.Context, pageSize, offset int) (foundAdverts []*models.AdvertSquareData, err error)
+	GetRectangleAdvertsList(ctx context.Context, advertFilter models.AdvertFilter) (foundAdverts *models.AdvertDataPage, err error)
+	GetRectangleAdvertsByUserId(ctx context.Context, pageSize, offset int, userId uuid.UUID) (foundAdverts []*models.AdvertRectangleData, err error)
+	UpdateAdvertById(ctx context.Context, advertUpdateData *models.AdvertUpdateData) (err error)
+	DeleteAdvertById(ctx context.Context, advertId uuid.UUID) (err error)
+	GetRectangleAdvertsByComplexId(ctx context.Context, pageSize, offset int, comlexId uuid.UUID) (foundAdverts []*models.AdvertRectangleData, err error)
 }
 
 // AdvertRepo represents the repository interface for adverts.
@@ -34,4 +40,15 @@ type AdvertRepo interface {
 	GetFlatRectangleAdvertsList(ctx context.Context) ([]*models.AdvertRectangleData, error)
 	GetHouseRectangleAdvertsList(ctx context.Context) ([]*models.AdvertRectangleData, error)
 	GetHouseAdvertById(ctx context.Context, id uuid.UUID) (*models.AdvertData, error)
+	GetFlatAdvertById(ctx context.Context, id uuid.UUID) (*models.AdvertData, error)
+	GetTypeAdvertById(ctx context.Context, id uuid.UUID) (*models.AdvertTypeAdvert, error)
+	GetSquareAdverts(ctx context.Context, pageSize, offset int) ([]*models.AdvertSquareData, error)
+	GetRectangleAdverts(ctx context.Context, advertFilter models.AdvertFilter) (*models.AdvertDataPage, error)
+	GetRectangleAdvertsByUserId(ctx context.Context, pageSize, offset int, userId uuid.UUID) ([]*models.AdvertRectangleData, error)
+	UpdateFlatAdvertById(ctx context.Context, tx *sql.Tx, advertUpdateData *models.AdvertUpdateData) error
+	UpdateHouseAdvertById(ctx context.Context, tx *sql.Tx, advertUpdateData *models.AdvertUpdateData) error
+	ChangeTypeAdvert(ctx context.Context, tx *sql.Tx, advertId uuid.UUID) error
+	DeleteHouseAdvertById(ctx context.Context, tx *sql.Tx, advertId uuid.UUID) error
+	DeleteFlatAdvertById(ctx context.Context, tx *sql.Tx, advertId uuid.UUID) error
+	GetRectangleAdvertsByComplexId(ctx context.Context, pageSize, offset int, complexId uuid.UUID) ([]*models.AdvertRectangleData, error)
 }

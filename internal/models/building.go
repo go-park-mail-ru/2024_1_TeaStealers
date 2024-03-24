@@ -45,13 +45,29 @@ type Building struct {
 	// Material is the material of the building.
 	Material MaterialBuilding `json:"material"`
 	// Address is the address of the building.
-	Address string `json:"address"`
+	Address string `json:"adress"`
 	// AddressPoint is the geographical point of the building's address.
-	AddressPoint string `json:"addressPoint"`
+	AddressPoint string `json:"adressPoint"`
 	// YearCreation is the year when the building was created.
 	YearCreation int `json:"yearCreation"`
 	// DateCreation is the date when the building was published.
 	DateCreation time.Time `json:"-"`
 	// IsDeleted is a flag indicating whether the building is deleted.
 	IsDeleted bool `json:"-"`
+}
+
+// BuildingCreateData represents a data for creation building.
+type BuildingCreateData struct {
+	// ComplexID is the identifier of the complex to which the building belongs.
+	ComplexID uuid.UUID `json:"complexId"`
+	// Floor is the number of floors in the building.
+	Floor int `json:"floor"`
+	// Material is the material of the building.
+	Material MaterialBuilding `json:"material"`
+	// Address is the address of the building.
+	Address string `json:"adress"`
+	// AddressPoint is the geographical point of the building's address.
+	AddressPoint string `json:"adressPoint"`
+	// YearCreation is the year when the building was created.
+	YearCreation int `json:"yearCreation"`
 }

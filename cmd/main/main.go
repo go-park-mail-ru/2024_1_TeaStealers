@@ -7,10 +7,19 @@ import (
 	authH "2024_1_TeaStealers/internal/pkg/auth/delivery"
 	authR "2024_1_TeaStealers/internal/pkg/auth/repo"
 	authUc "2024_1_TeaStealers/internal/pkg/auth/usecase"
+	companyH "2024_1_TeaStealers/internal/pkg/companies/delivery"
+	companyR "2024_1_TeaStealers/internal/pkg/companies/repo"
+	companyUc "2024_1_TeaStealers/internal/pkg/companies/usecase"
+	complexH "2024_1_TeaStealers/internal/pkg/complexes/delivery"
+	complexR "2024_1_TeaStealers/internal/pkg/complexes/repo"
+	complexUc "2024_1_TeaStealers/internal/pkg/complexes/usecase"
 	imageH "2024_1_TeaStealers/internal/pkg/images/delivery/http"
 	imageR "2024_1_TeaStealers/internal/pkg/images/repo"
 	imageUc "2024_1_TeaStealers/internal/pkg/images/usecase"
 	"2024_1_TeaStealers/internal/pkg/middleware"
+	userH "2024_1_TeaStealers/internal/pkg/users/delivery"
+	userR "2024_1_TeaStealers/internal/pkg/users/repo"
+	userUc "2024_1_TeaStealers/internal/pkg/users/usecase"
 	"context"
 	"database/sql"
 	"fmt"
@@ -66,7 +75,7 @@ func main() {
 	auth := r.PathPrefix("/auth").Subrouter()
 	auth.HandleFunc("/signup", autHandler.SignUp).Methods(http.MethodPost, http.MethodOptions)
 	auth.HandleFunc("/login", autHandler.Login).Methods(http.MethodPost, http.MethodOptions)
-	auth.Handle("/logout", middleware.JwtMiddleware(http.HandlerFunc(autHandler.Logout))).Methods(http.MethodGet, http.MethodOptions)
+	auth.Handle("/logout", middleware.JwtMiddleware(http.HandlerFunc(autHandler.Logout), authRepo)).Methods(http.MethodGet, http.MethodOptions)
 	auth.HandleFunc("/check_auth", autHandler.CheckAuth).Methods(http.MethodGet, http.MethodOptions)
 
 	advertRepo := advertsR.NewRepository(db)
@@ -79,15 +88,53 @@ func main() {
 
 	advert := r.PathPrefix("/adverts").Subrouter()
 	advert.HandleFunc("/{id}", advertHandler.GetAdvertById).Methods(http.MethodGet, http.MethodOptions)
+	advert.HandleFunc("/{id}", advertHandler.UpdateAdvertById).Methods(http.MethodPost, http.MethodOptions)
+	advert.HandleFunc("/{id}", advertHandler.DeleteAdvertById).Methods(http.MethodDelete, http.MethodOptions)
 	advert.HandleFunc("/houses", advertHandler.CreateHouseAdvert).Methods(http.MethodPost, http.MethodOptions)
 	advert.HandleFunc("/flats", advertHandler.CreateFlatAdvert).Methods(http.MethodPost, http.MethodOptions)
+	advert.HandleFunc("/squarelist/", advertHandler.GetSquareAdvertsList).Methods(http.MethodGet, http.MethodOptions)
+	advert.HandleFunc("/rectanglelist/", advertHandler.GetRectangeAdvertsList).Methods(http.MethodGet, http.MethodOptions)
 	advert.HandleFunc("/houses/squarelist/", advertHandler.GetHouseSquareAdvertsList).Methods(http.MethodGet, http.MethodOptions)
 	advert.HandleFunc("/flats/squarelist/", advertHandler.GetFlatSquareAdvertsList).Methods(http.MethodGet, http.MethodOptions)
 	advert.HandleFunc("/flats/rectanglelist/", advertHandler.GetFlatRectangleAdvertsList).Methods(http.MethodGet, http.MethodOptions)
 	advert.HandleFunc("/houses/rectanglelist/", advertHandler.GetHouseRectangleAdvertsList).Methods(http.MethodGet, http.MethodOptions)
-	advert.HandleFunc("/image", imageHandler.UploadImage).Methods(http.MethodPost, http.MethodOptions)
+	advert.HandleFunc("/image/", imageHandler.UploadImage).Methods(http.MethodPost, http.MethodOptions)
 	advert.HandleFunc("/{id}/image", imageHandler.GetAdvertImages).Methods(http.MethodGet, http.MethodOptions)
 	advert.HandleFunc("/{id}/image", imageHandler.DeleteImage).Methods(http.MethodDelete, http.MethodOptions)
+
+	userRepo := userR.NewRepository(db)
+	userUsecase := userUc.NewUserUsecase(userRepo)
+	userHandler := userH.NewUserHandler(userUsecase)
+
+	user := r.PathPrefix("/user").Subrouter()
+	user.Handle("/me", middleware.JwtMiddleware(http.HandlerFunc(userHandler.GetCurUser), authRepo)).Methods(http.MethodGet, http.MethodOptions)
+	user.Handle("/avatar", middleware.JwtMiddleware(http.HandlerFunc(userHandler.UpdateUserPhoto), authRepo)).Methods(http.MethodPost, http.MethodOptions)
+	user.Handle("/avatar", middleware.JwtMiddleware(http.HandlerFunc(userHandler.DeleteUserPhoto), authRepo)).Methods(http.MethodDelete, http.MethodOptions)
+	user.Handle("/info", middleware.JwtMiddleware(http.HandlerFunc(userHandler.UpdateUserInfo), authRepo)).Methods(http.MethodPost, http.MethodOptions)
+	user.Handle("/password", middleware.JwtMiddleware(http.HandlerFunc(userHandler.UpdateUserPassword), authRepo)).Methods(http.MethodPost, http.MethodOptions)
+	user.Handle("/myadverts", middleware.JwtMiddleware(http.HandlerFunc(advertHandler.GetUserAdverts), authRepo)).Methods(http.MethodGet, http.MethodOptions)
+
+	companyRepo := companyR.NewRepository(db)
+	companyUsecase := companyUc.NewCompanyUsecase(companyRepo)
+	companyHandler := companyH.NewCompanyHandler(companyUsecase)
+
+	company := r.PathPrefix("/companies").Subrouter()
+	company.HandleFunc("/", companyHandler.CreateCompany).Methods(http.MethodPost, http.MethodOptions)
+	company.HandleFunc("/{id}", companyHandler.GetCompanyById).Methods(http.MethodGet, http.MethodOptions)
+	company.HandleFunc("/images/{id}", companyHandler.UpdateCompanyPhoto).Methods(http.MethodPost, http.MethodOptions)
+
+	complexRepo := complexR.NewRepository(db)
+	complexUsecase := complexUc.NewComplexUsecase(complexRepo)
+	complexHandler := complexH.NewComplexHandler(complexUsecase)
+
+	complex := r.PathPrefix("/complexes").Subrouter()
+	complex.HandleFunc("/", complexHandler.CreateComplex).Methods(http.MethodPost, http.MethodOptions)
+	complex.HandleFunc("/{id}", complexHandler.GetComplexById).Methods(http.MethodGet, http.MethodOptions)
+	complex.HandleFunc("/{id}/rectanglelist/", advertHandler.GetComplexAdverts).Methods(http.MethodGet, http.MethodOptions)
+	complex.HandleFunc("/houses", complexHandler.CreateHouseAdvert).Methods(http.MethodPost, http.MethodOptions)
+	complex.HandleFunc("/flats", complexHandler.CreateFlatAdvert).Methods(http.MethodPost, http.MethodOptions)
+	complex.HandleFunc("/buildings", complexHandler.CreateBuilding).Methods(http.MethodPost, http.MethodOptions)
+	complex.HandleFunc("/images/{id}", complexHandler.UpdateComplexPhoto).Methods(http.MethodPost, http.MethodOptions)
 
 	srv := &http.Server{
 		Addr:              ":8080",

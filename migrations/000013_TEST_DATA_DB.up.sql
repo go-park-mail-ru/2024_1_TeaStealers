@@ -30,7 +30,7 @@ INSERT INTO advertTypes (id, advertType, dateCreation, isDeleted) VALUES
 ('089d0a75-f6a5-4512-86fd-55a3ed8e1748', 'House', NOW(), FALSE);
 
 INSERT INTO users (id, passwordHash, levelUpdate, firstName, secondName, dateBirthday, phone, email, photo, dateCreation, isDeleted) VALUES
-('18d5933e-b5e1-44f5-86d1-303e51891227', 'e38ad214943daad1d64c102faec29de4afe9da3d', 1, 'John', 'Doe', '1990-01-01', '1234567890', 'john.doe@example.com', 'photo1.jpg', NOW(), FALSE), -- password1
+('18d5933e-b5e1-44f5-86d1-303e51891227', 'e38ad214943daad1d64c102faec29de4afe9da3d', 1, 'John', 'Doe', '1990-01-01', '1234567890', 'john.doe@example.com', 'photo1.jpg', NOW(), FALSE), -- password1 // SuperUserForComplexAdverts
 ('a4ff3cc1-cc31-4f14-80f0-7c6bf8c0b79c', '2aa60a8ff7fcd473d321e0146afd9e26df395147', 1, 'Jane', 'Smith', '1992-02-02', '2345678901', 'jane.smith@example.com', 'photo2.jpg', NOW(), FALSE), -- password2
 ('3cf39825-4521-4a86-8d9c-ec21a8cc1162', '1119cfd37ee247357e034a08d844eea25f6fd20f', 1, 'Alice', 'Johnson', '1994-03-03', '3456789012', 'alice.johnson@example.com', 'photo3.jpg', NOW(), FALSE), -- password3
 ('a37f2d87-2b20-4e2a-9d44-b71666e2a3e7', 'a1d7584daaca4738d499ad7082886b01117275d8', 1, 'Bob', 'Williams', '1996-04-04', '4567890123', 'bob.williams@example.com', 'photo4.jpg', NOW(), FALSE), -- password4

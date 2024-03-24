@@ -16,7 +16,7 @@ CREATE TABLE IF NOT EXISTS houses (
     id UUID NOT NULL PRIMARY KEY,
     buildingId UUID NOT NULL REFERENCES buildings(id) ON DELETE CASCADE,
     advertTypeId UUID NOT NULL REFERENCES advertTypes(id) ON DELETE CASCADE,
-    ceilingHeight INTEGER DEFAULT NULL,
+    ceilingHeight FLOAT DEFAULT NULL,
     squareArea FLOAT DEFAULT NULL,
     squareHouse FLOAT DEFAULT NULL,
     bedroomCount INT DEFAULT NULL,

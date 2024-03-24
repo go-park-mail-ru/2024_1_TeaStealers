@@ -17,7 +17,8 @@ type AuthUsecase interface {
 
 // AuthRepo represents the repository interface for authentication.
 type AuthRepo interface {
-	CreateUser(ctx context.Context, newUser *models.User) error
+	CreateUser(ctx context.Context, newUser *models.User) (*models.User, error)
 	CheckUser(ctx context.Context, login string, passwordHash string) (*models.User, error)
-	GetUserByLogin(cts context.Context, login string) (*models.User, error)
+	GetUserByLogin(ctx context.Context, login string) (*models.User, error)
+	GetUserLevelById(id uuid.UUID) (int, error)
 }

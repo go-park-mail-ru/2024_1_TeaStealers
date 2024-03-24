@@ -4,6 +4,7 @@ import (
 	"2024_1_TeaStealers/internal/models"
 	"errors"
 	"fmt"
+	"net/http"
 	"os"
 	"time"
 
@@ -16,8 +17,7 @@ func GenerateToken(user *models.User) (string, time.Time, error) {
 	exp := time.Now().Add(time.Hour * 24)
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"id":    user.ID,
-		"email": user.Email,
-		"phone": user.Phone,
+		"level": user.LevelUpdate,
 		"exp":   exp.Unix(),
 	})
 	tokenStr, err := token.SignedString([]byte(os.Getenv("JWT_SECRET")))
@@ -37,20 +37,35 @@ func ParseToken(token string) (*jwt.Token, error) {
 	})
 }
 
-// ParseId parses the user ID from the JWT token claims.
-func ParseId(claims *jwt.Token) (uuid.UUID, error) {
+// ParseClaims parses the user ID from the JWT token claims.
+func ParseClaims(claims *jwt.Token) (uuid.UUID, int, error) {
 	payloadMap, ok := claims.Claims.(jwt.MapClaims)
 	if !ok {
-		return uuid.Nil, errors.New("invalid claims")
+		return uuid.Nil, 0, errors.New("invalid claims")
 	}
 	idStr, ok := payloadMap["id"].(string)
 	if !ok {
-		return uuid.Nil, errors.New("incorrect id")
+		return uuid.Nil, 0, errors.New("incorrect id")
 	}
 	id, err := uuid.FromString(idStr)
 	if err != nil {
-		return uuid.Nil, errors.New("incorrect id")
+		return uuid.Nil, 0, errors.New("incorrect id")
+	}
+	levelStr, ok := payloadMap["level"].(float64)
+	if !ok {
+		return uuid.Nil, 0, errors.New("incorrect level")
 	}
 
-	return id, nil
+	return id, int(levelStr), nil
+}
+
+// TokenCookie creates a new cookie for storing the authentication token.
+func TokenCookie(name, token string, exp time.Time) *http.Cookie {
+	return &http.Cookie{
+		Name:     name,
+		Value:    token,
+		Expires:  exp,
+		Path:     "/",
+		HttpOnly: true,
+	}
 }
