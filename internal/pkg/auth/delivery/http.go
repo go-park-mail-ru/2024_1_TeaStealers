@@ -6,7 +6,6 @@ import (
 	"2024_1_TeaStealers/internal/pkg/jwt"
 	"2024_1_TeaStealers/internal/pkg/middleware"
 	"2024_1_TeaStealers/internal/pkg/utils"
-	"errors"
 	"net/http"
 )
 
@@ -99,19 +98,16 @@ func (h *AuthHandler) Logout(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *AuthHandler) CheckAuth(w http.ResponseWriter, r *http.Request) {
-	tokenCookie, err := r.Cookie(middleware.CookieName)
-	if err != nil {
-		if errors.Is(err, http.ErrNoCookie) {
-			utils.WriteError(w, http.StatusUnauthorized, "token cookie not found")
-			return
-		}
-		utils.WriteError(w, http.StatusUnauthorized, "fail to get token cookie")
+	tokenValue := r.Context().Value(middleware.CookieName)
+	if tokenValue == nil {
+		utils.WriteError(w, http.StatusUnauthorized, "token cookie not found")
 		return
 	}
+	token := tokenValue.(string)
 
-	id, err := h.uc.CheckAuth(r.Context(), tokenCookie.Value)
+	id, err := h.uc.CheckAuth(r.Context(), token)
 	if err != nil {
-		utils.WriteError(w, http.StatusUnauthorized, "jws token is invalid")
+		utils.WriteError(w, http.StatusUnauthorized, "jwt token is invalid")
 		return
 	}
 	if err = utils.WriteResponse(w, http.StatusOK, id); err != nil {
