@@ -6,6 +6,7 @@ import (
 	"2024_1_TeaStealers/internal/pkg/jwt"
 	"2024_1_TeaStealers/internal/pkg/utils"
 	"context"
+	"errors"
 	"time"
 
 	"github.com/satori/uuid"
@@ -69,4 +70,15 @@ func (u *AuthUsecase) CheckAuth(ctx context.Context, token string) (uuid.UUID, e
 		return uuid.Nil, err
 	}
 	return id, nil
+}
+
+func (u *AuthUsecase) GetUserLevelById(id uuid.UUID, jwtLevel int) error {
+	level, err := u.repo.GetUserLevelById(id)
+	if err != nil {
+		return err
+	}
+	if jwtLevel != level {
+		return errors.New("levels don't much")
+	}
+	return nil
 }

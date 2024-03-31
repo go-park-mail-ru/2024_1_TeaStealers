@@ -14,6 +14,7 @@ type AuthUsecase interface {
 	SignUp(context.Context, *models.UserSignUpData) (*models.User, string, time.Time, error)
 	Login(context.Context, *models.UserLoginData) (*models.User, string, time.Time, error)
 	CheckAuth(context.Context, string) (uuid.UUID, error)
+	GetUserLevelById(id uuid.UUID, level int) error
 }
 
 // AuthRepo represents the repository interface for authentication.
