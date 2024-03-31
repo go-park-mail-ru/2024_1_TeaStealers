@@ -78,7 +78,7 @@ func main() {
 	auth.HandleFunc("/signup", autHandler.SignUp).Methods(http.MethodPost, http.MethodOptions)
 	auth.HandleFunc("/login", autHandler.Login).Methods(http.MethodPost, http.MethodOptions)
 	auth.Handle("/logout", jwtMd.JwtTMiddleware(http.HandlerFunc(autHandler.Logout))).Methods(http.MethodGet, http.MethodOptions)
-	auth.HandleFunc("/check_auth", autHandler.CheckAuth).Methods(http.MethodGet, http.MethodOptions)
+	auth.Handle("/check_auth", jwtMd.JwtTMiddleware(http.HandlerFunc(autHandler.CheckAuth))).Methods(http.MethodGet, http.MethodOptions)
 
 	advertRepo := advertsR.NewRepository(db)
 	advertUsecase := advertsUc.NewAdvertUsecase(advertRepo)

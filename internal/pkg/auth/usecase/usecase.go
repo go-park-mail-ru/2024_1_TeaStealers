@@ -60,16 +60,11 @@ func (u *AuthUsecase) Login(ctx context.Context, data *models.UserLoginData) (*m
 }
 
 // CheckAuth checking autorizing
-func (u *AuthUsecase) CheckAuth(ctx context.Context, token string) (uuid.UUID, error) {
-	claims, err := jwt.ParseToken(token)
-	if err != nil {
-		return uuid.Nil, err
+func (u *AuthUsecase) CheckAuth(ctx context.Context, idUser uuid.UUID) error {
+	if _, err := u.repo.GetUserLevelById(idUser); err != nil {
+		return errors.New("user not found")
 	}
-	id, _, err := jwt.ParseClaims(claims)
-	if err != nil {
-		return uuid.Nil, err
-	}
-	return id, nil
+	return nil
 }
 
 func (u *AuthUsecase) GetUserLevelById(id uuid.UUID, jwtLevel int) error {

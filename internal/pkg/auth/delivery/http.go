@@ -6,6 +6,7 @@ import (
 	"2024_1_TeaStealers/internal/pkg/jwt"
 	"2024_1_TeaStealers/internal/pkg/middleware"
 	"2024_1_TeaStealers/internal/pkg/utils"
+	"github.com/satori/uuid"
 	"net/http"
 )
 
@@ -98,19 +99,22 @@ func (h *AuthHandler) Logout(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *AuthHandler) CheckAuth(w http.ResponseWriter, r *http.Request) {
-	tokenValue := r.Context().Value(middleware.CookieName)
-	if tokenValue == nil {
-		utils.WriteError(w, http.StatusUnauthorized, "token cookie not found")
+	idUser := r.Context().Value(middleware.CookieName)
+	if idUser == nil {
+		utils.WriteError(w, http.StatusUnauthorized, "token not found")
 		return
 	}
-	token := tokenValue.(string)
-
-	id, err := h.uc.CheckAuth(r.Context(), token)
+	uuidUser, ok := idUser.(uuid.UUID)
+	if !ok {
+		utils.WriteError(w, http.StatusUnauthorized, "incorrect user id")
+		return
+	}
+	err := h.uc.CheckAuth(r.Context(), uuidUser)
 	if err != nil {
-		utils.WriteError(w, http.StatusUnauthorized, "jwt token is invalid")
+		utils.WriteError(w, http.StatusUnauthorized, "user not exists")
 		return
 	}
-	if err = utils.WriteResponse(w, http.StatusOK, id); err != nil {
+	if err = utils.WriteResponse(w, http.StatusOK, uuidUser); err != nil {
 		utils.WriteError(w, http.StatusInternalServerError, err.Error())
 	}
 }
