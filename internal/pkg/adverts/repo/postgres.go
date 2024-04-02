@@ -411,10 +411,10 @@ func (r *AdvertRepo) ChangeTypeAdvert(ctx context.Context, tx *sql.Tx, advertId 
 	VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9);`
 	queryInsertHouse := `INSERT INTO houses (id, buildingId, advertTypeId, ceilingHeight, squareArea, squareHouse, bedroomCount, statusArea, cottage, statusHome)
 	VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10);`
-	queryRestoreFlatByAdvertId := `UPDATE flats SET isdeleted=false WHERE id=$1;`
-	queryRestoreHouseByAdvertId := `UPDATE houses SET isdeleted=false WHERE id=$1;`
-	queryDeleteFlatByAdvertId := `UPDATE flats SET isdeleted=true WHERE id=$1;`
-	queryDeleteHouseByAdvertId := `UPDATE houses SET isdeleted=true WHERE id=$1;`
+	//queryRestoreFlatByAdvertId := `UPDATE flats SET isdeleted=false WHERE id=$1;`
+	//queryRestoreHouseByAdvertId := `UPDATE houses SET isdeleted=false WHERE id=$1;`
+	//queryDeleteFlatByAdvertId := `UPDATE flats SET isdeleted=true WHERE id=$1;`
+	//queryDeleteHouseByAdvertId := `UPDATE houses SET isdeleted=true WHERE id=$1;`
 
 	var advertType models.AdvertTypeAdvert
 	var advertTypeId uuid.UUID
