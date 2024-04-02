@@ -72,11 +72,13 @@ func main() {
 	authUsecase := authUc.NewAuthUsecase(authRepo)
 	autHandler := authH.NewAuthHandler(authUsecase)
 
+	jwtMd := middleware.NewAuthMiddleware(authUsecase)
+
 	auth := r.PathPrefix("/auth").Subrouter()
 	auth.HandleFunc("/signup", autHandler.SignUp).Methods(http.MethodPost, http.MethodOptions)
 	auth.HandleFunc("/login", autHandler.Login).Methods(http.MethodPost, http.MethodOptions)
-	auth.Handle("/logout", middleware.JwtMiddleware(http.HandlerFunc(autHandler.Logout), authRepo)).Methods(http.MethodGet, http.MethodOptions)
-	auth.HandleFunc("/check_auth", autHandler.CheckAuth).Methods(http.MethodGet, http.MethodOptions)
+	auth.Handle("/logout", jwtMd.JwtTMiddleware(http.HandlerFunc(autHandler.Logout))).Methods(http.MethodGet, http.MethodOptions)
+	auth.Handle("/check_auth", jwtMd.JwtTMiddleware(http.HandlerFunc(autHandler.CheckAuth))).Methods(http.MethodGet, http.MethodOptions)
 
 	advertRepo := advertsR.NewRepository(db)
 	advertUsecase := advertsUc.NewAdvertUsecase(advertRepo)
@@ -104,12 +106,12 @@ func main() {
 	userHandler := userH.NewUserHandler(userUsecase)
 
 	user := r.PathPrefix("/user").Subrouter()
-	user.Handle("/me", middleware.JwtMiddleware(http.HandlerFunc(userHandler.GetCurUser), authRepo)).Methods(http.MethodGet, http.MethodOptions)
-	user.Handle("/avatar", middleware.JwtMiddleware(http.HandlerFunc(userHandler.UpdateUserPhoto), authRepo)).Methods(http.MethodPost, http.MethodOptions)
-	user.Handle("/avatar", middleware.JwtMiddleware(http.HandlerFunc(userHandler.DeleteUserPhoto), authRepo)).Methods(http.MethodDelete, http.MethodOptions)
-	user.Handle("/info", middleware.JwtMiddleware(http.HandlerFunc(userHandler.UpdateUserInfo), authRepo)).Methods(http.MethodPost, http.MethodOptions)
-	user.Handle("/password", middleware.JwtMiddleware(http.HandlerFunc(userHandler.UpdateUserPassword), authRepo)).Methods(http.MethodPost, http.MethodOptions)
-	user.Handle("/myadverts", middleware.JwtMiddleware(http.HandlerFunc(advertHandler.GetUserAdverts), authRepo)).Methods(http.MethodGet, http.MethodOptions)
+	user.Handle("/me", jwtMd.JwtTMiddleware(http.HandlerFunc(userHandler.GetCurUser))).Methods(http.MethodGet, http.MethodOptions)
+	user.Handle("/avatar", jwtMd.JwtTMiddleware(http.HandlerFunc(userHandler.UpdateUserPhoto))).Methods(http.MethodPost, http.MethodOptions)
+	user.Handle("/avatar", jwtMd.JwtTMiddleware(http.HandlerFunc(userHandler.DeleteUserPhoto))).Methods(http.MethodDelete, http.MethodOptions)
+	user.Handle("/info", jwtMd.JwtTMiddleware(http.HandlerFunc(userHandler.UpdateUserInfo))).Methods(http.MethodPost, http.MethodOptions)
+	user.Handle("/password", jwtMd.JwtTMiddleware(http.HandlerFunc(userHandler.UpdateUserPassword))).Methods(http.MethodPost, http.MethodOptions)
+	user.Handle("/myadverts", jwtMd.JwtTMiddleware(http.HandlerFunc(advertHandler.GetUserAdverts))).Methods(http.MethodGet, http.MethodOptions)
 
 	companyRepo := companyR.NewRepository(db)
 	companyUsecase := companyUc.NewCompanyUsecase(companyRepo)

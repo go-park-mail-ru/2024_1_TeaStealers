@@ -6,6 +6,7 @@ import (
 	"2024_1_TeaStealers/internal/pkg/jwt"
 	"2024_1_TeaStealers/internal/pkg/utils"
 	"context"
+	"errors"
 	"time"
 
 	"github.com/satori/uuid"
@@ -59,14 +60,20 @@ func (u *AuthUsecase) Login(ctx context.Context, data *models.UserLoginData) (*m
 }
 
 // CheckAuth checking autorizing
-func (u *AuthUsecase) CheckAuth(ctx context.Context, token string) (uuid.UUID, error) {
-	claims, err := jwt.ParseToken(token)
-	if err != nil {
-		return uuid.Nil, err
+func (u *AuthUsecase) CheckAuth(ctx context.Context, idUser uuid.UUID) error {
+	if _, err := u.repo.GetUserLevelById(idUser); err != nil {
+		return errors.New("user not found")
 	}
-	id, _, err := jwt.ParseClaims(claims)
+	return nil
+}
+
+func (u *AuthUsecase) GetUserLevelById(id uuid.UUID, jwtLevel int) error {
+	level, err := u.repo.GetUserLevelById(id)
 	if err != nil {
-		return uuid.Nil, err
+		return err
 	}
-	return id, nil
+	if jwtLevel != level {
+		return errors.New("levels don't much")
+	}
+	return nil
 }

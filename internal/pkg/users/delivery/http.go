@@ -34,6 +34,7 @@ func (h *UserHandler) GetCurUser(w http.ResponseWriter, r *http.Request) {
 	userInfo, err := h.uc.GetUser(UUID)
 	if err != nil {
 		utils.WriteError(w, http.StatusBadRequest, "user is not exists")
+		return
 	}
 	if err := utils.WriteResponse(w, http.StatusOK, userInfo); err != nil {
 		utils.WriteError(w, http.StatusInternalServerError, "error write response")
@@ -104,7 +105,7 @@ func (h *UserHandler) UpdateUserInfo(w http.ResponseWriter, r *http.Request) {
 	data := &models.UserUpdateData{}
 
 	if err := utils.ReadRequestData(r, &data); err != nil {
-		utils.WriteError(w, http.StatusBadRequest, "Incorrect data format")
+		utils.WriteError(w, http.StatusBadRequest, "incorrect data format")
 		return
 	}
 
@@ -131,7 +132,7 @@ func (h *UserHandler) UpdateUserPassword(w http.ResponseWriter, r *http.Request)
 	}
 
 	if err := utils.ReadRequestData(r, &data); err != nil {
-		utils.WriteError(w, http.StatusBadRequest, "Incorrect data format")
+		utils.WriteError(w, http.StatusBadRequest, "incorrect data format")
 		return
 	}
 

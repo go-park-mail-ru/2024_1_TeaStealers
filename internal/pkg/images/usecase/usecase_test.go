@@ -8,6 +8,7 @@ import (
 	"github.com/satori/uuid"
 	"github.com/stretchr/testify/assert"
 	"io"
+	"os"
 	"testing"
 )
 
@@ -17,7 +18,6 @@ func TestUploadImage(t *testing.T) {
 
 	mockRepo := images_mock.NewMockImageRepo(ctrl)
 	usecase := NewImageUsecase(mockRepo)
-
 	type args struct {
 		file          io.Reader
 		fileType      string
@@ -42,14 +42,14 @@ func TestUploadImage(t *testing.T) {
 				expectedImage: &models.Image{
 					ID:       uuid.NewV4(),
 					AdvertID: uuid.NewV4(),
-					Photo:    "adverts/" + uuid.NewV4().String() + "/" + uuid.NewV4().String() + "jpg",
+					Photo:    "adverts/" + uuid.NewV4().String() + "/" + uuid.NewV4().String() + ".jpg",
 					Priority: 1,
 				},
 			},
 			want: want{
 				imageResp: &models.ImageResp{
 					ID:       uuid.NewV4(),
-					Photo:    "adverts/" + uuid.NewV4().String() + "/" + uuid.NewV4().String() + "jpg",
+					Photo:    "adverts/" + uuid.NewV4().String() + "/" + uuid.NewV4().String() + ".jpg",
 					Priority: 1,
 				},
 				err: nil,
@@ -65,6 +65,7 @@ func TestUploadImage(t *testing.T) {
 			assert.Equal(t, tt.want.imageResp, gotImageResp)
 		})
 	}
+	os.RemoveAll("adverts")
 }
 
 func TestGetAdvertImages(t *testing.T) {

@@ -11,8 +11,16 @@ import (
 // CookieName represents the name of the JWT cookie.
 const CookieName = "jwt-tean"
 
+type AuthMiddleware struct {
+	uc auth.AuthUsecase
+}
+
+func NewAuthMiddleware(uc auth.AuthUsecase) *AuthMiddleware {
+	return &AuthMiddleware{uc: uc}
+}
+
 // JwtMiddleware is a middleware function that handles JWT authentication.
-func JwtMiddleware(next http.Handler, repo auth.AuthRepo) http.Handler {
+func (md *AuthMiddleware) JwtTMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		cookie, err := r.Cookie(CookieName)
 		if err != nil {
@@ -42,12 +50,7 @@ func JwtMiddleware(next http.Handler, repo auth.AuthRepo) http.Handler {
 			return
 		}
 
-		levelCur, err := repo.GetUserLevelById(id)
-		if err != nil {
-			w.WriteHeader(http.StatusUnauthorized)
-			return
-		}
-		if levelCur != level {
+		if err := md.uc.GetUserLevelById(id, level); err != nil {
 			w.WriteHeader(http.StatusUnauthorized)
 			return
 		}

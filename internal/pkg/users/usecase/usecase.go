@@ -81,7 +81,7 @@ func (u *UserUsecase) UpdateUserPassword(data *models.UserUpdatePassword) (strin
 	oldPasswordHash := utils.GenerateHashString(data.OldPassword)
 	newPasswordHash := utils.GenerateHashString(data.NewPassword)
 	if oldPasswordHash == newPasswordHash {
-		return "", time.Now(), errors.New("passwords must not much")
+		return "", time.Now(), errors.New("passwords must not match")
 	}
 	if err := u.repo.CheckUserPassword(data.ID, oldPasswordHash); err != nil {
 		return "", time.Now(), errors.New("invalid old password")

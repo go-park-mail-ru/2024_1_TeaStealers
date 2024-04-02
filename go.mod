@@ -1,6 +1,6 @@
 module 2024_1_TeaStealers
 
-go 1.21.1
+go 1.22.1
 
 require (
 	github.com/DATA-DOG/go-sqlmock v1.5.2
@@ -13,6 +13,7 @@ require (
 	github.com/stretchr/testify v1.9.0
 	github.com/swaggo/http-swagger v1.3.4
 	github.com/swaggo/swag v1.16.3
+	github.com/yuin/goldmark v1.7.0
 )
 
 require (

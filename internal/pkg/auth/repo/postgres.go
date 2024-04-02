@@ -29,10 +29,9 @@ func (r *AuthRepo) CreateUser(ctx context.Context, user *models.User) (*models.U
 	res := r.db.QueryRow(query, user.ID)
 
 	newUser := &models.User{}
-	if err := res.Scan(&user.ID, &user.Email, &user.Phone, &user.PasswordHash, &user.LevelUpdate); err != nil {
+	if err := res.Scan(&newUser.ID, &newUser.Email, &newUser.Phone, &newUser.PasswordHash, &newUser.LevelUpdate); err != nil {
 		return nil, err
 	}
-
 	return newUser, nil
 }
 
