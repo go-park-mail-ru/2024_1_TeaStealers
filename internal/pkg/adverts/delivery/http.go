@@ -62,58 +62,6 @@ func (h *AdvertHandler) CreateHouseAdvert(w http.ResponseWriter, r *http.Request
 	}
 }
 
-// GetHouseSquareAdvertsList handles the request for retrieving a square house adverts.
-func (h *AdvertHandler) GetHouseSquareAdvertsList(w http.ResponseWriter, r *http.Request) {
-	adverts, err := h.uc.GetHouseSquareAdvertsList(r.Context())
-	if err != nil {
-		utils.WriteError(w, http.StatusInternalServerError, err.Error())
-		return
-	}
-
-	if err = utils.WriteResponse(w, http.StatusOK, adverts); err != nil {
-		utils.WriteError(w, http.StatusInternalServerError, err.Error())
-	}
-}
-
-// GetFlatSquareAdvertsList handles the request for retrieving a square flat adverts.
-func (h *AdvertHandler) GetFlatSquareAdvertsList(w http.ResponseWriter, r *http.Request) {
-	adverts, err := h.uc.GetFlatSquareAdvertsList(r.Context())
-	if err != nil {
-		utils.WriteError(w, http.StatusInternalServerError, err.Error())
-		return
-	}
-
-	if err = utils.WriteResponse(w, http.StatusOK, adverts); err != nil {
-		utils.WriteError(w, http.StatusInternalServerError, err.Error())
-	}
-}
-
-// GetFlatRectangleAdvertsList handles the request for retrieving a rectangle flat adverts.
-func (h *AdvertHandler) GetFlatRectangleAdvertsList(w http.ResponseWriter, r *http.Request) {
-	adverts, err := h.uc.GetFlatRectangleAdvertsList(r.Context())
-	if err != nil {
-		utils.WriteError(w, http.StatusInternalServerError, err.Error())
-		return
-	}
-
-	if err = utils.WriteResponse(w, http.StatusOK, adverts); err != nil {
-		utils.WriteError(w, http.StatusInternalServerError, err.Error())
-	}
-}
-
-// GetHouseRectangleAdvertsList handles the request for retrieving a rectangle house adverts.
-func (h *AdvertHandler) GetHouseRectangleAdvertsList(w http.ResponseWriter, r *http.Request) {
-	adverts, err := h.uc.GetHouseRectangleAdvertsList(r.Context())
-	if err != nil {
-		utils.WriteError(w, http.StatusInternalServerError, err.Error())
-		return
-	}
-
-	if err = utils.WriteResponse(w, http.StatusOK, adverts); err != nil {
-		utils.WriteError(w, http.StatusInternalServerError, err.Error())
-	}
-}
-
 // GetAdvertById handles the request for getting advert by id
 func (h *AdvertHandler) GetAdvertById(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
@@ -229,6 +177,26 @@ func (h *AdvertHandler) GetSquareAdvertsList(w http.ResponseWriter, r *http.Requ
 	}
 }
 
+// GetExistBuildingsByAddress handles the request for retrieving an existing buildings by address.
+func (h *AdvertHandler) GetExistBuildingsByAddress(w http.ResponseWriter, r *http.Request) {
+	pageStr := r.URL.Query().Get("page")
+	address := r.URL.Query().Get("address")
+
+	page, err := strconv.Atoi(pageStr)
+	if err != nil {
+		page = 5
+	}
+	adverts, err := h.uc.GetExistBuildingsByAddress(r.Context(), address, page)
+	if err != nil {
+		utils.WriteError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	if err = utils.WriteResponse(w, http.StatusOK, adverts); err != nil {
+		utils.WriteError(w, http.StatusInternalServerError, err.Error())
+	}
+}
+
 // GetRectangeAdvertsList handles the request for retrieving a rectangle adverts with search.
 func (h *AdvertHandler) GetRectangeAdvertsList(w http.ResponseWriter, r *http.Request) {
 	pageStr := r.URL.Query().Get("page")
@@ -243,28 +211,23 @@ func (h *AdvertHandler) GetRectangeAdvertsList(w http.ResponseWriter, r *http.Re
 	page, err := strconv.Atoi(pageStr)
 	if err != nil {
 		page = 1000000
-		err = nil
 	}
 
 	size, err := strconv.Atoi(sizeStr)
 	if err != nil {
 		size = 0
-		err = nil
 	}
 	roomCount, err := strconv.Atoi(roomCountStr)
 	if err != nil {
 		roomCount = 0
-		err = nil
 	}
 	minPrice, err := strconv.ParseInt(minPriceStr, 10, 64)
 	if err != nil {
 		minPrice = 0
-		err = nil
 	}
 	maxPrice, err := strconv.ParseInt(maxPriceStr, 10, 64)
 	if err != nil {
 		maxPrice = 1000000000
-		err = nil
 	}
 
 	if advertType != "House" && advertType != "Flat" {

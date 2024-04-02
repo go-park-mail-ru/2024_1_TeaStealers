@@ -63,3 +63,51 @@ type House struct {
 	// IsDeleted is a flag indicating whether the house is deleted.
 	IsDeleted bool `json:"-"`
 }
+
+// HouseProperties represents a house properties for advert.
+type HouseProperties struct {
+	// CeilingHeight is the ceiling height of the house.
+	CeilingHeight float64 `json:"ceilingHeight"`
+	// SquareArea is the square area of the house.
+	SquareArea float64 `json:"squareArea"`
+	// SquareHouse is the square area of the house.
+	SquareHouse float64 `json:"squareHouse"`
+	// BedroomCount is the number of bedrooms in the house.
+	BedroomCount int `json:"bedroomCount"`
+	// StatusArea is the status area of the house.
+	StatusArea StatusAreaHouse `json:"statusArea"`
+	// Cottage indicates if the house is a cottage.
+	Cottage bool `json:"cottage"`
+	// StatusHome is the status home of the house.
+	StatusHome StatusHomeHouse `json:"statusHome"`
+	// Floor is the floor of the house.
+	Floor int `json:"floor"`
+}
+
+// HouseSquareProperties represents a house properties in square advert.
+type HouseSquareProperties struct {
+	// Cottage indicates if the house is a cottage.
+	Cottage bool `json:"cottage"`
+	// SquareArea is the square area of the house.
+	SquareArea float64 `json:"squareArea"`
+	// SquareHouse is the square area of the house.
+	SquareHouse float64 `json:"squareHouse"`
+	// BedroomCount is the number of bedrooms in the house.
+	BedroomCount int `json:"bedroomCount"`
+	// Floor is the floor of the house.
+	Floor int `json:"floor"`
+}
+
+// HouseRectangleProperties represents a house properties in rectangle advert.
+type HouseRectangleProperties struct {
+	// Cottage indicates if the house is a cottage.
+	Cottage bool `json:"cottage"`
+	// SquareArea is the square area of the house.
+	SquareArea float64 `json:"squareArea"`
+	// SquareHouse is the square area of the house.
+	SquareHouse float64 `json:"squareHouse"`
+	// BedroomCount is the number of bedrooms in the house.
+	BedroomCount int `json:"bedroomCount"`
+	// Floor is the floor of the house.
+	Floor int `json:"floor"`
+}

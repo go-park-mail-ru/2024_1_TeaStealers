@@ -183,42 +183,6 @@ func (u *AdvertUsecase) CreateHouseAdvert(ctx context.Context, data *models.Adve
 	return newAdvert, nil
 }
 
-// GetHouseSquareAdvertsList handles the square house adverts getting process.
-func (u *AdvertUsecase) GetHouseSquareAdvertsList(ctx context.Context) (foundAdverts []*models.AdvertSquareData, err error) {
-	if foundAdverts, err = u.repo.GetHouseSquareAdvertsList(ctx); err != nil {
-		return nil, err
-	}
-
-	return foundAdverts, nil
-}
-
-// GetFlatSquareAdvertsList handles the square flat adverts getting process.
-func (u *AdvertUsecase) GetFlatSquareAdvertsList(ctx context.Context) (foundAdverts []*models.AdvertSquareData, err error) {
-	if foundAdverts, err = u.repo.GetFlatSquareAdvertsList(ctx); err != nil {
-		return nil, err
-	}
-
-	return foundAdverts, nil
-}
-
-// GetFlatRectangleAdvertsList handles the rectangle flat adverts getting process.
-func (u *AdvertUsecase) GetFlatRectangleAdvertsList(ctx context.Context) (foundAdverts []*models.AdvertRectangleData, err error) {
-	if foundAdverts, err = u.repo.GetFlatRectangleAdvertsList(ctx); err != nil {
-		return nil, err
-	}
-
-	return foundAdverts, nil
-}
-
-// GetHouseRectangleAdvertsList handles the rectangle house adverts getting process.
-func (u *AdvertUsecase) GetHouseRectangleAdvertsList(ctx context.Context) (foundAdverts []*models.AdvertRectangleData, err error) {
-	if foundAdverts, err = u.repo.GetHouseRectangleAdvertsList(ctx); err != nil {
-		return nil, err
-	}
-
-	return foundAdverts, nil
-}
-
 // GetAdvertById handles the getting house advert process.
 func (u *AdvertUsecase) GetAdvertById(ctx context.Context, id uuid.UUID) (foundAdvert *models.AdvertData, err error) {
 	var typeAdvert *models.AdvertTypeAdvert
@@ -234,6 +198,13 @@ func (u *AdvertUsecase) GetAdvertById(ctx context.Context, id uuid.UUID) (foundA
 			return nil, err
 		}
 	}
+
+	var foundImages []*models.ImageResp
+	if foundImages, err = u.repo.SelectImages(foundAdvert.ID); err != nil {
+		return nil, err
+	}
+
+	foundAdvert.Images = foundImages
 
 	return foundAdvert, nil
 }
@@ -323,6 +294,15 @@ func (u *AdvertUsecase) GetRectangleAdvertsList(ctx context.Context, advertFilte
 	}
 
 	return foundAdverts, nil
+}
+
+// GetExistBuildingsByAddress handles the buildings getting process by address with paggination.
+func (u *AdvertUsecase) GetExistBuildingsByAddress(ctx context.Context, address string, pageSize int) (foundBuildings []*models.BuildingsExistData, err error) {
+	if foundBuildings, err = u.repo.CheckExistsBuildings(ctx, pageSize, address); err != nil {
+		return nil, err
+	}
+
+	return foundBuildings, nil
 }
 
 // GetRectangleAdvertsByUserId handles the rectangle adverts getting process with paggination by userId.

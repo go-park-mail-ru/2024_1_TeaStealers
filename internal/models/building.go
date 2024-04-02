@@ -71,3 +71,21 @@ type BuildingCreateData struct {
 	// YearCreation is the year when the building was created.
 	YearCreation int `json:"yearCreation"`
 }
+
+// BuildingsExistData represents an exists buildings whit concrete adress.
+type BuildingsExistData struct {
+	// ID is the unique identifier for the building.
+	ID uuid.UUID `json:"id"`
+	// ComplexName is the name of the complex to which the building belongs.
+	ComplexName string `json:"complexName"`
+	// Floor is the number of floors in the building.
+	Floor int `json:"floor"`
+	// Material is the material of the building.
+	Material MaterialBuilding `json:"material"`
+	// Address is the address of the building.
+	Address string `json:"adress"`
+	// AddressPoint is the geographical point of the building's address.
+	AddressPoint string `json:"adressPoint"`
+	// YearCreation is the year when the building was created.
+	YearCreation int `json:"yearCreation"`
+}

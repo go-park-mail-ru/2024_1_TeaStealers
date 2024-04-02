@@ -12,10 +12,6 @@ import (
 type AdvertUsecase interface {
 	CreateFlatAdvert(context.Context, *models.AdvertFlatCreateData) (*models.Advert, error)
 	CreateHouseAdvert(context.Context, *models.AdvertHouseCreateData) (*models.Advert, error)
-	GetHouseSquareAdvertsList(ctx context.Context) (foundAdverts []*models.AdvertSquareData, err error)
-	GetFlatSquareAdvertsList(ctx context.Context) (foundAdverts []*models.AdvertSquareData, err error)
-	GetFlatRectangleAdvertsList(ctx context.Context) (foundAdverts []*models.AdvertRectangleData, err error)
-	GetHouseRectangleAdvertsList(ctx context.Context) (foundAdverts []*models.AdvertRectangleData, err error)
 	GetAdvertById(ctx context.Context, id uuid.UUID) (foundAdvert *models.AdvertData, err error)
 	GetSquareAdvertsList(ctx context.Context, pageSize, offset int) (foundAdverts []*models.AdvertSquareData, err error)
 	GetRectangleAdvertsList(ctx context.Context, advertFilter models.AdvertFilter) (foundAdverts *models.AdvertDataPage, err error)
@@ -23,6 +19,7 @@ type AdvertUsecase interface {
 	UpdateAdvertById(ctx context.Context, advertUpdateData *models.AdvertUpdateData) (err error)
 	DeleteAdvertById(ctx context.Context, advertId uuid.UUID) (err error)
 	GetRectangleAdvertsByComplexId(ctx context.Context, pageSize, offset int, comlexId uuid.UUID) (foundAdverts []*models.AdvertRectangleData, err error)
+	GetExistBuildingsByAddress(ctx context.Context, address string, pageSize int) (foundBuildings []*models.BuildingsExistData, err error)
 }
 
 // AdvertRepo represents the repository interface for adverts.
@@ -35,10 +32,6 @@ type AdvertRepo interface {
 	CreateHouse(ctx context.Context, tx *sql.Tx, newHouse *models.House) error
 	CreateFlat(ctx context.Context, tx *sql.Tx, newFlat *models.Flat) error
 	CheckExistsBuilding(ctx context.Context, adress string) (*models.Building, error)
-	GetHouseSquareAdvertsList(ctx context.Context) ([]*models.AdvertSquareData, error)
-	GetFlatSquareAdvertsList(ctx context.Context) ([]*models.AdvertSquareData, error)
-	GetFlatRectangleAdvertsList(ctx context.Context) ([]*models.AdvertRectangleData, error)
-	GetHouseRectangleAdvertsList(ctx context.Context) ([]*models.AdvertRectangleData, error)
 	GetHouseAdvertById(ctx context.Context, id uuid.UUID) (*models.AdvertData, error)
 	GetFlatAdvertById(ctx context.Context, id uuid.UUID) (*models.AdvertData, error)
 	GetTypeAdvertById(ctx context.Context, id uuid.UUID) (*models.AdvertTypeAdvert, error)
@@ -51,4 +44,6 @@ type AdvertRepo interface {
 	DeleteHouseAdvertById(ctx context.Context, tx *sql.Tx, advertId uuid.UUID) error
 	DeleteFlatAdvertById(ctx context.Context, tx *sql.Tx, advertId uuid.UUID) error
 	GetRectangleAdvertsByComplexId(ctx context.Context, pageSize, offset int, complexId uuid.UUID) ([]*models.AdvertRectangleData, error)
+	CheckExistsBuildings(ctx context.Context, pageSize int, adress string) ([]*models.BuildingsExistData, error)
+	SelectImages(advertId uuid.UUID) ([]*models.ImageResp, error)
 }

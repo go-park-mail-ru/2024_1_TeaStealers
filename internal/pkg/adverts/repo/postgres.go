@@ -5,9 +5,12 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"log"
 
 	"github.com/satori/uuid"
 )
+
+const ()
 
 // AdvertRepo represents a repository for adverts changes.
 type AdvertRepo struct {
@@ -78,6 +81,33 @@ func (r *AdvertRepo) CheckExistsBuilding(ctx context.Context, adress string) (*m
 	return building, nil
 }
 
+// CheckExistsBuildings check exists buildings.
+func (r *AdvertRepo) CheckExistsBuildings(ctx context.Context, pageSize int, adress string) ([]*models.BuildingsExistData, error) {
+	query := `SELECT b.id, b.floor, COALESCE(b.material, 'Brick'), b.adress, b.adresspoint, b.yearcreation, COALESCE(cx.name, '') FROM buildings AS b LEFT JOIN complexes AS cx ON b.complexid=cx.id WHERE b.adress ILIKE $1 LIMIT $2`
+
+	rows, err := r.db.Query(query, "%"+adress+"%", pageSize)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	buildings := []*models.BuildingsExistData{}
+	for rows.Next() {
+		building := &models.BuildingsExistData{}
+		err := rows.Scan(&building.ID, &building.Floor, &building.Material, &building.Address, &building.AddressPoint, &building.YearCreation, &building.ComplexName)
+		if err != nil {
+			return nil, err
+		}
+
+		buildings = append(buildings, building)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return buildings, nil
+}
+
 // CreateHouse creates a new house in the database.
 func (r *AdvertRepo) CreateHouse(ctx context.Context, tx *sql.Tx, newHouse *models.House) error {
 	insert := `INSERT INTO houses (id, buildingid, adverttypeid, ceilingheight, squarearea, squarehouse, bedroomcount, statusarea, cottage, statushome) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`
@@ -96,315 +126,33 @@ func (r *AdvertRepo) CreateFlat(ctx context.Context, tx *sql.Tx, newFlat *models
 	return nil
 }
 
-// GetHouseSquareAdvertsList retrieves square house adverts from the database.
-func (r *AdvertRepo) GetHouseSquareAdvertsList(ctx context.Context) ([]*models.AdvertSquareData, error) {
-	query := `
-        SELECT
-            a.id,
-            at.adverttype,
-            COALESCE(i.photo, '') AS photo,
-            a.adverttypeplacement,
-            b.adress,
-            h.cottage,
-            h.squarehouse,
-            h.squarearea,
-            h.bedroomcount,
-            b.floor,
-            pc.price,
-            a.datecreation
-        FROM
-            adverts AS a
-        LEFT JOIN
-            LATERAL (
-                SELECT *
-                FROM pricechanges AS pc
-                WHERE pc.advertid = a.id
-                ORDER BY pc.datecreation DESC
-                LIMIT 1
-            ) AS pc ON TRUE
-        INNER JOIN adverttypes AS at ON a.adverttypeid = at.id
-        INNER JOIN houses AS h ON at.id = h.adverttypeid
-        INNER JOIN buildings AS b ON h.buildingid = b.id
-		JOIN images AS i ON i.advertid = a.id
-		WHERE i.priority = (
-			SELECT MIN(priority)
-			FROM images
-			WHERE advertid = a.id
-				AND isdeleted = FALSE
-			)
-			AND i.isdeleted = FALSE AND a.isdeleted = TRUE
-		ORDER BY a.datecreation DESC;
-    `
-	rows, err := r.db.QueryContext(ctx, query)
+// SelectImages select list images for advert
+func (repo *AdvertRepo) SelectImages(advertId uuid.UUID) ([]*models.ImageResp, error) {
+	selectQuery := `SELECT id, photo, priority FROM images WHERE advertid = $1 AND isdeleted = false`
+	rows, err := repo.db.Query(selectQuery, advertId)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
 
-	squareAdverts := []*models.AdvertSquareData{}
+	images := []*models.ImageResp{}
+
 	for rows.Next() {
-		squareAdvert := &models.AdvertSquareData{}
-		var cottage bool
-		var squareHouse, squareArea float64
-		var bedroomCount, floor int
-		err := rows.Scan(&squareAdvert.ID, &squareAdvert.TypeAdvert, &squareAdvert.Photo, &squareAdvert.TypeSale, &squareAdvert.Address, &cottage, &squareHouse, &squareArea, &bedroomCount, &floor, &squareAdvert.Price, &squareAdvert.DateCreation)
-		if err != nil {
+		var id uuid.UUID
+		var photo string
+		var priority int
+		if err := rows.Scan(&id, &photo, &priority); err != nil {
 			return nil, err
 		}
-		squareAdvert.Properties = make(map[string]interface{})
-		squareAdvert.Properties["cottage"] = cottage
-		squareAdvert.Properties["squareHouse"] = squareHouse
-		squareAdvert.Properties["squareArea"] = squareArea
-		squareAdvert.Properties["bedroomCount"] = bedroomCount
-		squareAdvert.Properties["floor"] = floor
-		squareAdverts = append(squareAdverts, squareAdvert)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-
-	return squareAdverts, nil
-}
-
-// GetFlatSquareAdvertsList retrieves square flat adverts from the database.
-func (r *AdvertRepo) GetFlatSquareAdvertsList(ctx context.Context) ([]*models.AdvertSquareData, error) {
-	query := `
-        SELECT
-            a.id,
-            at.adverttype,
-            COALESCE(i.photo, '') AS photo,
-            a.adverttypeplacement,
-            b.adress,
-            f.floor,
-            f.squaregeneral,
-            f.roomcount,
-            b.floor AS floorgeneral,
-            pc.price,
-            a.datecreation
-        FROM
-            adverts AS a
-        LEFT JOIN
-            LATERAL (
-                SELECT *
-                FROM pricechanges AS pc
-                WHERE pc.advertid = a.id
-                ORDER BY pc.datecreation DESC
-                LIMIT 1
-            ) AS pc ON TRUE
-        INNER JOIN adverttypes AS at ON a.adverttypeid = at.id
-        INNER JOIN flats AS f ON at.id = f.adverttypeid
-        INNER JOIN buildings AS b ON f.buildingid = b.id
-        JOIN images AS i ON i.advertid = a.id
-		WHERE i.priority = (
-			SELECT MIN(priority)
-			FROM images
-			WHERE advertid = a.id
-				AND isdeleted = FALSE
-			)
-			AND i.isdeleted = FALSE AND a.isdeleted = FALSE
-        ORDER BY a.datecreation DESC;
-    `
-	rows, err := r.db.QueryContext(ctx, query)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-
-	squareAdverts := []*models.AdvertSquareData{}
-	for rows.Next() {
-		squareAdvert := &models.AdvertSquareData{}
-		var floor, floorGeneral, roomCount int
-		var squareGeneral float64
-		err := rows.Scan(&squareAdvert.ID, &squareAdvert.TypeAdvert, &squareAdvert.Photo, &squareAdvert.TypeSale, &squareAdvert.Address, &floor, &squareGeneral, &roomCount, &floorGeneral, &squareAdvert.Price, &squareAdvert.DateCreation)
-		if err != nil {
-			return nil, err
+		image := &models.ImageResp{
+			ID:       id,
+			Photo:    photo,
+			Priority: priority,
 		}
-		squareAdvert.Properties = make(map[string]interface{})
-		squareAdvert.Properties["floor"] = floor
-		squareAdvert.Properties["floorGeneral"] = floorGeneral
-		squareAdvert.Properties["squareGeneral"] = squareGeneral
-		squareAdvert.Properties["roomCount"] = roomCount
-		squareAdverts = append(squareAdverts, squareAdvert)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
+		images = append(images, image)
 	}
 
-	return squareAdverts, nil
-}
-
-// GetFlatRectangleAdvertsList retrieves a rectangle Flat adverts from the database.
-func (r *AdvertRepo) GetFlatRectangleAdvertsList(ctx context.Context) ([]*models.AdvertRectangleData, error) {
-	query := `
-        SELECT
-            a.id,
-            a.title,
-            a.description,
-            a.phone,
-            at.adverttype,
-            COALESCE(i.photo, '') as photo,
-            a.adverttypeplacement,
-            b.adress,
-            f.floor,
-            f.squaregeneral,
-            f.roomcount,
-            b.floor AS floorgeneral,
-            pc.price,
-            a.datecreation
-        FROM
-            adverts AS a
-        LEFT JOIN
-            LATERAL (
-                SELECT *
-                FROM pricechanges AS pc
-                WHERE pc.advertid = a.id
-                ORDER BY pc.datecreation DESC
-                LIMIT 1
-            ) AS pc ON true
-        INNER JOIN adverttypes AS at ON a.adverttypeid = at.id
-        INNER JOIN flats AS f ON at.id = f.adverttypeid
-        INNER JOIN buildings AS b ON f.buildingid = b.id
-        JOIN images AS i ON i.advertid = a.id
-		WHERE i.priority = (
-			SELECT MIN(priority)
-			FROM images
-			WHERE advertid = a.id
-				AND isdeleted = FALSE
-			)
-			AND i.isdeleted = FALSE AND a.isdeleted = FALSE
-        ORDER BY a.datecreation DESC;
-    `
-	rows, err := r.db.QueryContext(ctx, query)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-
-	rectangleAdverts := []*models.AdvertRectangleData{}
-	for rows.Next() {
-		rectangleAdvert := &models.AdvertRectangleData{}
-		var floor, floorGeneral, roomCount int
-		var squareGenereal float64
-		err := rows.Scan(
-			&rectangleAdvert.ID,
-			&rectangleAdvert.Title,
-			&rectangleAdvert.Description,
-			&rectangleAdvert.Phone,
-			&rectangleAdvert.TypeAdvert,
-			&rectangleAdvert.Photo,
-			&rectangleAdvert.TypeSale,
-			&rectangleAdvert.Address,
-			&floor,
-			&squareGenereal,
-			&roomCount,
-			&floorGeneral,
-			&rectangleAdvert.Price,
-			&rectangleAdvert.DateCreation,
-		)
-		if err != nil {
-			return nil, err
-		}
-		rectangleAdvert.Properties = make(map[string]interface{})
-		rectangleAdvert.Properties["floor"] = floor
-		rectangleAdvert.Properties["floorGeneral"] = floorGeneral
-		rectangleAdvert.Properties["squareGeneral"] = squareGenereal
-		rectangleAdvert.Properties["roomCount"] = roomCount
-		rectangleAdverts = append(rectangleAdverts, rectangleAdvert)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-
-	return rectangleAdverts, nil
-}
-
-// GetHouseRectangleAdvertsList retrieves a rectangle House adverts from the database.
-func (r *AdvertRepo) GetHouseRectangleAdvertsList(ctx context.Context) ([]*models.AdvertRectangleData, error) {
-	query := `
-        SELECT
-            a.id,
-            a.title,
-            a.description,
-            a.phone,
-            at.adverttype,
-            COALESCE(i.photo, '') as photo,
-            a.adverttypeplacement,
-            b.adress,
-            h.cottage,
-            h.squarehouse,
-            h.squarearea,
-            h.bedroomcount,
-            b.floor,
-            pc.price,
-            a.datecreation
-        FROM
-            adverts AS a
-        LEFT JOIN
-            LATERAL (
-                SELECT *
-                FROM pricechanges AS pc
-                WHERE pc.advertid = a.id
-                ORDER BY pc.datecreation DESC
-                LIMIT 1
-            ) AS pc ON true
-        INNER JOIN adverttypes AS at ON a.adverttypeid = at.id
-        INNER JOIN houses AS h ON at.id = h.adverttypeid
-        INNER JOIN buildings AS b ON h.buildingid = b.id
-        JOIN images AS i ON i.advertid = a.id
-		WHERE i.priority = (
-			SELECT MIN(priority)
-			FROM images
-			WHERE advertid = a.id
-				AND isdeleted = FALSE
-			)
-			AND i.isdeleted = FALSE AND a.isdeleted = FALSE
-        ORDER BY a.datecreation DESC;
-    `
-	rows, err := r.db.QueryContext(ctx, query)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-
-	rectangleAdverts := []*models.AdvertRectangleData{}
-	for rows.Next() {
-		rectangleAdvert := &models.AdvertRectangleData{}
-		var cottage bool
-		var squareHouse, squareArea float64
-		var bedroomCount, floor int
-		err := rows.Scan(
-			&rectangleAdvert.ID,
-			&rectangleAdvert.Title,
-			&rectangleAdvert.Description,
-			&rectangleAdvert.Phone,
-			&rectangleAdvert.TypeAdvert,
-			&rectangleAdvert.Photo,
-			&rectangleAdvert.TypeSale,
-			&rectangleAdvert.Address,
-			&cottage,
-			&squareHouse,
-			&squareArea,
-			&bedroomCount,
-			&floor,
-			&rectangleAdvert.Price,
-			&rectangleAdvert.DateCreation,
-		)
-		if err != nil {
-			return nil, err
-		}
-		rectangleAdvert.Properties = make(map[string]interface{})
-		rectangleAdvert.Properties["cottage"] = cottage
-		rectangleAdvert.Properties["squareHouse"] = squareHouse
-		rectangleAdvert.Properties["squareArea"] = squareArea
-		rectangleAdvert.Properties["bedroomCount"] = bedroomCount
-		rectangleAdvert.Properties["floor"] = floor
-		rectangleAdverts = append(rectangleAdverts, rectangleAdvert)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-
-	return rectangleAdverts, nil
+	return images, nil
 }
 
 // GetTypeAdvertById return type of advert
@@ -513,21 +261,23 @@ func (r *AdvertRepo) GetHouseAdvertById(ctx context.Context, id uuid.UUID) (*mod
 		return nil, err
 	}
 
-	advertData.Properties = make(map[string]interface{})
-	advertData.Properties["ceilingHeight"] = ceilingHeight
-	advertData.Properties["squareArea"] = squareArea
-	advertData.Properties["squareHouse"] = squareHouse
-	advertData.Properties["bedroomCount"] = bedroomCount
-	advertData.Properties["statusArea"] = statusArea
-	advertData.Properties["cottage"] = cottage
-	advertData.Properties["statusHome"] = statusHome
-	advertData.Properties["floor"] = floor
+	advertData.HouseProperties = &models.HouseProperties{}
+	advertData.HouseProperties.CeilingHeight = ceilingHeight
+	advertData.HouseProperties.SquareArea = squareArea
+	advertData.HouseProperties.SquareHouse = squareHouse
+	advertData.HouseProperties.BedroomCount = bedroomCount
+	advertData.HouseProperties.StatusArea = statusArea
+	advertData.HouseProperties.Cottage = cottage
+	advertData.HouseProperties.StatusHome = statusHome
+	advertData.HouseProperties.Floor = floor
 
-	advertData.Complex = make(map[string]interface{})
-	advertData.Complex["complexId"] = complexId
-	advertData.Complex["companyPhoto"] = companyPhoto
-	advertData.Complex["companyName"] = companyName
-	advertData.Complex["complexName"] = complexName
+	if complexId.String != "" {
+		advertData.ComplexProperties = &models.ComplexAdvertProperties{}
+		advertData.ComplexProperties.ComplexId = complexId.String
+		advertData.ComplexProperties.PhotoCompany = companyPhoto.String
+		advertData.ComplexProperties.NameCompany = companyName.String
+		advertData.ComplexProperties.NameComplex = complexName.String
+	}
 
 	return advertData, nil
 }
@@ -661,6 +411,10 @@ func (r *AdvertRepo) ChangeTypeAdvert(ctx context.Context, tx *sql.Tx, advertId 
 	VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9);`
 	queryInsertHouse := `INSERT INTO houses (id, buildingId, advertTypeId, ceilingHeight, squareArea, squareHouse, bedroomCount, statusArea, cottage, statusHome)
 	VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10);`
+	queryRestoreFlatByAdvertId := `UPDATE flats SET isdeleted=false WHERE id=$1;`
+	queryRestoreHouseByAdvertId := `UPDATE houses SET isdeleted=false WHERE id=$1;`
+	queryDeleteFlatByAdvertId := `UPDATE flats SET isdeleted=true WHERE id=$1;`
+	queryDeleteHouseByAdvertId := `UPDATE houses SET isdeleted=true WHERE id=$1;`
 
 	var advertType models.AdvertTypeAdvert
 	var advertTypeId uuid.UUID
@@ -915,20 +669,22 @@ func (r *AdvertRepo) GetFlatAdvertById(ctx context.Context, id uuid.UUID) (*mode
 		return nil, err
 	}
 
-	advertData.Properties = make(map[string]interface{})
-	advertData.Properties["ceilingHeight"] = ceilingHeight
-	advertData.Properties["apartament"] = apartament
-	advertData.Properties["squareResidential"] = squareResidential
-	advertData.Properties["roomCount"] = roomCount
-	advertData.Properties["squareGeneral"] = squareGenereal
-	advertData.Properties["floorGeneral"] = floorGeneral
-	advertData.Properties["floor"] = floor
+	advertData.FlatProperties = &models.FlatProperties{}
+	advertData.FlatProperties.CeilingHeight = ceilingHeight
+	advertData.FlatProperties.Apartment = apartament.Bool
+	advertData.FlatProperties.SquareResidential = squareResidential
+	advertData.FlatProperties.RoomCount = roomCount
+	advertData.FlatProperties.SquareGeneral = squareGenereal
+	advertData.FlatProperties.FloorGeneral = floorGeneral
+	advertData.FlatProperties.Floor = floor
 
-	advertData.Complex = make(map[string]interface{})
-	advertData.Complex["complexId"] = complexId
-	advertData.Complex["companyPhoto"] = companyPhoto
-	advertData.Complex["companyName"] = companyName
-	advertData.Complex["complexName"] = complexName
+	if complexId.String != "" {
+		advertData.ComplexProperties = &models.ComplexAdvertProperties{}
+		advertData.ComplexProperties.ComplexId = complexId.String
+		advertData.ComplexProperties.PhotoCompany = companyPhoto.String
+		advertData.ComplexProperties.NameCompany = companyName.String
+		advertData.ComplexProperties.NameComplex = complexName.String
+	}
 
 	return advertData, nil
 }
@@ -1009,7 +765,6 @@ OFFSET $2;`
 		if err != nil {
 			return nil, err
 		}
-		squareAdvert.Properties = make(map[string]interface{})
 		switch squareAdvert.TypeAdvert {
 		case string(models.AdvertTypeFlat):
 			var squareGeneral float64
@@ -1018,10 +773,12 @@ OFFSET $2;`
 			if err := row.Scan(&squareGeneral, &floor, &squareAdvert.Address, &floorGeneral, &roomCount); err != nil {
 				return nil, err
 			}
-			squareAdvert.Properties["floor"] = floor
-			squareAdvert.Properties["floorGeneral"] = floorGeneral
-			squareAdvert.Properties["squareGeneral"] = squareGeneral
-			squareAdvert.Properties["roomCount"] = roomCount
+			log.Println("TUT")
+			squareAdvert.FlatProperties = &models.FlatSquareProperties{}
+			squareAdvert.FlatProperties.Floor = floor
+			squareAdvert.FlatProperties.FloorGeneral = floorGeneral
+			squareAdvert.FlatProperties.RoomCount = roomCount
+			squareAdvert.FlatProperties.SquareGeneral = squareGeneral
 		case string(models.AdvertTypeHouse):
 			var cottage bool
 			var squareHouse, squareArea float64
@@ -1030,11 +787,12 @@ OFFSET $2;`
 			if err := row.Scan(&squareAdvert.Address, &cottage, &squareHouse, &squareArea, &bedroomCount, &floor); err != nil {
 				return nil, err
 			}
-			squareAdvert.Properties["cottage"] = cottage
-			squareAdvert.Properties["squareHouse"] = squareHouse
-			squareAdvert.Properties["squareArea"] = squareArea
-			squareAdvert.Properties["bedroomCount"] = bedroomCount
-			squareAdvert.Properties["floor"] = floor
+			squareAdvert.HouseProperties = &models.HouseSquareProperties{}
+			squareAdvert.HouseProperties.Cottage = cottage
+			squareAdvert.HouseProperties.SquareHouse = squareHouse
+			squareAdvert.HouseProperties.SquareArea = squareArea
+			squareAdvert.HouseProperties.BedroomCount = bedroomCount
+			squareAdvert.HouseProperties.Floor = floor
 		}
 
 		squareAdverts = append(squareAdverts, squareAdvert)
@@ -1121,8 +879,10 @@ AND i.isdeleted = FALSE AND a.isdeleted = FALSE AND pc.price>=$1 AND pc.price<=$
          a.datecreation DESC;`
 
 	pageInfo := &models.PageInfo{}
+
 	var args []interface{}
 	i := 4
+
 	advertFilter.Address = "%" + advertFilter.Address + "%"
 	if advertFilter.AdvertType != "" {
 		query += "AND at.adverttype=$" + fmt.Sprint(i) + " "
@@ -1163,7 +923,6 @@ AND i.isdeleted = FALSE AND a.isdeleted = FALSE AND pc.price>=$1 AND pc.price<=$
 		if err != nil {
 			return nil, err
 		}
-		rectangleAdvert.Properties = make(map[string]interface{})
 		switch rectangleAdvert.TypeAdvert {
 		case string(models.AdvertTypeFlat):
 			var squareGeneral float64
@@ -1172,10 +931,11 @@ AND i.isdeleted = FALSE AND a.isdeleted = FALSE AND pc.price>=$1 AND pc.price<=$
 			if err := row.Scan(&squareGeneral, &floor, &rectangleAdvert.Address, &floorGeneral); err != nil {
 				return nil, err
 			}
-			rectangleAdvert.Properties["floor"] = floor
-			rectangleAdvert.Properties["floorGeneral"] = floorGeneral
-			rectangleAdvert.Properties["squareGeneral"] = squareGeneral
-			rectangleAdvert.Properties["roomCount"] = roomCount
+			rectangleAdvert.FlatProperties = &models.FlatRectangleProperties{}
+			rectangleAdvert.FlatProperties.Floor = floor
+			rectangleAdvert.FlatProperties.FloorGeneral = floorGeneral
+			rectangleAdvert.FlatProperties.SquareGeneral = squareGeneral
+			rectangleAdvert.FlatProperties.RoomCount = roomCount
 		case string(models.AdvertTypeHouse):
 			var cottage bool
 			var squareHouse, squareArea float64
@@ -1184,11 +944,12 @@ AND i.isdeleted = FALSE AND a.isdeleted = FALSE AND pc.price>=$1 AND pc.price<=$
 			if err := row.Scan(&rectangleAdvert.Address, &cottage, &squareHouse, &squareArea, &floor); err != nil {
 				return nil, err
 			}
-			rectangleAdvert.Properties["cottage"] = cottage
-			rectangleAdvert.Properties["squareHouse"] = squareHouse
-			rectangleAdvert.Properties["squareArea"] = squareArea
-			rectangleAdvert.Properties["bedroomCount"] = roomCount
-			rectangleAdvert.Properties["floor"] = floor
+			rectangleAdvert.HouseProperties = &models.HouseRectangleProperties{}
+			rectangleAdvert.HouseProperties.Cottage = cottage
+			rectangleAdvert.HouseProperties.SquareHouse = squareHouse
+			rectangleAdvert.HouseProperties.SquareArea = squareArea
+			rectangleAdvert.HouseProperties.BedroomCount = roomCount
+			rectangleAdvert.HouseProperties.Floor = floor
 		}
 
 		rectangleAdverts = append(rectangleAdverts, rectangleAdvert)
@@ -1295,7 +1056,6 @@ AND i.isdeleted = FALSE AND a.isdeleted = FALSE AND userid=$1 ORDER BY datecreat
 		if err != nil {
 			return nil, err
 		}
-		rectangleAdvert.Properties = make(map[string]interface{})
 		switch rectangleAdvert.TypeAdvert {
 		case string(models.AdvertTypeFlat):
 			var squareGeneral float64
@@ -1304,10 +1064,11 @@ AND i.isdeleted = FALSE AND a.isdeleted = FALSE AND userid=$1 ORDER BY datecreat
 			if err := row.Scan(&squareGeneral, &floor, &rectangleAdvert.Address, &floorGeneral); err != nil {
 				return nil, err
 			}
-			rectangleAdvert.Properties["floor"] = floor
-			rectangleAdvert.Properties["floorGeneral"] = floorGeneral
-			rectangleAdvert.Properties["squareGeneral"] = squareGeneral
-			rectangleAdvert.Properties["roomCount"] = roomCount
+			rectangleAdvert.FlatProperties = &models.FlatRectangleProperties{}
+			rectangleAdvert.FlatProperties.Floor = floor
+			rectangleAdvert.FlatProperties.FloorGeneral = floorGeneral
+			rectangleAdvert.FlatProperties.SquareGeneral = squareGeneral
+			rectangleAdvert.FlatProperties.RoomCount = roomCount
 		case string(models.AdvertTypeHouse):
 			var cottage bool
 			var squareHouse, squareArea float64
@@ -1316,11 +1077,12 @@ AND i.isdeleted = FALSE AND a.isdeleted = FALSE AND userid=$1 ORDER BY datecreat
 			if err := row.Scan(&rectangleAdvert.Address, &cottage, &squareHouse, &squareArea, &floor); err != nil {
 				return nil, err
 			}
-			rectangleAdvert.Properties["cottage"] = cottage
-			rectangleAdvert.Properties["squareHouse"] = squareHouse
-			rectangleAdvert.Properties["squareArea"] = squareArea
-			rectangleAdvert.Properties["bedroomCount"] = roomCount
-			rectangleAdvert.Properties["floor"] = floor
+			rectangleAdvert.HouseProperties = &models.HouseRectangleProperties{}
+			rectangleAdvert.HouseProperties.Cottage = cottage
+			rectangleAdvert.HouseProperties.SquareHouse = squareHouse
+			rectangleAdvert.HouseProperties.SquareArea = squareArea
+			rectangleAdvert.HouseProperties.BedroomCount = roomCount
+			rectangleAdvert.HouseProperties.Floor = floor
 		}
 
 		rectangleAdverts = append(rectangleAdverts, rectangleAdvert)
@@ -1420,7 +1182,6 @@ AND i.isdeleted = FALSE AND a.isdeleted = FALSE AND b.complexid=$1 ORDER BY date
 		if err != nil {
 			return nil, err
 		}
-		rectangleAdvert.Properties = make(map[string]interface{})
 		switch rectangleAdvert.TypeAdvert {
 		case string(models.AdvertTypeFlat):
 			var squareGeneral float64
@@ -1429,10 +1190,11 @@ AND i.isdeleted = FALSE AND a.isdeleted = FALSE AND b.complexid=$1 ORDER BY date
 			if err := row.Scan(&squareGeneral, &floor, &rectangleAdvert.Address, &floorGeneral); err != nil {
 				return nil, err
 			}
-			rectangleAdvert.Properties["floor"] = floor
-			rectangleAdvert.Properties["floorGeneral"] = floorGeneral
-			rectangleAdvert.Properties["squareGeneral"] = squareGeneral
-			rectangleAdvert.Properties["roomCount"] = roomCount
+			rectangleAdvert.FlatProperties = &models.FlatRectangleProperties{}
+			rectangleAdvert.FlatProperties.Floor = floor
+			rectangleAdvert.FlatProperties.FloorGeneral = floorGeneral
+			rectangleAdvert.FlatProperties.SquareGeneral = squareGeneral
+			rectangleAdvert.FlatProperties.RoomCount = roomCount
 		case string(models.AdvertTypeHouse):
 			var cottage bool
 			var squareHouse, squareArea float64
@@ -1441,11 +1203,12 @@ AND i.isdeleted = FALSE AND a.isdeleted = FALSE AND b.complexid=$1 ORDER BY date
 			if err := row.Scan(&rectangleAdvert.Address, &cottage, &squareHouse, &squareArea, &floor); err != nil {
 				return nil, err
 			}
-			rectangleAdvert.Properties["cottage"] = cottage
-			rectangleAdvert.Properties["squareHouse"] = squareHouse
-			rectangleAdvert.Properties["squareArea"] = squareArea
-			rectangleAdvert.Properties["bedroomCount"] = roomCount
-			rectangleAdvert.Properties["floor"] = floor
+			rectangleAdvert.HouseProperties = &models.HouseRectangleProperties{}
+			rectangleAdvert.HouseProperties.Cottage = cottage
+			rectangleAdvert.HouseProperties.SquareHouse = squareHouse
+			rectangleAdvert.HouseProperties.SquareArea = squareArea
+			rectangleAdvert.HouseProperties.BedroomCount = roomCount
+			rectangleAdvert.HouseProperties.Floor = floor
 		}
 
 		rectangleAdverts = append(rectangleAdverts, rectangleAdvert)

@@ -232,8 +232,10 @@ type AdvertSquareData struct {
 	TypeSale string `json:"typeSale"`
 	// Address is the address of the advertisement.
 	Address string `json:"adress"`
-	// Properties contains additional properties for houses or flats.
-	Properties map[string]interface{} `json:"properties"`
+	// HouseProperties contains additional properties for houses.
+	HouseProperties *HouseSquareProperties `json:"houseProperties,omitempty"`
+	// FlatProperties contains additional properties for flats.
+	FlatProperties *FlatSquareProperties `json:"flatProperties,omitempty"`
 	// Price is the price of the advertisement.
 	Price int `json:"price"`
 	// DateCreation is the date when the advert was created.
@@ -260,8 +262,10 @@ type AdvertRectangleData struct {
 	Address string `json:"adress"`
 	// Complex represents residential complex information.
 	// Complex map[string]interface{} `json:"complex"`
-	// Properties contains additional properties for houses or flats.
-	Properties map[string]interface{} `json:"properties"`
+	// FlatProperties contains additional properties for flats.
+	FlatProperties *FlatRectangleProperties `json:"flatProperties,omitempty"`
+	// HouseProperties contains additional properties for flats.
+	HouseProperties *HouseRectangleProperties `json:"houseProperties,omitempty"`
 	// Price is the price of the advertisement.
 	Price int `json:"price"`
 	// DateCreation is the date when the advert was created.
@@ -291,18 +295,25 @@ type AdvertData struct {
 	// AddressPoint is the address of the advertisement.
 	AddressPoint string `json:"adressPoint"`
 	// Images contains filenames of photos for advert.
-	Images map[string]string `json:"images"`
-	// Properties contains additional properties for houses or flats.
-	Properties map[string]interface{} `json:"properties"`
+	Images []*ImageResp `json:"images"`
+	// HouseProperties contains additional properties for house.
+	HouseProperties *HouseProperties `json:"houseProperties,omitempty"`
+	// FlatProperties contains additional properties for flat.
+	FlatProperties *FlatProperties `json:"flatProperties,omitempty"`
 	// YearCreation is the year when the building was created.
 	YearCreation int `json:"yearCreation"`
 	// Material is the material of the building.
 	Material MaterialBuilding `json:"material"`
-	//Complex represents residential complex information.
-	Complex map[string]interface{} `json:"complex"`
+	//ComplexProperties represents residential complex information.
+	ComplexProperties *ComplexAdvertProperties `json:"complexProperties,omitempty"`
 	// DateCreation is the date when the advert was created.
 	DateCreation time.Time `json:"dateCreation"`
 }
+
+// AdvertDataWithImages represents the structure of the JSON data for advert.
+//type AdvertUpdateData struct {
+
+//}
 
 // AdvertUpdateData represents the structure of the JSON data for update advert.
 type AdvertUpdateData struct {
@@ -327,7 +338,7 @@ type AdvertUpdateData struct {
 	// AddressPoint is the address of the advertisement.
 	AddressPoint string `json:"adressPoint"`
 	// Properties contains additional properties for houses or flats.
-	Properties map[string]interface{} `json:"properties"`
+	Properties map[string]interface{} `json:"properties"` //Одна структура properties для всех объявлений
 	// YearCreation is the year when the building was created.
 	YearCreation int `json:"yearCreation"`
 	// Material is the material of the building.

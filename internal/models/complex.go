@@ -117,3 +117,15 @@ type ComplexData struct {
 	// Security indicates if the complex has security.
 	Security bool `json:"security"`
 }
+
+// ComplexAdvertProperties represents a complex properties for advert.
+type ComplexAdvertProperties struct {
+	// ComplexId is the unique identifier for the complex.
+	ComplexId string `json:"complexId"`
+	// Name is the name of the complex.
+	NameComplex string `json:"nameComplex"`
+	// Photo is the filename of the company's photo.
+	PhotoCompany string `json:"photoCompany"`
+	// Name is the name of the company.
+	NameCompany string `json:"nameCompany"`
+}
