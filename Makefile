@@ -44,19 +44,6 @@ dev-compose-down:
 
 swagger:
 	swag init -g cmd/main/main.go
-coverage:
-	go test -json ./... -coverprofile coverprofile_.tmp -coverpkg=./... ; \
-	cat coverprofile_.tmp | grep -v _mock.go > coverprofile.tmp ; \
-	rm coverprofile_.tmp ; \
-	go tool cover -html coverprofile.tmp ; \
-	go tool cover -func coverprofile.tmp
-
-coverage:
-	go test -json ./... -coverprofile coverprofile_.tmp -coverpkg=./... ; \
-	cat coverprofile_.tmp | grep -v _mock.go > coverprofile.tmp ; \
-	rm coverprofile_.tmp ; \
-	go tool cover -html coverprofile.tmp ; \
-	go tool cover -func coverprofile.tmp
 
 coverage:
 	go test -json ./... -coverprofile coverprofile_.tmp -coverpkg=./... ; \
