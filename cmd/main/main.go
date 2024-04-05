@@ -105,7 +105,7 @@ func main() {
 	userUsecase := userUc.NewUserUsecase(userRepo)
 	userHandler := userH.NewUserHandler(userUsecase)
 
-	user := r.PathPrefix("/user").Subrouter()
+	user := r.PathPrefix("/users").Subrouter()
 	user.Handle("/me", jwtMd.JwtTMiddleware(http.HandlerFunc(userHandler.GetCurUser))).Methods(http.MethodGet, http.MethodOptions)
 	user.Handle("/avatar", jwtMd.JwtTMiddleware(http.HandlerFunc(userHandler.UpdateUserPhoto))).Methods(http.MethodPost, http.MethodOptions)
 	user.Handle("/avatar", jwtMd.JwtTMiddleware(http.HandlerFunc(userHandler.DeleteUserPhoto))).Methods(http.MethodDelete, http.MethodOptions)
