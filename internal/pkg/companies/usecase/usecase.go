@@ -4,13 +4,14 @@ import (
 	"2024_1_TeaStealers/internal/models"
 	"2024_1_TeaStealers/internal/pkg/companies"
 	"context"
-
-	"time"
+	"io"
+	"os"
+	"path/filepath"
 
 	"github.com/satori/uuid"
 )
 
-// CompanyUsecase represents the usecase for manage companies.
+// CompanyUsecase represents the usecase for company using.
 type CompanyUsecase struct {
 	repo companies.CompanyRepo
 }
@@ -20,56 +21,54 @@ func NewCompanyUsecase(repo companies.CompanyRepo) *CompanyUsecase {
 	return &CompanyUsecase{repo: repo}
 }
 
-// CreateCompany handles the company creation process.
+// CreateCompany handles the company registration process.
 func (u *CompanyUsecase) CreateCompany(ctx context.Context, data *models.CompanyCreateData) (*models.Company, error) {
 	newCompany := &models.Company{
-		ID:           uuid.NewV4(),
-		Name:         data.Name,
-		Phone:        data.Phone,
-		Descpription: data.Descpription,
-		DataCreation: time.Now(),
-		IsDeleted:    false,
+		ID:          uuid.NewV4(),
+		Name:        data.Name,
+		Description: data.Description,
+		Phone:       data.Phone,
+		YearFounded: data.YearFounded,
 	}
 
-	if err := u.repo.CreateCompany(ctx, newCompany); err != nil {
+	company, err := u.repo.CreateCompany(ctx, newCompany)
+	if err != nil {
 		return nil, err
 	}
 
-	return newCompany, nil
+	return company, nil
 }
 
-// GetCompanyById handles the company getting process.
-func (u *CompanyUsecase) GetCompanyById(ctx context.Context, id uuid.UUID) (findCompany *models.Company, err error) {
-	if findCompany, err = u.repo.GetCompanyById(ctx, id); err != nil {
+func (u *CompanyUsecase) UpdateCompanyPhoto(file io.Reader, fileType string, id uuid.UUID) (string, error) {
+	newId := uuid.NewV4()
+	newFileName := newId.String() + fileType
+	subDirectory := "companies"
+	directory := filepath.Join(os.Getenv("DOCKER_DIR"), subDirectory)
+	if err := os.MkdirAll(directory, 0755); err != nil {
+		return "", err
+	}
+	destination, err := os.Create(directory + "/" + newFileName)
+	if err != nil {
+		return "", err
+	}
+	defer destination.Close()
+	_, err = io.Copy(destination, file)
+	if err != nil {
+		return "", err
+	}
+	fileName, err := u.repo.UpdateCompanyPhoto(id, subDirectory+"/"+newFileName)
+	if err != nil {
+		return "", nil
+	}
+	return fileName, nil
+}
+
+// GetCompanyById handles the getting company advert process.
+func (u *CompanyUsecase) GetCompanyById(ctx context.Context, id uuid.UUID) (foundCompanyData *models.CompanyData, err error) {
+
+	if foundCompanyData, err = u.repo.GetCompanyById(ctx, id); err != nil {
 		return nil, err
 	}
 
-	return findCompany, nil
-}
-
-// GetCompaniesList handles the companies getting process.
-func (u *CompanyUsecase) GetCompaniesList(ctx context.Context) (findCompanies []*models.Company, err error) {
-	if findCompanies, err = u.repo.GetCompaniesList(ctx); err != nil {
-		return nil, err
-	}
-
-	return findCompanies, nil
-}
-
-// DeleteCompanyById handles the deleting company process.
-func (u *CompanyUsecase) DeleteCompanyById(ctx context.Context, id uuid.UUID) (err error) {
-	if err = u.repo.DeleteCompanyById(ctx, id); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-// UpdateCompanyById handles the updating company process.
-func (u *CompanyUsecase) UpdateCompanyById(ctx context.Context, body map[string]interface{}, id uuid.UUID) (err error) {
-	if err = u.repo.UpdateCompanyById(ctx, body, id); err != nil {
-		return err
-	}
-
-	return nil
+	return foundCompanyData, nil
 }

@@ -1,22 +1,25 @@
 package main
 
 import (
-	advertH "2024_1_TeaStealers/internal/pkg/adverts/delivery"
-	advertR "2024_1_TeaStealers/internal/pkg/adverts/repo"
-	advertUc "2024_1_TeaStealers/internal/pkg/adverts/usecase"
+	advertsH "2024_1_TeaStealers/internal/pkg/adverts/delivery"
+	advertsR "2024_1_TeaStealers/internal/pkg/adverts/repo"
+	advertsUc "2024_1_TeaStealers/internal/pkg/adverts/usecase"
 	authH "2024_1_TeaStealers/internal/pkg/auth/delivery"
 	authR "2024_1_TeaStealers/internal/pkg/auth/repo"
 	authUc "2024_1_TeaStealers/internal/pkg/auth/usecase"
-	buildingH "2024_1_TeaStealers/internal/pkg/buildings/delivery"
-	buildingR "2024_1_TeaStealers/internal/pkg/buildings/repo"
-	buildingUc "2024_1_TeaStealers/internal/pkg/buildings/usecase"
 	companyH "2024_1_TeaStealers/internal/pkg/companies/delivery"
 	companyR "2024_1_TeaStealers/internal/pkg/companies/repo"
 	companyUc "2024_1_TeaStealers/internal/pkg/companies/usecase"
-	imageH "2024_1_TeaStealers/internal/pkg/images/delivery"
+	complexH "2024_1_TeaStealers/internal/pkg/complexes/delivery"
+	complexR "2024_1_TeaStealers/internal/pkg/complexes/repo"
+	complexUc "2024_1_TeaStealers/internal/pkg/complexes/usecase"
+	imageH "2024_1_TeaStealers/internal/pkg/images/delivery/http"
 	imageR "2024_1_TeaStealers/internal/pkg/images/repo"
 	imageUc "2024_1_TeaStealers/internal/pkg/images/usecase"
 	"2024_1_TeaStealers/internal/pkg/middleware"
+	userH "2024_1_TeaStealers/internal/pkg/users/delivery"
+	userR "2024_1_TeaStealers/internal/pkg/users/repo"
+	userUc "2024_1_TeaStealers/internal/pkg/users/usecase"
 	"context"
 	"database/sql"
 	"fmt"
@@ -27,11 +30,21 @@ import (
 	"syscall"
 	"time"
 
+	_ "2024_1_TeaStealers/docs"
+
 	"github.com/gorilla/mux"
 	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
+	httpSwagger "github.com/swaggo/http-swagger"
 )
 
+// @title Sample Project API
+// @version 1.0
+// @description This is a sample server Tean server.
+
+// @host 0.0.0.0:8080
+// @BasePath /api
+// @schemes http https
 func main() {
 	_ = godotenv.Load()
 	db, err := sql.Open("postgres", fmt.Sprintf("postgres://%v:%v@%v:%v/%v?sslmode=disable",
@@ -44,60 +57,83 @@ func main() {
 		panic("failed to connect database" + err.Error())
 	}
 
+	if err = db.Ping(); err != nil {
+		log.Println("fail ping postgres")
+		err = fmt.Errorf("error happened in db.Ping: %w", err)
+		log.Println(err)
+	}
+
 	r := mux.NewRouter().PathPrefix("/api").Subrouter()
+	r.Use(middleware.CORSMiddleware)
 	r.HandleFunc("/ping", pingPongHandler).Methods(http.MethodGet)
+	r.PathPrefix("/docs/").Handler(httpSwagger.WrapHandler)
 
 	authRepo := authR.NewRepository(db)
 	authUsecase := authUc.NewAuthUsecase(authRepo)
 	autHandler := authH.NewAuthHandler(authUsecase)
 
+	jwtMd := middleware.NewAuthMiddleware(authUsecase)
+
 	auth := r.PathPrefix("/auth").Subrouter()
 	auth.HandleFunc("/signup", autHandler.SignUp).Methods(http.MethodPost, http.MethodOptions)
 	auth.HandleFunc("/login", autHandler.Login).Methods(http.MethodPost, http.MethodOptions)
-	auth.Handle("/logout", middleware.JwtMiddleware(http.HandlerFunc(autHandler.Logout))).Methods(http.MethodGet, http.MethodOptions)
+	auth.Handle("/logout", jwtMd.JwtTMiddleware(http.HandlerFunc(autHandler.Logout))).Methods(http.MethodGet, http.MethodOptions)
+	auth.Handle("/check_auth", jwtMd.JwtTMiddleware(http.HandlerFunc(autHandler.CheckAuth))).Methods(http.MethodGet, http.MethodOptions)
 
-	companyRepo := companyR.NewRepository(db)
-	companyUsecase := companyUc.NewCompanyUsecase(companyRepo)
-	companyHandler := companyH.NewCompanyHandler(companyUsecase)
-
-	companyApi := r.PathPrefix("/company").Subrouter()
-	companyApi.Handle("/create", middleware.JwtMiddleware(http.HandlerFunc(companyHandler.CreateCompany))).Methods(http.MethodPost)
-	companyApi.HandleFunc("/get/by/id", companyHandler.GetCompanyById).Methods(http.MethodGet)
-	companyApi.HandleFunc("/get/list", companyHandler.GetCompaniesList).Methods(http.MethodGet)
-	companyApi.Handle("/delete/by/id", middleware.JwtMiddleware(http.HandlerFunc(companyHandler.DeleteCompanyById))).Methods(http.MethodDelete, http.MethodPost)
-	companyApi.Handle("/update/by/id", middleware.JwtMiddleware(http.HandlerFunc(companyHandler.UpdateCompanyById))).Methods(http.MethodPost, http.MethodPut)
-
-	buildingRepo := buildingR.NewRepository(db)
-	buildingUsecase := buildingUc.NewBuildingUsecase(buildingRepo)
-	buildingHandler := buildingH.NewBuildingHandler(buildingUsecase)
-
-	buildingApi := r.PathPrefix("/building").Subrouter()
-	buildingApi.Handle("/create", middleware.JwtMiddleware(http.HandlerFunc(buildingHandler.CreateBuilding))).Methods(http.MethodPost)
-	buildingApi.HandleFunc("/get/by/id", buildingHandler.GetBuildingById).Methods(http.MethodGet)
-	buildingApi.HandleFunc("/get/list", buildingHandler.GetBuildingsList).Methods(http.MethodGet)
-	buildingApi.Handle("/delete/by/id", middleware.JwtMiddleware(http.HandlerFunc(buildingHandler.DeleteBuildingById))).Methods(http.MethodDelete, http.MethodPost)
-	buildingApi.Handle("/update/by/id", middleware.JwtMiddleware(http.HandlerFunc(buildingHandler.UpdateBuildingById))).Methods(http.MethodPost, http.MethodPut)
-
-	advertRepo := advertR.NewRepository(db)
-	advertUsecase := advertUc.NewAdvertUsecase(advertRepo)
-	advertHandler := advertH.NewAdvertHandler(advertUsecase)
-
-	advertApi := r.PathPrefix("/advert").Subrouter()
-	advertApi.Handle("/create", middleware.JwtMiddleware(http.HandlerFunc(advertHandler.CreateAdvert))).Methods(http.MethodPost)
-	advertApi.HandleFunc("/get/by/id", advertHandler.GetAdvertById).Methods(http.MethodGet)
-	advertApi.HandleFunc("/get/list", advertHandler.GetAdvertsList).Methods(http.MethodGet)
-	advertApi.HandleFunc("/get/list/with/images", advertHandler.GetAdvertsWithImages).Methods(http.MethodGet)
-	advertApi.Handle("/delete/by/id", middleware.JwtMiddleware(http.HandlerFunc(advertHandler.DeleteAdvertById))).Methods(http.MethodDelete, http.MethodPost)
-	advertApi.Handle("/update/by/id", middleware.JwtMiddleware(http.HandlerFunc(advertHandler.UpdateAdvertById))).Methods(http.MethodPost, http.MethodPut)
+	advertRepo := advertsR.NewRepository(db)
+	advertUsecase := advertsUc.NewAdvertUsecase(advertRepo)
+	advertHandler := advertsH.NewAdvertHandler(advertUsecase)
 
 	imageRepo := imageR.NewRepository(db)
 	imageUsecase := imageUc.NewImageUsecase(imageRepo)
 	imageHandler := imageH.NewImageHandler(imageUsecase)
 
-	imageApi := r.PathPrefix("/image").Subrouter()
-	imageApi.Handle("/create", middleware.JwtMiddleware(http.HandlerFunc(imageHandler.CreateImage))).Methods(http.MethodPost)
-	imageApi.HandleFunc("/get/list/by/advert/id", imageHandler.GetImagesByAdvertId).Methods(http.MethodGet)
-	imageApi.Handle("/delete/by/id", middleware.JwtMiddleware(http.HandlerFunc(imageHandler.DeleteImageById))).Methods(http.MethodDelete, http.MethodPost)
+	advert := r.PathPrefix("/adverts").Subrouter()
+	advert.HandleFunc("/{id}", advertHandler.GetAdvertById).Methods(http.MethodGet, http.MethodOptions)
+	advert.HandleFunc("/{id}", advertHandler.UpdateAdvertById).Methods(http.MethodPost, http.MethodOptions)
+	advert.HandleFunc("/{id}", advertHandler.DeleteAdvertById).Methods(http.MethodDelete, http.MethodOptions)
+	advert.HandleFunc("/houses/", advertHandler.CreateHouseAdvert).Methods(http.MethodPost, http.MethodOptions)
+	advert.HandleFunc("/buildings/", advertHandler.GetExistBuildingsByAddress).Methods(http.MethodGet, http.MethodOptions)
+	advert.HandleFunc("/flats/", advertHandler.CreateFlatAdvert).Methods(http.MethodPost, http.MethodOptions)
+	advert.HandleFunc("/squarelist/", advertHandler.GetSquareAdvertsList).Methods(http.MethodGet, http.MethodOptions)
+	advert.HandleFunc("/rectanglelist/", advertHandler.GetRectangeAdvertsList).Methods(http.MethodGet, http.MethodOptions)
+	advert.HandleFunc("/image/", imageHandler.UploadImage).Methods(http.MethodPost, http.MethodOptions)
+	advert.HandleFunc("/{id}/image", imageHandler.GetAdvertImages).Methods(http.MethodGet, http.MethodOptions)
+	advert.HandleFunc("/{id}/image", imageHandler.DeleteImage).Methods(http.MethodDelete, http.MethodOptions)
+
+	userRepo := userR.NewRepository(db)
+	userUsecase := userUc.NewUserUsecase(userRepo)
+	userHandler := userH.NewUserHandler(userUsecase)
+
+	user := r.PathPrefix("/user").Subrouter()
+	user.Handle("/me", jwtMd.JwtTMiddleware(http.HandlerFunc(userHandler.GetCurUser))).Methods(http.MethodGet, http.MethodOptions)
+	user.Handle("/avatar", jwtMd.JwtTMiddleware(http.HandlerFunc(userHandler.UpdateUserPhoto))).Methods(http.MethodPost, http.MethodOptions)
+	user.Handle("/avatar", jwtMd.JwtTMiddleware(http.HandlerFunc(userHandler.DeleteUserPhoto))).Methods(http.MethodDelete, http.MethodOptions)
+	user.Handle("/info", jwtMd.JwtTMiddleware(http.HandlerFunc(userHandler.UpdateUserInfo))).Methods(http.MethodPost, http.MethodOptions)
+	user.Handle("/password", jwtMd.JwtTMiddleware(http.HandlerFunc(userHandler.UpdateUserPassword))).Methods(http.MethodPost, http.MethodOptions)
+	user.Handle("/myadverts", jwtMd.JwtTMiddleware(http.HandlerFunc(advertHandler.GetUserAdverts))).Methods(http.MethodGet, http.MethodOptions)
+
+	companyRepo := companyR.NewRepository(db)
+	companyUsecase := companyUc.NewCompanyUsecase(companyRepo)
+	companyHandler := companyH.NewCompanyHandler(companyUsecase)
+
+	company := r.PathPrefix("/companies").Subrouter()
+	company.HandleFunc("/", companyHandler.CreateCompany).Methods(http.MethodPost, http.MethodOptions)
+	company.HandleFunc("/{id}", companyHandler.GetCompanyById).Methods(http.MethodGet, http.MethodOptions)
+	company.HandleFunc("/images/{id}", companyHandler.UpdateCompanyPhoto).Methods(http.MethodPost, http.MethodOptions)
+
+	complexRepo := complexR.NewRepository(db)
+	complexUsecase := complexUc.NewComplexUsecase(complexRepo)
+	complexHandler := complexH.NewComplexHandler(complexUsecase)
+
+	complex := r.PathPrefix("/complexes").Subrouter()
+	complex.HandleFunc("/", complexHandler.CreateComplex).Methods(http.MethodPost, http.MethodOptions)
+	complex.HandleFunc("/{id}", complexHandler.GetComplexById).Methods(http.MethodGet, http.MethodOptions)
+	complex.HandleFunc("/{id}/rectanglelist/", advertHandler.GetComplexAdverts).Methods(http.MethodGet, http.MethodOptions)
+	complex.HandleFunc("/houses", complexHandler.CreateHouseAdvert).Methods(http.MethodPost, http.MethodOptions)
+	complex.HandleFunc("/flats", complexHandler.CreateFlatAdvert).Methods(http.MethodPost, http.MethodOptions)
+	complex.HandleFunc("/buildings", complexHandler.CreateBuilding).Methods(http.MethodPost, http.MethodOptions)
+	complex.HandleFunc("/images/{id}", complexHandler.UpdateComplexPhoto).Methods(http.MethodPost, http.MethodOptions)
 
 	srv := &http.Server{
 		Addr:              ":8080",

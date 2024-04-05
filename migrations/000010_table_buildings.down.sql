@@ -1,0 +1,3 @@
+DROP TABLE IF EXISTS buildings;
+DROP EXTENSION IF EXISTS postgis;
+DROP TYPE IF EXISTS materialBuilding;

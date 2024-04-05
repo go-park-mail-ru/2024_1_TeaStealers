@@ -3,24 +3,21 @@ package companies
 import (
 	"2024_1_TeaStealers/internal/models"
 	"context"
+	"io"
 
 	"github.com/satori/uuid"
 )
 
-// CompanyUsecase represents the usecase interface for manage companies.
+// CompanyUsecase represents the usecase interface for companies.
 type CompanyUsecase interface {
 	CreateCompany(ctx context.Context, data *models.CompanyCreateData) (*models.Company, error)
-	GetCompanyById(ctx context.Context, id uuid.UUID) (findCompany *models.Company, err error)
-	GetCompaniesList(ctx context.Context) (findCompanies []*models.Company, err error)
-	DeleteCompanyById(ctx context.Context, id uuid.UUID) (err error)
-	UpdateCompanyById(ctx context.Context, body map[string]interface{}, id uuid.UUID) (err error)
+	UpdateCompanyPhoto(file io.Reader, fileType string, id uuid.UUID) (string, error)
+	GetCompanyById(ctx context.Context, id uuid.UUID) (foundCompanyData *models.CompanyData, err error)
 }
 
-// CompanyRepo represents the repository interface for manage companies.
+// CompanyRepo represents the repository interface for companies.
 type CompanyRepo interface {
-	CreateCompany(ctx context.Context, company *models.Company) error
-	GetCompanyById(ctx context.Context, id uuid.UUID) (*models.Company, error)
-	GetCompaniesList(ctx context.Context) ([]*models.Company, error)
-	DeleteCompanyById(ctx context.Context, id uuid.UUID) error
-	UpdateCompanyById(ctx context.Context, body map[string]interface{}, id uuid.UUID) (err error)
+	CreateCompany(ctx context.Context, company *models.Company) (*models.Company, error)
+	UpdateCompanyPhoto(id uuid.UUID, fileName string) (string, error)
+	GetCompanyById(ctx context.Context, companyId uuid.UUID) (*models.CompanyData, error)
 }

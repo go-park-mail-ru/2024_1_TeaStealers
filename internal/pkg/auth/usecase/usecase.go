@@ -4,11 +4,12 @@ import (
 	"2024_1_TeaStealers/internal/models"
 	"2024_1_TeaStealers/internal/pkg/auth"
 	"2024_1_TeaStealers/internal/pkg/jwt"
+	"2024_1_TeaStealers/internal/pkg/utils"
 	"context"
-	"crypto/sha1"
-	"encoding/hex"
-	"github.com/satori/uuid"
+	"errors"
 	"time"
+
+	"github.com/satori/uuid"
 )
 
 // AuthUsecase represents the usecase for authentication.
@@ -22,14 +23,16 @@ func NewAuthUsecase(repo auth.AuthRepo) *AuthUsecase {
 }
 
 // SignUp handles the user registration process.
-func (u *AuthUsecase) SignUp(ctx context.Context, data *models.UserLoginData) (*models.User, string, time.Time, error) {
+func (u *AuthUsecase) SignUp(ctx context.Context, data *models.UserSignUpData) (*models.User, string, time.Time, error) {
 	newUser := &models.User{
 		ID:           uuid.NewV4(),
-		Login:        data.Login,
-		PasswordHash: generateHashString(data.Password),
+		Email:        data.Email,
+		Phone:        data.Phone,
+		PasswordHash: utils.GenerateHashString(data.Password),
 	}
 
-	if err := u.repo.CreateUser(ctx, newUser); err != nil {
+	userResponse, err := u.repo.CreateUser(ctx, newUser)
+	if err != nil {
 		return nil, "", time.Now(), err
 	}
 
@@ -38,12 +41,12 @@ func (u *AuthUsecase) SignUp(ctx context.Context, data *models.UserLoginData) (*
 		return nil, "", time.Now(), err
 	}
 
-	return newUser, token, exp, nil
+	return userResponse, token, exp, nil
 }
 
 // Login handles the user login process.
 func (u *AuthUsecase) Login(ctx context.Context, data *models.UserLoginData) (*models.User, string, time.Time, error) {
-	user, err := u.repo.CheckUser(ctx, data.Login, generateHashString(data.Password))
+	user, err := u.repo.CheckUser(ctx, data.Login, utils.GenerateHashString(data.Password))
 	if err != nil {
 		return nil, "", time.Now(), err
 	}
@@ -56,9 +59,21 @@ func (u *AuthUsecase) Login(ctx context.Context, data *models.UserLoginData) (*m
 	return user, token, exp, nil
 }
 
-// generateHashString returns a hash string for the given input string.
-func generateHashString(s string) string {
-	h := sha1.New()
-	h.Write([]byte(s))
-	return hex.EncodeToString(h.Sum(nil))
+// CheckAuth checking autorizing
+func (u *AuthUsecase) CheckAuth(ctx context.Context, idUser uuid.UUID) error {
+	if _, err := u.repo.GetUserLevelById(idUser); err != nil {
+		return errors.New("user not found")
+	}
+	return nil
+}
+
+func (u *AuthUsecase) GetUserLevelById(id uuid.UUID, jwtLevel int) error {
+	level, err := u.repo.GetUserLevelById(id)
+	if err != nil {
+		return err
+	}
+	if jwtLevel != level {
+		return errors.New("levels don't much")
+	}
+	return nil
 }

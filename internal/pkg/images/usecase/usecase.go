@@ -3,14 +3,14 @@ package usecase
 import (
 	"2024_1_TeaStealers/internal/models"
 	"2024_1_TeaStealers/internal/pkg/images"
-	"context"
-
-	"time"
-
+	"fmt"
 	"github.com/satori/uuid"
+	"io"
+	"os"
+	"path/filepath"
 )
 
-// ImageUsecase represents the usecase for manage images.
+// ImageUsecase represents the usecase for images for advert.
 type ImageUsecase struct {
 	repo images.ImageRepo
 }
@@ -20,38 +20,55 @@ func NewImageUsecase(repo images.ImageRepo) *ImageUsecase {
 	return &ImageUsecase{repo: repo}
 }
 
-// CreateImage handles the image creation process.
-func (u *ImageUsecase) CreateImage(ctx context.Context, data *models.ImageCreateData, id uuid.UUID) (*models.Image, error) {
+// UploadImage upload image for advert
+func (u *ImageUsecase) UploadImage(file io.Reader, fileType string, advertUUID uuid.UUID) (*models.ImageResp, error) {
+	newId := uuid.NewV4()
+	fileName := newId.String() + fileType
+	subDirectory := filepath.Join("adverts", advertUUID.String())
+	directory := filepath.Join(os.Getenv("DOCKER_DIR"), subDirectory)
+	if err := os.MkdirAll(directory, 0755); err != nil {
+		return nil, err
+	}
+	destination, err := os.Create(directory + "/" + fileName)
+	if err != nil {
+		fmt.Println(err.Error())
+		return nil, err
+	}
+	defer destination.Close()
+
+	_, err = io.Copy(destination, file)
+	if err != nil {
+		fmt.Println(err.Error())
+
+		return nil, err
+	}
 	newImage := &models.Image{
-		ID:           id,
-		Filename:     data.AdvertId.String() + "/" + id.String(),
-		AdvertId:     data.AdvertId,
-		Priority:     data.Priority,
-		DataCreation: time.Now(),
-		IsDeleted:    false,
+		ID:       newId,
+		AdvertID: advertUUID,
+		Photo:    subDirectory + "/" + fileName,
+		Priority: 1,
 	}
-
-	if err := u.repo.CreateImage(ctx, newImage); err != nil {
+	image, err := u.repo.StoreImage(newImage)
+	if err != nil {
 		return nil, err
 	}
-
-	return newImage, nil
+	return image, nil
 }
 
-// GetImagesByAdvertId handles the images getting process.
-func (u *ImageUsecase) GetImagesByAdvertId(ctx context.Context, advertId uuid.UUID) (findImages []*models.Image, err error) {
-	if findImages, err = u.repo.GetImagesByAdvertId(ctx, advertId); err != nil {
+// GetAdvertImages return list of images for advert
+func (u *ImageUsecase) GetAdvertImages(advertId uuid.UUID) ([]*models.ImageResp, error) {
+	imagesList, err := u.repo.SelectImages(advertId)
+	if err != nil {
 		return nil, err
 	}
-
-	return findImages, nil
+	return imagesList, nil
 }
 
-// DeleteImageById handles the deleting image process.
-func (u *ImageUsecase) DeleteImageById(ctx context.Context, id uuid.UUID) (err error) {
-	if err = u.repo.DeleteImageById(ctx, id); err != nil {
-		return err
+// DeleteImage delete image bby id and return new list images
+func (u *ImageUsecase) DeleteImage(imageId uuid.UUID) ([]*models.ImageResp, error) {
+	imagesList, err := u.repo.DeleteImage(imageId)
+	if err != nil {
+		return nil, err
 	}
-
-	return nil
+	return imagesList, nil
 }

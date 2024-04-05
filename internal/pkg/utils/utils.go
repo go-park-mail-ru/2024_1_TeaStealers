@@ -1,21 +1,43 @@
 package utils
 
 import (
+	"2024_1_TeaStealers/internal/pkg/middleware"
+	"crypto/sha1"
+	"encoding/hex"
 	"encoding/json"
-	"fmt"
 	"io"
 	"net/http"
+
+	"github.com/satori/uuid"
 )
 
-// WriteError writes an error response with the specified status code and message.
+// WriteError prints error in json
 func WriteError(w http.ResponseWriter, statusCode int, message string) {
+	errorResponse := struct {
+		Message string `json:"message"`
+	}{
+		Message: message,
+	}
+	resp, err := json.Marshal(errorResponse)
+	if err != nil {
+		return
+	}
+
 	w.WriteHeader(statusCode)
-	fmt.Fprintln(w, message)
+	_, _ = w.Write(resp)
 }
 
 // WriteResponse writes a JSON response with the specified status code and data.
 func WriteResponse(w http.ResponseWriter, statusCode int, response interface{}) error {
-	resp, err := json.Marshal(response)
+	respSuccess := struct {
+		StatusCode int         `json:"statusCode"`
+		Message    string      `json:"message,omitempty"`
+		Payload    interface{} `json:"payload"`
+	}{
+		StatusCode: statusCode,
+		Payload:    response,
+	}
+	resp, err := json.Marshal(respSuccess)
 	if err != nil {
 		return err
 	}
@@ -37,4 +59,20 @@ func ReadRequestData(r *http.Request, request interface{}) error {
 		return err
 	}
 	return nil
+}
+
+// GenerateHashString generate hash string
+func GenerateHashString(s string) string {
+	h := sha1.New()
+	h.Write([]byte(s))
+	return hex.EncodeToString(h.Sum(nil))
+}
+
+func GetIdUserByRequest(r *http.Request) uuid.UUID {
+	id := r.Context().Value(middleware.CookieName)
+	UUID, ok := id.(uuid.UUID)
+	if !ok {
+		return uuid.Nil
+	}
+	return UUID
 }
