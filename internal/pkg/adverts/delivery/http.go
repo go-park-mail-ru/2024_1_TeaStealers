@@ -186,6 +186,7 @@ func (h *AdvertHandler) GetExistBuildingsByAddress(w http.ResponseWriter, r *htt
 	if err != nil {
 		page = 5
 	}
+
 	adverts, err := h.uc.GetExistBuildingsByAddress(r.Context(), address, page)
 	if err != nil {
 		utils.WriteError(w, http.StatusInternalServerError, err.Error())
@@ -250,6 +251,7 @@ func (h *AdvertHandler) GetRectangeAdvertsList(w http.ResponseWriter, r *http.Re
 		DealType:   dealType,
 		AdvertType: advertType,
 	})
+
 	if err != nil {
 		utils.WriteError(w, http.StatusInternalServerError, err.Error())
 		return
@@ -288,6 +290,7 @@ func (h *AdvertHandler) GetUserAdverts(w http.ResponseWriter, r *http.Request) {
 		utils.WriteError(w, http.StatusBadRequest, "error getting user adverts")
 		return
 	}
+
 	if err := utils.WriteResponse(w, http.StatusOK, userAdverts); err != nil {
 		utils.WriteError(w, http.StatusInternalServerError, "error write response")
 		return
@@ -329,6 +332,7 @@ func (h *AdvertHandler) GetComplexAdverts(w http.ResponseWriter, r *http.Request
 		utils.WriteError(w, http.StatusBadRequest, "error getting complex adverts")
 		return
 	}
+
 	if err := utils.WriteResponse(w, http.StatusOK, complexAdverts); err != nil {
 		utils.WriteError(w, http.StatusInternalServerError, "error write response")
 		return

@@ -310,11 +310,6 @@ type AdvertData struct {
 	DateCreation time.Time `json:"dateCreation"`
 }
 
-// AdvertDataWithImages represents the structure of the JSON data for advert.
-//type AdvertUpdateData struct {
-
-//}
-
 // AdvertUpdateData represents the structure of the JSON data for update advert.
 type AdvertUpdateData struct {
 	// ID is the unique identifier for the advert.
@@ -337,8 +332,10 @@ type AdvertUpdateData struct {
 	Address string `json:"adress"`
 	// AddressPoint is the address of the advertisement.
 	AddressPoint string `json:"adressPoint"`
-	// Properties contains additional properties for houses or flats.
-	Properties map[string]interface{} `json:"properties"` //Одна структура properties для всех объявлений
+	// HouseProperties contains additional properties for house.
+	HouseProperties *HouseProperties `json:"houseProperties,omitempty"`
+	// FlatProperties contains additional properties for flat.
+	FlatProperties *FlatProperties `json:"flatProperties,omitempty"`
 	// YearCreation is the year when the building was created.
 	YearCreation int `json:"yearCreation"`
 	// Material is the material of the building.
