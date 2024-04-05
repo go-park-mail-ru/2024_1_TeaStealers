@@ -316,7 +316,7 @@ func (u *AdvertUsecase) GetRectangleAdvertsList(ctx context.Context, advertFilte
 }
 
 // GetExistBuildingsByAddress handles the buildings getting process by address with paggination.
-func (u *AdvertUsecase) GetExistBuildingsByAddress(ctx context.Context, address string, pageSize int) (foundBuildings []*models.BuildingsExistData, err error) {
+func (u *AdvertUsecase) GetExistBuildingsByAddress(ctx context.Context, address string, pageSize int) (foundBuildings []*models.BuildingData, err error) {
 	if foundBuildings, err = u.repo.CheckExistsBuildings(ctx, pageSize, address); err != nil {
 		return nil, err
 	}

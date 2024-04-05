@@ -79,7 +79,7 @@ func (r *AdvertRepo) CheckExistsBuilding(ctx context.Context, adress string) (*m
 }
 
 // CheckExistsBuildings check exists buildings. Нужна для выпадающего списка существующих зданий по адресу(Для создания объявления)
-func (r *AdvertRepo) CheckExistsBuildings(ctx context.Context, pageSize int, adress string) ([]*models.BuildingsExistData, error) {
+func (r *AdvertRepo) CheckExistsBuildings(ctx context.Context, pageSize int, adress string) ([]*models.BuildingData, error) {
 	query := `SELECT b.id, b.floor, COALESCE(b.material, 'Brick'), b.adress, b.adresspoint, b.yearcreation, COALESCE(cx.name, '') FROM buildings AS b LEFT JOIN complexes AS cx ON b.complexid=cx.id WHERE b.adress ILIKE $1 LIMIT $2`
 
 	rows, err := r.db.Query(query, "%"+adress+"%", pageSize)
@@ -88,9 +88,9 @@ func (r *AdvertRepo) CheckExistsBuildings(ctx context.Context, pageSize int, adr
 	}
 	defer rows.Close()
 
-	buildings := []*models.BuildingsExistData{}
+	buildings := []*models.BuildingData{}
 	for rows.Next() {
-		building := &models.BuildingsExistData{}
+		building := &models.BuildingData{}
 		err := rows.Scan(&building.ID, &building.Floor, &building.Material, &building.Address, &building.AddressPoint, &building.YearCreation, &building.ComplexName)
 		if err != nil {
 			return nil, err
@@ -230,7 +230,7 @@ func (r *AdvertRepo) GetHouseAdvertById(ctx context.Context, id uuid.UUID) (*mod
 
 	if err := res.Scan(
 		&advertData.ID,
-		&advertData.TypeAdvert,
+		&advertData.AdvertType,
 		&advertData.TypeSale,
 		&advertData.Title,
 		&advertData.Description,
@@ -662,7 +662,7 @@ func (r *AdvertRepo) GetFlatAdvertById(ctx context.Context, id uuid.UUID) (*mode
 
 	if err := res.Scan(
 		&advertData.ID,
-		&advertData.TypeAdvert,
+		&advertData.AdvertType,
 		&advertData.TypeSale,
 		&advertData.Title,
 		&advertData.Description,

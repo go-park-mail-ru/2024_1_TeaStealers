@@ -277,7 +277,7 @@ type AdvertData struct {
 	// ID is the unique identifier for the advert.
 	ID uuid.UUID `json:"advertId"`
 	// TypeAdvert represents the type of the advertisement (House/Flat).
-	TypeAdvert string `json:"typeAdvert"`
+	AdvertType string `json:"advertType"`
 	// TypeSale represents the sale type of the advertisement (Sale/Rent).
 	TypeSale string `json:"typeSale"`
 	// Title is the title of the advert.

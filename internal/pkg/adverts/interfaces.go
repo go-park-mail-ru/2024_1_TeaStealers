@@ -19,7 +19,7 @@ type AdvertUsecase interface {
 	UpdateAdvertById(ctx context.Context, advertUpdateData *models.AdvertUpdateData) (err error)
 	DeleteAdvertById(ctx context.Context, advertId uuid.UUID) (err error)
 	GetRectangleAdvertsByComplexId(ctx context.Context, pageSize, offset int, comlexId uuid.UUID) (foundAdverts []*models.AdvertRectangleData, err error)
-	GetExistBuildingsByAddress(ctx context.Context, address string, pageSize int) (foundBuildings []*models.BuildingsExistData, err error)
+	GetExistBuildingsByAddress(ctx context.Context, address string, pageSize int) (foundBuildings []*models.BuildingData, err error)
 }
 
 // AdvertRepo represents the repository interface for adverts.
@@ -44,6 +44,6 @@ type AdvertRepo interface {
 	DeleteHouseAdvertById(ctx context.Context, tx *sql.Tx, advertId uuid.UUID) error
 	DeleteFlatAdvertById(ctx context.Context, tx *sql.Tx, advertId uuid.UUID) error
 	GetRectangleAdvertsByComplexId(ctx context.Context, pageSize, offset int, complexId uuid.UUID) ([]*models.AdvertRectangleData, error)
-	CheckExistsBuildings(ctx context.Context, pageSize int, adress string) ([]*models.BuildingsExistData, error)
+	CheckExistsBuildings(ctx context.Context, pageSize int, adress string) ([]*models.BuildingData, error)
 	SelectImages(advertId uuid.UUID) ([]*models.ImageResp, error)
 }

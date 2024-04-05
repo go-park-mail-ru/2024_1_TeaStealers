@@ -72,8 +72,8 @@ type BuildingCreateData struct {
 	YearCreation int `json:"yearCreation"`
 }
 
-// BuildingsExistData represents an exists buildings whit concrete adress.
-type BuildingsExistData struct {
+// BuildingData represents an exists buildings with concrete adress.
+type BuildingData struct {
 	// ID is the unique identifier for the building.
 	ID uuid.UUID `json:"id"`
 	// ComplexName is the name of the complex to which the building belongs.
