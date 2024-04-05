@@ -7,10 +7,11 @@ import (
 	"2024_1_TeaStealers/internal/pkg/utils"
 	"context"
 	"errors"
+	"testing"
+
 	"github.com/golang/mock/gomock"
 	"github.com/satori/uuid"
 	"github.com/stretchr/testify/assert"
-	"testing"
 )
 
 func TestSignUp(t *testing.T) {
@@ -33,7 +34,7 @@ func TestSignUp(t *testing.T) {
 		user *models.User
 		err  error
 	}
-	//id, email, phone, passwordhash, levelupdate
+	// id, email, phone, passwordhash, levelupdate
 	tests := []struct {
 		name string
 		args args

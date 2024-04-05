@@ -3,9 +3,10 @@ package users
 
 import (
 	"2024_1_TeaStealers/internal/models"
-	"github.com/satori/uuid"
 	"io"
 	"time"
+
+	"github.com/satori/uuid"
 )
 
 // UserUsecase represents the usecase interface for users.
@@ -14,7 +15,7 @@ type UserUsecase interface {
 	UpdateUserPhoto(io.Reader, string, uuid.UUID) (string, error)
 	UpdateUserInfo(uuid.UUID, *models.UserUpdateData) (*models.User, error)
 	DeleteUserPhoto(uuid.UUID) error
-	UpdateUserPassword(*models.UserUpdatePassword) (string, time.Time, error) //тут менять левел юзера + генерировать новый жвт
+	UpdateUserPassword(*models.UserUpdatePassword) (string, time.Time, error) // тут менять левел юзера + генерировать новый жвт
 }
 
 // UserRepo represents the repository interface for users.

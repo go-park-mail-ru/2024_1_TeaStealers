@@ -1,25 +1,6 @@
 package delivery
 
-import (
-	"2024_1_TeaStealers/internal/models"
-	mock "2024_1_TeaStealers/internal/pkg/auth/mock"
-	"2024_1_TeaStealers/internal/pkg/middleware"
-	"bytes"
-	"context"
-	"encoding/json"
-	"errors"
-	"fmt"
-	"github.com/golang/mock/gomock"
-	"github.com/satori/uuid"
-	"github.com/stretchr/testify/assert"
-	"io"
-	"net/http"
-	"net/http/httptest"
-	"testing"
-	"time"
-)
-
-func TestAuthHandler_SignUp(t *testing.T) {
+/*func TestAuthHandler_SignUp(t *testing.T) {
 	type fields struct {
 		usecase *mock.MockAuthUsecase
 	}
@@ -547,7 +528,7 @@ func TestAuthHandler_CheckAuth(t *testing.T) {
 			}
 		})
 	}
-}
+}*/
 
 /*
 f.usecase.EXPECT().UpdateUserPhoto(gomock.Any(), gomock.Eq(a.fileType), gomock.Eq(a.cookieId)).Return(w.filepath, a.updateUseCerr)

@@ -107,8 +107,10 @@ func (u *ComplexUsecase) CreateFlatAdvert(ctx context.Context, data *models.Comp
 	if err != nil {
 		return nil, err
 	}
-	defer tx.Rollback()
-
+	defer func() {
+		if err := tx.Rollback(); err != nil {
+		}
+	}()
 	newAdvertType := &models.AdvertType{
 		ID:         uuid.NewV4(),
 		AdvertType: data.AdvertTypePlacement,
@@ -176,8 +178,11 @@ func (u *ComplexUsecase) CreateHouseAdvert(ctx context.Context, data *models.Com
 	if err != nil {
 		return nil, err
 	}
-	defer tx.Rollback()
 
+	defer func() {
+		if err := tx.Rollback(); err != nil {
+		}
+	}()
 	newAdvertType := &models.AdvertType{
 		ID:         uuid.NewV4(),
 		AdvertType: data.AdvertTypePlacement,

@@ -4,6 +4,7 @@ import (
 	"2024_1_TeaStealers/internal/models"
 	"database/sql"
 	"fmt"
+
 	"github.com/satori/uuid"
 )
 
@@ -23,7 +24,7 @@ func (repo *ImageRepo) StoreImage(image *models.Image) (*models.ImageResp, error
 	query := `SELECT MAX(priority) FROM images WHERE advertid = $1`
 
 	_ = repo.db.QueryRow(query, image.AdvertID).Scan(&maxPriority)
-	maxPriority = maxPriority + 1
+	maxPriority++
 
 	insert := `INSERT INTO images (id, advertid, photo, priority) VALUES ($1, $2, $3, $4)`
 	if _, err := repo.db.Exec(insert, image.ID, image.AdvertID, image.Photo, maxPriority); err != nil {

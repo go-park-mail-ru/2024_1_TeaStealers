@@ -304,7 +304,7 @@ type AdvertData struct {
 	YearCreation int `json:"yearCreation"`
 	// Material is the material of the building.
 	Material MaterialBuilding `json:"material"`
-	//ComplexProperties represents residential complex information.
+	// ComplexProperties represents residential complex information.
 	ComplexProperties *ComplexAdvertProperties `json:"complexProperties,omitempty"`
 	// DateCreation is the date when the advert was created.
 	DateCreation time.Time `json:"dateCreation"`

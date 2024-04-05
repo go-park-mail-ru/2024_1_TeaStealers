@@ -162,7 +162,6 @@ func (h *AdvertHandler) GetSquareAdvertsList(w http.ResponseWriter, r *http.Requ
 	if err != nil {
 		size = 10
 	}
-	err = nil
 
 	offset := (page - 1) * size
 
@@ -270,13 +269,11 @@ func (h *AdvertHandler) GetUserAdverts(w http.ResponseWriter, r *http.Request) {
 	page, err := strconv.Atoi(pageStr)
 	if err != nil {
 		page = 1000000
-		err = nil
 	}
 
 	size, err := strconv.Atoi(sizeStr)
 	if err != nil {
 		size = 0
-		err = nil
 	}
 
 	UUID, ok := id.(uuid.UUID)
@@ -285,7 +282,7 @@ func (h *AdvertHandler) GetUserAdverts(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	userAdverts := []*models.AdvertRectangleData{}
+	var userAdverts []*models.AdvertRectangleData
 	if userAdverts, err = h.uc.GetRectangleAdvertsByUserId(r.Context(), page, size, UUID); err != nil {
 		utils.WriteError(w, http.StatusBadRequest, "error getting user adverts")
 		return
@@ -304,13 +301,11 @@ func (h *AdvertHandler) GetComplexAdverts(w http.ResponseWriter, r *http.Request
 	page, err := strconv.Atoi(pageStr)
 	if err != nil {
 		page = 1000000
-		err = nil
 	}
 
 	size, err := strconv.Atoi(sizeStr)
 	if err != nil {
 		size = 0
-		err = nil
 	}
 
 	vars := mux.Vars(r)
@@ -326,7 +321,8 @@ func (h *AdvertHandler) GetComplexAdverts(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	complexAdverts := []*models.AdvertRectangleData{}
+	var complexAdverts []*models.AdvertRectangleData
+
 	if complexAdverts, err = h.uc.GetRectangleAdvertsByComplexId(r.Context(), page, size, complexId); err != nil {
 		log.Println(err)
 		utils.WriteError(w, http.StatusBadRequest, "error getting complex adverts")

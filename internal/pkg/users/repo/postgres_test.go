@@ -5,11 +5,12 @@ import (
 	"2024_1_TeaStealers/internal/pkg/users/repo"
 	"database/sql"
 	"errors"
+	"testing"
+	"time"
+
 	sqlmock "github.com/DATA-DOG/go-sqlmock"
 	"github.com/satori/uuid"
 	"github.com/stretchr/testify/suite"
-	"testing"
-	"time"
 )
 
 type UserRepoTestSuite struct {
@@ -92,7 +93,7 @@ func TestImageRepoTestSuite(t *testing.T) {
 
 func (suite *UserRepoTestSuite) TestUpdateUserInfo() {
 	type args struct {
-		//data   *models.UserUpdateData
+		// data   *models.UserUpdateData
 		userId uuid.UUID
 	}
 	type want struct {
@@ -207,7 +208,7 @@ func (suite *UserRepoTestSuite) TestUpdateUserPassword() {
 	type args struct {
 		userId      uuid.UUID
 		newpassHash string
-		prevlevel   int
+		// prevlevel   int
 	}
 	type want struct {
 		err      error

@@ -5,10 +5,11 @@ import (
 	"2024_1_TeaStealers/internal/pkg/auth/repo"
 	"context"
 	"database/sql"
+	"testing"
+
 	sqlmock "github.com/DATA-DOG/go-sqlmock"
 	"github.com/satori/uuid"
 	"github.com/stretchr/testify/suite"
-	"testing"
 )
 
 type UserRepoTestSuite struct {
@@ -32,7 +33,7 @@ func (suite *UserRepoTestSuite) TestCreateUser() {
 	type args struct {
 		user   *models.User
 		userId uuid.UUID
-		ctx    context.Context
+		//	ctx    context.Context
 	}
 	type want struct {
 		user *models.User
@@ -105,7 +106,7 @@ func (suite *UserRepoTestSuite) TestGetUserByLogin() {
 		login  string
 		user   *models.User
 		userId uuid.UUID
-		ctx    context.Context
+		//	ctx    context.Context
 	}
 	type want struct {
 		user *models.User
@@ -173,7 +174,7 @@ func (suite *UserRepoTestSuite) TestGetUserLevelById() {
 	type args struct {
 		user   *models.User
 		userId uuid.UUID
-		ctx    context.Context
+		//	ctx    context.Context
 	}
 	type want struct {
 		user *models.User

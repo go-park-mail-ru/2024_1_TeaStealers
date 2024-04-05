@@ -9,8 +9,6 @@ import (
 	"github.com/satori/uuid"
 )
 
-const ()
-
 // AdvertRepo represents a repository for adverts changes.
 type AdvertRepo struct {
 	db *sql.DB
@@ -1002,7 +1000,10 @@ func (r *AdvertRepo) GetRectangleAdverts(ctx context.Context, advertFilter model
 
 	pageInfo.CurrentPage = (advertFilter.Offset / pageInfo.PageSize) + 1
 
-	return &models.AdvertDataPage{rectangleAdverts, pageInfo}, nil
+	return &models.AdvertDataPage{
+		Adverts:  rectangleAdverts,
+		PageInfo: pageInfo,
+	}, nil
 }
 
 // GetRectangleAdvertsByUserId retrieves rectangle adverts from the database by user id.

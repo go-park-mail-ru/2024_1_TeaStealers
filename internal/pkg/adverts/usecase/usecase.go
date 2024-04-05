@@ -24,7 +24,11 @@ func (u *AdvertUsecase) CreateFlatAdvert(ctx context.Context, data *models.Adver
 	if err != nil {
 		return nil, err
 	}
-	defer tx.Rollback()
+
+	defer func() {
+		if err := tx.Rollback(); err != nil {
+		}
+	}()
 
 	newAdvertType := &models.AdvertType{
 		ID:         uuid.NewV4(),
@@ -106,7 +110,11 @@ func (u *AdvertUsecase) CreateHouseAdvert(ctx context.Context, data *models.Adve
 	if err != nil {
 		return nil, err
 	}
-	defer tx.Rollback()
+
+	defer func() {
+		if err := tx.Rollback(); err != nil {
+		}
+	}()
 
 	newAdvertType := &models.AdvertType{
 		ID:         uuid.NewV4(),
@@ -187,6 +195,9 @@ func (u *AdvertUsecase) CreateHouseAdvert(ctx context.Context, data *models.Adve
 func (u *AdvertUsecase) GetAdvertById(ctx context.Context, id uuid.UUID) (foundAdvert *models.AdvertData, err error) {
 	var typeAdvert *models.AdvertTypeAdvert
 	typeAdvert, err = u.repo.GetTypeAdvertById(ctx, id)
+	if err != nil {
+		return nil, err
+	}
 
 	switch *typeAdvert {
 	case models.AdvertTypeFlat:
@@ -216,7 +227,11 @@ func (u *AdvertUsecase) UpdateAdvertById(ctx context.Context, advertUpdateData *
 	if err != nil {
 		return err
 	}
-	defer tx.Rollback()
+
+	defer func() {
+		if err := tx.Rollback(); err != nil {
+		}
+	}()
 
 	if typeAdvertOld, err := u.repo.GetTypeAdvertById(ctx, advertUpdateData.ID); err == nil {
 		if *typeAdvertOld != models.AdvertTypeAdvert(typeAdvert) {
@@ -253,7 +268,11 @@ func (u *AdvertUsecase) DeleteAdvertById(ctx context.Context, advertId uuid.UUID
 	if err != nil {
 		return err
 	}
-	defer tx.Rollback()
+
+	defer func() {
+		if err := tx.Rollback(); err != nil {
+		}
+	}()
 
 	typeAdvert, err := u.repo.GetTypeAdvertById(ctx, advertId)
 	if err != nil {

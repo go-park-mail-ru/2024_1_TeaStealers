@@ -5,9 +5,10 @@ import (
 	"crypto/sha1"
 	"encoding/hex"
 	"encoding/json"
-	"github.com/satori/uuid"
 	"io"
 	"net/http"
+
+	"github.com/satori/uuid"
 )
 
 // WriteError prints error in json
@@ -24,8 +25,6 @@ func WriteError(w http.ResponseWriter, statusCode int, message string) {
 
 	w.WriteHeader(statusCode)
 	_, _ = w.Write(resp)
-
-	return
 }
 
 // WriteResponse writes a JSON response with the specified status code and data.

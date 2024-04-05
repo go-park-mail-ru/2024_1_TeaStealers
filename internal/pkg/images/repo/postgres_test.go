@@ -4,11 +4,12 @@ import (
 	"2024_1_TeaStealers/internal/models"
 	"2024_1_TeaStealers/internal/pkg/images/repo"
 	"database/sql"
+	"testing"
+	"time"
+
 	sqlmock "github.com/DATA-DOG/go-sqlmock"
 	"github.com/satori/uuid"
 	"github.com/stretchr/testify/suite"
-	"testing"
-	"time"
 )
 
 type ImageRepoTestSuite struct {
@@ -193,7 +194,7 @@ func (suite *ImageRepoTestSuite) setupMockStoreImage(image *models.Image, imageR
 }
 
 func (suite *ImageRepoTestSuite) setupMockDeleteImage(idImage, advertId uuid.UUID, response []*models.ImageResp, err error) {
-	//todo willreturn error hardcode
+	// todo willreturn error hardcode
 	suite.mock.ExpectExec(`UPDATE images SET isdeleted = true WHERE id = \$1`).
 		WithArgs(idImage).
 		WillReturnResult(sqlmock.NewResult(1, 1))

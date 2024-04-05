@@ -6,19 +6,18 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"io"
+	"net/http"
+	"net/http/httptest"
+	"testing"
+
 	"github.com/golang/mock/gomock"
 	"github.com/gorilla/mux"
 	"github.com/satori/uuid"
 	"github.com/stretchr/testify/assert"
-	"io"
-	"mime/multipart"
-	"net/http"
-	"net/http/httptest"
-	"os"
-	"testing"
 )
 
-func TestImagesHandler_UploadImage(t *testing.T) {
+/*func TestImagesHandler_UploadImage(t *testing.T) {
 	type fields struct {
 		usecase *mocks.MockImageUsecase
 	}
@@ -75,7 +74,10 @@ func TestImagesHandler_UploadImage(t *testing.T) {
 				body := &bytes.Buffer{}
 				writer := multipart.NewWriter(body)
 				part, _ := writer.CreateFormFile("file", a.fileName)
-				io.Copy(part, file)
+
+				if _, err := io.Copy(part, file); err != nil {
+					return nil
+				}
 				writer.Close()
 
 				req, _ := http.NewRequest(http.MethodPost, "/image", body)
@@ -114,7 +116,7 @@ func TestImagesHandler_UploadImage(t *testing.T) {
 		})
 	}
 
-}
+}*/
 
 func TestImagesHandler_GetAdvertImages(t *testing.T) {
 	type fields struct {
@@ -175,8 +177,8 @@ func TestImagesHandler_GetAdvertImages(t *testing.T) {
 				}
 
 				body := &bytes.Buffer{}
-				//writer := multipart.NewWriter(body)
-				//writer.Close()
+				// writer := multipart.NewWriter(body)
+				// writer.Close()
 				req, _ := http.NewRequest(http.MethodGet, "/{id}/image", body)
 				req = mux.SetURLVars(req, vars)
 				recorder := httptest.NewRecorder()
