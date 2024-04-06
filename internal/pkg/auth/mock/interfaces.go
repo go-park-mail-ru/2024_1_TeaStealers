@@ -38,18 +38,31 @@ func (m *MockAuthUsecase) EXPECT() *MockAuthUsecaseMockRecorder {
 }
 
 // CheckAuth mocks base method.
-func (m *MockAuthUsecase) CheckAuth(arg0 context.Context, arg1 string) (uuid.UUID, error) {
+func (m *MockAuthUsecase) CheckAuth(arg0 context.Context, arg1 uuid.UUID) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "CheckAuth", arg0, arg1)
-	ret0, _ := ret[0].(uuid.UUID)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
+	ret0, _ := ret[0].(error)
+	return ret0
 }
 
 // CheckAuth indicates an expected call of CheckAuth.
 func (mr *MockAuthUsecaseMockRecorder) CheckAuth(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CheckAuth", reflect.TypeOf((*MockAuthUsecase)(nil).CheckAuth), arg0, arg1)
+}
+
+// GetUserLevelById mocks base method.
+func (m *MockAuthUsecase) GetUserLevelById(id uuid.UUID, level int) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetUserLevelById", id, level)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// GetUserLevelById indicates an expected call of GetUserLevelById.
+func (mr *MockAuthUsecaseMockRecorder) GetUserLevelById(id, level interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUserLevelById", reflect.TypeOf((*MockAuthUsecase)(nil).GetUserLevelById), id, level)
 }
 
 // Login mocks base method.
