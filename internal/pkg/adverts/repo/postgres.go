@@ -56,7 +56,7 @@ func (r *AdvertRepo) CreatePriceChange(ctx context.Context, tx *sql.Tx, newPrice
 
 // CreateBuilding creates a new building in the database.
 func (r *AdvertRepo) CreateBuilding(ctx context.Context, tx *sql.Tx, newBuilding *models.Building) error {
-	insert := `INSERT INTO buildings (id, floor, material, adress, adresspoint, yearcreation) VALUES ($1, $2, $3, $4, $5, $6)`
+	insert := `INSERT INTO buildings (id, floor, material, adress, adresspoint, yearcreation) VALUES ($1, $2, $3, $4, $5, $6, $7)`
 	if _, err := tx.ExecContext(ctx, insert, newBuilding.ID, newBuilding.Floor, newBuilding.Material, newBuilding.Address, newBuilding.AddressPoint, newBuilding.YearCreation); err != nil {
 		return err
 	}
@@ -116,7 +116,7 @@ func (r *AdvertRepo) CreateHouse(ctx context.Context, tx *sql.Tx, newHouse *mode
 
 // CreateFlat creates a new flat in the database.
 func (r *AdvertRepo) CreateFlat(ctx context.Context, tx *sql.Tx, newFlat *models.Flat) error {
-	insert := `INSERT INTO flats (id, buildingid, adverttypeid, floor, ceilingheight, squaregeneral, roomcount, squareresidential, apartament) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`
+	insert := `INSERT INTO flats (id, buildingid, adverttypeid, floor, ceilingheight, squaregeneral, roomcount, squareresidential, apartament) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`
 	if _, err := tx.ExecContext(ctx, insert, newFlat.ID, newFlat.BuildingID, newFlat.AdvertTypeID, newFlat.Floor, newFlat.CeilingHeight, newFlat.SquareGeneral, newFlat.RoomCount, newFlat.SquareResidential, newFlat.Apartment); err != nil {
 		return err
 	}

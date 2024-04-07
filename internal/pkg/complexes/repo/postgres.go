@@ -23,7 +23,9 @@ func NewRepository(db *sql.DB) *ComplexRepo {
 func (r *ComplexRepo) CreateComplex(ctx context.Context, complex *models.Complex) (*models.Complex, error) {
 	insert := `INSERT INTO complexes (id, companyid, name, adress, photo, description, datebeginbuild, dateendbuild, withoutfinishingoption, finishingoption, prefinishingoption, classhousing, parking, security)
 	VALUES ($1, $2, $3, $4, '', $5, $6, $7, $8, $9, $10, $11, $12, $13);`
-	if _, err := r.db.ExecContext(ctx, insert, complex.ID, complex.CompanyId, complex.Name, complex.Address, complex.Description, complex.DateBeginBuild, complex.DateEndBuild, complex.WithoutFinishingOption, complex.FinishingOption, complex.PreFinishingOption, complex.ClassHousing, complex.Parking, complex.Security); err != nil {
+	if _, err := r.db.ExecContext(ctx, insert, complex.ID, complex.CompanyId, complex.Name,
+		complex.Address, complex.Description, complex.DateBeginBuild, complex.DateEndBuild, complex.WithoutFinishingOption,
+		complex.FinishingOption, complex.PreFinishingOption, complex.ClassHousing, complex.Parking, complex.Security); err != nil {
 		return nil, err
 	}
 	query := `SELECT id, companyid, name, adress, photo, description, datebeginbuild, dateendbuild, withoutfinishingoption, finishingoption, prefinishingoption, classhousing, parking, security FROM complexes WHERE id = $1`
@@ -60,7 +62,7 @@ func (r *ComplexRepo) CreateBuilding(ctx context.Context, building *models.Build
 
 func (r *ComplexRepo) UpdateComplexPhoto(id uuid.UUID, fileName string) (string, error) {
 	query := `UPDATE complexes SET photo = $1 WHERE id = $2`
-	if _, err := r.db.Query(query, fileName, id); err != nil {
+	if _, err := r.db.Exec(query, fileName, id); err != nil {
 		log.Println(err)
 		return "", err
 	}
@@ -75,7 +77,9 @@ func (r *ComplexRepo) GetComplexById(ctx context.Context, complexId uuid.UUID) (
 
 	res := r.db.QueryRowContext(ctx, query, complexId)
 
-	if err := res.Scan(&complexData.ID, &complexData.CompanyId, &complexData.Name, &complexData.Address, &complexData.Photo, &complexData.Description, &complexData.DateBeginBuild, &complexData.DateEndBuild, &complexData.WithoutFinishingOption, &complexData.FinishingOption, &complexData.PreFinishingOption, &complexData.ClassHousing, &complexData.Parking, &complexData.Security); err != nil {
+	if err := res.Scan(&complexData.ID, &complexData.CompanyId, &complexData.Name, &complexData.Address, &complexData.Photo,
+		&complexData.Description, &complexData.DateBeginBuild, &complexData.DateEndBuild, &complexData.WithoutFinishingOption,
+		&complexData.FinishingOption, &complexData.PreFinishingOption, &complexData.ClassHousing, &complexData.Parking, &complexData.Security); err != nil {
 		return nil, err
 	}
 

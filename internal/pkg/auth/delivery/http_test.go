@@ -24,8 +24,7 @@ func TestAuthHandler_SignUp(t *testing.T) {
 		usecase *mock.MockAuthUsecase
 	}
 	type args struct {
-		data      *models.UserSignUpData
-		signUperr error
+		data *models.UserSignUpData
 	}
 	type want struct {
 		user    *models.User
@@ -39,7 +38,7 @@ func TestAuthHandler_SignUp(t *testing.T) {
 	defer ctrl.Finish()
 
 	id1 := uuid.NewV4()
-	//id2 := uuid.NewV4()
+	// id2 := uuid.NewV4()
 	tests := []struct {
 		name      string
 		fields    fields
@@ -81,7 +80,7 @@ func TestAuthHandler_SignUp(t *testing.T) {
 				handler := NewAuthHandler(f.usecase)
 				reqBody, _ := json.Marshal(a.data)
 				req := httptest.NewRequest(http.MethodPost, "/signup", bytes.NewBuffer(reqBody))
-				//req = req.WithContext(context.WithValue(req.Context(), middleware.CookieName, a.cookieId))
+				// req = req.WithContext(context.WithValue(req.Context(), middleware.CookieName, a.cookieId))
 				rec := httptest.NewRecorder()
 				handler.SignUp(rec, req)
 				return rec
@@ -102,13 +101,13 @@ func TestAuthHandler_SignUp(t *testing.T) {
 			want: want{
 				user: &models.User{
 					ID: id1,
-					//FirstName:    "Maksim",
-					//SecondName:   "Shagaev",
+					// FirstName:    "Maksim",
+					// SecondName:   "Shagaev",
 					Phone:        "+79003249325",
 					Email:        "my@mail.ru",
 					PasswordHash: "hash",
-					//Photo:        "/path/to/photo/test.jpg",
-					//DateBirthday: time.Now(),
+					// Photo:        "/path/to/photo/test.jpg",
+					// DateBirthday: time.Now(),
 				},
 				message: "incorrect data format",
 				token:   "token",
@@ -117,11 +116,11 @@ func TestAuthHandler_SignUp(t *testing.T) {
 			},
 			IsMessage: true,
 			prepare: func(f *fields, a *args, w *want) *httptest.ResponseRecorder {
-				//f.usecase.EXPECT().SignUp(gomock.Any(), gomock.Eq(a.data)).Return(w.user, w.token, time.Now(), w.err)
+				// f.usecase.EXPECT().SignUp(gomock.Any(), gomock.Eq(a.data)).Return(w.user, w.token, time.Now(), w.err)
 				handler := NewAuthHandler(f.usecase)
-				//reqBody, _ := json.Marshal("lolol")
+				// reqBody, _ := json.Marshal("lolol")
 				req := httptest.NewRequest(http.MethodPost, "/signup", nil)
-				//req = req.WithContext(context.WithValue(req.Context(), middleware.CookieName, a.cookieId))
+				// req = req.WithContext(context.WithValue(req.Context(), middleware.CookieName, a.cookieId))
 				rec := httptest.NewRecorder()
 				handler.SignUp(rec, req)
 				return rec
@@ -142,13 +141,13 @@ func TestAuthHandler_SignUp(t *testing.T) {
 			want: want{
 				user: &models.User{
 					ID: id1,
-					//FirstName:    "Maksim",
-					//SecondName:   "Shagaev",
+					// FirstName:    "Maksim",
+					// SecondName:   "Shagaev",
 					Phone:        "+79003249325",
 					Email:        "my@mail.ru",
 					PasswordHash: "hash",
-					//Photo:        "/path/to/photo/test.jpg",
-					//DateBirthday: time.Now(),
+					// Photo:        "/path/to/photo/test.jpg",
+					// DateBirthday: time.Now(),
 				},
 				message: "data already is used",
 				token:   "token",
@@ -161,7 +160,7 @@ func TestAuthHandler_SignUp(t *testing.T) {
 				handler := NewAuthHandler(f.usecase)
 				reqBody, _ := json.Marshal(a.data)
 				req := httptest.NewRequest(http.MethodPost, "/signup", bytes.NewBuffer(reqBody))
-				//req = req.WithContext(context.WithValue(req.Context(), middleware.CookieName, a.cookieId))
+				// req = req.WithContext(context.WithValue(req.Context(), middleware.CookieName, a.cookieId))
 				rec := httptest.NewRecorder()
 				handler.SignUp(rec, req)
 				return rec
@@ -198,8 +197,7 @@ func TestAuthHandler_Login(t *testing.T) {
 		usecase *mock.MockAuthUsecase
 	}
 	type args struct {
-		data      *models.UserLoginData
-		signUperr error
+		data *models.UserLoginData
 	}
 	type want struct {
 		user    *models.User
@@ -249,7 +247,7 @@ func TestAuthHandler_Login(t *testing.T) {
 				handler := NewAuthHandler(f.usecase)
 				reqBody, _ := json.Marshal(a.data)
 				req := httptest.NewRequest(http.MethodGet, "/login", bytes.NewBuffer(reqBody))
-				//req = req.WithContext(context.WithValue(req.Context(), middleware.CookieName, a.cookieId))
+				// req = req.WithContext(context.WithValue(req.Context(), middleware.CookieName, a.cookieId))
 				rec := httptest.NewRecorder()
 				handler.Login(rec, req)
 				return rec
@@ -280,11 +278,11 @@ func TestAuthHandler_Login(t *testing.T) {
 			},
 			IsMessage: true,
 			prepare: func(f *fields, a *args, w *want) *httptest.ResponseRecorder {
-				//f.usecase.EXPECT().Login(gomock.Any(), gomock.Eq(a.data)).Return(w.user, w.token, time.Now(), w.err)
+				// f.usecase.EXPECT().Login(gomock.Any(), gomock.Eq(a.data)).Return(w.user, w.token, time.Now(), w.err)
 				handler := NewAuthHandler(f.usecase)
-				//reqBody, _ := json.Marshal(a.data)
+				// reqBody, _ := json.Marshal(a.data)
 				req := httptest.NewRequest(http.MethodGet, "/login", nil)
-				//req = req.WithContext(context.WithValue(req.Context(), middleware.CookieName, a.cookieId))
+				// req = req.WithContext(context.WithValue(req.Context(), middleware.CookieName, a.cookieId))
 				rec := httptest.NewRecorder()
 				handler.Login(rec, req)
 				return rec
@@ -319,7 +317,7 @@ func TestAuthHandler_Login(t *testing.T) {
 				handler := NewAuthHandler(f.usecase)
 				reqBody, _ := json.Marshal(a.data)
 				req := httptest.NewRequest(http.MethodGet, "/login", bytes.NewBuffer(reqBody))
-				//req = req.WithContext(context.WithValue(req.Context(), middleware.CookieName, a.cookieId))
+				// req = req.WithContext(context.WithValue(req.Context(), middleware.CookieName, a.cookieId))
 				rec := httptest.NewRecorder()
 				handler.Login(rec, req)
 				return rec
@@ -385,11 +383,11 @@ func TestAuthHandler_Logout(t *testing.T) {
 				payload: "success logout",
 			},
 			prepare: func(f *fields, w *want) *httptest.ResponseRecorder {
-				//f.usecase.EXPECT().Login(gomock.Any(), gomock.Eq(a.data)).Return(w.user, w.token, time.Now(), w.err)
+				// f.usecase.EXPECT().Login(gomock.Any(), gomock.Eq(a.data)).Return(w.user, w.token, time.Now(), w.err)
 				handler := NewAuthHandler(f.usecase)
-				//reqBody, _ := json.Marshal(a.data)
+				// reqBody, _ := json.Marshal(a.data)
 				req := httptest.NewRequest(http.MethodGet, "/auth/logout", nil)
-				//req = req.WithContext(context.WithValue(req.Context(), middleware.CookieName, a.cookieId))
+				// req = req.WithContext(context.WithValue(req.Context(), middleware.CookieName, a.cookieId))
 				rec := httptest.NewRecorder()
 				handler.Logout(rec, req)
 				return rec
@@ -489,11 +487,11 @@ func TestAuthHandler_CheckAuth(t *testing.T) {
 				status:  http.StatusUnauthorized,
 			},
 			prepare: func(f *fields, a *args, w *want) *httptest.ResponseRecorder {
-				//f.usecase.EXPECT().CheckAuth(gomock.Any(), gomock.Eq(a.id)).Return(a.checkErr)
+				// f.usecase.EXPECT().CheckAuth(gomock.Any(), gomock.Eq(a.id)).Return(a.checkErr)
 				handler := NewAuthHandler(f.usecase)
 				req := httptest.NewRequest(http.MethodGet, "/auth/logout", nil)
-				//ctx := context.WithValue(req.Context(), middleware.CookieName, a.id.String())
-				//req = req.WithContext(ctx)
+				// ctx := context.WithValue(req.Context(), middleware.CookieName, a.id.String())
+				// req = req.WithContext(ctx)
 				rec := httptest.NewRecorder()
 				handler.CheckAuth(rec, req)
 				return rec
@@ -516,7 +514,7 @@ func TestAuthHandler_CheckAuth(t *testing.T) {
 				status:  http.StatusUnauthorized,
 			},
 			prepare: func(f *fields, a *args, w *want) *httptest.ResponseRecorder {
-				//f.usecase.EXPECT().CheckAuth(gomock.Any(), gomock.Eq(a.id)).Return(a.checkErr)
+				// f.usecase.EXPECT().CheckAuth(gomock.Any(), gomock.Eq(a.id)).Return(a.checkErr)
 				handler := NewAuthHandler(f.usecase)
 				req := httptest.NewRequest(http.MethodGet, "/auth/logout", nil)
 				ctx := context.WithValue(req.Context(), middleware.CookieName, "notid")
