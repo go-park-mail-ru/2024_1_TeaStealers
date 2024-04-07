@@ -323,7 +323,7 @@ type AdvertUpdateData struct {
 	// Description is the description of the advert.
 	Description string `json:"description"`
 	// Price is the price of the advertisement.
-	Price int64 `json:"price"`
+	Price float64 `json:"price"`
 	// Phone is the phone number associated with the advert.
 	Phone string `json:"phone"`
 	// IsAgent indicates whether the advert is posted by an agent.

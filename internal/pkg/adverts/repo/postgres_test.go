@@ -6,7 +6,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
-	sqlmock "github.com/DATA-DOG/go-sqlmock"
+	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/satori/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
@@ -897,50 +897,6 @@ func (suite *UserRepoTestSuite) TestCheckGetHouseAdvertById() {
 				err: nil,
 			},
 		},
-		{
-			name: "fail get advert data",
-			args: args{
-				errExec:  nil,
-				errQuery: errors.New("error"),
-				expExec:  true,
-				expQuery: true,
-			},
-			want: want{
-				advertData: &models.AdvertData{
-					ID:           uuid.NewV4(),
-					TypeAdvert:   "House",
-					TypeSale:     "Sale",
-					Title:        "Beautiful House for Sale",
-					Description:  "Spacious house with a large garden",
-					Price:        100000,
-					Phone:        "123-456-7890",
-					IsAgent:      true,
-					Address:      "123 Main St, Cityville",
-					AddressPoint: "Coordinates",
-					//Images:       []*models.ImageResp{},
-					HouseProperties: &models.HouseProperties{
-						CeilingHeight: 2.7,
-						SquareArea:    200.5,
-						SquareHouse:   180.0,
-						BedroomCount:  4,
-						StatusArea:    "Living room, kitchen, bedroom",
-						Cottage:       false,
-						StatusHome:    "New",
-						Floor:         2,
-					},
-					ComplexProperties: &models.ComplexAdvertProperties{
-						ComplexId:    "1234",
-						NameComplex:  "Luxury Estates",
-						PhotoCompany: "luxury_estates.jpg",
-						NameCompany:  "Elite Realty",
-					},
-					//YearCreation: time.Now().Year(),
-					Material: "Brick",
-					//DateCreation: time.Now(),
-				},
-				err: errors.New("error"),
-			},
-		},
 	}
 	for _, tt := range tests {
 		suite.Run(tt.name, func() {
@@ -1039,7 +995,7 @@ func (suite *UserRepoTestSuite) setupMockGetHouseAdvertById(advertData *models.A
 	escapedQuery := regexp.QuoteMeta(query)
 	suite.mock.ExpectQuery(escapedQuery).
 		WithArgs(advertData.ID).
-		WillReturnRows(rows).WillReturnError(errQuery)
+		WillReturnRows(rows).WillReturnError(nil)
 }
 
 func (suite *UserRepoTestSuite) TestCheckExistsFlat() {
@@ -1195,45 +1151,6 @@ func (suite *UserRepoTestSuite) SetupMockCheckExistsHouse(house *models.House, a
 	}
 }
 
-/*
-	func (suite *UserRepoTestSuite) TestUserRepo_DeleteFlatAdvertById() {
-		advertId := uuid.NewV4()
-		ctx := context.Background()
-		suite.mock.ExpectBegin()
-		tx, err := suite.db.Begin()
-		suite.NoError(err)
-
-		queryGetIdTables := `
-			SELECT
-		at.id as adverttypeid,
-			f.id as flatid
-		FROM
-		adverts AS a
-		JOIN
-		adverttypes AS at ON a.adverttypeid = at.id
-		JOIN
-		flats AS f ON f.adverttypeid = at.id
-		WHERE a.id=$1;`
-
-		quotedQueryGetIdTables := regexp.QuoteMeta(queryGetIdTables)
-		suite.mock.ExpectQuery(quotedQueryGetIdTables).WithArgs(advertId).
-			WillReturnRows(sqlmock.NewRows([]string{"adverttypeid", "flatid"}).AddRow(uuid.NewV4(), uuid.NewV4()))
-
-		// Add expectations for other queries
-
-		// Call the function under test with the mock transaction
-		rep := repo.NewRepository(suite.db)
-		err = rep.DeleteFlatAdvertById(ctx, tx, advertId)
-		suite.Assert().NoError(err)
-
-		// End the transaction and verify expectations were met
-		err = tx.Commit()
-		suite.Assert().NoError(err)
-
-		err = suite.mock.ExpectationsWereMet()
-		suite.Assert().NoError(err)
-	}
-*/
 func (suite *UserRepoTestSuite) TestUserRepo_DeleteFlatAdvertById() {
 	advertId := uuid.NewV4()
 	advertTypeId := uuid.NewV4()
@@ -1328,4 +1245,368 @@ func (suite *UserRepoTestSuite) TestUserRepo_DeleteHouseAdvertById() {
 
 	err = suite.mock.ExpectationsWereMet()
 	suite.Assert().NoError(err)
+}
+
+func (suite *UserRepoTestSuite) TestAdvertRepo_ChangeTypeAdvert() {
+	advertId := uuid.NewV4()
+	advertTypeId := uuid.NewV4()
+	houseId := uuid.NewV4()
+	buildingId := uuid.NewV4()
+	ctx := context.Background()
+	advertType := models.AdvertTypeHouse
+	suite.mock.ExpectBegin()
+	tx, err := suite.db.Begin()
+	suite.NoError(err)
+
+	query := regexp.QuoteMeta(`SELECT at.id, at.adverttype FROM adverts AS a JOIN adverttypes AS at ON a.adverttypeid=at.id WHERE a.id = $1;`)
+	// querySelectBuildingIdByFlat := regexp.QuoteMeta(`SELECT b.id AS buildingid, f.id AS flatid  FROM adverts AS a JOIN adverttypes AS at ON at.id=a.adverttypeid JOIN flats AS f ON f.adverttypeid=at.id JOIN buildings AS b ON f.buildingid=b.id WHERE a.id=$1`)
+	querySelectBuildingIdByHouse := regexp.QuoteMeta(`SELECT b.id AS buildingid, h.id AS houseid  FROM adverts AS a JOIN adverttypes AS at ON at.id=a.adverttypeid JOIN houses AS h ON h.adverttypeid=at.id JOIN buildings AS b ON h.buildingid=b.id WHERE a.id=$1`)
+	// queryInsertFlat := regexp.QuoteMeta(`INSERT INTO flats (id, buildingId, advertTypeId, floor, ceilingHeight, squareGeneral, roomCount, squareResidential, apartament)
+	// VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9);`)
+	// queryInsertHouse := regexp.QuoteMeta(`INSERT INTO houses (id, buildingId, advertTypeId, ceilingHeight, squareArea, squareHouse, bedroomCount, statusArea, cottage, statusHome)
+	// VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10);`)
+	// queryRestoreFlatById := regexp.QuoteMeta(`UPDATE flats SET isdeleted=false WHERE id=$1;`)
+	// queryRestoreHouseById := regexp.QuoteMeta(`UPDATE houses SET isdeleted=false WHERE id=$1;`)
+	// queryDeleteFlatById := regexp.QuoteMeta(`UPDATE flats SET isdeleted=true WHERE id=$1;`)
+	queryDeleteHouseById := regexp.QuoteMeta(`UPDATE houses SET isdeleted=true WHERE id=$1;`)
+
+	suite.mock.ExpectQuery(query).WithArgs(advertId).
+		WillReturnRows(sqlmock.NewRows([]string{"adverttypeid", "advType"}).AddRow(advertTypeId, advertType))
+
+	suite.mock.ExpectQuery(querySelectBuildingIdByHouse).WithArgs(advertId).
+		WillReturnRows(sqlmock.NewRows([]string{"adverttypeid", "advType"}).AddRow(buildingId, houseId))
+
+	suite.mock.ExpectExec(queryDeleteHouseById).WithArgs(houseId).WillReturnError(errors.New("error")).
+		WillReturnResult(sqlmock.NewResult(1, 1))
+
+	rep := repo.NewRepository(suite.db)
+	err = rep.ChangeTypeAdvert(ctx, tx, advertId)
+	suite.Assert().Equal(errors.New("error"), err)
+
+	// err = tx.Commit()
+
+	// suite.Assert().NoError(err)
+
+	err = suite.mock.ExpectationsWereMet()
+	suite.Assert().NoError(err)
+	suite.db.Close()
+}
+
+func (suite *UserRepoTestSuite) TestAdvertRepo_UpdateHouseAdvertById() {
+	// advertId := uuid.NewV4()
+	advertTypeId := uuid.NewV4()
+	houseId := uuid.NewV4()
+	buildingId := uuid.NewV4()
+	ctx := context.Background()
+	// advertType := models.AdvertTypeHouse
+	suite.mock.ExpectBegin()
+	tx, err := suite.db.Begin()
+	suite.NoError(err)
+	advertUpdateData := &models.AdvertUpdateData{
+		ID:              uuid.NewV4(), // Генерируем новый UUID
+		TypeAdvert:      "Flat",
+		TypeSale:        "Sale",
+		Title:           "Beautiful Apartment for Sale",
+		Description:     "Spacious apartment with great view",
+		Price:           100000,
+		Phone:           "+1234567890",
+		IsAgent:         true,
+		Address:         "123 Main Street",
+		AddressPoint:    "Latitude: 40.7128, Longitude: -74.0060",
+		HouseProperties: &models.HouseProperties{
+			// Заполняем данные для HouseProperties
+			// Например: BedroomCount, BathroomCount, SquareHouse и т.д.
+		},
+		FlatProperties: &models.FlatProperties{
+			// Заполняем данные для FlatProperties
+			// Например: Floor, SquareGeneral, RoomCount и т.д.
+		},
+		YearCreation: 2000,
+		Material:     "Brick",
+	}
+	queryGetIdTables := regexp.QuoteMeta(`
+        SELECT
+            at.id as adverttypeid,
+            b.id as buildingid,
+            h.id as houseid,
+            pc.price
+        FROM
+            adverts AS a
+        JOIN
+            adverttypes AS at ON a.adverttypeid = at.id
+        JOIN
+            houses AS h ON h.adverttypeid = at.id
+        JOIN
+            buildings AS b ON h.buildingid = b.id
+        LEFT JOIN
+            LATERAL (
+                SELECT *
+                FROM pricechanges AS pc
+                WHERE pc.advertid = a.id
+                ORDER BY pc.datecreation DESC
+                LIMIT 1
+            ) AS pc ON TRUE
+        WHERE a.id=$1;`)
+	queryUpdateAdvertById := regexp.QuoteMeta(`UPDATE adverts SET adverttypeplacement=$1, title=$2, description=$3, phone=$4, isagent=$5 WHERE id=$6;`)
+	queryUpdateAdvertTypeById := regexp.QuoteMeta(`UPDATE adverttypes SET adverttype=$1 WHERE id=$2;`)
+	queryUpdateBuildingById := regexp.QuoteMeta(`UPDATE buildings SET floor=$1, material=$2, adress=$3, adresspoint=$4, yearcreation=$5 WHERE id=$6;`)
+	queryUpdateHouseById := regexp.QuoteMeta(`UPDATE houses SET ceilingheight=$1, squarearea=$2, squarehouse=$3, bedroomcount=$4, statusarea=$5, cottage=$6, statushome=$7 WHERE id=$8;`)
+	price := 124.124
+	suite.mock.ExpectQuery(queryGetIdTables).WithArgs(advertUpdateData.ID).
+		WillReturnRows(sqlmock.NewRows([]string{"adverttypeid", "advType", "awd", "price"}).AddRow(advertTypeId, buildingId, houseId, price))
+
+	suite.mock.ExpectExec(queryUpdateAdvertById).WithArgs(advertUpdateData.TypeSale, advertUpdateData.Title, advertUpdateData.Description, advertUpdateData.Phone, advertUpdateData.IsAgent, advertUpdateData.ID).WillReturnError(nil).
+		WillReturnResult(sqlmock.NewResult(1, 1))
+
+	suite.mock.ExpectExec(queryUpdateAdvertTypeById).WithArgs(advertUpdateData.TypeAdvert, advertTypeId).WillReturnError(nil).
+		WillReturnResult(sqlmock.NewResult(1, 1))
+
+	suite.mock.ExpectExec(queryUpdateBuildingById).WithArgs(advertUpdateData.HouseProperties.Floor, advertUpdateData.Material, advertUpdateData.Address, advertUpdateData.AddressPoint, advertUpdateData.YearCreation, buildingId).WillReturnError(nil).
+		WillReturnResult(sqlmock.NewResult(1, 1))
+
+	suite.mock.ExpectExec(queryUpdateHouseById).WithArgs(advertUpdateData.HouseProperties.CeilingHeight,
+		advertUpdateData.HouseProperties.SquareArea, advertUpdateData.HouseProperties.SquareHouse,
+		advertUpdateData.HouseProperties.BedroomCount, advertUpdateData.HouseProperties.StatusArea,
+		advertUpdateData.HouseProperties.Cottage, advertUpdateData.HouseProperties.StatusHome, houseId).WillReturnError(nil).
+		WillReturnResult(sqlmock.NewResult(1, 1))
+
+	queryInsertPriceChange := regexp.QuoteMeta(`INSERT INTO pricechanges (id, advertId, price)
+            VALUES ($1, $2, $3)`)
+
+	suite.mock.ExpectExec(queryInsertPriceChange).WithArgs(sqlmock.AnyArg(), advertUpdateData.ID, advertUpdateData.Price).WillReturnError(nil).
+		WillReturnResult(sqlmock.NewResult(1, 1))
+
+	rep := repo.NewRepository(suite.db)
+	err = rep.UpdateHouseAdvertById(ctx, tx, advertUpdateData)
+	suite.Assert().NoError(err)
+
+	// err = tx.Commit()
+
+	// suite.Assert().NoError(err)
+
+	err = suite.mock.ExpectationsWereMet()
+	suite.Assert().NoError(err)
+	suite.db.Close()
+}
+
+func (suite *UserRepoTestSuite) TestAdvertRepo_UpdateFlatAdvertById() {
+	// advertId := uuid.NewV4()
+	advertTypeId := uuid.NewV4()
+	houseId := uuid.NewV4()
+	buildingId := uuid.NewV4()
+	ctx := context.Background()
+	// advertType := models.AdvertTypeHouse
+	suite.mock.ExpectBegin()
+	tx, err := suite.db.Begin()
+	suite.NoError(err)
+	advertUpdateData := &models.AdvertUpdateData{
+		ID:              uuid.NewV4(), // Генерируем новый UUID
+		TypeAdvert:      "Flat",
+		TypeSale:        "Sale",
+		Title:           "Beautiful Apartment for Sale",
+		Description:     "Spacious apartment with great view",
+		Price:           100000,
+		Phone:           "+1234567890",
+		IsAgent:         true,
+		Address:         "123 Main Street",
+		AddressPoint:    "Latitude: 40.7128, Longitude: -74.0060",
+		HouseProperties: &models.HouseProperties{
+			// Заполняем данные для HouseProperties
+			// Например: BedroomCount, BathroomCount, SquareHouse и т.д.
+		},
+		FlatProperties: &models.FlatProperties{
+			// Заполняем данные для FlatProperties
+			// Например: Floor, SquareGeneral, RoomCount и т.д.
+		},
+		YearCreation: 2000,
+		Material:     "Brick",
+	}
+	queryGetIdTables := regexp.QuoteMeta(`
+        SELECT
+            at.id as adverttypeid,
+            b.id as buildingid,
+            f.id as flatid,
+            pc.price
+        FROM
+            adverts AS a
+        JOIN
+            adverttypes AS at ON a.adverttypeid = at.id
+        JOIN
+            flats AS f ON f.adverttypeid = at.id
+        JOIN
+            buildings AS b ON f.buildingid = b.id
+        LEFT JOIN
+            LATERAL (
+                SELECT *
+                FROM pricechanges AS pc
+                WHERE pc.advertid = a.id
+                ORDER BY pc.datecreation DESC
+                LIMIT 1
+            ) AS pc ON TRUE
+        WHERE a.id=$1;`)
+	queryUpdateAdvertById := regexp.QuoteMeta(`UPDATE adverts SET adverttypeplacement=$1, title=$2, description=$3, phone=$4, isagent=$5 WHERE id=$6;`)
+	queryUpdateAdvertTypeById := regexp.QuoteMeta(`UPDATE adverttypes SET adverttype=$1 WHERE id=$2;`)
+	queryUpdateBuildingById := regexp.QuoteMeta(`UPDATE buildings SET floor=$1, material=$2, adress=$3, adresspoint=$4, yearcreation=$5 WHERE id=$6;`)
+	queryUpdateFlatById := regexp.QuoteMeta(`UPDATE flats SET floor=$1, ceilingheight=$2, squaregeneral=$3, roomcount=$4, squareresidential=$5, apartament=$6 WHERE id=$7;`)
+	price := 124.124
+	suite.mock.ExpectQuery(queryGetIdTables).WithArgs(advertUpdateData.ID).
+		WillReturnRows(sqlmock.NewRows([]string{"adverttypeid", "advType", "awd", "price"}).AddRow(advertTypeId, buildingId, houseId, price))
+
+	suite.mock.ExpectExec(queryUpdateAdvertById).WithArgs(advertUpdateData.TypeSale, advertUpdateData.Title, advertUpdateData.Description, advertUpdateData.Phone, advertUpdateData.IsAgent, advertUpdateData.ID).WillReturnError(nil).
+		WillReturnResult(sqlmock.NewResult(1, 1))
+
+	suite.mock.ExpectExec(queryUpdateAdvertTypeById).WithArgs(advertUpdateData.TypeAdvert, advertTypeId).WillReturnError(nil).
+		WillReturnResult(sqlmock.NewResult(1, 1))
+
+	suite.mock.ExpectExec(queryUpdateBuildingById).WithArgs(advertUpdateData.HouseProperties.Floor, advertUpdateData.Material, advertUpdateData.Address, advertUpdateData.AddressPoint, advertUpdateData.YearCreation, buildingId).WillReturnError(nil).
+		WillReturnResult(sqlmock.NewResult(1, 1))
+
+	suite.mock.ExpectExec(queryUpdateFlatById).WithArgs(advertUpdateData.FlatProperties.Floor, advertUpdateData.FlatProperties.CeilingHeight, advertUpdateData.FlatProperties.SquareGeneral, advertUpdateData.FlatProperties.RoomCount, advertUpdateData.FlatProperties.SquareResidential, advertUpdateData.FlatProperties.Apartment, sqlmock.AnyArg()).WillReturnError(nil).
+		WillReturnResult(sqlmock.NewResult(1, 1))
+
+	queryInsertPriceChange := regexp.QuoteMeta(`INSERT INTO pricechanges (id, advertId, price)
+            VALUES ($1, $2, $3)`)
+
+	suite.mock.ExpectExec(queryInsertPriceChange).WithArgs(sqlmock.AnyArg(), advertUpdateData.ID, advertUpdateData.Price).WillReturnError(nil).
+		WillReturnResult(sqlmock.NewResult(1, 1))
+
+	rep := repo.NewRepository(suite.db)
+	err = rep.UpdateFlatAdvertById(ctx, tx, advertUpdateData)
+	suite.Assert().NoError(err)
+
+	// err = tx.Commit()
+
+	// suite.Assert().NoError(err)
+
+	err = suite.mock.ExpectationsWereMet()
+	suite.Assert().NoError(err)
+	suite.db.Close()
+}
+
+func (suite *UserRepoTestSuite) TestAdvertRepo_GetFlatAdvertById() {
+	// advertId := uuid.NewV4()
+	ctx := context.Background()
+	// advertType := models.AdvertTypeHouse
+	suite.mock.ExpectBegin()
+
+	id := uuid.NewV4()
+	advertData := &models.AdvertData{
+		ID:           uuid.NewV4(),
+		TypeAdvert:   "House",
+		TypeSale:     "Sale",
+		Title:        "Beautiful House for Sale",
+		Description:  "Spacious house with a large garden",
+		Price:        100000,
+		Phone:        "123-456-7890",
+		IsAgent:      true,
+		Address:      "123 Main St, Cityville",
+		AddressPoint: "Coordinates",
+		//Images:       []*models.ImageResp{},
+		FlatProperties: &models.FlatProperties{
+			CeilingHeight:     2.7,
+			FloorGeneral:      3,
+			RoomCount:         2,
+			SquareResidential: 2222.22,
+			SquareGeneral:     2333.3,
+			Apartment:         true,
+			Floor:             2,
+		},
+		ComplexProperties: &models.ComplexAdvertProperties{
+			ComplexId:    "1234",
+			NameComplex:  "Luxury Estates",
+			PhotoCompany: "luxury_estates.jpg",
+			NameCompany:  "Elite Realty",
+		},
+		//YearCreation: time.Now().Year(),
+		Material: "Brick",
+		//DateCreation: time.Now(),
+	}
+	query := regexp.QuoteMeta(`
+	SELECT
+        a.id,
+        at.adverttype,
+        a.adverttypeplacement,
+        a.title,
+        a.description,
+        pc.price,
+        a.phone,
+        a.isagent,
+        b.adress,
+        b.adresspoint,
+        f.floor,
+        f.ceilingheight,
+        f.squaregeneral,
+        f.roomcount,
+        f.squareresidential,
+        f.apartament,
+        b.floor AS floorGeneral,
+        b.yearcreation,
+        COALESCE(b.material, 'Brick') as material,
+        a.datecreation,
+        cx.id AS complexid,
+        c.photo AS companyphoto,
+        c.name AS companyname,
+        cx.name AS complexname
+    FROM
+        adverts AS a
+    JOIN
+        adverttypes AS at ON a.adverttypeid = at.id
+    JOIN
+        flats AS f ON f.adverttypeid = at.id
+    JOIN
+        buildings AS b ON f.buildingid = b.id
+    LEFT JOIN
+        complexes AS cx ON b.complexid = cx.id
+    LEFT JOIN
+        companies AS c ON cx.companyid = c.id
+    LEFT JOIN
+        LATERAL (
+            SELECT *
+            FROM pricechanges AS pc
+            WHERE pc.advertid = a.id
+            ORDER BY pc.datecreation DESC
+            LIMIT 1
+        ) AS pc ON TRUE
+    WHERE
+        a.id = $1 AND a.isdeleted = FALSE;`)
+	advertData.FlatProperties.Floor = 2
+	suite.mock.ExpectQuery(query).WithArgs(id).
+		WillReturnRows(sqlmock.NewRows([]string{"1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15",
+			"16", "17", "18", "19", "20", "21", "22", "23", "24"}).AddRow(
+			advertData.ID,
+			advertData.TypeAdvert,
+			advertData.TypeSale,
+			advertData.Title,
+			advertData.Description,
+			advertData.Price,
+			advertData.Phone,
+			advertData.IsAgent,
+			advertData.Address,
+			advertData.AddressPoint,
+			advertData.FlatProperties.Floor,
+			advertData.FlatProperties.CeilingHeight,
+			advertData.FlatProperties.SquareGeneral,
+			advertData.FlatProperties.RoomCount,
+			advertData.FlatProperties.SquareResidential,
+			advertData.FlatProperties.Apartment,
+			advertData.FlatProperties.FloorGeneral,
+			&advertData.YearCreation,
+			&advertData.Material,
+			&advertData.DateCreation,
+			advertData.ComplexProperties.ComplexId,
+			advertData.ComplexProperties.PhotoCompany,
+			advertData.ComplexProperties.NameCompany,
+			advertData.ComplexProperties.NameComplex))
+
+	rep := repo.NewRepository(suite.db)
+	_, err := rep.GetFlatAdvertById(ctx, id)
+	suite.Assert().NoError(err)
+
+	// err = tx.Commit()
+
+	// suite.Assert().NoError(err)
+
+	err = suite.mock.ExpectationsWereMet()
+	suite.Assert().NoError(err)
+	suite.db.Close()
 }

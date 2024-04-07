@@ -506,7 +506,7 @@ func (r *AdvertRepo) UpdateHouseAdvertById(ctx context.Context, tx models.Transa
 	res := tx.QueryRowContext(ctx, queryGetIdTables, advertUpdateData.ID)
 
 	var advertTypeId, buildingId, houseId uuid.UUID
-	var price int64
+	var price float64
 	if err := res.Scan(&advertTypeId, &buildingId, &houseId, &price); err != nil {
 		return err
 	}
@@ -568,7 +568,7 @@ func (r *AdvertRepo) UpdateFlatAdvertById(ctx context.Context, tx models.Transac
 	res := tx.QueryRowContext(ctx, queryGetIdTables, advertUpdateData.ID)
 
 	var advertTypeId, buildingId, flatId uuid.UUID
-	var price int64
+	var price float64
 	if err := res.Scan(&advertTypeId, &buildingId, &flatId, &price); err != nil {
 		return err
 	}
