@@ -7,7 +7,6 @@ package adverts_mock
 import (
 	models "2024_1_TeaStealers/internal/models"
 	context "context"
-	sql "database/sql"
 	reflect "reflect"
 
 	gomock "github.com/golang/mock/gomock"
@@ -209,10 +208,10 @@ func (m *MockAdvertRepo) EXPECT() *MockAdvertRepoMockRecorder {
 }
 
 // BeginTx mocks base method.
-func (m *MockAdvertRepo) BeginTx(ctx context.Context) (*sql.Tx, error) {
+func (m *MockAdvertRepo) BeginTx(ctx context.Context) (models.Transaction, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "BeginTx", ctx)
-	ret0, _ := ret[0].(*sql.Tx)
+	ret0, _ := ret[0].(models.Transaction)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -224,7 +223,7 @@ func (mr *MockAdvertRepoMockRecorder) BeginTx(ctx interface{}) *gomock.Call {
 }
 
 // ChangeTypeAdvert mocks base method.
-func (m *MockAdvertRepo) ChangeTypeAdvert(ctx context.Context, tx *sql.Tx, advertId uuid.UUID) error {
+func (m *MockAdvertRepo) ChangeTypeAdvert(ctx context.Context, tx models.Transaction, advertId uuid.UUID) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "ChangeTypeAdvert", ctx, tx, advertId)
 	ret0, _ := ret[0].(error)
@@ -268,7 +267,7 @@ func (mr *MockAdvertRepoMockRecorder) CheckExistsBuildings(ctx, pageSize, adress
 }
 
 // CreateAdvert mocks base method.
-func (m *MockAdvertRepo) CreateAdvert(ctx context.Context, tx *sql.Tx, newAdvert *models.Advert) error {
+func (m *MockAdvertRepo) CreateAdvert(ctx context.Context, tx models.Transaction, newAdvert *models.Advert) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "CreateAdvert", ctx, tx, newAdvert)
 	ret0, _ := ret[0].(error)
@@ -282,7 +281,7 @@ func (mr *MockAdvertRepoMockRecorder) CreateAdvert(ctx, tx, newAdvert interface{
 }
 
 // CreateAdvertType mocks base method.
-func (m *MockAdvertRepo) CreateAdvertType(ctx context.Context, tx *sql.Tx, newAdvertType *models.AdvertType) error {
+func (m *MockAdvertRepo) CreateAdvertType(ctx context.Context, tx models.Transaction, newAdvertType *models.AdvertType) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "CreateAdvertType", ctx, tx, newAdvertType)
 	ret0, _ := ret[0].(error)
@@ -296,7 +295,7 @@ func (mr *MockAdvertRepoMockRecorder) CreateAdvertType(ctx, tx, newAdvertType in
 }
 
 // CreateBuilding mocks base method.
-func (m *MockAdvertRepo) CreateBuilding(ctx context.Context, tx *sql.Tx, newBuilding *models.Building) error {
+func (m *MockAdvertRepo) CreateBuilding(ctx context.Context, tx models.Transaction, newBuilding *models.Building) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "CreateBuilding", ctx, tx, newBuilding)
 	ret0, _ := ret[0].(error)
@@ -310,7 +309,7 @@ func (mr *MockAdvertRepoMockRecorder) CreateBuilding(ctx, tx, newBuilding interf
 }
 
 // CreateFlat mocks base method.
-func (m *MockAdvertRepo) CreateFlat(ctx context.Context, tx *sql.Tx, newFlat *models.Flat) error {
+func (m *MockAdvertRepo) CreateFlat(ctx context.Context, tx models.Transaction, newFlat *models.Flat) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "CreateFlat", ctx, tx, newFlat)
 	ret0, _ := ret[0].(error)
@@ -324,7 +323,7 @@ func (mr *MockAdvertRepoMockRecorder) CreateFlat(ctx, tx, newFlat interface{}) *
 }
 
 // CreateHouse mocks base method.
-func (m *MockAdvertRepo) CreateHouse(ctx context.Context, tx *sql.Tx, newHouse *models.House) error {
+func (m *MockAdvertRepo) CreateHouse(ctx context.Context, tx models.Transaction, newHouse *models.House) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "CreateHouse", ctx, tx, newHouse)
 	ret0, _ := ret[0].(error)
@@ -338,7 +337,7 @@ func (mr *MockAdvertRepoMockRecorder) CreateHouse(ctx, tx, newHouse interface{})
 }
 
 // CreatePriceChange mocks base method.
-func (m *MockAdvertRepo) CreatePriceChange(ctx context.Context, tx *sql.Tx, newPriceChange *models.PriceChange) error {
+func (m *MockAdvertRepo) CreatePriceChange(ctx context.Context, tx models.Transaction, newPriceChange *models.PriceChange) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "CreatePriceChange", ctx, tx, newPriceChange)
 	ret0, _ := ret[0].(error)
@@ -352,7 +351,7 @@ func (mr *MockAdvertRepoMockRecorder) CreatePriceChange(ctx, tx, newPriceChange 
 }
 
 // DeleteFlatAdvertById mocks base method.
-func (m *MockAdvertRepo) DeleteFlatAdvertById(ctx context.Context, tx *sql.Tx, advertId uuid.UUID) error {
+func (m *MockAdvertRepo) DeleteFlatAdvertById(ctx context.Context, tx models.Transaction, advertId uuid.UUID) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "DeleteFlatAdvertById", ctx, tx, advertId)
 	ret0, _ := ret[0].(error)
@@ -366,7 +365,7 @@ func (mr *MockAdvertRepoMockRecorder) DeleteFlatAdvertById(ctx, tx, advertId int
 }
 
 // DeleteHouseAdvertById mocks base method.
-func (m *MockAdvertRepo) DeleteHouseAdvertById(ctx context.Context, tx *sql.Tx, advertId uuid.UUID) error {
+func (m *MockAdvertRepo) DeleteHouseAdvertById(ctx context.Context, tx models.Transaction, advertId uuid.UUID) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "DeleteHouseAdvertById", ctx, tx, advertId)
 	ret0, _ := ret[0].(error)
@@ -500,7 +499,7 @@ func (mr *MockAdvertRepoMockRecorder) SelectImages(advertId interface{}) *gomock
 }
 
 // UpdateFlatAdvertById mocks base method.
-func (m *MockAdvertRepo) UpdateFlatAdvertById(ctx context.Context, tx *sql.Tx, advertUpdateData *models.AdvertUpdateData) error {
+func (m *MockAdvertRepo) UpdateFlatAdvertById(ctx context.Context, tx models.Transaction, advertUpdateData *models.AdvertUpdateData) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "UpdateFlatAdvertById", ctx, tx, advertUpdateData)
 	ret0, _ := ret[0].(error)
@@ -514,7 +513,7 @@ func (mr *MockAdvertRepoMockRecorder) UpdateFlatAdvertById(ctx, tx, advertUpdate
 }
 
 // UpdateHouseAdvertById mocks base method.
-func (m *MockAdvertRepo) UpdateHouseAdvertById(ctx context.Context, tx *sql.Tx, advertUpdateData *models.AdvertUpdateData) error {
+func (m *MockAdvertRepo) UpdateHouseAdvertById(ctx context.Context, tx models.Transaction, advertUpdateData *models.AdvertUpdateData) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "UpdateHouseAdvertById", ctx, tx, advertUpdateData)
 	ret0, _ := ret[0].(error)
