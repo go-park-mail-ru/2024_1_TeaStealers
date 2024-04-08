@@ -1487,7 +1487,7 @@ func (suite *UserRepoTestSuite) TestAdvertRepo_GetFlatAdvertById() {
 	// advertId := uuid.NewV4()
 	ctx := context.Background()
 	// advertType := models.AdvertTypeHouse
-	suite.mock.ExpectBegin()
+	// suite.mock.ExpectBegin()
 
 	id := uuid.NewV4()
 	advertData := &models.AdvertData{
@@ -1570,7 +1570,7 @@ func (suite *UserRepoTestSuite) TestAdvertRepo_GetFlatAdvertById() {
     WHERE
         a.id = $1 AND a.isdeleted = FALSE;`)
 	advertData.FlatProperties.Floor = 2
-	suite.mock.ExpectQuery(query).WithArgs(id).
+	suite.mock.ExpectQuery(query).WithArgs(id).WillReturnError(nil).
 		WillReturnRows(sqlmock.NewRows([]string{"1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15",
 			"16", "17", "18", "19", "20", "21", "22", "23", "24"}).AddRow(
 			advertData.ID,
@@ -1600,6 +1600,228 @@ func (suite *UserRepoTestSuite) TestAdvertRepo_GetFlatAdvertById() {
 
 	rep := repo.NewRepository(suite.db)
 	_, err := rep.GetFlatAdvertById(ctx, id)
+	suite.Assert().NoError(err)
+
+	// err = tx.Commit()
+
+	// suite.Assert().NoError(err)
+
+	err = suite.mock.ExpectationsWereMet()
+	suite.Assert().NoError(err)
+	suite.db.Close()
+}
+
+func (suite *UserRepoTestSuite) TestAdvertRepo_GetRectangleAdvertsByUserId() {
+	// advertId := uuid.NewV4()
+	ctx := context.Background()
+	// advertType := models.AdvertTypeHouse
+	// suite.mock.ExpectBegin()
+
+	rectangleAdvert := &models.AdvertRectangleData{
+		ID:          uuid.NewV4(),
+		TypeAdvert:  "House",
+		TypeSale:    "Sale",
+		Title:       "Beautiful House for Sale",
+		Description: "Spacious house with a large garden",
+		Price:       100000,
+		Phone:       "123-456-7890",
+		Address:     "123 Main St, Cityville",
+		//Images:       []*models.ImageResp{},
+		FlatProperties: &models.FlatRectangleProperties{
+			FloorGeneral:  3,
+			RoomCount:     2,
+			SquareGeneral: 2333.3,
+			Floor:         2,
+		},
+
+		//DateCreation: time.Now(),
+	}
+	queryBaseAdvert := regexp.QuoteMeta(`
+        SELECT
+            a.id,
+            a.title,
+            a.description,
+            at.adverttype,
+            CASE
+                WHEN at.adverttype = 'Flat' THEN f.roomcount
+                WHEN at.adverttype = 'House' THEN h.bedroomcount
+                ELSE NULL
+            END AS rcount,
+            a.phone,
+            a.adverttypeplacement,
+            b.adress,
+            pc.price,
+            i.photo,
+            a.datecreation
+        FROM
+            adverts AS a
+            JOIN adverttypes AS at ON a.adverttypeid = at.id
+            LEFT JOIN flats AS f ON f.adverttypeid = at.id
+            LEFT JOIN houses AS h ON h.adverttypeid = at.id
+            LEFT JOIN buildings AS b ON (f.buildingid = b.id OR h.buildingid = b.id)
+            LEFT JOIN LATERAL (
+                SELECT *
+                FROM pricechanges AS pc
+                WHERE pc.advertid = a.id
+                ORDER BY pc.datecreation DESC
+                LIMIT 1
+            ) AS pc ON TRUE
+            JOIN images AS i ON i.advertid = a.id
+        WHERE i.priority = (
+                SELECT MIN(priority)
+                FROM images
+                WHERE advertid = a.id
+                    AND isdeleted = FALSE
+            )
+            AND i.isdeleted = FALSE
+            AND a.isdeleted = FALSE
+            AND userid = $1
+        ORDER BY datecreation DESC
+        LIMIT $2
+        OFFSET $3;`)
+	queryHouse := regexp.QuoteMeta(`
+        SELECT
+            b.adress,
+            h.cottage,
+            h.squarehouse,
+            h.squarearea,
+            b.floor
+        FROM
+            adverts AS a
+            JOIN adverttypes AS at ON a.adverttypeid = at.id
+            JOIN houses AS h ON h.adverttypeid = at.id
+            JOIN buildings AS b ON h.buildingid = b.id
+        WHERE a.id = $1
+        ORDER BY
+            a.datecreation DESC;`)
+
+	userId := uuid.NewV4()
+	pageSize := 3
+	offset := 2
+	roomCount := 4
+	suite.mock.ExpectQuery(queryBaseAdvert).WithArgs(userId, pageSize, offset).WillReturnError(nil).
+		WillReturnRows(sqlmock.NewRows([]string{"1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11"}).AddRow(
+			rectangleAdvert.ID, rectangleAdvert.Title, rectangleAdvert.Description, rectangleAdvert.TypeAdvert,
+			roomCount, rectangleAdvert.Phone, rectangleAdvert.TypeSale, rectangleAdvert.Address, rectangleAdvert.Price,
+			rectangleAdvert.Photo, rectangleAdvert.DateCreation))
+
+	suite.mock.ExpectQuery(queryHouse).WithArgs(rectangleAdvert.ID).WillReturnError(nil).
+		WillReturnRows(sqlmock.NewRows([]string{"1", "2", "3", "4", "5"}).AddRow(
+			rectangleAdvert.Address,
+			true, 124.44, 444.444, 4))
+	rep := repo.NewRepository(suite.db)
+	_, err := rep.GetRectangleAdvertsByUserId(ctx, pageSize, offset, userId)
+	suite.Assert().NoError(err)
+
+	// err = tx.Commit()
+
+	// suite.Assert().NoError(err)
+
+	err = suite.mock.ExpectationsWereMet()
+	suite.Assert().NoError(err)
+	suite.db.Close()
+}
+
+func (suite *UserRepoTestSuite) TestAdvertRepo_GetRectangleAdvertsByComplexId() {
+	// advertId := uuid.NewV4()
+	ctx := context.Background()
+	// advertType := models.AdvertTypeHouse
+	// suite.mock.ExpectBegin()
+
+	rectangleAdvert := &models.AdvertRectangleData{
+		ID:          uuid.NewV4(),
+		TypeAdvert:  "House",
+		TypeSale:    "Sale",
+		Title:       "Beautiful House for Sale",
+		Description: "Spacious house with a large garden",
+		Price:       100000,
+		Phone:       "123-456-7890",
+		Address:     "123 Main St, Cityville",
+		//Images:       []*models.ImageResp{},
+		FlatProperties: &models.FlatRectangleProperties{
+			FloorGeneral:  3,
+			RoomCount:     2,
+			SquareGeneral: 2333.3,
+			Floor:         2,
+		},
+
+		//DateCreation: time.Now(),
+	}
+	queryBaseAdvert := regexp.QuoteMeta(`
+        SELECT
+            a.id,
+            a.title,
+            a.description,
+            at.adverttype,
+            CASE
+                WHEN at.adverttype = 'Flat' THEN f.roomcount
+                WHEN at.adverttype = 'House' THEN h.bedroomcount
+                ELSE 0
+            END AS rcount,
+            a.phone,
+            a.adverttypeplacement,
+            b.adress,
+            pc.price,
+            i.photo,
+            a.datecreation
+        FROM
+            adverts AS a
+            JOIN adverttypes AS at ON a.adverttypeid = at.id
+            LEFT JOIN flats AS f ON f.adverttypeid = at.id
+            LEFT JOIN houses AS h ON h.adverttypeid = at.id
+            LEFT JOIN buildings AS b ON (f.buildingid = b.id OR h.buildingid = b.id)
+            LEFT JOIN LATERAL (
+                SELECT *
+                FROM pricechanges AS pc
+                WHERE pc.advertid = a.id
+                ORDER BY pc.datecreation DESC
+                LIMIT 1
+            ) AS pc ON TRUE
+            JOIN images AS i ON i.advertid = a.id
+        WHERE i.priority = (
+                SELECT MIN(priority)
+                FROM images
+                WHERE advertid = a.id
+                    AND isdeleted = FALSE
+            )
+            AND i.isdeleted = FALSE
+            AND a.isdeleted = FALSE
+            AND b.complexid = $1
+        ORDER BY datecreation DESC
+        LIMIT $2
+        OFFSET $3;`)
+	queryHouse := regexp.QuoteMeta(`
+        SELECT
+            b.adress,
+            h.cottage,
+            h.squarehouse,
+            h.squarearea,
+            b.floor
+        FROM
+            adverts AS a
+            JOIN adverttypes AS at ON a.adverttypeid = at.id
+            JOIN houses AS h ON h.adverttypeid = at.id
+            JOIN buildings AS b ON h.buildingid = b.id
+        WHERE a.id = $1
+        ORDER BY
+            a.datecreation DESC;`)
+
+	userId := uuid.NewV4()
+	pageSize := 3
+	offset := 2
+	roomCount := 4
+	suite.mock.ExpectQuery(queryBaseAdvert).WithArgs(userId, pageSize, offset).WillReturnError(nil).
+		WillReturnRows(sqlmock.NewRows([]string{"1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11"}).AddRow(
+			rectangleAdvert.ID, rectangleAdvert.Title, rectangleAdvert.Description, rectangleAdvert.TypeAdvert,
+			roomCount, rectangleAdvert.Phone, rectangleAdvert.TypeSale, rectangleAdvert.Address, rectangleAdvert.Price,
+			rectangleAdvert.Photo, rectangleAdvert.DateCreation))
+
+	suite.mock.ExpectQuery(queryHouse).WithArgs(rectangleAdvert.ID).WillReturnError(nil).
+		WillReturnRows(sqlmock.NewRows([]string{"1", "2", "3", "4", "5"}).AddRow(
+			rectangleAdvert.Address,
+			true, 124.44, 444.444, 4))
+	rep := repo.NewRepository(suite.db)
+	_, err := rep.GetRectangleAdvertsByComplexId(ctx, pageSize, offset, userId)
 	suite.Assert().NoError(err)
 
 	// err = tx.Commit()
