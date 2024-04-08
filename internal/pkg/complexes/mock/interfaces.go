@@ -7,7 +7,6 @@ package complexes_mock
 import (
 	models "2024_1_TeaStealers/internal/models"
 	context "context"
-	sql "database/sql"
 	io "io"
 	reflect "reflect"
 
@@ -152,10 +151,10 @@ func (m *MockComplexRepo) EXPECT() *MockComplexRepoMockRecorder {
 }
 
 // BeginTx mocks base method.
-func (m *MockComplexRepo) BeginTx(ctx context.Context) (*sql.Tx, error) {
+func (m *MockComplexRepo) BeginTx(ctx context.Context) (models.Transaction, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "BeginTx", ctx)
-	ret0, _ := ret[0].(*sql.Tx)
+	ret0, _ := ret[0].(models.Transaction)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -167,7 +166,7 @@ func (mr *MockComplexRepoMockRecorder) BeginTx(ctx interface{}) *gomock.Call {
 }
 
 // CreateAdvert mocks base method.
-func (m *MockComplexRepo) CreateAdvert(ctx context.Context, tx *sql.Tx, newAdvert *models.Advert) error {
+func (m *MockComplexRepo) CreateAdvert(ctx context.Context, tx models.Transaction, newAdvert *models.Advert) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "CreateAdvert", ctx, tx, newAdvert)
 	ret0, _ := ret[0].(error)
@@ -181,7 +180,7 @@ func (mr *MockComplexRepoMockRecorder) CreateAdvert(ctx, tx, newAdvert interface
 }
 
 // CreateAdvertType mocks base method.
-func (m *MockComplexRepo) CreateAdvertType(ctx context.Context, tx *sql.Tx, newAdvertType *models.AdvertType) error {
+func (m *MockComplexRepo) CreateAdvertType(ctx context.Context, tx models.Transaction, newAdvertType *models.AdvertType) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "CreateAdvertType", ctx, tx, newAdvertType)
 	ret0, _ := ret[0].(error)
@@ -225,7 +224,7 @@ func (mr *MockComplexRepoMockRecorder) CreateComplex(ctx, company interface{}) *
 }
 
 // CreateFlat mocks base method.
-func (m *MockComplexRepo) CreateFlat(ctx context.Context, tx *sql.Tx, newFlat *models.Flat) error {
+func (m *MockComplexRepo) CreateFlat(ctx context.Context, tx models.Transaction, newFlat *models.Flat) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "CreateFlat", ctx, tx, newFlat)
 	ret0, _ := ret[0].(error)
@@ -239,7 +238,7 @@ func (mr *MockComplexRepoMockRecorder) CreateFlat(ctx, tx, newFlat interface{}) 
 }
 
 // CreateHouse mocks base method.
-func (m *MockComplexRepo) CreateHouse(ctx context.Context, tx *sql.Tx, newHouse *models.House) error {
+func (m *MockComplexRepo) CreateHouse(ctx context.Context, tx models.Transaction, newHouse *models.House) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "CreateHouse", ctx, tx, newHouse)
 	ret0, _ := ret[0].(error)
@@ -253,7 +252,7 @@ func (mr *MockComplexRepoMockRecorder) CreateHouse(ctx, tx, newHouse interface{}
 }
 
 // CreatePriceChange mocks base method.
-func (m *MockComplexRepo) CreatePriceChange(ctx context.Context, tx *sql.Tx, newPriceChange *models.PriceChange) error {
+func (m *MockComplexRepo) CreatePriceChange(ctx context.Context, tx models.Transaction, newPriceChange *models.PriceChange) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "CreatePriceChange", ctx, tx, newPriceChange)
 	ret0, _ := ret[0].(error)

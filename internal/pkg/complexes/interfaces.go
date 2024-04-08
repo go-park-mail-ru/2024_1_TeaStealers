@@ -4,7 +4,6 @@ package complexes
 import (
 	"2024_1_TeaStealers/internal/models"
 	"context"
-	"database/sql"
 	"io"
 
 	"github.com/satori/uuid"
@@ -26,10 +25,10 @@ type ComplexRepo interface {
 	CreateBuilding(ctx context.Context, complex *models.Building) (*models.Building, error)
 	UpdateComplexPhoto(id uuid.UUID, fileName string) (string, error)
 	GetComplexById(ctx context.Context, complexId uuid.UUID) (*models.ComplexData, error)
-	BeginTx(ctx context.Context) (*sql.Tx, error)
-	CreateAdvertType(ctx context.Context, tx *sql.Tx, newAdvertType *models.AdvertType) error
-	CreateAdvert(ctx context.Context, tx *sql.Tx, newAdvert *models.Advert) error
-	CreatePriceChange(ctx context.Context, tx *sql.Tx, newPriceChange *models.PriceChange) error
-	CreateHouse(ctx context.Context, tx *sql.Tx, newHouse *models.House) error
-	CreateFlat(ctx context.Context, tx *sql.Tx, newFlat *models.Flat) error
+	BeginTx(ctx context.Context) (models.Transaction, error)
+	CreateAdvertType(ctx context.Context, tx models.Transaction, newAdvertType *models.AdvertType) error
+	CreateAdvert(ctx context.Context, tx models.Transaction, newAdvert *models.Advert) error
+	CreatePriceChange(ctx context.Context, tx models.Transaction, newPriceChange *models.PriceChange) error
+	CreateHouse(ctx context.Context, tx models.Transaction, newHouse *models.House) error
+	CreateFlat(ctx context.Context, tx models.Transaction, newFlat *models.Flat) error
 }

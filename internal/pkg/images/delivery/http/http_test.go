@@ -57,13 +57,13 @@ func TestImagesHandler_UploadImage(t *testing.T) {
 			args: args{
 				imageId:  id1,
 				advertId: id2,
-				fileType: ".jpg",
-				fileName: "testdata/test_image.jpg",
+				fileType: ".jpeg",
+				fileName: "testdata/test_image.jpeg",
 			},
 			want: want{
 				imagesResp: &models.ImageResp{
 					ID:       id1,
-					Photo:    "/images/" + id1.String() + ".jpg",
+					Photo:    "/images/" + id1.String() + ".jpeg",
 					Priority: 1,
 				},
 				status: http.StatusCreated,
