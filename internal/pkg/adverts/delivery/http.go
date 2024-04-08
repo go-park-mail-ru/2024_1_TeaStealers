@@ -28,7 +28,7 @@ func (h *AdvertHandler) CreateFlatAdvert(w http.ResponseWriter, r *http.Request)
 	data := models.AdvertFlatCreateData{}
 
 	if err := utils.ReadRequestData(r, &data); err != nil {
-		utils.WriteError(w, http.StatusBadRequest, "Incorrect data format")
+		utils.WriteError(w, http.StatusBadRequest, "incorrect data format")
 		return
 	}
 
@@ -47,7 +47,7 @@ func (h *AdvertHandler) CreateHouseAdvert(w http.ResponseWriter, r *http.Request
 	data := models.AdvertHouseCreateData{}
 
 	if err := utils.ReadRequestData(r, &data); err != nil {
-		utils.WriteError(w, http.StatusBadRequest, "Incorrect data format")
+		utils.WriteError(w, http.StatusBadRequest, "incorrect data format")
 		return
 	}
 
@@ -79,7 +79,7 @@ func (h *AdvertHandler) GetAdvertById(w http.ResponseWriter, r *http.Request) {
 
 	advertData, err := h.uc.GetAdvertById(r.Context(), advertId)
 	if err != nil {
-		utils.WriteError(w, http.StatusInternalServerError, err.Error())
+		utils.WriteError(w, http.StatusBadRequest, err.Error())
 		return
 	}
 
@@ -114,11 +114,11 @@ func (h *AdvertHandler) UpdateAdvertById(w http.ResponseWriter, r *http.Request)
 
 	err = h.uc.UpdateAdvertById(r.Context(), &data)
 	if err != nil {
-		utils.WriteError(w, http.StatusInternalServerError, err.Error())
+		utils.WriteError(w, http.StatusBadRequest, err.Error())
 		return
 	}
 
-	if err = utils.WriteResponse(w, http.StatusOK, "Advert Succesfully updated"); err != nil {
+	if err = utils.WriteResponse(w, http.StatusOK, "advert successfully updated"); err != nil {
 		utils.WriteError(w, http.StatusInternalServerError, err.Error())
 	}
 }
@@ -140,11 +140,11 @@ func (h *AdvertHandler) DeleteAdvertById(w http.ResponseWriter, r *http.Request)
 
 	err = h.uc.DeleteAdvertById(r.Context(), advertId)
 	if err != nil {
-		utils.WriteError(w, http.StatusInternalServerError, err.Error())
+		utils.WriteError(w, http.StatusBadRequest, err.Error())
 		return
 	}
 
-	if err = utils.WriteResponse(w, http.StatusOK, "Advert Succesfully deleted"); err != nil {
+	if err = utils.WriteResponse(w, http.StatusOK, "Advert successfully deleted"); err != nil {
 		utils.WriteError(w, http.StatusInternalServerError, err.Error())
 	}
 }
@@ -167,7 +167,7 @@ func (h *AdvertHandler) GetSquareAdvertsList(w http.ResponseWriter, r *http.Requ
 
 	adverts, err := h.uc.GetSquareAdvertsList(r.Context(), size, offset)
 	if err != nil {
-		utils.WriteError(w, http.StatusInternalServerError, err.Error())
+		utils.WriteError(w, http.StatusBadRequest, err.Error())
 		return
 	}
 
@@ -188,7 +188,7 @@ func (h *AdvertHandler) GetExistBuildingsByAddress(w http.ResponseWriter, r *htt
 
 	adverts, err := h.uc.GetExistBuildingsByAddress(r.Context(), address, page)
 	if err != nil {
-		utils.WriteError(w, http.StatusInternalServerError, err.Error())
+		utils.WriteError(w, http.StatusBadRequest, err.Error())
 		return
 	}
 
@@ -252,7 +252,7 @@ func (h *AdvertHandler) GetRectangeAdvertsList(w http.ResponseWriter, r *http.Re
 	})
 
 	if err != nil {
-		utils.WriteError(w, http.StatusInternalServerError, err.Error())
+		utils.WriteError(w, http.StatusBadRequest, err.Error())
 		return
 	}
 

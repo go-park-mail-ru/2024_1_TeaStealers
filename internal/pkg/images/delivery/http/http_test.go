@@ -7,8 +7,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log"
+	"mime/multipart"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"testing"
 
 	"github.com/golang/mock/gomock"
@@ -17,7 +20,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-/*func TestImagesHandler_UploadImage(t *testing.T) {
+func TestImagesHandler_UploadImage(t *testing.T) {
 	type fields struct {
 		usecase *mocks.MockImageUsecase
 	}
@@ -54,13 +57,13 @@ import (
 			args: args{
 				imageId:  id1,
 				advertId: id2,
-				fileType: ".jpg",
-				fileName: "testdata/test_image.jpg",
+				fileType: ".jpeg",
+				fileName: "testdata/test_image.jpeg",
 			},
 			want: want{
 				imagesResp: &models.ImageResp{
 					ID:       id1,
-					Photo:    "/images/" + id1.String() + ".jpg",
+					Photo:    "/images/" + id1.String() + ".jpeg",
 					Priority: 1,
 				},
 				status: http.StatusCreated,
@@ -74,9 +77,9 @@ import (
 				body := &bytes.Buffer{}
 				writer := multipart.NewWriter(body)
 				part, _ := writer.CreateFormFile("file", a.fileName)
-
-				if _, err := io.Copy(part, file); err != nil {
-					return nil
+				_, err := io.Copy(part, file)
+				if err != nil {
+					log.Fatalf("error copy test file")
 				}
 				writer.Close()
 
@@ -116,7 +119,7 @@ import (
 		})
 	}
 
-}*/
+}
 
 func TestImagesHandler_GetAdvertImages(t *testing.T) {
 	type fields struct {

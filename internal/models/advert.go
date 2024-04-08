@@ -147,7 +147,7 @@ type AdvertHouseCreateData struct {
 	// IsAgent indicates whether the advert is posted by an agent.
 	IsAgent bool `json:"isAgent"`
 	// CeilingHeight is the ceiling height of the house.
-	CeilingHeight int `json:"ceilingHeight"`
+	CeilingHeight float64 `json:"ceilingHeight"`
 	// SquareArea is the square area of the house.
 	SquareArea float64 `json:"squareArea"`
 	// SquareHouse is the square area of the house.
@@ -193,7 +193,7 @@ type ComplexAdvertHouseCreateData struct {
 	// IsAgent indicates whether the advert is posted by an agent.
 	IsAgent bool `json:"isAgent"`
 	// CeilingHeight is the ceiling height of the house.
-	CeilingHeight int `json:"ceilingHeight"`
+	CeilingHeight float64 `json:"ceilingHeight"`
 	// SquareArea is the square area of the house.
 	SquareArea float64 `json:"squareArea"`
 	// SquareHouse is the square area of the house.
@@ -323,7 +323,7 @@ type AdvertUpdateData struct {
 	// Description is the description of the advert.
 	Description string `json:"description"`
 	// Price is the price of the advertisement.
-	Price int64 `json:"price"`
+	Price float64 `json:"price"`
 	// Phone is the phone number associated with the advert.
 	Phone string `json:"phone"`
 	// IsAgent indicates whether the advert is posted by an agent.

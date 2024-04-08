@@ -125,7 +125,7 @@ func (h *ComplexHandler) GetComplexById(w http.ResponseWriter, r *http.Request) 
 
 	complexData, err := h.uc.GetComplexById(r.Context(), complexId)
 	if err != nil {
-		utils.WriteError(w, http.StatusInternalServerError, err.Error())
+		utils.WriteError(w, http.StatusBadRequest, err.Error())
 		return
 	}
 
@@ -138,7 +138,7 @@ func (h *ComplexHandler) CreateHouseAdvert(w http.ResponseWriter, r *http.Reques
 	data := models.ComplexAdvertHouseCreateData{}
 
 	if err := utils.ReadRequestData(r, &data); err != nil {
-		utils.WriteError(w, http.StatusBadRequest, "Incorrect data format")
+		utils.WriteError(w, http.StatusBadRequest, "incorrect data format")
 		return
 	}
 
@@ -157,7 +157,7 @@ func (h *ComplexHandler) CreateFlatAdvert(w http.ResponseWriter, r *http.Request
 	data := models.ComplexAdvertFlatCreateData{}
 
 	if err := utils.ReadRequestData(r, &data); err != nil {
-		utils.WriteError(w, http.StatusBadRequest, "Incorrect data format")
+		utils.WriteError(w, http.StatusBadRequest, "incorrect data format")
 		return
 	}
 

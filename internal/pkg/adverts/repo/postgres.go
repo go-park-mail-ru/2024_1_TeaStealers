@@ -19,7 +19,7 @@ func NewRepository(db *sql.DB) *AdvertRepo {
 	return &AdvertRepo{db: db}
 }
 
-func (r *AdvertRepo) BeginTx(ctx context.Context) (*sql.Tx, error) {
+func (r *AdvertRepo) BeginTx(ctx context.Context) (models.Transaction, error) {
 	tx, err := r.db.BeginTx(ctx, nil)
 	if err != nil {
 		return nil, err
@@ -28,7 +28,7 @@ func (r *AdvertRepo) BeginTx(ctx context.Context) (*sql.Tx, error) {
 }
 
 // CreateAdvertType creates a new advertType in the database.
-func (r *AdvertRepo) CreateAdvertType(ctx context.Context, tx *sql.Tx, newAdvertType *models.AdvertType) error {
+func (r *AdvertRepo) CreateAdvertType(ctx context.Context, tx models.Transaction, newAdvertType *models.AdvertType) error {
 	insert := `INSERT INTO adverttypes (id, adverttype) VALUES ($1, $2)`
 	if _, err := tx.ExecContext(ctx, insert, newAdvertType.ID, newAdvertType.AdvertType); err != nil {
 		return err
@@ -37,7 +37,7 @@ func (r *AdvertRepo) CreateAdvertType(ctx context.Context, tx *sql.Tx, newAdvert
 }
 
 // CreateAdvert creates a new advert in the database.
-func (r *AdvertRepo) CreateAdvert(ctx context.Context, tx *sql.Tx, newAdvert *models.Advert) error {
+func (r *AdvertRepo) CreateAdvert(ctx context.Context, tx models.Transaction, newAdvert *models.Advert) error {
 	insert := `INSERT INTO adverts (id, userid, adverttypeid, adverttypeplacement, title, description, phone, isagent, priority) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`
 	if _, err := tx.ExecContext(ctx, insert, newAdvert.ID, newAdvert.UserID, newAdvert.AdvertTypeID, newAdvert.AdvertTypeSale, newAdvert.Title, newAdvert.Description, newAdvert.Phone, newAdvert.IsAgent, newAdvert.Priority); err != nil {
 		return err
@@ -46,7 +46,7 @@ func (r *AdvertRepo) CreateAdvert(ctx context.Context, tx *sql.Tx, newAdvert *mo
 }
 
 // CreatePriceChange creates a new price change in the database.
-func (r *AdvertRepo) CreatePriceChange(ctx context.Context, tx *sql.Tx, newPriceChange *models.PriceChange) error {
+func (r *AdvertRepo) CreatePriceChange(ctx context.Context, tx models.Transaction, newPriceChange *models.PriceChange) error {
 	insert := `INSERT INTO pricechanges (id, advertid, price) VALUES ($1, $2, $3)`
 	if _, err := tx.ExecContext(ctx, insert, newPriceChange.ID, newPriceChange.AdvertID, newPriceChange.Price); err != nil {
 		return err
@@ -55,8 +55,8 @@ func (r *AdvertRepo) CreatePriceChange(ctx context.Context, tx *sql.Tx, newPrice
 }
 
 // CreateBuilding creates a new building in the database.
-func (r *AdvertRepo) CreateBuilding(ctx context.Context, tx *sql.Tx, newBuilding *models.Building) error {
-	insert := `INSERT INTO buildings (id, floor, material, adress, adresspoint, yearcreation) VALUES ($1, $2, $3, $4, $5, $6)`
+func (r *AdvertRepo) CreateBuilding(ctx context.Context, tx models.Transaction, newBuilding *models.Building) error {
+	insert := `INSERT INTO buildings (id, floor, material, adress, adresspoint, yearcreation) VALUES ($1, $2, $3, $4, $5, $6, $7)`
 	if _, err := tx.ExecContext(ctx, insert, newBuilding.ID, newBuilding.Floor, newBuilding.Material, newBuilding.Address, newBuilding.AddressPoint, newBuilding.YearCreation); err != nil {
 		return err
 	}
@@ -106,7 +106,7 @@ func (r *AdvertRepo) CheckExistsBuildings(ctx context.Context, pageSize int, adr
 }
 
 // CreateHouse creates a new house in the database.
-func (r *AdvertRepo) CreateHouse(ctx context.Context, tx *sql.Tx, newHouse *models.House) error {
+func (r *AdvertRepo) CreateHouse(ctx context.Context, tx models.Transaction, newHouse *models.House) error {
 	insert := `INSERT INTO houses (id, buildingid, adverttypeid, ceilingheight, squarearea, squarehouse, bedroomcount, statusarea, cottage, statushome) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`
 	if _, err := tx.ExecContext(ctx, insert, newHouse.ID, newHouse.BuildingID, newHouse.AdvertTypeID, newHouse.CeilingHeight, newHouse.SquareArea, newHouse.SquareHouse, newHouse.BedroomCount, newHouse.StatusArea, newHouse.Cottage, newHouse.StatusHome); err != nil {
 		return err
@@ -115,8 +115,8 @@ func (r *AdvertRepo) CreateHouse(ctx context.Context, tx *sql.Tx, newHouse *mode
 }
 
 // CreateFlat creates a new flat in the database.
-func (r *AdvertRepo) CreateFlat(ctx context.Context, tx *sql.Tx, newFlat *models.Flat) error {
-	insert := `INSERT INTO flats (id, buildingid, adverttypeid, floor, ceilingheight, squaregeneral, roomcount, squareresidential, apartament) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`
+func (r *AdvertRepo) CreateFlat(ctx context.Context, tx models.Transaction, newFlat *models.Flat) error {
+	insert := `INSERT INTO flats (id, buildingid, adverttypeid, floor, ceilingheight, squaregeneral, roomcount, squareresidential, apartament) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`
 	if _, err := tx.ExecContext(ctx, insert, newFlat.ID, newFlat.BuildingID, newFlat.AdvertTypeID, newFlat.Floor, newFlat.CeilingHeight, newFlat.SquareGeneral, newFlat.RoomCount, newFlat.SquareResidential, newFlat.Apartment); err != nil {
 		return err
 	}
@@ -310,7 +310,7 @@ func (r *AdvertRepo) CheckExistsHouse(ctx context.Context, advertId uuid.UUID) (
 }
 
 // DeleteFlatAdvertById deletes a flat advert by ID.
-func (r *AdvertRepo) DeleteFlatAdvertById(ctx context.Context, tx *sql.Tx, advertId uuid.UUID) error {
+func (r *AdvertRepo) DeleteFlatAdvertById(ctx context.Context, tx models.Transaction, advertId uuid.UUID) error {
 	queryGetIdTables := `
         SELECT
             at.id as adverttypeid,
@@ -356,7 +356,7 @@ func (r *AdvertRepo) DeleteFlatAdvertById(ctx context.Context, tx *sql.Tx, adver
 }
 
 // DeleteHouseAdvertById deletes a house advert by ID.
-func (r *AdvertRepo) DeleteHouseAdvertById(ctx context.Context, tx *sql.Tx, advertId uuid.UUID) error {
+func (r *AdvertRepo) DeleteHouseAdvertById(ctx context.Context, tx models.Transaction, advertId uuid.UUID) error {
 	queryGetIdTables := `
         SELECT
             at.id as adverttypeid,
@@ -402,7 +402,7 @@ func (r *AdvertRepo) DeleteHouseAdvertById(ctx context.Context, tx *sql.Tx, adve
 }
 
 // ChangeTypeAdvert. Когда мы захотели поменять тип объявления(Дом, Квартира), Меняем сущности в бд
-func (r *AdvertRepo) ChangeTypeAdvert(ctx context.Context, tx *sql.Tx, advertId uuid.UUID) (err error) {
+func (r *AdvertRepo) ChangeTypeAdvert(ctx context.Context, tx models.Transaction, advertId uuid.UUID) (err error) {
 	query := `SELECT at.id, at.adverttype FROM adverts AS a JOIN adverttypes AS at ON a.adverttypeid=at.id WHERE a.id = $1;`
 	querySelectBuildingIdByFlat := `SELECT b.id AS buildingid, f.id AS flatid  FROM adverts AS a JOIN adverttypes AS at ON at.id=a.adverttypeid JOIN flats AS f ON f.adverttypeid=at.id JOIN buildings AS b ON f.buildingid=b.id WHERE a.id=$1`
 	querySelectBuildingIdByHouse := `SELECT b.id AS buildingid, h.id AS houseid  FROM adverts AS a JOIN adverttypes AS at ON at.id=a.adverttypeid JOIN houses AS h ON h.adverttypeid=at.id JOIN buildings AS b ON h.buildingid=b.id WHERE a.id=$1`
@@ -478,7 +478,7 @@ func (r *AdvertRepo) ChangeTypeAdvert(ctx context.Context, tx *sql.Tx, advertId 
 }
 
 // UpdateHouseAdvertById updates a house advert in the database.
-func (r *AdvertRepo) UpdateHouseAdvertById(ctx context.Context, tx *sql.Tx, advertUpdateData *models.AdvertUpdateData) error {
+func (r *AdvertRepo) UpdateHouseAdvertById(ctx context.Context, tx models.Transaction, advertUpdateData *models.AdvertUpdateData) error {
 	queryGetIdTables := `
         SELECT
             at.id as adverttypeid,
@@ -506,7 +506,7 @@ func (r *AdvertRepo) UpdateHouseAdvertById(ctx context.Context, tx *sql.Tx, adve
 	res := tx.QueryRowContext(ctx, queryGetIdTables, advertUpdateData.ID)
 
 	var advertTypeId, buildingId, houseId uuid.UUID
-	var price int64
+	var price float64
 	if err := res.Scan(&advertTypeId, &buildingId, &houseId, &price); err != nil {
 		return err
 	}
@@ -540,7 +540,7 @@ func (r *AdvertRepo) UpdateHouseAdvertById(ctx context.Context, tx *sql.Tx, adve
 }
 
 // UpdateFlatAdvertById updates a flat advert in the database.
-func (r *AdvertRepo) UpdateFlatAdvertById(ctx context.Context, tx *sql.Tx, advertUpdateData *models.AdvertUpdateData) error {
+func (r *AdvertRepo) UpdateFlatAdvertById(ctx context.Context, tx models.Transaction, advertUpdateData *models.AdvertUpdateData) error {
 	queryGetIdTables := `
         SELECT
             at.id as adverttypeid,
@@ -568,7 +568,7 @@ func (r *AdvertRepo) UpdateFlatAdvertById(ctx context.Context, tx *sql.Tx, adver
 	res := tx.QueryRowContext(ctx, queryGetIdTables, advertUpdateData.ID)
 
 	var advertTypeId, buildingId, flatId uuid.UUID
-	var price int64
+	var price float64
 	if err := res.Scan(&advertTypeId, &buildingId, &flatId, &price); err != nil {
 		return err
 	}
@@ -918,7 +918,7 @@ func (r *AdvertRepo) GetRectangleAdverts(ctx context.Context, advertFilter model
 	}
 
 	if advertFilter.RoomCount != 0 {
-		queryBaseAdvert = "SELECT * FROM (" + queryBaseAdvert + ") AS subqueryforroomcountcalculate WHERE rcount = $" + fmt.Sprint(i) + " "
+		queryBaseAdvert += "SELECT * FROM (" + queryBaseAdvert + ") AS subqueryforroomcountcalculate WHERE rcount = $" + fmt.Sprint(i) + " "
 		argsForQuery = append(argsForQuery, advertFilter.RoomCount)
 		i++
 	}
@@ -1092,7 +1092,9 @@ func (r *AdvertRepo) GetRectangleAdvertsByUserId(ctx context.Context, pageSize, 
 	for rows.Next() {
 		var roomCount int
 		rectangleAdvert := &models.AdvertRectangleData{}
-		err := rows.Scan(&rectangleAdvert.ID, &rectangleAdvert.Title, &rectangleAdvert.Description, &rectangleAdvert.TypeAdvert, &roomCount, &rectangleAdvert.Phone, &rectangleAdvert.TypeSale, &rectangleAdvert.Address, &rectangleAdvert.Price, &rectangleAdvert.Photo, &rectangleAdvert.DateCreation)
+		err := rows.Scan(&rectangleAdvert.ID, &rectangleAdvert.Title, &rectangleAdvert.Description, &rectangleAdvert.TypeAdvert,
+			&roomCount, &rectangleAdvert.Phone, &rectangleAdvert.TypeSale, &rectangleAdvert.Address, &rectangleAdvert.Price,
+			&rectangleAdvert.Photo, &rectangleAdvert.DateCreation)
 
 		if err != nil {
 			return nil, err

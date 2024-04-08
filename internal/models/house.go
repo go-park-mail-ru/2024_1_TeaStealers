@@ -45,7 +45,7 @@ type House struct {
 	// AdvertTypeID is the identifier of the advert type of the house.
 	AdvertTypeID uuid.UUID `json:"advertTypeId"`
 	// CeilingHeight is the ceiling height of the house.
-	CeilingHeight int `json:"ceilingHeight"`
+	CeilingHeight float64 `json:"ceilingHeight"`
 	// SquareArea is the square area of the house.
 	SquareArea float64 `json:"squareArea"`
 	// SquareHouse is the square area of the house.

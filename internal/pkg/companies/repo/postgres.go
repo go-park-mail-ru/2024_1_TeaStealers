@@ -39,7 +39,7 @@ func (r *CompanyRepo) CreateCompany(ctx context.Context, company *models.Company
 
 func (r *CompanyRepo) UpdateCompanyPhoto(id uuid.UUID, fileName string) (string, error) {
 	query := `UPDATE companies SET photo = $1 WHERE id = $2`
-	if _, err := r.db.Query(query, fileName, id); err != nil {
+	if _, err := r.db.Exec(query, fileName, id); err != nil {
 		log.Println(err)
 		return "", err
 	}

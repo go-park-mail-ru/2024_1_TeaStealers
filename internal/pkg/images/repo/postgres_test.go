@@ -4,6 +4,7 @@ import (
 	"2024_1_TeaStealers/internal/models"
 	"2024_1_TeaStealers/internal/pkg/images/repo"
 	"database/sql"
+	"regexp"
 	"testing"
 	"time"
 
@@ -95,7 +96,7 @@ func (suite *ImageRepoTestSuite) setupMockSelectImage(advertID uuid.UUID, images
 	for _, image := range images {
 		rows = rows.AddRow(image.ID, image.Photo, image.Priority)
 	}
-	suite.mock.ExpectQuery(`SELECT id, photo, priority FROM images WHERE advertid = \$1 AND isdeleted = false`).
+	suite.mock.ExpectQuery(regexp.QuoteMeta(`SELECT id, photo, priority FROM images WHERE advertid = $1 AND isdeleted = false`)).
 		WithArgs(advertID).
 		WillReturnRows(rows)
 }

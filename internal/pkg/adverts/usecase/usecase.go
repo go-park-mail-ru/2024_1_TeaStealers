@@ -24,7 +24,6 @@ func (u *AdvertUsecase) CreateFlatAdvert(ctx context.Context, data *models.Adver
 	if err != nil {
 		return nil, err
 	}
-
 	defer func() {
 		if err := tx.Rollback(); err != nil {
 		}
