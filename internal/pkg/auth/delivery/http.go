@@ -3,11 +3,12 @@ package delivery
 import (
 	"2024_1_TeaStealers/internal/models"
 	"2024_1_TeaStealers/internal/pkg/auth"
+	"2024_1_TeaStealers/internal/pkg/jwt"
 	"2024_1_TeaStealers/internal/pkg/middleware"
 	"2024_1_TeaStealers/internal/pkg/utils"
-	"errors"
 	"net/http"
-	"time"
+
+	"github.com/satori/uuid"
 )
 
 // AuthHandler handles HTTP requests for user authentication.
@@ -32,7 +33,7 @@ func NewAuthHandler(uc auth.AuthUsecase) *AuthHandler {
 // @Failure 500 {string} string "Internal server error"
 // @Router /auth/signup [post]
 func (h *AuthHandler) SignUp(w http.ResponseWriter, r *http.Request) {
-	data := models.UserLoginData{}
+	data := models.UserSignUpData{}
 
 	if err := utils.ReadRequestData(r, &data); err != nil {
 		utils.WriteError(w, http.StatusBadRequest, "incorrect data format")
@@ -41,11 +42,11 @@ func (h *AuthHandler) SignUp(w http.ResponseWriter, r *http.Request) {
 
 	newUser, token, exp, err := h.uc.SignUp(r.Context(), &data)
 	if err != nil {
-		utils.WriteError(w, http.StatusBadRequest, err.Error())
+		utils.WriteError(w, http.StatusBadRequest, "data already is used")
 		return
 	}
 
-	http.SetCookie(w, tokenCookie(middleware.CookieName, token, exp))
+	http.SetCookie(w, jwt.TokenCookie(middleware.CookieName, token, exp))
 
 	if err = utils.WriteResponse(w, http.StatusCreated, newUser); err != nil {
 		utils.WriteError(w, http.StatusInternalServerError, err.Error())
@@ -72,9 +73,10 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 	user, token, exp, err := h.uc.Login(r.Context(), &data)
 	if err != nil {
 		utils.WriteError(w, http.StatusBadRequest, "incorrect password or login")
+		return
 	}
 
-	http.SetCookie(w, tokenCookie(middleware.CookieName, token, exp))
+	http.SetCookie(w, jwt.TokenCookie(middleware.CookieName, token, exp))
 
 	if err := utils.WriteResponse(w, http.StatusOK, user); err != nil {
 		utils.WriteError(w, http.StatusInternalServerError, err.Error())
@@ -98,33 +100,22 @@ func (h *AuthHandler) Logout(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *AuthHandler) CheckAuth(w http.ResponseWriter, r *http.Request) {
-	tokenCookie, err := r.Cookie(middleware.CookieName)
-	if err != nil {
-		if errors.Is(err, http.ErrNoCookie) {
-			utils.WriteError(w, http.StatusUnauthorized, "token cookie not found")
-			return
-		}
-		utils.WriteError(w, http.StatusUnauthorized, "fail to get token cookie")
+	idUser := r.Context().Value(middleware.CookieName)
+	if idUser == nil {
+		utils.WriteError(w, http.StatusUnauthorized, "token not found")
 		return
 	}
-
-	id, err := h.uc.CheckAuth(r.Context(), tokenCookie.Value)
-	if err != nil {
-		utils.WriteError(w, http.StatusUnauthorized, "jws token is invalid")
+	uuidUser, ok := idUser.(uuid.UUID)
+	if !ok {
+		utils.WriteError(w, http.StatusUnauthorized, "incorrect user id")
 		return
 	}
-	if err = utils.WriteResponse(w, http.StatusOK, id); err != nil {
+	err := h.uc.CheckAuth(r.Context(), uuidUser)
+	if err != nil {
+		utils.WriteError(w, http.StatusUnauthorized, "user not exists")
+		return
+	}
+	if err = utils.WriteResponse(w, http.StatusOK, uuidUser); err != nil {
 		utils.WriteError(w, http.StatusInternalServerError, err.Error())
-	}
-}
-
-// tokenCookie creates a new cookie for storing the authentication token.
-func tokenCookie(name, token string, exp time.Time) *http.Cookie {
-	return &http.Cookie{
-		Name:     name,
-		Value:    token,
-		Expires:  exp,
-		Path:     "/",
-		HttpOnly: true,
 	}
 }

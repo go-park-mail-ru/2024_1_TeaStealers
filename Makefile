@@ -34,7 +34,7 @@ migrate-up:
 	migrate -path migrations -database "postgres://$(DB_USER):$(DB_PASS)@localhost:$(DB_PORT)/$(DB_NAME)?sslmode=disable" up
 
 migrate-down:
-	migrate -path migrations -database "postgres://$(DB_USER):$(DB_PASS)@$localhost:$(DB_PORT)/$(DB_NAME)?sslmode=disable" down
+	migrate -path migrations -database "postgres://$(DB_USER):$(DB_PASS)@localhost:$(DB_PORT)/$(DB_NAME)?sslmode=disable" down
 
 dev-compose-up:
 	$(DOCKER_COMPOSE) -f "dev-docker-compose.yaml" up -d
@@ -42,5 +42,13 @@ dev-compose-up:
 dev-compose-down:
 	$(DOCKER_COMPOSE) -f "dev-docker-compose.yaml" down
 
+coverage:
+	go test -json ./... -coverprofile coverprofile_.tmp -coverpkg=./... ; \
+	cat coverprofile_.tmp |grep -v auth.go| grep -v interfaces.go | grep -v docs.go| grep -v cors.go| grep -v transaction.go| grep -v main.go > coverprofile.tmp ; \
+	rm coverprofile_.tmp ; \
+	go tool cover -html coverprofile.tmp ; \
+	go tool cover -func coverprofile.tmp
+
 swagger:
 	swag init -g cmd/main/main.go
+

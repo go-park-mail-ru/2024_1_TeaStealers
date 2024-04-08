@@ -3,8 +3,10 @@ version: "3.9"
 services:
   db:
     container_name: postgres
-    image: postgres:latest
     restart: always
+    build:
+      context: .
+      dockerfile: ./build/postgres.Dockerfile
     volumes:
       - type: volume
         source: postgresdb-data
@@ -24,6 +26,8 @@ services:
       - '8080:8080'
     env_file:
       - ./.env
+    volumes:
+      - "${BASE_DIR}:/docker-cian/images"
 
 volumes:
   postgresdb-data:
