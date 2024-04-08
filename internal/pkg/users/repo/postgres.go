@@ -4,6 +4,7 @@ import (
 	"2024_1_TeaStealers/internal/models"
 	"database/sql"
 	"errors"
+
 	"github.com/satori/uuid"
 )
 
@@ -56,9 +57,9 @@ func (r *UserRepo) UpdateUserInfo(id uuid.UUID, data *models.UserUpdateData) (*m
 		return nil, err
 	}
 	user := &models.User{}
-	querySelect := `SELECT id, firstname, secondname, datebirthday, phone, email, photo FROM users WHERE id = $1`
+	querySelect := `SELECT id, firstname, secondname, datebirthday, phone, email FROM users WHERE id = $1`
 	res := r.db.QueryRow(querySelect, id)
-	if err := res.Scan(&user.ID, &user.FirstName, &user.SecondName, &user.DateBirthday, &user.Phone, &user.Email, &user.Photo); err != nil {
+	if err := res.Scan(&user.ID, &user.FirstName, &user.SecondName, &user.DateBirthday, &user.Phone, &user.Email); err != nil {
 		return nil, err
 	}
 
@@ -91,5 +92,3 @@ func (r *UserRepo) CheckUserPassword(id uuid.UUID, passwordHash string) error {
 	}
 	return nil
 }
-
-// ToDo: отдавать нового юзера, в юзкейсе генерировать новый жвт с новым уровнем, поменять функции

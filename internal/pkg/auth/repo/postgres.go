@@ -5,6 +5,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+
 	"github.com/satori/uuid"
 )
 
