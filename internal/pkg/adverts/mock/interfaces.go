@@ -96,10 +96,10 @@ func (mr *MockAdvertUsecaseMockRecorder) GetAdvertById(ctx, id interface{}) *gom
 }
 
 // GetExistBuildingsByAddress mocks base method.
-func (m *MockAdvertUsecase) GetExistBuildingsByAddress(ctx context.Context, address string, pageSize int) ([]*models.BuildingsExistData, error) {
+func (m *MockAdvertUsecase) GetExistBuildingsByAddress(ctx context.Context, address string, pageSize int) ([]*models.BuildingData, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetExistBuildingsByAddress", ctx, address, pageSize)
-	ret0, _ := ret[0].([]*models.BuildingsExistData)
+	ret0, _ := ret[0].([]*models.BuildingData)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -252,10 +252,10 @@ func (mr *MockAdvertRepoMockRecorder) CheckExistsBuilding(ctx, adress interface{
 }
 
 // CheckExistsBuildings mocks base method.
-func (m *MockAdvertRepo) CheckExistsBuildings(ctx context.Context, pageSize int, adress string) ([]*models.BuildingsExistData, error) {
+func (m *MockAdvertRepo) CheckExistsBuildings(ctx context.Context, pageSize int, adress string) ([]*models.BuildingData, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "CheckExistsBuildings", ctx, pageSize, adress)
-	ret0, _ := ret[0].([]*models.BuildingsExistData)
+	ret0, _ := ret[0].([]*models.BuildingData)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }

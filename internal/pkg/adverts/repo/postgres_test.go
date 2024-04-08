@@ -6,12 +6,13 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"regexp"
+	"testing"
+
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/satori/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
-	"regexp"
-	"testing"
 )
 
 type UserRepoTestSuite struct {
@@ -621,7 +622,7 @@ func (suite *UserRepoTestSuite) TestCheckExistsBuilding2() {
 	}
 	type want struct {
 		err   error
-		build *models.BuildingsExistData
+		build *models.BuildingData
 	}
 	tests := []struct {
 		name string
@@ -638,7 +639,7 @@ func (suite *UserRepoTestSuite) TestCheckExistsBuilding2() {
 				pageS:    2,
 			},
 			want: want{
-				build: &models.BuildingsExistData{
+				build: &models.BuildingData{
 					ID: uuid.NewV4(),
 					//ComplexID:    uuid.NewV4(),
 					Floor:        2,
@@ -659,7 +660,7 @@ func (suite *UserRepoTestSuite) TestCheckExistsBuilding2() {
 				pageS:    2,
 			},
 			want: want{
-				build: &models.BuildingsExistData{
+				build: &models.BuildingData{
 					ID: uuid.NewV4(),
 					//ComplexID:    uuid.NewV4(),
 					Floor:        2,
@@ -687,7 +688,7 @@ func (suite *UserRepoTestSuite) TestCheckExistsBuilding2() {
 	}
 }
 
-func (suite *UserRepoTestSuite) setupMockCheckExistsBuilding2(building *models.BuildingsExistData, pageSize int, errQuery error, epxQuery bool) {
+func (suite *UserRepoTestSuite) setupMockCheckExistsBuilding2(building *models.BuildingData, pageSize int, errQuery error, epxQuery bool) {
 	rows := sqlmock.NewRows([]string{"id", "floor", "material", "adress", "adressPoint", "yearCreation", "complexName"})
 	rows = rows.AddRow(building.ID, building.Floor, building.Material, building.Address, building.AddressPoint, building.YearCreation, building.ComplexName)
 
@@ -864,7 +865,7 @@ func (suite *UserRepoTestSuite) TestCheckGetHouseAdvertById() {
 			want: want{
 				advertData: &models.AdvertData{
 					ID:           uuid.NewV4(),
-					TypeAdvert:   "House",
+					AdvertType:   "House",
 					TypeSale:     "Sale",
 					Title:        "Beautiful House for Sale",
 					Description:  "Spacious house with a large garden",
@@ -917,7 +918,7 @@ func (suite *UserRepoTestSuite) setupMockGetHouseAdvertById(advertData *models.A
 	rows := sqlmock.NewRows([]string{"1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15",
 		"16", "17", "18", "19", "20", "21", "22", "23", "24", "25"})
 	rows = rows.AddRow(advertData.ID,
-		advertData.TypeAdvert,
+		advertData.AdvertType,
 		advertData.TypeSale,
 		advertData.Title,
 		advertData.Description,
@@ -1492,7 +1493,7 @@ func (suite *UserRepoTestSuite) TestAdvertRepo_GetFlatAdvertById() {
 	id := uuid.NewV4()
 	advertData := &models.AdvertData{
 		ID:           uuid.NewV4(),
-		TypeAdvert:   "House",
+		AdvertType:   "House",
 		TypeSale:     "Sale",
 		Title:        "Beautiful House for Sale",
 		Description:  "Spacious house with a large garden",
@@ -1574,7 +1575,7 @@ func (suite *UserRepoTestSuite) TestAdvertRepo_GetFlatAdvertById() {
 		WillReturnRows(sqlmock.NewRows([]string{"1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15",
 			"16", "17", "18", "19", "20", "21", "22", "23", "24"}).AddRow(
 			advertData.ID,
-			advertData.TypeAdvert,
+			advertData.AdvertType,
 			advertData.TypeSale,
 			advertData.Title,
 			advertData.Description,

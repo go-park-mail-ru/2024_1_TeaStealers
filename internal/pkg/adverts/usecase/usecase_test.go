@@ -7,11 +7,12 @@ import (
 	"2024_1_TeaStealers/internal/pkg/adverts/usecase"
 	"context"
 	"errors"
+	"testing"
+	"time"
+
 	"github.com/golang/mock/gomock"
 	"github.com/satori/uuid"
 	"github.com/stretchr/testify/assert"
-	"testing"
-	"time"
 )
 
 func TestCreateFlatAdvert(t *testing.T) {
@@ -194,7 +195,7 @@ func TestGetAdvertById(t *testing.T) {
 
 	advData := &models.AdvertData{
 		ID:           uuid.NewV4(),
-		TypeAdvert:   "House",
+		AdvertType:   "House",
 		TypeSale:     "Sale",
 		Title:        "Beautiful House for Sale",
 		Description:  "Spacious house with a large garden",
@@ -271,7 +272,7 @@ func TestLUpdateAdvertById(t *testing.T) {
 
 	advData := &models.AdvertData{
 		ID:           uuid.NewV4(),
-		TypeAdvert:   "House",
+		AdvertType:   "House",
 		TypeSale:     "Sale",
 		Title:        "Beautiful House for Sale",
 		Description:  "Spacious house with a large garden",
@@ -354,7 +355,7 @@ func TestDeleteAdvertById(t *testing.T) {
 
 	advData := &models.AdvertData{
 		ID:           uuid.NewV4(),
-		TypeAdvert:   "House",
+		AdvertType:   "House",
 		TypeSale:     "Sale",
 		Title:        "Beautiful House for Sale",
 		Description:  "Spacious house with a large garden",
@@ -494,7 +495,7 @@ func TestGetExistBuildingsByAddress(t *testing.T) {
 	// filter := AdvertFilter{ /* populate filter if needed */ }
 	// mockResult := &models.AdvertDataPage{}
 	// Set expectations
-	mockRepo.EXPECT().CheckExistsBuildings(gomock.Any(), gomock.Any(), gomock.Any()).Return([]*models.BuildingsExistData{}, nil)
+	mockRepo.EXPECT().CheckExistsBuildings(gomock.Any(), gomock.Any(), gomock.Any()).Return([]*models.BuildingData{}, nil)
 
 	// Call the method under test
 	_, err := usecase.GetExistBuildingsByAddress(ctx, "address", 2)
