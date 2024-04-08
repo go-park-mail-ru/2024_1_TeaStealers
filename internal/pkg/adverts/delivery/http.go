@@ -25,7 +25,13 @@ func NewAdvertHandler(uc adverts.AdvertUsecase) *AdvertHandler {
 }
 
 func (h *AdvertHandler) CreateFlatAdvert(w http.ResponseWriter, r *http.Request) {
-	data := models.AdvertFlatCreateData{}
+	id, ok := r.Context().Value(middleware.CookieName).(uuid.UUID)
+	if !ok {
+		utils.WriteError(w, http.StatusBadRequest, "incorrect id")
+		return
+	}
+
+	data := models.AdvertFlatCreateData{UserID: id}
 
 	if err := utils.ReadRequestData(r, &data); err != nil {
 		utils.WriteError(w, http.StatusBadRequest, "incorrect data format")
@@ -44,7 +50,13 @@ func (h *AdvertHandler) CreateFlatAdvert(w http.ResponseWriter, r *http.Request)
 }
 
 func (h *AdvertHandler) CreateHouseAdvert(w http.ResponseWriter, r *http.Request) {
-	data := models.AdvertHouseCreateData{}
+	id, ok := r.Context().Value(middleware.CookieName).(uuid.UUID)
+	if !ok {
+		utils.WriteError(w, http.StatusBadRequest, "incorrect id")
+		return
+	}
+
+	data := models.AdvertHouseCreateData{UserID: id}
 
 	if err := utils.ReadRequestData(r, &data); err != nil {
 		utils.WriteError(w, http.StatusBadRequest, "incorrect data format")
