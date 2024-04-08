@@ -3,8 +3,10 @@ version: "3.9"
 services:
   db:
     container_name: postgres
-    image: postgres:latest
     restart: always
+    build:
+      context: .
+      dockerfile: ./build/postgres.Dockerfile
     volumes:
       - type: volume
         source: postgresdb-data
