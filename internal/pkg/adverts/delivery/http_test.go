@@ -3,18 +3,21 @@ package delivery
 import (
 	"2024_1_TeaStealers/internal/models"
 	mocks "2024_1_TeaStealers/internal/pkg/adverts/mock"
+	"2024_1_TeaStealers/internal/pkg/middleware"
 	"bytes"
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/golang/mock/gomock"
-	"github.com/gorilla/mux"
-	"github.com/satori/uuid"
-	"github.com/stretchr/testify/assert"
 	"io"
 	"net/http"
 	"net/http/httptest"
 	"testing"
+
+	"github.com/golang/mock/gomock"
+	"github.com/gorilla/mux"
+	"github.com/satori/uuid"
+	"github.com/stretchr/testify/assert"
 )
 
 /*
@@ -142,7 +145,8 @@ func TestComplexHandler_CreateFlatAdvert(t *testing.T) {
 		usecase *mocks.MockAdvertUsecase
 	}
 	type args struct {
-		data *models.AdvertFlatCreateData
+		data     *models.AdvertFlatCreateData
+		cookieId uuid.UUID
 	}
 	type want struct {
 		complexResp *models.Advert
@@ -153,6 +157,7 @@ func TestComplexHandler_CreateFlatAdvert(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 	id1 := uuid.NewV4()
+	id2 := uuid.NewV4()
 	tests := []struct {
 		name        string
 		fields      fields
@@ -173,6 +178,7 @@ func TestComplexHandler_CreateFlatAdvert(t *testing.T) {
 				data: &models.AdvertFlatCreateData{
 					Phone: "+99999",
 				},
+				cookieId: id2,
 			},
 			want: want{
 				complexResp: &models.Advert{
@@ -190,6 +196,7 @@ func TestComplexHandler_CreateFlatAdvert(t *testing.T) {
 				handler := NewAdvertHandler(f.usecase)
 				reqBody, _ := json.Marshal(a.data)
 				req := httptest.NewRequest(http.MethodPost, "/create/complex", bytes.NewBuffer(reqBody))
+				req = req.WithContext(context.WithValue(req.Context(), middleware.CookieName, a.cookieId))
 				rec := httptest.NewRecorder()
 				handler.CreateFlatAdvert(rec, req)
 				return rec
@@ -205,6 +212,7 @@ func TestComplexHandler_CreateFlatAdvert(t *testing.T) {
 				data: &models.AdvertFlatCreateData{
 					Phone: "+99999",
 				},
+				cookieId: id2,
 			},
 			want: want{
 				complexResp: &models.Advert{
@@ -222,6 +230,7 @@ func TestComplexHandler_CreateFlatAdvert(t *testing.T) {
 				handler := NewAdvertHandler(f.usecase)
 				reqBody, _ := json.Marshal(a.data)
 				req := httptest.NewRequest(http.MethodPost, "/create/complex", bytes.NewBuffer(reqBody))
+				req = req.WithContext(context.WithValue(req.Context(), middleware.CookieName, a.cookieId))
 				rec := httptest.NewRecorder()
 				handler.CreateFlatAdvert(rec, req)
 				return rec
@@ -237,6 +246,7 @@ func TestComplexHandler_CreateFlatAdvert(t *testing.T) {
 				data: &models.AdvertFlatCreateData{
 					Phone: "+99999",
 				},
+				cookieId: id2,
 			},
 			want: want{
 				complexResp: &models.Advert{
@@ -254,6 +264,7 @@ func TestComplexHandler_CreateFlatAdvert(t *testing.T) {
 				handler := NewAdvertHandler(f.usecase)
 				// reqBody, _ := json.Marshal(a.data)
 				req := httptest.NewRequest(http.MethodPost, "/create/complex", nil)
+				req = req.WithContext(context.WithValue(req.Context(), middleware.CookieName, a.cookieId))
 				rec := httptest.NewRecorder()
 				handler.CreateFlatAdvert(rec, req)
 				return rec
@@ -291,7 +302,8 @@ func TestComplexHandler_CreateHouseAdvert(t *testing.T) {
 		usecase *mocks.MockAdvertUsecase
 	}
 	type args struct {
-		data *models.AdvertHouseCreateData
+		data     *models.AdvertHouseCreateData
+		cookieId uuid.UUID
 	}
 	type want struct {
 		complexResp *models.Advert
@@ -302,6 +314,7 @@ func TestComplexHandler_CreateHouseAdvert(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 	id1 := uuid.NewV4()
+	id2 := uuid.NewV4()
 	tests := []struct {
 		name        string
 		fields      fields
@@ -322,6 +335,7 @@ func TestComplexHandler_CreateHouseAdvert(t *testing.T) {
 				data: &models.AdvertHouseCreateData{
 					Phone: "+99999",
 				},
+				cookieId: id2,
 			},
 			want: want{
 				complexResp: &models.Advert{
@@ -339,6 +353,7 @@ func TestComplexHandler_CreateHouseAdvert(t *testing.T) {
 				handler := NewAdvertHandler(f.usecase)
 				reqBody, _ := json.Marshal(a.data)
 				req := httptest.NewRequest(http.MethodPost, "/create/complex", bytes.NewBuffer(reqBody))
+				req = req.WithContext(context.WithValue(req.Context(), middleware.CookieName, a.cookieId))
 				rec := httptest.NewRecorder()
 				handler.CreateHouseAdvert(rec, req)
 				return rec
@@ -354,6 +369,7 @@ func TestComplexHandler_CreateHouseAdvert(t *testing.T) {
 				data: &models.AdvertHouseCreateData{
 					Phone: "+99999",
 				},
+				cookieId: id2,
 			},
 			want: want{
 				complexResp: &models.Advert{
@@ -371,6 +387,7 @@ func TestComplexHandler_CreateHouseAdvert(t *testing.T) {
 				handler := NewAdvertHandler(f.usecase)
 				reqBody, _ := json.Marshal(a.data)
 				req := httptest.NewRequest(http.MethodPost, "/create/complex", bytes.NewBuffer(reqBody))
+				req = req.WithContext(context.WithValue(req.Context(), middleware.CookieName, a.cookieId))
 				rec := httptest.NewRecorder()
 				handler.CreateHouseAdvert(rec, req)
 				return rec
@@ -386,6 +403,7 @@ func TestComplexHandler_CreateHouseAdvert(t *testing.T) {
 				data: &models.AdvertHouseCreateData{
 					Phone: "+99999",
 				},
+				cookieId: id2,
 			},
 			want: want{
 				complexResp: &models.Advert{
@@ -403,6 +421,7 @@ func TestComplexHandler_CreateHouseAdvert(t *testing.T) {
 				handler := NewAdvertHandler(f.usecase)
 				// reqBody, _ := json.Marshal(a.data)
 				req := httptest.NewRequest(http.MethodPost, "/create/complex", nil)
+				req = req.WithContext(context.WithValue(req.Context(), middleware.CookieName, a.cookieId))
 				rec := httptest.NewRecorder()
 				handler.CreateHouseAdvert(rec, req)
 				return rec

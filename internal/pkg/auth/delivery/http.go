@@ -6,8 +6,9 @@ import (
 	"2024_1_TeaStealers/internal/pkg/jwt"
 	"2024_1_TeaStealers/internal/pkg/middleware"
 	"2024_1_TeaStealers/internal/pkg/utils"
-	"github.com/satori/uuid"
 	"net/http"
+
+	"github.com/satori/uuid"
 )
 
 // AuthHandler handles HTTP requests for user authentication.
@@ -104,8 +105,8 @@ func (h *AuthHandler) CheckAuth(w http.ResponseWriter, r *http.Request) {
 		utils.WriteError(w, http.StatusUnauthorized, "token not found")
 		return
 	}
-	uuidUser, ok := uuid.FromString(idUser.(string))
-	if ok != nil {
+	uuidUser, ok := idUser.(uuid.UUID)
+	if !ok {
 		utils.WriteError(w, http.StatusUnauthorized, "incorrect user id")
 		return
 	}

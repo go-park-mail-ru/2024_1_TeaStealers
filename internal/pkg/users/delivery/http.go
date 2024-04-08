@@ -6,11 +6,12 @@ import (
 	"2024_1_TeaStealers/internal/pkg/middleware"
 	"2024_1_TeaStealers/internal/pkg/users"
 	"2024_1_TeaStealers/internal/pkg/utils"
-	"github.com/satori/uuid"
 	"net/http"
 	"path/filepath"
 	"slices"
 	"strings"
+
+	"github.com/satori/uuid"
 )
 
 // UserHandler handles HTTP requests for user.
