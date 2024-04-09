@@ -97,6 +97,9 @@ func (h *ImagesHandler) GetAdvertImages(w http.ResponseWriter, r *http.Request) 
 		utils.WriteError(w, http.StatusBadRequest, "incorrect data")
 		return
 	}
+	for _, re := range resp {
+		re.Sanitize()
+	}
 	if err = utils.WriteResponse(w, http.StatusOK, resp); err != nil {
 		utils.WriteError(w, http.StatusInternalServerError, err.Error())
 	}
@@ -121,9 +124,13 @@ func (h *ImagesHandler) DeleteImage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	resp, err := h.uc.DeleteImage(imageUUID)
+
 	if err != nil {
 		utils.WriteError(w, http.StatusBadRequest, "incorrect data")
 		return
+	}
+	for _, re := range resp {
+		re.Sanitize()
 	}
 	if err = utils.WriteResponse(w, http.StatusOK, resp); err != nil {
 		utils.WriteError(w, http.StatusInternalServerError, err.Error())

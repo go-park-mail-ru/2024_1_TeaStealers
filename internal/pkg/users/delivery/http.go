@@ -37,6 +37,8 @@ func (h *UserHandler) GetCurUser(w http.ResponseWriter, r *http.Request) {
 		utils.WriteError(w, http.StatusBadRequest, "user is not exists")
 		return
 	}
+	userInfo.Sanitize()
+
 	if err := utils.WriteResponse(w, http.StatusOK, userInfo); err != nil {
 		utils.WriteError(w, http.StatusInternalServerError, "error write response")
 		return
@@ -109,12 +111,14 @@ func (h *UserHandler) UpdateUserInfo(w http.ResponseWriter, r *http.Request) {
 		utils.WriteError(w, http.StatusBadRequest, "incorrect data format")
 		return
 	}
+	data.Sanitize()
 
 	user, err := h.uc.UpdateUserInfo(id, data)
 	if err != nil {
 		utils.WriteError(w, http.StatusBadRequest, err.Error())
 		return
 	}
+	user.Sanitize()
 
 	if err := utils.WriteResponse(w, http.StatusOK, user); err != nil {
 		utils.WriteError(w, http.StatusInternalServerError, "error write response")
@@ -136,6 +140,7 @@ func (h *UserHandler) UpdateUserPassword(w http.ResponseWriter, r *http.Request)
 		utils.WriteError(w, http.StatusBadRequest, "incorrect data format")
 		return
 	}
+	data.Sanitize()
 
 	token, exp, err := h.uc.UpdateUserPassword(data)
 	if err != nil {

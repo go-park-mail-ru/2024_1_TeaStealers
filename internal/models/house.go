@@ -1,6 +1,7 @@
 package models
 
 import (
+	"html"
 	"time"
 
 	"github.com/satori/uuid"
@@ -64,6 +65,11 @@ type House struct {
 	IsDeleted bool `json:"-"`
 }
 
+func (house *House) Sanitize() {
+	house.StatusArea = StatusAreaHouse(html.EscapeString(string(house.StatusArea)))
+	house.StatusHome = StatusHomeHouse(html.EscapeString(string(house.StatusHome)))
+}
+
 // HouseProperties represents a house properties for advert.
 type HouseProperties struct {
 	// CeilingHeight is the ceiling height of the house.
@@ -82,6 +88,11 @@ type HouseProperties struct {
 	StatusHome StatusHomeHouse `json:"statusHome"`
 	// Floor is the floor of the house.
 	Floor int `json:"floor"`
+}
+
+func (houseProp *HouseProperties) Sanitize() {
+	houseProp.StatusArea = StatusAreaHouse(html.EscapeString(string(houseProp.StatusArea)))
+	houseProp.StatusHome = StatusHomeHouse(html.EscapeString(string(houseProp.StatusHome)))
 }
 
 // HouseSquareProperties represents a house properties in square advert.

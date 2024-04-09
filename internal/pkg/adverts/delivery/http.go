@@ -39,6 +39,7 @@ func (h *AdvertHandler) CreateFlatAdvert(w http.ResponseWriter, r *http.Request)
 	}
 
 	newAdvert, err := h.uc.CreateFlatAdvert(r.Context(), &data)
+	newAdvert.Sanitize()
 	if err != nil {
 		utils.WriteError(w, http.StatusBadRequest, err.Error())
 		return
@@ -64,6 +65,7 @@ func (h *AdvertHandler) CreateHouseAdvert(w http.ResponseWriter, r *http.Request
 	}
 
 	newAdvert, err := h.uc.CreateHouseAdvert(r.Context(), &data)
+	newAdvert.Sanitize()
 	if err != nil {
 		utils.WriteError(w, http.StatusBadRequest, err.Error())
 		return
@@ -90,6 +92,8 @@ func (h *AdvertHandler) GetAdvertById(w http.ResponseWriter, r *http.Request) {
 	}
 
 	advertData, err := h.uc.GetAdvertById(r.Context(), advertId)
+	advertData.Sanitize()
+
 	if err != nil {
 		utils.WriteError(w, http.StatusBadRequest, err.Error())
 		return
@@ -121,6 +125,7 @@ func (h *AdvertHandler) UpdateAdvertById(w http.ResponseWriter, r *http.Request)
 		utils.WriteError(w, http.StatusBadRequest, "incorrect data format")
 		return
 	}
+	data.Sanitize()
 
 	data.ID = advertId
 
@@ -182,6 +187,9 @@ func (h *AdvertHandler) GetSquareAdvertsList(w http.ResponseWriter, r *http.Requ
 		utils.WriteError(w, http.StatusBadRequest, err.Error())
 		return
 	}
+	for _, adv := range adverts {
+		adv.Sanitize()
+	}
 
 	if err = utils.WriteResponse(w, http.StatusOK, adverts); err != nil {
 		utils.WriteError(w, http.StatusInternalServerError, err.Error())
@@ -202,6 +210,9 @@ func (h *AdvertHandler) GetExistBuildingsByAddress(w http.ResponseWriter, r *htt
 	if err != nil {
 		utils.WriteError(w, http.StatusBadRequest, err.Error())
 		return
+	}
+	for _, adv := range adverts {
+		adv.Sanitize()
 	}
 
 	if err = utils.WriteResponse(w, http.StatusOK, adverts); err != nil {
@@ -262,6 +273,7 @@ func (h *AdvertHandler) GetRectangeAdvertsList(w http.ResponseWriter, r *http.Re
 		DealType:   dealType,
 		AdvertType: advertType,
 	})
+	adverts.Sanitize()
 
 	if err != nil {
 		utils.WriteError(w, http.StatusBadRequest, err.Error())
@@ -298,6 +310,9 @@ func (h *AdvertHandler) GetUserAdverts(w http.ResponseWriter, r *http.Request) {
 	if userAdverts, err = h.uc.GetRectangleAdvertsByUserId(r.Context(), page, size, UUID); err != nil {
 		utils.WriteError(w, http.StatusBadRequest, "error getting user adverts")
 		return
+	}
+	for _, adv := range userAdverts {
+		adv.Sanitize()
 	}
 
 	if err := utils.WriteResponse(w, http.StatusOK, userAdverts); err != nil {
@@ -340,7 +355,9 @@ func (h *AdvertHandler) GetComplexAdverts(w http.ResponseWriter, r *http.Request
 		utils.WriteError(w, http.StatusBadRequest, "error getting complex adverts")
 		return
 	}
-
+	for _, adv := range complexAdverts {
+		adv.Sanitize()
+	}
 	if err := utils.WriteResponse(w, http.StatusOK, complexAdverts); err != nil {
 		utils.WriteError(w, http.StatusInternalServerError, "error write response")
 		return

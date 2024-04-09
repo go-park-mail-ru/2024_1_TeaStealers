@@ -45,6 +45,7 @@ func (h *AuthHandler) SignUp(w http.ResponseWriter, r *http.Request) {
 		utils.WriteError(w, http.StatusBadRequest, "data already is used")
 		return
 	}
+	newUser.Sanitize()
 
 	http.SetCookie(w, jwt.TokenCookie(middleware.CookieName, token, exp))
 
@@ -69,12 +70,13 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 		utils.WriteError(w, http.StatusBadRequest, err.Error())
 		return
 	}
-
+	data.Sanitize()
 	user, token, exp, err := h.uc.Login(r.Context(), &data)
 	if err != nil {
 		utils.WriteError(w, http.StatusBadRequest, "incorrect password or login")
 		return
 	}
+	user.Sanitize()
 
 	http.SetCookie(w, jwt.TokenCookie(middleware.CookieName, token, exp))
 

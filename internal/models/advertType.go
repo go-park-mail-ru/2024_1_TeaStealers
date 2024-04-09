@@ -1,6 +1,7 @@
 package models
 
 import (
+	"html"
 	"time"
 
 	"github.com/satori/uuid"
@@ -26,4 +27,8 @@ type AdvertType struct {
 	DateCreation time.Time `json:"-"`
 	// IsDeleted is a flag indicating if the advert type is deleted.
 	IsDeleted bool `json:"-"`
+}
+
+func (advType *AdvertType) Sanitize() {
+	advType.AdvertType = AdvertTypeAdvert(html.EscapeString(string(advType.AdvertType)))
 }
