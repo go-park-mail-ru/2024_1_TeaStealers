@@ -9,14 +9,15 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/golang/mock/gomock"
-	"github.com/satori/uuid"
-	"github.com/stretchr/testify/assert"
 	"io"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 	"time"
+
+	"github.com/golang/mock/gomock"
+	"github.com/satori/uuid"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestAuthHandler_SignUp(t *testing.T) {
@@ -464,7 +465,7 @@ func TestAuthHandler_CheckAuth(t *testing.T) {
 				f.usecase.EXPECT().CheckAuth(gomock.Any(), gomock.Eq(a.id)).Return(a.checkErr)
 				handler := NewAuthHandler(f.usecase)
 				req := httptest.NewRequest(http.MethodGet, "/auth/logout", nil)
-				ctx := context.WithValue(req.Context(), middleware.CookieName, a.id.String())
+				ctx := context.WithValue(req.Context(), middleware.CookieName, a.id)
 				req = req.WithContext(ctx)
 				rec := httptest.NewRecorder()
 				handler.CheckAuth(rec, req)
@@ -544,7 +545,7 @@ func TestAuthHandler_CheckAuth(t *testing.T) {
 				f.usecase.EXPECT().CheckAuth(gomock.Any(), gomock.Eq(a.id)).Return(a.checkErr)
 				handler := NewAuthHandler(f.usecase)
 				req := httptest.NewRequest(http.MethodGet, "/auth/logout", nil)
-				ctx := context.WithValue(req.Context(), middleware.CookieName, a.id.String())
+				ctx := context.WithValue(req.Context(), middleware.CookieName, a.id)
 				req = req.WithContext(ctx)
 				rec := httptest.NewRecorder()
 				handler.CheckAuth(rec, req)

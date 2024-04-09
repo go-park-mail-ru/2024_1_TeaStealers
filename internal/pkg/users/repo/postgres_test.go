@@ -117,7 +117,6 @@ func (suite *UserRepoTestSuite) TestUpdateUserInfo() {
 					SecondName: "Shagaev",
 					Phone:      "+79003249325",
 					Email:      "my@mail.ru",
-					Photo:      "/path/to/photo/test.jpg",
 				},
 				err: nil,
 			},
@@ -140,12 +139,12 @@ func (suite *UserRepoTestSuite) TestUpdateUserInfo() {
 }
 
 func (suite *UserRepoTestSuite) setupMockUpdateUserInfo(userID uuid.UUID, wantUser *models.User) {
-	rows := sqlmock.NewRows([]string{"id", "firstName", "secondName", "dateBirthday", "phone", "email", "photo"})
+	rows := sqlmock.NewRows([]string{"id", "firstName", "secondName", "dateBirthday", "phone", "email"})
 	rows = rows.AddRow(wantUser.ID, wantUser.FirstName,
-		wantUser.SecondName, wantUser.DateBirthday, wantUser.Phone, wantUser.Email, wantUser.Photo)
+		wantUser.SecondName, wantUser.DateBirthday, wantUser.Phone, wantUser.Email)
 	suite.mock.ExpectExec(`UPDATE users SET firstname = \$1, secondname = \$2, datebirthday = \$3, phone = \$4, email = \$5 WHERE id = \$6`).
 		WillReturnError(nil).WillReturnResult(sqlmock.NewResult(1, 1))
-	suite.mock.ExpectQuery(`SELECT id, firstname, secondname, datebirthday, phone, email, photo FROM users WHERE id = \$1`).
+	suite.mock.ExpectQuery(`SELECT id, firstname, secondname, datebirthday, phone, email FROM users WHERE id = \$1`).
 		WithArgs(userID).WillReturnRows(rows)
 }
 

@@ -466,7 +466,6 @@ func (suite *UserRepoTestSuite) TestCreateBuilding() {
 			args: args{
 				building: &models.Building{
 					ID:           uuid.NewV4(),
-					ComplexID:    uuid.NewV4(),
 					Floor:        5,
 					Material:     models.MaterialStalinsky,
 					Address:      "123 Main Street",
@@ -489,7 +488,6 @@ func (suite *UserRepoTestSuite) TestCreateBuilding() {
 			args: args{
 				building: &models.Building{
 					ID:           uuid.NewV4(),
-					ComplexID:    uuid.NewV4(),
 					Floor:        5,
 					Material:     models.MaterialStalinsky,
 					Address:      "123 Main Street",
@@ -524,10 +522,10 @@ func (suite *UserRepoTestSuite) TestCreateBuilding() {
 	}
 }
 func (suite *UserRepoTestSuite) setupMockCreateBuilding(newBuilding *models.Building, errExec, errQuery error, expExec, epxQuery bool) {
-	rows := sqlmock.NewRows([]string{"id", "complexId", "floor", "material", "adress", "adressPoint", "yearCreation"})
-	rows = rows.AddRow(newBuilding.ID, newBuilding.ComplexID, newBuilding.Floor, newBuilding.Material, newBuilding.Address, newBuilding.AddressPoint, newBuilding.YearCreation)
+	rows := sqlmock.NewRows([]string{"id", "floor", "material", "adress", "adressPoint", "yearCreation"})
+	rows = rows.AddRow(newBuilding.ID, newBuilding.Floor, newBuilding.Material, newBuilding.Address, newBuilding.AddressPoint, newBuilding.YearCreation)
 	if expExec {
-		suite.mock.ExpectExec(`INSERT INTO buildings \(id, floor, material, adress, adresspoint, yearcreation\) VALUES \(\$1, \$2, \$3, \$4, \$5, \$6, \$7\)`).
+		suite.mock.ExpectExec(`INSERT INTO buildings \(id, floor, material, adress, adresspoint, yearcreation\) VALUES \(\$1, \$2, \$3, \$4, \$5, \$6\)`).
 			WithArgs(newBuilding.ID, newBuilding.Floor, newBuilding.Material, newBuilding.Address, newBuilding.AddressPoint, newBuilding.YearCreation).
 			WillReturnError(errExec).WillReturnResult(sqlmock.NewResult(1, 1))
 	}
@@ -558,7 +556,6 @@ func (suite *UserRepoTestSuite) TestCheckExistsBuilding1() {
 			want: want{
 				build: &models.Building{
 					ID:           uuid.NewV4(),
-					ComplexID:    uuid.NewV4(),
 					Floor:        2,
 					Material:     models.MaterialStalinsky,
 					Address:      "address",
@@ -578,7 +575,6 @@ func (suite *UserRepoTestSuite) TestCheckExistsBuilding1() {
 			want: want{
 				build: &models.Building{
 					ID:           uuid.NewV4(),
-					ComplexID:    uuid.NewV4(),
 					Floor:        2,
 					Material:     models.MaterialStalinsky,
 					Address:      "address",
