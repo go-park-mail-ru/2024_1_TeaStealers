@@ -5,6 +5,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"log"
 
 	"github.com/satori/uuid"
 )
@@ -918,15 +919,16 @@ func (r *AdvertRepo) GetRectangleAdverts(ctx context.Context, advertFilter model
 	}
 
 	if advertFilter.RoomCount != 0 {
-		queryBaseAdvert += "SELECT * FROM (" + queryBaseAdvert + ") AS subqueryforroomcountcalculate WHERE rcount = $" + fmt.Sprint(i) + " "
+		queryBaseAdvert = "SELECT * FROM (" + queryBaseAdvert + ") AS subqueryforroomcountcalculate WHERE rcount = $" + fmt.Sprint(i) + " "
 		argsForQuery = append(argsForQuery, advertFilter.RoomCount)
 		i++
 	}
 
-	queryCount := "SELECT COUNT(*) FROM (" + queryBaseAdvert + ") AS subqueryforpaginate;"
+	queryCount := "SELECT COUNT(*) FROM (" + queryBaseAdvert + ") AS subqueryforpaginate"
 	queryBaseAdvert += " ORDER BY datecreation DESC LIMIT $" + fmt.Sprint(i) + " OFFSET $" + fmt.Sprint(i+1) + ";"
 	rowCountQuery := r.db.QueryRowContext(ctx, queryCount, append([]interface{}{advertFilter.MinPrice, advertFilter.MaxPrice, advertFilter.Address}, argsForQuery...)...)
 
+	log.Println(queryCount)
 	if err := rowCountQuery.Scan(&pageInfo.TotalElements); err != nil {
 		return nil, err
 	}
