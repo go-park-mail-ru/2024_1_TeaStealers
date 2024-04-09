@@ -73,10 +73,13 @@ func main() {
 	autHandler := authH.NewAuthHandler(authUsecase)
 
 	jwtMd := middleware.NewAuthMiddleware(authUsecase)
+	csrfMd := middleware.NewCsrfMiddleware()
 
 	auth := r.PathPrefix("/auth").Subrouter()
-	auth.HandleFunc("/signup", autHandler.SignUp).Methods(http.MethodPost, http.MethodOptions)
-	auth.HandleFunc("/login", autHandler.Login).Methods(http.MethodPost, http.MethodOptions)
+	// auth.HandleFunc("/signup", autHandler.SignUp).Methods(http.MethodPost, http.MethodOptions)
+	// auth.HandleFunc("/login", autHandler.Login).Methods(http.MethodPost, http.MethodOptions)
+	auth.Handle("/signup", csrfMd.SetCSRFToken(http.HandlerFunc(autHandler.SignUp))).Methods(http.MethodPost, http.MethodOptions)
+	auth.Handle("/login", csrfMd.SetCSRFToken(http.HandlerFunc(autHandler.Login))).Methods(http.MethodPost, http.MethodOptions)
 	auth.Handle("/logout", jwtMd.JwtTMiddleware(http.HandlerFunc(autHandler.Logout))).Methods(http.MethodGet, http.MethodOptions)
 	auth.Handle("/check_auth", jwtMd.JwtTMiddleware(http.HandlerFunc(autHandler.CheckAuth))).Methods(http.MethodGet, http.MethodOptions)
 
