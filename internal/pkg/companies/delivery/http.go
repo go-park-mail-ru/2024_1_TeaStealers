@@ -25,6 +25,11 @@ func NewCompanyHandler(uc companies.CompanyUsecase) *CompanyHandler {
 }
 
 func (h *CompanyHandler) CreateCompany(w http.ResponseWriter, r *http.Request) {
+	_, err := r.Cookie("csrftoken")
+	if err != nil {
+		utils.WriteError(w, http.StatusUnauthorized, "csrf cookie not found")
+		return
+	}
 	data := models.CompanyCreateData{}
 
 	if err := utils.ReadRequestData(r, &data); err != nil {
@@ -46,6 +51,11 @@ func (h *CompanyHandler) CreateCompany(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *CompanyHandler) UpdateCompanyPhoto(w http.ResponseWriter, r *http.Request) {
+	_, err := r.Cookie("csrftoken")
+	if err != nil {
+		utils.WriteError(w, http.StatusUnauthorized, "csrf cookie not found")
+		return
+	}
 	vars := mux.Vars(r)
 	id := vars["id"]
 	if id == "" {

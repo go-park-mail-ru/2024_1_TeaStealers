@@ -26,6 +26,11 @@ func NewComplexHandler(uc complexes.ComplexUsecase) *ComplexHandler {
 }
 
 func (h *ComplexHandler) CreateComplex(w http.ResponseWriter, r *http.Request) {
+	_, err := r.Cookie("csrftoken")
+	if err != nil {
+		utils.WriteError(w, http.StatusUnauthorized, "csrf cookie not found")
+		return
+	}
 	data := models.ComplexCreateData{}
 
 	if err := utils.ReadRequestData(r, &data); err != nil {
@@ -48,6 +53,11 @@ func (h *ComplexHandler) CreateComplex(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *ComplexHandler) CreateBuilding(w http.ResponseWriter, r *http.Request) {
+	_, err := r.Cookie("csrftoken")
+	if err != nil {
+		utils.WriteError(w, http.StatusUnauthorized, "csrf cookie not found")
+		return
+	}
 	data := models.BuildingCreateData{}
 
 	if err := utils.ReadRequestData(r, &data); err != nil {
@@ -70,6 +80,11 @@ func (h *ComplexHandler) CreateBuilding(w http.ResponseWriter, r *http.Request) 
 }
 
 func (h *ComplexHandler) UpdateComplexPhoto(w http.ResponseWriter, r *http.Request) {
+	_, err := r.Cookie("csrftoken")
+	if err != nil {
+		utils.WriteError(w, http.StatusUnauthorized, "csrf cookie not found")
+		return
+	}
 	vars := mux.Vars(r)
 	id := vars["id"]
 	if id == "" {
@@ -140,6 +155,11 @@ func (h *ComplexHandler) GetComplexById(w http.ResponseWriter, r *http.Request) 
 }
 
 func (h *ComplexHandler) CreateHouseAdvert(w http.ResponseWriter, r *http.Request) {
+	_, err := r.Cookie("csrftoken")
+	if err != nil {
+		utils.WriteError(w, http.StatusUnauthorized, "csrf cookie not found")
+		return
+	}
 	data := models.ComplexAdvertHouseCreateData{}
 
 	if err := utils.ReadRequestData(r, &data); err != nil {
@@ -161,6 +181,11 @@ func (h *ComplexHandler) CreateHouseAdvert(w http.ResponseWriter, r *http.Reques
 }
 
 func (h *ComplexHandler) CreateFlatAdvert(w http.ResponseWriter, r *http.Request) {
+	_, err := r.Cookie("csrftoken")
+	if err != nil {
+		utils.WriteError(w, http.StatusUnauthorized, "csrf cookie not found")
+		return
+	}
 	data := models.ComplexAdvertFlatCreateData{}
 
 	if err := utils.ReadRequestData(r, &data); err != nil {

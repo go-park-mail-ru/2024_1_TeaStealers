@@ -25,6 +25,11 @@ func NewAdvertHandler(uc adverts.AdvertUsecase) *AdvertHandler {
 }
 
 func (h *AdvertHandler) CreateFlatAdvert(w http.ResponseWriter, r *http.Request) {
+	_, err := r.Cookie("csrftoken")
+	if err != nil {
+		utils.WriteError(w, http.StatusUnauthorized, "csrf cookie not found")
+		return
+	}
 	id, ok := r.Context().Value(middleware.CookieName).(uuid.UUID)
 	if !ok {
 		utils.WriteError(w, http.StatusBadRequest, "incorrect id")
@@ -51,6 +56,11 @@ func (h *AdvertHandler) CreateFlatAdvert(w http.ResponseWriter, r *http.Request)
 }
 
 func (h *AdvertHandler) CreateHouseAdvert(w http.ResponseWriter, r *http.Request) {
+	_, err := r.Cookie("csrftoken")
+	if err != nil {
+		utils.WriteError(w, http.StatusUnauthorized, "csrf cookie not found")
+		return
+	}
 	id, ok := r.Context().Value(middleware.CookieName).(uuid.UUID)
 	if !ok {
 		utils.WriteError(w, http.StatusBadRequest, "incorrect id")
@@ -106,6 +116,11 @@ func (h *AdvertHandler) GetAdvertById(w http.ResponseWriter, r *http.Request) {
 
 // UpdateAdvertById handles the request for update advert by id
 func (h *AdvertHandler) UpdateAdvertById(w http.ResponseWriter, r *http.Request) {
+	_, err := r.Cookie("csrftoken")
+	if err != nil {
+		utils.WriteError(w, http.StatusUnauthorized, "csrf cookie not found")
+		return
+	}
 	vars := mux.Vars(r)
 	id := vars["id"]
 	if id == "" {
@@ -142,6 +157,11 @@ func (h *AdvertHandler) UpdateAdvertById(w http.ResponseWriter, r *http.Request)
 
 // DeleteAdvertById handles the request for deleting advert by id
 func (h *AdvertHandler) DeleteAdvertById(w http.ResponseWriter, r *http.Request) {
+	_, err := r.Cookie("csrftoken")
+	if err != nil {
+		utils.WriteError(w, http.StatusUnauthorized, "csrf cookie not found")
+		return
+	}
 	vars := mux.Vars(r)
 	id := vars["id"]
 	if id == "" {

@@ -46,6 +46,11 @@ func (h *UserHandler) GetCurUser(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *UserHandler) UpdateUserPhoto(w http.ResponseWriter, r *http.Request) {
+	_, err := r.Cookie("csrftoken")
+	if err != nil {
+		utils.WriteError(w, http.StatusUnauthorized, "csrf cookie not found")
+		return
+	}
 	id := r.Context().Value(middleware.CookieName)
 	UUID, ok := id.(uuid.UUID)
 	if !ok {
@@ -83,6 +88,11 @@ func (h *UserHandler) UpdateUserPhoto(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *UserHandler) DeleteUserPhoto(w http.ResponseWriter, r *http.Request) {
+	_, err := r.Cookie("csrftoken")
+	if err != nil {
+		utils.WriteError(w, http.StatusUnauthorized, "csrf cookie not found")
+		return
+	}
 	id := r.Context().Value(middleware.CookieName)
 	UUID, ok := id.(uuid.UUID)
 	if !ok {
@@ -100,6 +110,11 @@ func (h *UserHandler) DeleteUserPhoto(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *UserHandler) UpdateUserInfo(w http.ResponseWriter, r *http.Request) {
+	_, err := r.Cookie("csrftoken")
+	if err != nil {
+		utils.WriteError(w, http.StatusUnauthorized, "csrf cookie not found")
+		return
+	}
 	id, ok := r.Context().Value(middleware.CookieName).(uuid.UUID)
 	if !ok {
 		utils.WriteError(w, http.StatusBadRequest, "incorrect id")
@@ -126,6 +141,11 @@ func (h *UserHandler) UpdateUserInfo(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *UserHandler) UpdateUserPassword(w http.ResponseWriter, r *http.Request) {
+	_, err := r.Cookie("csrftoken")
+	if err != nil {
+		utils.WriteError(w, http.StatusUnauthorized, "csrf cookie not found")
+		return
+	}
 	id := r.Context().Value(middleware.CookieName)
 	UUID, ok := id.(uuid.UUID)
 	if !ok {
