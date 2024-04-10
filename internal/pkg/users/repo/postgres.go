@@ -2,6 +2,7 @@ package repo
 
 import (
 	"2024_1_TeaStealers/internal/models"
+	"context"
 	"database/sql"
 	"errors"
 
@@ -18,7 +19,7 @@ func NewRepository(db *sql.DB) *UserRepo {
 	return &UserRepo{db: db}
 }
 
-func (r *UserRepo) GetUserById(id uuid.UUID) (*models.User, error) {
+func (r *UserRepo) GetUserById(ctx context.Context, id uuid.UUID) (*models.User, error) {
 	user := &models.User{}
 	query := `SELECT id, firstname, secondname, datebirthday, phone, email, photo FROM users WHERE id=$1`
 	res := r.db.QueryRow(query, id)
@@ -35,7 +36,7 @@ func (r *UserRepo) GetUserById(id uuid.UUID) (*models.User, error) {
 	return user, nil
 }
 
-func (r *UserRepo) UpdateUserPhoto(id uuid.UUID, fileName string) (string, error) {
+func (r *UserRepo) UpdateUserPhoto(ctx context.Context, id uuid.UUID, fileName string) (string, error) {
 	query := `UPDATE users SET photo = $1 WHERE id = $2`
 	if _, err := r.db.Query(query, fileName, id); err != nil {
 		return "", err
@@ -43,7 +44,7 @@ func (r *UserRepo) UpdateUserPhoto(id uuid.UUID, fileName string) (string, error
 	return fileName, nil
 }
 
-func (r *UserRepo) DeleteUserPhoto(id uuid.UUID) error {
+func (r *UserRepo) DeleteUserPhoto(ctx context.Context, id uuid.UUID) error {
 	query := `UPDATE users SET photo = '' WHERE id = $1`
 	if _, err := r.db.Query(query, id); err != nil {
 		return err
@@ -51,7 +52,7 @@ func (r *UserRepo) DeleteUserPhoto(id uuid.UUID) error {
 	return nil
 }
 
-func (r *UserRepo) UpdateUserInfo(id uuid.UUID, data *models.UserUpdateData) (*models.User, error) {
+func (r *UserRepo) UpdateUserInfo(ctx context.Context, id uuid.UUID, data *models.UserUpdateData) (*models.User, error) {
 	query := `UPDATE users SET firstname = $1, secondname = $2, datebirthday = $3, phone = $4, email = $5 WHERE id = $6`
 	if _, err := r.db.Exec(query, data.FirstName, data.SecondName, data.DateBirthday, data.Phone, data.Email, id); err != nil {
 		return nil, err
@@ -66,7 +67,7 @@ func (r *UserRepo) UpdateUserInfo(id uuid.UUID, data *models.UserUpdateData) (*m
 	return user, nil
 }
 
-func (r *UserRepo) UpdateUserPassword(id uuid.UUID, newPasswordHash string) (int, error) {
+func (r *UserRepo) UpdateUserPassword(ctx context.Context, id uuid.UUID, newPasswordHash string) (int, error) {
 	query := `UPDATE users SET passwordhash=$1, levelupdate = levelupdate+1 WHERE id = $2`
 	if _, err := r.db.Exec(query, newPasswordHash, id); err != nil {
 		return 0, err
@@ -80,7 +81,7 @@ func (r *UserRepo) UpdateUserPassword(id uuid.UUID, newPasswordHash string) (int
 	return level, nil
 }
 
-func (r *UserRepo) CheckUserPassword(id uuid.UUID, passwordHash string) error {
+func (r *UserRepo) CheckUserPassword(ctx context.Context, id uuid.UUID, passwordHash string) error {
 	passwordHashCur := ""
 	querySelect := `SELECT passwordhash FROM users WHERE id = $1`
 	res := r.db.QueryRow(querySelect, id)

@@ -5,12 +5,14 @@ import (
 	users_mock "2024_1_TeaStealers/internal/pkg/users/mock"
 	"2024_1_TeaStealers/internal/pkg/users/usecase"
 	"2024_1_TeaStealers/internal/pkg/utils"
+	"context"
 	"errors"
+	"testing"
+	"time"
+
 	"github.com/golang/mock/gomock"
 	"github.com/satori/uuid"
 	"github.com/stretchr/testify/assert"
-	"testing"
-	"time"
 )
 
 func TestGetUser(t *testing.T) {
@@ -54,8 +56,8 @@ func TestGetUser(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			mockRepo.EXPECT().GetUserById(gomock.Eq(tt.args.userUUID)).Return(tt.want.user, tt.want.err)
-			gotUser, goterr := usecase.GetUser(tt.args.userUUID)
+			mockRepo.EXPECT().GetUserById(gomock.Any(), gomock.Eq(tt.args.userUUID)).Return(tt.want.user, tt.want.err)
+			gotUser, goterr := usecase.GetUser(context.WithValue(context.Background(), "requestId", uuid.NewV4().String()), tt.args.userUUID)
 			assert.Equal(t, tt.want.user, gotUser)
 			assert.Equal(t, tt.want.err, goterr)
 		})
@@ -147,9 +149,9 @@ func TestUpdateUserInfo(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if tt.name == "successful update user" {
-				mockRepo.EXPECT().UpdateUserInfo(gomock.Eq(tt.args.userUUID), gomock.Eq(tt.args.data)).Return(tt.want.user, tt.want.err)
+				mockRepo.EXPECT().UpdateUserInfo(gomock.Any(), gomock.Eq(tt.args.userUUID), gomock.Eq(tt.args.data)).Return(tt.want.user, tt.want.err)
 			}
-			gotUser, goterr := usecase.UpdateUserInfo(tt.args.userUUID, tt.args.data)
+			gotUser, goterr := usecase.UpdateUserInfo(context.WithValue(context.Background(), "requestId", uuid.NewV4().String()), tt.args.userUUID, tt.args.data)
 			assert.Equal(t, tt.want.user, gotUser)
 			assert.Equal(t, tt.want.err, goterr)
 		})
@@ -216,13 +218,13 @@ func TestUpdateUserPassword(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if tt.args.errCheckPassword == nil {
-				mockRepo.EXPECT().CheckUserPassword(gomock.Eq(tt.args.update.ID), gomock.Eq(utils.GenerateHashString(tt.args.update.OldPassword))).Return(nil)
+				mockRepo.EXPECT().CheckUserPassword(gomock.Any(), gomock.Eq(tt.args.update.ID), gomock.Eq(utils.GenerateHashString(tt.args.update.OldPassword))).Return(nil)
 			}
 			if tt.args.errUpdatePassword == nil {
-				mockRepo.EXPECT().UpdateUserPassword(gomock.Eq(tt.args.update.ID), gomock.Eq(utils.GenerateHashString(tt.args.update.NewPassword))).Return(1, errors.New("error"))
+				mockRepo.EXPECT().UpdateUserPassword(gomock.Any(), gomock.Eq(tt.args.update.ID), gomock.Eq(utils.GenerateHashString(tt.args.update.NewPassword))).Return(1, errors.New("error"))
 			}
 
-			gotToken, gotTime, goterr := usecase.UpdateUserPassword(tt.args.update)
+			gotToken, gotTime, goterr := usecase.UpdateUserPassword(context.WithValue(context.Background(), "requestId", uuid.NewV4().String()), tt.args.update)
 			assert.Equal(t, tt.want.token, gotToken)
 			assert.True(t, tt.want.expTime.Truncate(time.Second).Equal(gotTime.Truncate(time.Second)))
 			assert.Equal(t, tt.want.err, goterr)

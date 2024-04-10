@@ -3,6 +3,7 @@ package repo_test
 import (
 	"2024_1_TeaStealers/internal/models"
 	"2024_1_TeaStealers/internal/pkg/users/repo"
+	"context"
 	"database/sql"
 	"errors"
 	"testing"
@@ -66,7 +67,7 @@ func (suite *UserRepoTestSuite) TestGetUserById() {
 		suite.Run(tt.name, func() {
 			suite.setupMockGetUserByID(tt.args.userId, tt.want.user)
 			rep := repo.NewRepository(suite.db)
-			gotUser, gotErr := rep.GetUserById(tt.args.userId)
+			gotUser, gotErr := rep.GetUserById(context.WithValue(context.Background(), "requestId", uuid.NewV4().String()), tt.args.userId)
 			suite.Assert().Equal(tt.want.err, gotErr)
 			if tt.want.err != nil {
 				suite.Assert().Empty(gotUser)
@@ -126,7 +127,7 @@ func (suite *UserRepoTestSuite) TestUpdateUserInfo() {
 		suite.Run(tt.name, func() {
 			suite.setupMockUpdateUserInfo(tt.args.userId, tt.want.user)
 			rep := repo.NewRepository(suite.db)
-			gotUser, gotErr := rep.UpdateUserInfo(tt.args.userId, &models.UserUpdateData{})
+			gotUser, gotErr := rep.UpdateUserInfo(context.WithValue(context.Background(), "requestId", uuid.NewV4().String()), tt.args.userId, &models.UserUpdateData{})
 			suite.Assert().Equal(tt.want.err, gotErr)
 			if tt.want.err != nil {
 				suite.Assert().Empty(gotUser)
@@ -189,7 +190,7 @@ func (suite *UserRepoTestSuite) TestCheckUserPassword() {
 		suite.Run(tt.name, func() {
 			suite.setupMockCheckUserPassword(tt.args.userId, tt.args.passHashMock)
 			rep := repo.NewRepository(suite.db)
-			gotErr := rep.CheckUserPassword(tt.args.userId, tt.args.passHash)
+			gotErr := rep.CheckUserPassword(context.WithValue(context.Background(), "requestId", uuid.NewV4().String()), tt.args.userId, tt.args.passHash)
 			suite.Assert().Equal(tt.want.err, gotErr)
 			suite.Assert().NoError(suite.mock.ExpectationsWereMet())
 		})
@@ -234,7 +235,7 @@ func (suite *UserRepoTestSuite) TestUpdateUserPassword() {
 		suite.Run(tt.name, func() {
 			suite.setupMockUpdateUserPassword(tt.args.userId, rune(tt.want.newlevel))
 			rep := repo.NewRepository(suite.db)
-			gotLevel, gotErr := rep.UpdateUserPassword(tt.args.userId, tt.args.newpassHash)
+			gotLevel, gotErr := rep.UpdateUserPassword(context.WithValue(context.Background(), "requestId", uuid.NewV4().String()), tt.args.userId, tt.args.newpassHash)
 			suite.Assert().Equal(tt.want.newlevel, gotLevel)
 			suite.Assert().Equal(tt.want.err, gotErr)
 			suite.Assert().NoError(suite.mock.ExpectationsWereMet())
