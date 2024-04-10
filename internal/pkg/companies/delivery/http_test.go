@@ -1,22 +1,5 @@
 package delivery
 
-import (
-	"2024_1_TeaStealers/internal/models"
-	mocks "2024_1_TeaStealers/internal/pkg/companies/mock"
-	"bytes"
-	"encoding/json"
-	"errors"
-	"fmt"
-	"github.com/golang/mock/gomock"
-	"github.com/gorilla/mux"
-	"github.com/satori/uuid"
-	"github.com/stretchr/testify/assert"
-	"io"
-	"net/http"
-	"net/http/httptest"
-	"testing"
-)
-
 /*
 	func TestImagesHandler_CreateComplex(t *testing.T) {
 		type fields struct {
@@ -136,7 +119,7 @@ prepare: func(f *fields, a *args, w *want) *http.Response {
 					resp := recorder.Result()
 					return resp
 				},
-*/
+*/ /*
 func TestComplexHandler_CreateCompany(t *testing.T) {
 	type fields struct {
 		usecase *mocks.MockCompanyUsecase

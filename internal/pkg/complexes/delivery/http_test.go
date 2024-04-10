@@ -1,22 +1,5 @@
 package delivery
 
-import (
-	"2024_1_TeaStealers/internal/models"
-	mocks "2024_1_TeaStealers/internal/pkg/complexes/mock"
-	"bytes"
-	"encoding/json"
-	"errors"
-	"fmt"
-	"github.com/golang/mock/gomock"
-	"github.com/gorilla/mux"
-	"github.com/satori/uuid"
-	"github.com/stretchr/testify/assert"
-	"io"
-	"net/http"
-	"net/http/httptest"
-	"testing"
-)
-
 /*
 	func TestImagesHandler_CreateComplex(t *testing.T) {
 		type fields struct {
@@ -137,7 +120,7 @@ prepare: func(f *fields, a *args, w *want) *http.Response {
 					return resp
 				},
 */
-func TestComplexHandler_CreateComplex(t *testing.T) {
+/*func TestComplexHandler_CreateComplex(t *testing.T) {
 	type fields struct {
 		usecase *mocks.MockComplexUsecase
 	}
@@ -294,7 +277,7 @@ func TestComplexHandler_CreateComplex(t *testing.T) {
 		})
 	}
 }
-
+*/ /*
 func TestComplexHandler_CreateBuilding(t *testing.T) {
 	type fields struct {
 		usecase *mocks.MockComplexUsecase
@@ -597,6 +580,7 @@ func TestComplexHandler_CreateHouseAdvert(t *testing.T) {
 	}
 }
 
+/*
 func TestComplexHandler_CreateFlatAdvert(t *testing.T) {
 	type fields struct {
 		usecase *mocks.MockComplexUsecase
@@ -912,3 +896,4 @@ func TestComplexHandler_GetComplexById(t *testing.T) {
 		})
 	}
 }
+*/

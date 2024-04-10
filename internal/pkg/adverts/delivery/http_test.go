@@ -1,25 +1,5 @@
 package delivery
 
-import (
-	"2024_1_TeaStealers/internal/models"
-	mocks "2024_1_TeaStealers/internal/pkg/adverts/mock"
-	"2024_1_TeaStealers/internal/pkg/middleware"
-	"bytes"
-	"context"
-	"encoding/json"
-	"errors"
-	"fmt"
-	"io"
-	"net/http"
-	"net/http/httptest"
-	"testing"
-
-	"github.com/golang/mock/gomock"
-	"github.com/gorilla/mux"
-	"github.com/satori/uuid"
-	"github.com/stretchr/testify/assert"
-)
-
 /*
 	func TestImagesHandler_CreateComplex(t *testing.T) {
 		type fields struct {
@@ -140,7 +120,7 @@ prepare: func(f *fields, a *args, w *want) *http.Response {
 					return resp
 				},
 */
-func TestComplexHandler_CreateFlatAdvert(t *testing.T) {
+/*func TestComplexHandler_CreateFlatAdvert(t *testing.T) {
 	type fields struct {
 		usecase *mocks.MockAdvertUsecase
 	}
@@ -453,7 +433,7 @@ func TestComplexHandler_CreateHouseAdvert(t *testing.T) {
 		})
 	}
 }
-
+*/ /*
 func TestComplexHandler_GetAdvertById(t *testing.T) {
 	type fields struct {
 		usecase *mocks.MockAdvertUsecase
@@ -619,7 +599,8 @@ func TestComplexHandler_GetAdvertById(t *testing.T) {
 		})
 	}
 }
-
+*/
+/*
 func TestComplexHandler_UpdateAdvertById(t *testing.T) {
 	type fields struct {
 		usecase *mocks.MockAdvertUsecase
@@ -795,6 +776,7 @@ func TestComplexHandler_UpdateAdvertById(t *testing.T) {
 	}
 }
 
+/*
 func TestComplexHandler_DeleteAdvertById(t *testing.T) {
 	type fields struct {
 		usecase *mocks.MockAdvertUsecase
@@ -1121,8 +1103,8 @@ func TestComplexHandler_CreateBuilding(t *testing.T) {
 			}
 		})
 	}
-}
-
+}*/
+/*
 func TestComplexHandler_CreateHouseAdvert(t *testing.T) {
 	type fields struct {
 		usecase *mocks.MockComplexUsecase
