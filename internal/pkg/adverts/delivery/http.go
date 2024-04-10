@@ -41,6 +41,11 @@ func NewAdvertHandler(uc adverts.AdvertUsecase, logger *zap.Logger) *AdvertHandl
 }
 
 func (h *AdvertHandler) CreateFlatAdvert(w http.ResponseWriter, r *http.Request) {
+	_, err := r.Cookie("csrftoken")
+	if err != nil {
+		utils.WriteError(w, http.StatusUnauthorized, "csrf cookie not found")
+		return
+	}
 	ctx := context.WithValue(r.Context(), "requestId", uuid.NewV4().String())
 
 	id, ok := ctx.Value(middleware.CookieName).(uuid.UUID)
@@ -59,6 +64,8 @@ func (h *AdvertHandler) CreateFlatAdvert(w http.ResponseWriter, r *http.Request)
 	}
 
 	newAdvert, err := h.uc.CreateFlatAdvert(ctx, &data)
+	newAdvert.Sanitize()
+
 	if err != nil {
 		utils.LogErrorResponse(h.logger, ctx.Value("requestId").(string), CreateFlatAdvertMethod, utils.DeliveryLayer, err, http.StatusBadRequest)
 		utils.WriteError(w, http.StatusBadRequest, err.Error())
@@ -74,10 +81,17 @@ func (h *AdvertHandler) CreateFlatAdvert(w http.ResponseWriter, r *http.Request)
 }
 
 func (h *AdvertHandler) CreateHouseAdvert(w http.ResponseWriter, r *http.Request) {
+	_, err := r.Cookie("csrftoken")
+	if err != nil {
+		utils.WriteError(w, http.StatusUnauthorized, "csrf cookie not found")
+		return
+	}
+
 	ctx := context.WithValue(r.Context(), "requestId", uuid.NewV4().String())
 
 	id, ok := ctx.Value(middleware.CookieName).(uuid.UUID)
-	if !ok {
+
+  if !ok {
 		utils.LogErrorResponse(h.logger, ctx.Value("requestId").(string), utils.DeliveryLayer, CreateHouseAdvertMethod, errors.New("error with cookie"), http.StatusBadRequest)
 		utils.WriteError(w, http.StatusBadRequest, "incorrect id")
 		return
@@ -92,6 +106,8 @@ func (h *AdvertHandler) CreateHouseAdvert(w http.ResponseWriter, r *http.Request
 	}
 
 	newAdvert, err := h.uc.CreateHouseAdvert(ctx, &data)
+	newAdvert.Sanitize()
+
 	if err != nil {
 		utils.LogErrorResponse(h.logger, ctx.Value("requestId").(string), utils.DeliveryLayer, CreateHouseAdvertMethod, err, http.StatusBadRequest)
 		utils.WriteError(w, http.StatusBadRequest, err.Error())
@@ -126,6 +142,8 @@ func (h *AdvertHandler) GetAdvertById(w http.ResponseWriter, r *http.Request) {
 	}
 
 	advertData, err := h.uc.GetAdvertById(ctx, advertId)
+	advertData.Sanitize()
+  
 	if err != nil {
 		utils.LogErrorResponse(h.logger, ctx.Value("requestId").(string), utils.DeliveryLayer, GetAdvertByIdMethod, err, http.StatusBadRequest)
 		utils.WriteError(w, http.StatusBadRequest, err.Error())
@@ -142,6 +160,11 @@ func (h *AdvertHandler) GetAdvertById(w http.ResponseWriter, r *http.Request) {
 
 // UpdateAdvertById handles the request for update advert by id
 func (h *AdvertHandler) UpdateAdvertById(w http.ResponseWriter, r *http.Request) {
+	_, err := r.Cookie("csrftoken")
+	if err != nil {
+		utils.WriteError(w, http.StatusUnauthorized, "csrf cookie not found")
+		return
+	}
 	ctx := context.WithValue(r.Context(), "requestId", uuid.NewV4().String())
 
 	vars := mux.Vars(r)
@@ -166,6 +189,7 @@ func (h *AdvertHandler) UpdateAdvertById(w http.ResponseWriter, r *http.Request)
 		utils.WriteError(w, http.StatusBadRequest, "incorrect data format")
 		return
 	}
+	data.Sanitize()
 
 	data.ID = advertId
 
@@ -186,6 +210,12 @@ func (h *AdvertHandler) UpdateAdvertById(w http.ResponseWriter, r *http.Request)
 
 // DeleteAdvertById handles the request for deleting advert by id
 func (h *AdvertHandler) DeleteAdvertById(w http.ResponseWriter, r *http.Request) {
+	_, err := r.Cookie("csrftoken")
+	if err != nil {
+		utils.WriteError(w, http.StatusUnauthorized, "csrf cookie not found")
+		return
+	}
+
 	ctx := context.WithValue(r.Context(), "requestId", uuid.NewV4().String())
 
 	vars := mux.Vars(r)
@@ -242,6 +272,9 @@ func (h *AdvertHandler) GetSquareAdvertsList(w http.ResponseWriter, r *http.Requ
 		utils.WriteError(w, http.StatusBadRequest, err.Error())
 		return
 	}
+	for _, adv := range adverts {
+		adv.Sanitize()
+	}
 
 	if err = utils.WriteResponse(w, http.StatusOK, adverts); err != nil {
 		utils.LogErrorResponse(h.logger, ctx.Value("requestId").(string), utils.DeliveryLayer, GetSquareAdvertsListMethod, err, http.StatusInternalServerError)
@@ -268,6 +301,9 @@ func (h *AdvertHandler) GetExistBuildingsByAddress(w http.ResponseWriter, r *htt
 		utils.LogErrorResponse(h.logger, ctx.Value("requestId").(string), utils.DeliveryLayer, GetExistBuildingsByAddressMethod, err, http.StatusBadRequest)
 		utils.WriteError(w, http.StatusBadRequest, err.Error())
 		return
+	}
+	for _, adv := range adverts {
+		adv.Sanitize()
 	}
 
 	if err = utils.WriteResponse(w, http.StatusOK, adverts); err != nil {
@@ -333,6 +369,7 @@ func (h *AdvertHandler) GetRectangeAdvertsList(w http.ResponseWriter, r *http.Re
 		DealType:   dealType,
 		AdvertType: advertType,
 	})
+	adverts.Sanitize()
 
 	if err != nil {
 		utils.LogErrorResponse(h.logger, ctx.Value("requestId").(string), utils.DeliveryLayer, GetRectangeAdvertsListMethod, err, http.StatusBadRequest)
@@ -377,6 +414,9 @@ func (h *AdvertHandler) GetUserAdverts(w http.ResponseWriter, r *http.Request) {
 		utils.LogErrorResponse(h.logger, ctx.Value("requestId").(string), utils.DeliveryLayer, GetUserAdvertsMethod, err, http.StatusBadRequest)
 		utils.WriteError(w, http.StatusBadRequest, "error getting user adverts")
 		return
+	}
+	for _, adv := range userAdverts {
+		adv.Sanitize()
 	}
 
 	if err := utils.WriteResponse(w, http.StatusOK, userAdverts); err != nil {
@@ -426,7 +466,9 @@ func (h *AdvertHandler) GetComplexAdverts(w http.ResponseWriter, r *http.Request
 		utils.WriteError(w, http.StatusBadRequest, "error getting complex adverts")
 		return
 	}
-
+	for _, adv := range complexAdverts {
+		adv.Sanitize()
+	}
 	if err := utils.WriteResponse(w, http.StatusOK, complexAdverts); err != nil {
 		utils.LogErrorResponse(h.logger, ctx.Value("requestId").(string), utils.DeliveryLayer, GetComplexAdvertsMethod, err, http.StatusBadRequest)
 		utils.WriteError(w, http.StatusInternalServerError, "error write response")

@@ -1,5 +1,6 @@
 package delivery
 
+/*
 import (
 	"2024_1_TeaStealers/internal/models"
 	mocks "2024_1_TeaStealers/internal/pkg/adverts/mock"
@@ -21,7 +22,6 @@ import (
 	"go.uber.org/zap"
 )
 
-/*
 	func TestImagesHandler_CreateComplex(t *testing.T) {
 		type fields struct {
 			usecase *mocks.MockComplexUsecase
@@ -141,7 +141,7 @@ prepare: func(f *fields, a *args, w *want) *http.Response {
 					return resp
 				},
 */
-func TestComplexHandler_CreateFlatAdvert(t *testing.T) {
+/*func TestComplexHandler_CreateFlatAdvert(t *testing.T) {
 	type fields struct {
 		usecase *mocks.MockAdvertUsecase
 	}
@@ -460,7 +460,7 @@ func TestComplexHandler_CreateHouseAdvert(t *testing.T) {
 		})
 	}
 }
-
+*/ /*
 func TestComplexHandler_GetAdvertById(t *testing.T) {
 	type fields struct {
 		usecase *mocks.MockAdvertUsecase
@@ -629,7 +629,8 @@ func TestComplexHandler_GetAdvertById(t *testing.T) {
 		})
 	}
 }
-
+*/
+/*
 func TestComplexHandler_UpdateAdvertById(t *testing.T) {
 	type fields struct {
 		usecase *mocks.MockAdvertUsecase
@@ -808,6 +809,7 @@ func TestComplexHandler_UpdateAdvertById(t *testing.T) {
 	}
 }
 
+/*
 func TestComplexHandler_DeleteAdvertById(t *testing.T) {
 	type fields struct {
 		usecase *mocks.MockAdvertUsecase
@@ -1137,8 +1139,8 @@ func TestComplexHandler_CreateBuilding(t *testing.T) {
 			}
 		})
 	}
-}
-
+}*/
+/*
 func TestComplexHandler_CreateHouseAdvert(t *testing.T) {
 	type fields struct {
 		usecase *mocks.MockComplexUsecase

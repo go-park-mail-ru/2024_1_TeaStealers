@@ -1,6 +1,7 @@
 package models
 
 import (
+	"html"
 	"time"
 
 	"github.com/satori/uuid"
@@ -40,6 +41,13 @@ type Advert struct {
 	DateCreation time.Time `json:"-"`
 	// IsDeleted is a flag indicating whether the advert is deleted.
 	IsDeleted bool `json:"-"`
+}
+
+func (adv *Advert) Sanitize() {
+	adv.Title = html.EscapeString(adv.Title)
+	adv.Description = html.EscapeString(adv.Description)
+	adv.Phone = html.EscapeString(adv.Phone)
+	adv.AdvertTypeSale = TypePlacementAdvert(html.EscapeString(string(adv.AdvertTypeSale)))
 }
 
 // AdvertFlatCreateData represents a data for creation advertisement.
@@ -83,6 +91,16 @@ type AdvertFlatCreateData struct {
 	// YearCreation is the year when the building was created.
 	YearCreation int `json:"yearCreation"`
 	// DateCreation is the date when the building was published.
+}
+
+func (advFlCr *AdvertFlatCreateData) Sanitize() {
+	advFlCr.AdvertTypeSale = TypePlacementAdvert(html.EscapeString(string(advFlCr.AdvertTypeSale)))
+	advFlCr.AdvertTypePlacement = AdvertTypeAdvert(html.EscapeString(string(advFlCr.AdvertTypePlacement)))
+	advFlCr.Title = html.EscapeString(advFlCr.Title)
+	advFlCr.Description = html.EscapeString(advFlCr.Description)
+	advFlCr.Phone = html.EscapeString(advFlCr.Phone)
+	advFlCr.Address = html.EscapeString(advFlCr.Address)
+	advFlCr.AddressPoint = html.EscapeString(advFlCr.AddressPoint)
 }
 
 // ComplexAdvertFlatCreateData represents a data for creation advertisement.
@@ -130,6 +148,16 @@ type ComplexAdvertFlatCreateData struct {
 	// DateCreation is the date when the building was published.
 }
 
+func (complAdvFlCrDat *ComplexAdvertFlatCreateData) Sanitize() {
+	complAdvFlCrDat.AdvertTypeSale = TypePlacementAdvert(html.EscapeString(string(complAdvFlCrDat.AdvertTypeSale)))
+	complAdvFlCrDat.AdvertTypePlacement = AdvertTypeAdvert(html.EscapeString(string(complAdvFlCrDat.AdvertTypePlacement)))
+	complAdvFlCrDat.Title = html.EscapeString(complAdvFlCrDat.Title)
+	complAdvFlCrDat.Description = html.EscapeString(complAdvFlCrDat.Description)
+	complAdvFlCrDat.Phone = html.EscapeString(complAdvFlCrDat.Phone)
+	complAdvFlCrDat.Address = html.EscapeString(complAdvFlCrDat.Address)
+	complAdvFlCrDat.AddressPoint = html.EscapeString(complAdvFlCrDat.AddressPoint)
+}
+
 // AdvertHouseCreateData represents a data for creation advertisement.
 type AdvertHouseCreateData struct {
 	// UserID is the identifier of the user who created the advert.
@@ -172,6 +200,16 @@ type AdvertHouseCreateData struct {
 	AddressPoint string `json:"addressPoint"`
 	// YearCreation is the year when the building was created.
 	YearCreation int `json:"yearCreation"`
+}
+
+func (advHousCrDat *AdvertHouseCreateData) Sanitize() {
+	advHousCrDat.AdvertTypeSale = TypePlacementAdvert(html.EscapeString(string(advHousCrDat.AdvertTypeSale)))
+	advHousCrDat.AdvertTypePlacement = AdvertTypeAdvert(html.EscapeString(string(advHousCrDat.AdvertTypePlacement)))
+	advHousCrDat.Title = html.EscapeString(advHousCrDat.Title)
+	advHousCrDat.Description = html.EscapeString(advHousCrDat.Description)
+	advHousCrDat.Phone = html.EscapeString(advHousCrDat.Phone)
+	advHousCrDat.Address = html.EscapeString(advHousCrDat.Address)
+	advHousCrDat.AddressPoint = html.EscapeString(advHousCrDat.AddressPoint)
 }
 
 // ComplexAdvertHouseCreateData represents a data for creation advertisement.
@@ -220,6 +258,16 @@ type ComplexAdvertHouseCreateData struct {
 	YearCreation int `json:"yearCreation"`
 }
 
+func (complAdvHousCrDat *ComplexAdvertHouseCreateData) Sanitize() {
+	complAdvHousCrDat.AdvertTypeSale = TypePlacementAdvert(html.EscapeString(string(complAdvHousCrDat.AdvertTypeSale)))
+	complAdvHousCrDat.AdvertTypePlacement = AdvertTypeAdvert(html.EscapeString(string(complAdvHousCrDat.AdvertTypePlacement)))
+	complAdvHousCrDat.Title = html.EscapeString(complAdvHousCrDat.Title)
+	complAdvHousCrDat.Description = html.EscapeString(complAdvHousCrDat.Description)
+	complAdvHousCrDat.Phone = html.EscapeString(complAdvHousCrDat.Phone)
+	complAdvHousCrDat.Address = html.EscapeString(complAdvHousCrDat.Address)
+	complAdvHousCrDat.AddressPoint = html.EscapeString(complAdvHousCrDat.AddressPoint)
+}
+
 // AdvertSquareData represents the structure of the JSON data for square advert.
 type AdvertSquareData struct {
 	// ID is the unique identifier for the advert.
@@ -240,6 +288,13 @@ type AdvertSquareData struct {
 	Price int `json:"price"`
 	// DateCreation is the date when the advert was created.
 	DateCreation time.Time `json:"dateCreation"`
+}
+
+func (advSqDat *AdvertSquareData) Sanitize() {
+	advSqDat.TypeAdvert = html.EscapeString(advSqDat.TypeAdvert)
+	advSqDat.Photo = html.EscapeString(advSqDat.Photo)
+	advSqDat.TypeSale = html.EscapeString(advSqDat.TypeSale)
+	advSqDat.Address = html.EscapeString(advSqDat.Address)
 }
 
 // AdvertRectangleData represents the structure of the JSON data for Rectangle advert.
@@ -270,6 +325,13 @@ type AdvertRectangleData struct {
 	Price int `json:"price"`
 	// DateCreation is the date when the advert was created.
 	DateCreation time.Time `json:"dateCreation"`
+}
+
+func (advRectDat *AdvertRectangleData) Sanitize() {
+	advRectDat.TypeAdvert = html.EscapeString(advRectDat.TypeAdvert)
+	advRectDat.Photo = html.EscapeString(advRectDat.Photo)
+	advRectDat.TypeSale = html.EscapeString(advRectDat.TypeSale)
+	advRectDat.Address = html.EscapeString(advRectDat.Address)
 }
 
 // AdvertData represents the structure of the JSON data for advert.
@@ -310,6 +372,18 @@ type AdvertData struct {
 	DateCreation time.Time `json:"dateCreation"`
 }
 
+func (advDat *AdvertData) Sanitize() {
+	advDat.AdvertType = html.EscapeString(advDat.AdvertType)
+	advDat.TypeSale = html.EscapeString(advDat.TypeSale)
+	advDat.Title = html.EscapeString(advDat.Title)
+	advDat.Description = html.EscapeString(advDat.Description)
+	advDat.Address = html.EscapeString(advDat.Address)
+	advDat.AddressPoint = html.EscapeString(advDat.AddressPoint)
+	advDat.HouseProperties.Sanitize()
+	advDat.Material = MaterialBuilding(html.EscapeString(string(advDat.Material)))
+	advDat.ComplexProperties.Sanitize()
+}
+
 // AdvertUpdateData represents the structure of the JSON data for update advert.
 type AdvertUpdateData struct {
 	// ID is the unique identifier for the advert.
@@ -342,6 +416,17 @@ type AdvertUpdateData struct {
 	Material MaterialBuilding `json:"material"`
 }
 
+func (advDat *AdvertUpdateData) Sanitize() {
+	advDat.TypeAdvert = html.EscapeString(advDat.TypeAdvert)
+	advDat.TypeSale = html.EscapeString(advDat.TypeSale)
+	advDat.Title = html.EscapeString(advDat.Title)
+	advDat.Description = html.EscapeString(advDat.Description)
+	advDat.Address = html.EscapeString(advDat.Address)
+	advDat.AddressPoint = html.EscapeString(advDat.AddressPoint)
+	advDat.HouseProperties.Sanitize()
+	advDat.Material = MaterialBuilding(html.EscapeString(string(advDat.Material)))
+}
+
 type AdvertFilter struct {
 	// MinPrice is the minimal price of the search advertisement.
 	MinPrice int64 `json:"minPrice"`
@@ -361,6 +446,12 @@ type AdvertFilter struct {
 	Address string `json:"adress"`
 }
 
+func (advFilter *AdvertFilter) Sanitize() {
+	advFilter.AdvertType = html.EscapeString(advFilter.AdvertType)
+	advFilter.DealType = html.EscapeString(advFilter.DealType)
+	advFilter.Address = html.EscapeString(advFilter.Address)
+}
+
 type PageInfo struct {
 	TotalElements int `json:"totalElements"`
 	TotalPages    int `json:"totalPages"`
@@ -371,4 +462,10 @@ type PageInfo struct {
 type AdvertDataPage struct {
 	Adverts  []*AdvertRectangleData `json:"adverts"`
 	PageInfo *PageInfo              `json:"pageInfo"`
+}
+
+func (advDatPage *AdvertDataPage) Sanitize() {
+	for _, v := range advDatPage.Adverts {
+		v.Sanitize()
+	}
 }

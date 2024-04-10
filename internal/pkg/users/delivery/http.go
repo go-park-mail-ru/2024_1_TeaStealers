@@ -37,6 +37,8 @@ func (h *UserHandler) GetCurUser(w http.ResponseWriter, r *http.Request) {
 		utils.WriteError(w, http.StatusBadRequest, "user is not exists")
 		return
 	}
+	userInfo.Sanitize()
+
 	if err := utils.WriteResponse(w, http.StatusOK, userInfo); err != nil {
 		utils.WriteError(w, http.StatusInternalServerError, "error write response")
 		return
@@ -44,6 +46,11 @@ func (h *UserHandler) GetCurUser(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *UserHandler) UpdateUserPhoto(w http.ResponseWriter, r *http.Request) {
+	_, err := r.Cookie("csrftoken")
+	if err != nil {
+		utils.WriteError(w, http.StatusUnauthorized, "csrf cookie not found")
+		return
+	}
 	id := r.Context().Value(middleware.CookieName)
 	UUID, ok := id.(uuid.UUID)
 	if !ok {
@@ -81,6 +88,11 @@ func (h *UserHandler) UpdateUserPhoto(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *UserHandler) DeleteUserPhoto(w http.ResponseWriter, r *http.Request) {
+	_, err := r.Cookie("csrftoken")
+	if err != nil {
+		utils.WriteError(w, http.StatusUnauthorized, "csrf cookie not found")
+		return
+	}
 	id := r.Context().Value(middleware.CookieName)
 	UUID, ok := id.(uuid.UUID)
 	if !ok {
@@ -98,6 +110,11 @@ func (h *UserHandler) DeleteUserPhoto(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *UserHandler) UpdateUserInfo(w http.ResponseWriter, r *http.Request) {
+	_, err := r.Cookie("csrftoken")
+	if err != nil {
+		utils.WriteError(w, http.StatusUnauthorized, "csrf cookie not found")
+		return
+	}
 	id, ok := r.Context().Value(middleware.CookieName).(uuid.UUID)
 	if !ok {
 		utils.WriteError(w, http.StatusBadRequest, "incorrect id")
@@ -109,12 +126,14 @@ func (h *UserHandler) UpdateUserInfo(w http.ResponseWriter, r *http.Request) {
 		utils.WriteError(w, http.StatusBadRequest, "incorrect data format")
 		return
 	}
+	data.Sanitize()
 
 	user, err := h.uc.UpdateUserInfo(r.Context(), id, data)
 	if err != nil {
 		utils.WriteError(w, http.StatusBadRequest, err.Error())
 		return
 	}
+	user.Sanitize()
 
 	if err := utils.WriteResponse(w, http.StatusOK, user); err != nil {
 		utils.WriteError(w, http.StatusInternalServerError, "error write response")
@@ -122,6 +141,11 @@ func (h *UserHandler) UpdateUserInfo(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *UserHandler) UpdateUserPassword(w http.ResponseWriter, r *http.Request) {
+	_, err := r.Cookie("csrftoken")
+	if err != nil {
+		utils.WriteError(w, http.StatusUnauthorized, "csrf cookie not found")
+		return
+	}
 	id := r.Context().Value(middleware.CookieName)
 	UUID, ok := id.(uuid.UUID)
 	if !ok {
@@ -136,6 +160,7 @@ func (h *UserHandler) UpdateUserPassword(w http.ResponseWriter, r *http.Request)
 		utils.WriteError(w, http.StatusBadRequest, "incorrect data format")
 		return
 	}
+	data.Sanitize()
 
 	token, exp, err := h.uc.UpdateUserPassword(r.Context(), data)
 	if err != nil {

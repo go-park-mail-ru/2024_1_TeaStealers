@@ -27,18 +27,25 @@ func NewCompanyHandler(uc companies.CompanyUsecase, logger *zap.Logger) *Company
 }
 
 func (h *CompanyHandler) CreateCompany(w http.ResponseWriter, r *http.Request) {
+	_, err := r.Cookie("csrftoken")
+	if err != nil {
+		utils.WriteError(w, http.StatusUnauthorized, "csrf cookie not found")
+		return
+	}
 	data := models.CompanyCreateData{}
 
 	if err := utils.ReadRequestData(r, &data); err != nil {
 		utils.WriteError(w, http.StatusBadRequest, "incorrect data format")
 		return
 	}
+	data.Sanitize()
 
 	newCompany, err := h.uc.CreateCompany(r.Context(), &data)
 	if err != nil {
 		utils.WriteError(w, http.StatusBadRequest, "data already is used")
 		return
 	}
+	newCompany.Sanitize()
 
 	if err = utils.WriteResponse(w, http.StatusCreated, newCompany); err != nil {
 		utils.WriteError(w, http.StatusInternalServerError, err.Error())
@@ -46,6 +53,11 @@ func (h *CompanyHandler) CreateCompany(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *CompanyHandler) UpdateCompanyPhoto(w http.ResponseWriter, r *http.Request) {
+	_, err := r.Cookie("csrftoken")
+	if err != nil {
+		utils.WriteError(w, http.StatusUnauthorized, "csrf cookie not found")
+		return
+	}
 	vars := mux.Vars(r)
 	id := vars["id"]
 	if id == "" {
@@ -108,6 +120,7 @@ func (h *CompanyHandler) GetCompanyById(w http.ResponseWriter, r *http.Request) 
 		utils.WriteError(w, http.StatusBadRequest, err.Error())
 		return
 	}
+	companyData.Sanitize()
 
 	if err = utils.WriteResponse(w, http.StatusOK, companyData); err != nil {
 		utils.WriteError(w, http.StatusInternalServerError, err.Error())

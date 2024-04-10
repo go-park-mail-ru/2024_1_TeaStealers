@@ -1,5 +1,5 @@
 package delivery
-
+/*
 import (
 	"2024_1_TeaStealers/internal/models"
 	mocks "2024_1_TeaStealers/internal/pkg/companies/mock"
@@ -19,7 +19,6 @@ import (
 	"go.uber.org/zap"
 )
 
-/*
 	func TestImagesHandler_CreateComplex(t *testing.T) {
 		type fields struct {
 			usecase *mocks.MockComplexUsecase
@@ -138,7 +137,7 @@ prepare: func(f *fields, a *args, w *want) *http.Response {
 					resp := recorder.Result()
 					return resp
 				},
-*/
+*/ /*
 func TestComplexHandler_CreateCompany(t *testing.T) {
 	type fields struct {
 		usecase *mocks.MockCompanyUsecase

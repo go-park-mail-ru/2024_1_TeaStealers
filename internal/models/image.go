@@ -1,6 +1,7 @@
 package models
 
 import (
+	"html"
 	"time"
 
 	"github.com/satori/uuid"
@@ -22,6 +23,10 @@ type Image struct {
 	IsDeleted bool `json:"-"`
 }
 
+func (imag *Image) Sanitize() {
+	imag.Photo = html.EscapeString(imag.Photo)
+}
+
 // ImageResp represents an image response.
 type ImageResp struct {
 	// ID is the unique identifier for the image.
@@ -30,4 +35,8 @@ type ImageResp struct {
 	Photo string `json:"photo"`
 	// Priority is the priority of the image.
 	Priority int `json:"priority"`
+}
+
+func (imagResp *ImageResp) Sanitize() {
+	imagResp.Photo = html.EscapeString(imagResp.Photo)
 }

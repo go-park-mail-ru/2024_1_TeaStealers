@@ -1,6 +1,7 @@
 package models
 
 import (
+	"html"
 	"time"
 
 	"github.com/satori/uuid"
@@ -56,6 +57,12 @@ type Building struct {
 	IsDeleted bool `json:"-"`
 }
 
+func (building *Building) Sanitize() {
+	building.Address = html.EscapeString(building.Address)
+	building.AddressPoint = html.EscapeString(building.AddressPoint)
+	building.Material = MaterialBuilding(html.EscapeString(string(building.Material)))
+}
+
 // BuildingCreateData represents a data for creation building.
 type BuildingCreateData struct {
 	// ComplexID is the identifier of the complex to which the building belongs.
@@ -70,6 +77,12 @@ type BuildingCreateData struct {
 	AddressPoint string `json:"adressPoint"`
 	// YearCreation is the year when the building was created.
 	YearCreation int `json:"yearCreation"`
+}
+
+func (buildCrDat *BuildingCreateData) Sanitize() {
+	buildCrDat.Address = html.EscapeString(buildCrDat.Address)
+	buildCrDat.AddressPoint = html.EscapeString(buildCrDat.AddressPoint)
+	buildCrDat.Material = MaterialBuilding(html.EscapeString(string(buildCrDat.Material)))
 }
 
 // BuildingData represents an exists buildings with concrete adress.
@@ -88,4 +101,11 @@ type BuildingData struct {
 	AddressPoint string `json:"adressPoint"`
 	// YearCreation is the year when the building was created.
 	YearCreation int `json:"yearCreation"`
+}
+
+func (buildDat *BuildingData) Sanitize() {
+	buildDat.ComplexName = html.EscapeString(buildDat.ComplexName)
+	buildDat.Address = html.EscapeString(buildDat.Address)
+	buildDat.AddressPoint = html.EscapeString(buildDat.AddressPoint)
+	buildDat.Material = MaterialBuilding(html.EscapeString(string(buildDat.Material)))
 }

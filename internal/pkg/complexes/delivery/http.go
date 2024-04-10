@@ -28,14 +28,21 @@ func NewComplexHandler(uc complexes.ComplexUsecase, logger *zap.Logger) *Complex
 }
 
 func (h *ComplexHandler) CreateComplex(w http.ResponseWriter, r *http.Request) {
+	_, err := r.Cookie("csrftoken")
+	if err != nil {
+		utils.WriteError(w, http.StatusUnauthorized, "csrf cookie not found")
+		return
+	}
 	data := models.ComplexCreateData{}
 
 	if err := utils.ReadRequestData(r, &data); err != nil {
 		utils.WriteError(w, http.StatusBadRequest, "incorrect data format")
 		return
 	}
+	data.Sanitize()
 
 	newComplex, err := h.uc.CreateComplex(r.Context(), &data)
+	newComplex.Sanitize()
 	if err != nil {
 		log.Println(err)
 		utils.WriteError(w, http.StatusBadRequest, "data already is used")
@@ -48,12 +55,18 @@ func (h *ComplexHandler) CreateComplex(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *ComplexHandler) CreateBuilding(w http.ResponseWriter, r *http.Request) {
+	_, err := r.Cookie("csrftoken")
+	if err != nil {
+		utils.WriteError(w, http.StatusUnauthorized, "csrf cookie not found")
+		return
+	}
 	data := models.BuildingCreateData{}
 
 	if err := utils.ReadRequestData(r, &data); err != nil {
 		utils.WriteError(w, http.StatusBadRequest, "incorrect data format")
 		return
 	}
+	data.Sanitize()
 
 	newBuilding, err := h.uc.CreateBuilding(r.Context(), &data)
 	if err != nil {
@@ -61,6 +74,7 @@ func (h *ComplexHandler) CreateBuilding(w http.ResponseWriter, r *http.Request) 
 		utils.WriteError(w, http.StatusBadRequest, "data already is used")
 		return
 	}
+	newBuilding.Sanitize()
 
 	if err = utils.WriteResponse(w, http.StatusCreated, newBuilding); err != nil {
 		utils.WriteError(w, http.StatusInternalServerError, err.Error())
@@ -68,6 +82,11 @@ func (h *ComplexHandler) CreateBuilding(w http.ResponseWriter, r *http.Request) 
 }
 
 func (h *ComplexHandler) UpdateComplexPhoto(w http.ResponseWriter, r *http.Request) {
+	_, err := r.Cookie("csrftoken")
+	if err != nil {
+		utils.WriteError(w, http.StatusUnauthorized, "csrf cookie not found")
+		return
+	}
 	vars := mux.Vars(r)
 	id := vars["id"]
 	if id == "" {
@@ -130,6 +149,7 @@ func (h *ComplexHandler) GetComplexById(w http.ResponseWriter, r *http.Request) 
 		utils.WriteError(w, http.StatusBadRequest, err.Error())
 		return
 	}
+	complexData.Sanitize()
 
 	if err = utils.WriteResponse(w, http.StatusOK, complexData); err != nil {
 		utils.WriteError(w, http.StatusInternalServerError, err.Error())
@@ -137,18 +157,25 @@ func (h *ComplexHandler) GetComplexById(w http.ResponseWriter, r *http.Request) 
 }
 
 func (h *ComplexHandler) CreateHouseAdvert(w http.ResponseWriter, r *http.Request) {
+	_, err := r.Cookie("csrftoken")
+	if err != nil {
+		utils.WriteError(w, http.StatusUnauthorized, "csrf cookie not found")
+		return
+	}
 	data := models.ComplexAdvertHouseCreateData{}
 
 	if err := utils.ReadRequestData(r, &data); err != nil {
 		utils.WriteError(w, http.StatusBadRequest, "incorrect data format")
 		return
 	}
+	data.Sanitize()
 
 	newAdvert, err := h.uc.CreateHouseAdvert(r.Context(), &data)
 	if err != nil {
 		utils.WriteError(w, http.StatusBadRequest, err.Error())
 		return
 	}
+	newAdvert.Sanitize()
 
 	if err = utils.WriteResponse(w, http.StatusCreated, newAdvert); err != nil {
 		utils.WriteError(w, http.StatusInternalServerError, err.Error())
@@ -156,18 +183,24 @@ func (h *ComplexHandler) CreateHouseAdvert(w http.ResponseWriter, r *http.Reques
 }
 
 func (h *ComplexHandler) CreateFlatAdvert(w http.ResponseWriter, r *http.Request) {
+	_, err := r.Cookie("csrftoken")
+	if err != nil {
+		utils.WriteError(w, http.StatusUnauthorized, "csrf cookie not found")
+		return
+	}
 	data := models.ComplexAdvertFlatCreateData{}
 
 	if err := utils.ReadRequestData(r, &data); err != nil {
 		utils.WriteError(w, http.StatusBadRequest, "incorrect data format")
 		return
 	}
-
+	data.Sanitize()
 	newAdvert, err := h.uc.CreateFlatAdvert(r.Context(), &data)
 	if err != nil {
 		utils.WriteError(w, http.StatusBadRequest, err.Error())
 		return
 	}
+	newAdvert.Sanitize()
 
 	if err = utils.WriteResponse(w, http.StatusCreated, newAdvert); err != nil {
 		utils.WriteError(w, http.StatusInternalServerError, err.Error())

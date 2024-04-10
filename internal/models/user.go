@@ -1,6 +1,7 @@
 package models
 
 import (
+	"html"
 	"time"
 
 	"github.com/satori/uuid"
@@ -32,6 +33,15 @@ type User struct {
 	IsDeleted bool `json:"-"`
 }
 
+func (user *User) Sanitize() {
+	user.PasswordHash = html.EscapeString(user.PasswordHash)
+	user.FirstName = html.EscapeString(user.FirstName)
+	user.SecondName = html.EscapeString(user.SecondName)
+	user.Phone = html.EscapeString(user.Phone)
+	user.Email = html.EscapeString(user.Email)
+	user.Photo = html.EscapeString(user.Photo)
+}
+
 // UserUpdateData represents user update information
 type UserUpdateData struct {
 	// FirstName is the first name of user.
@@ -47,6 +57,13 @@ type UserUpdateData struct {
 	// Photo is the filename of photo for user.
 }
 
+func (user *UserUpdateData) Sanitize() {
+	user.FirstName = html.EscapeString(user.FirstName)
+	user.SecondName = html.EscapeString(user.SecondName)
+	user.Phone = html.EscapeString(user.Phone)
+	user.Email = html.EscapeString(user.Email)
+}
+
 type UserUpdatePassword struct {
 	// ID uniquely identifies the user.
 	ID uuid.UUID `json:"id"`
@@ -54,4 +71,9 @@ type UserUpdatePassword struct {
 	OldPassword string `json:"oldPassword"`
 	// NewPassword ...
 	NewPassword string `json:"newPassword"`
+}
+
+func (user *UserUpdatePassword) Sanitize() {
+	user.OldPassword = html.EscapeString(user.OldPassword)
+	user.NewPassword = html.EscapeString(user.NewPassword)
 }

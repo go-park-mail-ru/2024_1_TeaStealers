@@ -40,6 +40,11 @@ func NewImageHandler(uc images.ImageUsecase, logger *zap.Logger) *ImagesHandler 
 // @Failure 500 {string} string "failed to upload images"
 // @Router /adverts/image [post]
 func (h *ImagesHandler) UploadImage(w http.ResponseWriter, r *http.Request) {
+	_, err := r.Cookie("csrftoken")
+	if err != nil {
+		utils.WriteError(w, http.StatusUnauthorized, "csrf cookie not found")
+		return
+	}
 	if err := r.ParseMultipartForm(5 << 20); err != nil {
 		utils.WriteError(w, http.StatusBadRequest, "max size 5 mb")
 		return
@@ -99,6 +104,9 @@ func (h *ImagesHandler) GetAdvertImages(w http.ResponseWriter, r *http.Request) 
 		utils.WriteError(w, http.StatusBadRequest, "incorrect data")
 		return
 	}
+	for _, re := range resp {
+		re.Sanitize()
+	}
 	if err = utils.WriteResponse(w, http.StatusOK, resp); err != nil {
 		utils.WriteError(w, http.StatusInternalServerError, err.Error())
 	}
@@ -116,6 +124,11 @@ func (h *ImagesHandler) GetAdvertImages(w http.ResponseWriter, r *http.Request) 
 // @Failure 500 {string} string "Internal Server Error"
 // @Router /advert/{id}/image [delete]
 func (h *ImagesHandler) DeleteImage(w http.ResponseWriter, r *http.Request) {
+	_, err := r.Cookie("csrftoken")
+	if err != nil {
+		utils.WriteError(w, http.StatusUnauthorized, "csrf cookie not found")
+		return
+	}
 	queryParam := mux.Vars(r)["id"]
 	imageUUID, err := uuid.FromString(queryParam)
 	if err != nil {
@@ -123,9 +136,13 @@ func (h *ImagesHandler) DeleteImage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	resp, err := h.uc.DeleteImage(imageUUID)
+
 	if err != nil {
 		utils.WriteError(w, http.StatusBadRequest, "incorrect data")
 		return
+	}
+	for _, re := range resp {
+		re.Sanitize()
 	}
 	if err = utils.WriteResponse(w, http.StatusOK, resp); err != nil {
 		utils.WriteError(w, http.StatusInternalServerError, err.Error())
