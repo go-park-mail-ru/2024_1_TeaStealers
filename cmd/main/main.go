@@ -72,9 +72,9 @@ func main() {
 
 	authRepo := authR.NewRepository(db)
 	authUsecase := authUc.NewAuthUsecase(authRepo)
-	autHandler := authH.NewAuthHandler(authUsecase)
+	autHandler := authH.NewAuthHandler(authUsecase, logger)
 
-	jwtMd := middleware.NewAuthMiddleware(authUsecase)
+	jwtMd := middleware.NewAuthMiddleware(authUsecase, logger)
 
 	auth := r.PathPrefix("/auth").Subrouter()
 	auth.HandleFunc("/signup", autHandler.SignUp).Methods(http.MethodPost, http.MethodOptions)
@@ -88,7 +88,7 @@ func main() {
 
 	imageRepo := imageR.NewRepository(db)
 	imageUsecase := imageUc.NewImageUsecase(imageRepo)
-	imageHandler := imageH.NewImageHandler(imageUsecase)
+	imageHandler := imageH.NewImageHandler(imageUsecase, logger)
 
 	advert := r.PathPrefix("/adverts").Subrouter()
 	advert.HandleFunc("/{id}", advertHandler.GetAdvertById).Methods(http.MethodGet, http.MethodOptions)
@@ -117,7 +117,7 @@ func main() {
 
 	companyRepo := companyR.NewRepository(db)
 	companyUsecase := companyUc.NewCompanyUsecase(companyRepo)
-	companyHandler := companyH.NewCompanyHandler(companyUsecase)
+	companyHandler := companyH.NewCompanyHandler(companyUsecase, logger)
 
 	company := r.PathPrefix("/companies").Subrouter()
 	company.HandleFunc("/", companyHandler.CreateCompany).Methods(http.MethodPost, http.MethodOptions)
@@ -126,7 +126,7 @@ func main() {
 
 	complexRepo := complexR.NewRepository(db)
 	complexUsecase := complexUc.NewComplexUsecase(complexRepo)
-	complexHandler := complexH.NewComplexHandler(complexUsecase)
+	complexHandler := complexH.NewComplexHandler(complexUsecase, logger)
 
 	complex := r.PathPrefix("/complexes").Subrouter()
 	complex.HandleFunc("/", complexHandler.CreateComplex).Methods(http.MethodPost, http.MethodOptions)

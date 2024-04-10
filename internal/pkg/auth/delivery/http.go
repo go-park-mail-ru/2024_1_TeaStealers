@@ -9,17 +9,19 @@ import (
 	"net/http"
 
 	"github.com/satori/uuid"
+	"go.uber.org/zap"
 )
 
 // AuthHandler handles HTTP requests for user authentication.
 type AuthHandler struct {
 	// uc represents the usecase interface for authentication.
-	uc auth.AuthUsecase
+	uc     auth.AuthUsecase
+	logger *zap.Logger
 }
 
 // NewAuthHandler creates a new instance of AuthHandler.
-func NewAuthHandler(uc auth.AuthUsecase) *AuthHandler {
-	return &AuthHandler{uc: uc}
+func NewAuthHandler(uc auth.AuthUsecase, logger *zap.Logger) *AuthHandler {
+	return &AuthHandler{uc: uc, logger: logger}
 }
 
 // @Summary Register a new user

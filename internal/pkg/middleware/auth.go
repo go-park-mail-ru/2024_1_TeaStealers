@@ -6,17 +6,20 @@ import (
 	"context"
 	"net/http"
 	"time"
+
+	"go.uber.org/zap"
 )
 
 // CookieName represents the name of the JWT cookie.
 const CookieName = "jwt-tean"
 
 type AuthMiddleware struct {
-	uc auth.AuthUsecase
+	uc     auth.AuthUsecase
+	logger *zap.Logger
 }
 
-func NewAuthMiddleware(uc auth.AuthUsecase) *AuthMiddleware {
-	return &AuthMiddleware{uc: uc}
+func NewAuthMiddleware(uc auth.AuthUsecase, logger *zap.Logger) *AuthMiddleware {
+	return &AuthMiddleware{uc: uc, logger: logger}
 }
 
 // JwtMiddleware is a middleware function that handles JWT authentication.
