@@ -6,10 +6,12 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"testing"
+
 	sqlmock "github.com/DATA-DOG/go-sqlmock"
 	"github.com/satori/uuid"
 	"github.com/stretchr/testify/suite"
-	"testing"
+	"go.uber.org/zap"
 )
 
 type UserRepoTestSuite struct {
@@ -106,7 +108,7 @@ func (suite *UserRepoTestSuite) TestCreateCompany() {
 	for _, tt := range tests {
 		suite.Run(tt.name, func() {
 			suite.setupMockCreateCompany(tt.args.comp, tt.args.errExec, tt.args.errQuery, tt.args.expExec, tt.args.expQuery)
-			rep := repo.NewRepository(suite.db)
+			rep := repo.NewRepository(suite.db, &zap.Logger{})
 			newCompany, gotErr := rep.CreateCompany(context.Background(), tt.args.comp)
 			suite.Assert().Equal(tt.want.err, gotErr)
 			if tt.want.err != nil {
@@ -176,7 +178,7 @@ func (suite *UserRepoTestSuite) TestUpdatePhoto() {
 	for _, tt := range tests {
 		suite.Run(tt.name, func() {
 			suite.setupMockUpdateCompanyPhoto(tt.args.id, tt.args.filename, tt.args.errExec, tt.args.expExec)
-			rep := repo.NewRepository(suite.db)
+			rep := repo.NewRepository(suite.db, &zap.Logger{})
 			newFilename, gotErr := rep.UpdateCompanyPhoto(tt.args.id, tt.args.filename)
 			suite.Assert().Equal(tt.want.err, gotErr)
 			if tt.want.err != nil {
@@ -259,7 +261,7 @@ func (suite *UserRepoTestSuite) TestGetCompanyById() {
 	for _, tt := range tests {
 		suite.Run(tt.name, func() {
 			suite.setupMockGetCompanyById(tt.want.compData, tt.args.errQuery, tt.args.expQuery)
-			rep := repo.NewRepository(suite.db)
+			rep := repo.NewRepository(suite.db, &zap.Logger{})
 			updCompany, gotErr := rep.GetCompanyById(context.Background(), tt.want.compData.ID)
 			suite.Assert().Equal(tt.want.err, gotErr)
 			if tt.want.err != nil {

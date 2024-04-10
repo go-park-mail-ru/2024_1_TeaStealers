@@ -2,14 +2,16 @@ package usecase
 
 import (
 	"2024_1_TeaStealers/internal/models"
-	"2024_1_TeaStealers/internal/pkg/images/mock"
+	images_mock "2024_1_TeaStealers/internal/pkg/images/mock"
 	"bytes"
-	"github.com/golang/mock/gomock"
-	"github.com/satori/uuid"
-	"github.com/stretchr/testify/assert"
 	"io"
 	"os"
 	"testing"
+
+	"github.com/golang/mock/gomock"
+	"github.com/satori/uuid"
+	"github.com/stretchr/testify/assert"
+	"go.uber.org/zap"
 )
 
 func TestUploadImage(t *testing.T) {
@@ -17,7 +19,7 @@ func TestUploadImage(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockRepo := images_mock.NewMockImageRepo(ctrl)
-	usecase := NewImageUsecase(mockRepo)
+	usecase := NewImageUsecase(mockRepo, &zap.Logger{})
 	type args struct {
 		file          io.Reader
 		fileType      string
@@ -73,7 +75,7 @@ func TestGetAdvertImages(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockRepo := images_mock.NewMockImageRepo(ctrl)
-	usecase := NewImageUsecase(mockRepo)
+	usecase := NewImageUsecase(mockRepo, &zap.Logger{})
 
 	type args struct {
 		advertUUID uuid.UUID
@@ -125,7 +127,7 @@ func TestDeleteImage(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockRepo := images_mock.NewMockImageRepo(ctrl)
-	usecase := NewImageUsecase(mockRepo)
+	usecase := NewImageUsecase(mockRepo, &zap.Logger{})
 
 	type args struct {
 		imageId uuid.UUID

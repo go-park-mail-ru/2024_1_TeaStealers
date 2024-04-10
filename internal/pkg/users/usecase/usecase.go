@@ -6,11 +6,12 @@ import (
 	"2024_1_TeaStealers/internal/pkg/users"
 	"2024_1_TeaStealers/internal/pkg/utils"
 	"errors"
-	"github.com/satori/uuid"
 	"io"
 	"os"
 	"path/filepath"
 	"time"
+
+	"github.com/satori/uuid"
 )
 
 // UserUsecase represents the usecase for user.

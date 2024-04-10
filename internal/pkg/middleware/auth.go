@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/satori/uuid"
 	"go.uber.org/zap"
 )
 
@@ -53,7 +54,7 @@ func (md *AuthMiddleware) JwtTMiddleware(next http.Handler) http.Handler {
 			return
 		}
 
-		if err := md.uc.GetUserLevelById(id, level); err != nil {
+		if err := md.uc.GetUserLevelById(context.WithValue(r.Context(), "requestId", uuid.NewV4().String()), id, level); err != nil {
 			w.WriteHeader(http.StatusUnauthorized)
 			return
 		}

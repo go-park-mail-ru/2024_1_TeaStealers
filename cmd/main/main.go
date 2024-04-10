@@ -70,8 +70,8 @@ func main() {
 	r.HandleFunc("/ping", pingPongHandler).Methods(http.MethodGet)
 	r.PathPrefix("/docs/").Handler(httpSwagger.WrapHandler)
 
-	authRepo := authR.NewRepository(db)
-	authUsecase := authUc.NewAuthUsecase(authRepo)
+	authRepo := authR.NewRepository(db, logger)
+	authUsecase := authUc.NewAuthUsecase(authRepo, logger)
 	autHandler := authH.NewAuthHandler(authUsecase, logger)
 
 	jwtMd := middleware.NewAuthMiddleware(authUsecase, logger)
@@ -86,8 +86,8 @@ func main() {
 	advertUsecase := advertsUc.NewAdvertUsecase(advertRepo, logger)
 	advertHandler := advertsH.NewAdvertHandler(advertUsecase, logger)
 
-	imageRepo := imageR.NewRepository(db)
-	imageUsecase := imageUc.NewImageUsecase(imageRepo)
+	imageRepo := imageR.NewRepository(db, logger)
+	imageUsecase := imageUc.NewImageUsecase(imageRepo, logger)
 	imageHandler := imageH.NewImageHandler(imageUsecase, logger)
 
 	advert := r.PathPrefix("/adverts").Subrouter()
@@ -115,8 +115,8 @@ func main() {
 	user.Handle("/password", jwtMd.JwtTMiddleware(http.HandlerFunc(userHandler.UpdateUserPassword))).Methods(http.MethodPost, http.MethodOptions)
 	user.Handle("/myadverts", jwtMd.JwtTMiddleware(http.HandlerFunc(advertHandler.GetUserAdverts))).Methods(http.MethodGet, http.MethodOptions)
 
-	companyRepo := companyR.NewRepository(db)
-	companyUsecase := companyUc.NewCompanyUsecase(companyRepo)
+	companyRepo := companyR.NewRepository(db, logger)
+	companyUsecase := companyUc.NewCompanyUsecase(companyRepo, logger)
 	companyHandler := companyH.NewCompanyHandler(companyUsecase, logger)
 
 	company := r.PathPrefix("/companies").Subrouter()
@@ -124,8 +124,8 @@ func main() {
 	company.HandleFunc("/{id}", companyHandler.GetCompanyById).Methods(http.MethodGet, http.MethodOptions)
 	company.HandleFunc("/images/{id}", companyHandler.UpdateCompanyPhoto).Methods(http.MethodPost, http.MethodOptions)
 
-	complexRepo := complexR.NewRepository(db)
-	complexUsecase := complexUc.NewComplexUsecase(complexRepo)
+	complexRepo := complexR.NewRepository(db, logger)
+	complexUsecase := complexUc.NewComplexUsecase(complexRepo, logger)
 	complexHandler := complexH.NewComplexHandler(complexUsecase, logger)
 
 	complex := r.PathPrefix("/complexes").Subrouter()
