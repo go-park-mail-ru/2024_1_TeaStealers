@@ -36,6 +36,7 @@ import (
 	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
 	httpSwagger "github.com/swaggo/http-swagger"
+	"go.uber.org/zap"
 )
 
 // @title Sample Project API
@@ -47,6 +48,7 @@ import (
 // @schemes http https
 func main() {
 	_ = godotenv.Load()
+	logger := zap.Must(zap.NewDevelopment())
 	db, err := sql.Open("postgres", fmt.Sprintf("postgres://%v:%v@%v:%v/%v?sslmode=disable",
 		os.Getenv("DB_USER"),
 		os.Getenv("DB_PASS"),
@@ -80,9 +82,9 @@ func main() {
 	auth.Handle("/logout", jwtMd.JwtTMiddleware(http.HandlerFunc(autHandler.Logout))).Methods(http.MethodGet, http.MethodOptions)
 	auth.Handle("/check_auth", jwtMd.JwtTMiddleware(http.HandlerFunc(autHandler.CheckAuth))).Methods(http.MethodGet, http.MethodOptions)
 
-	advertRepo := advertsR.NewRepository(db)
-	advertUsecase := advertsUc.NewAdvertUsecase(advertRepo)
-	advertHandler := advertsH.NewAdvertHandler(advertUsecase)
+	advertRepo := advertsR.NewRepository(db, logger)
+	advertUsecase := advertsUc.NewAdvertUsecase(advertRepo, logger)
+	advertHandler := advertsH.NewAdvertHandler(advertUsecase, logger)
 
 	imageRepo := imageR.NewRepository(db)
 	imageUsecase := imageUc.NewImageUsecase(imageRepo)
@@ -147,21 +149,20 @@ func main() {
 	signal.Notify(signalCh, syscall.SIGINT, syscall.SIGTERM)
 
 	go func() {
-		log.Printf("Start server on %s\n", srv.Addr)
+		logger.Info(fmt.Sprintf("Start server on %s\n", srv.Addr))
 		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			log.Fatalf("listen: %s\n", err)
+			logger.Error(fmt.Sprintf("listen: %s\n", err))
 		}
 	}()
 
 	sig := <-signalCh
-	log.Printf("Received signal: %v\n", sig)
+	logger.Info(fmt.Sprintf("Received signal: %v\n", sig))
 
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
 	if err := srv.Shutdown(ctx); err != nil {
-		log.Panic("Server shutdown failed: ", err, '\n')
-
+		logger.Error(fmt.Sprintf("Server shutdown failed: %s\n", err))
 	}
 }
 
