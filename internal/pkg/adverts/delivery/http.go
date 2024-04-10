@@ -142,7 +142,6 @@ func (h *AdvertHandler) GetAdvertById(w http.ResponseWriter, r *http.Request) {
 	}
 
 	advertData, err := h.uc.GetAdvertById(ctx, advertId)
-	advertData.Sanitize()
 
 	if err != nil {
 		utils.LogErrorResponse(h.logger, ctx.Value("requestId").(string), utils.DeliveryLayer, GetAdvertByIdMethod, err, http.StatusBadRequest)
