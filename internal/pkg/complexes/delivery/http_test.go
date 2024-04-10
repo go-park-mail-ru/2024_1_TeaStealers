@@ -7,14 +7,16 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/golang/mock/gomock"
-	"github.com/gorilla/mux"
-	"github.com/satori/uuid"
-	"github.com/stretchr/testify/assert"
 	"io"
 	"net/http"
 	"net/http/httptest"
 	"testing"
+
+	"github.com/golang/mock/gomock"
+	"github.com/gorilla/mux"
+	"github.com/satori/uuid"
+	"github.com/stretchr/testify/assert"
+	"go.uber.org/zap"
 )
 
 /*
@@ -190,7 +192,7 @@ func TestComplexHandler_CreateComplex(t *testing.T) {
 
 			prepare: func(f *fields, a *args, w *want) *httptest.ResponseRecorder {
 				f.usecase.EXPECT().CreateComplex(gomock.Any(), gomock.Eq(a.data)).Return(w.complexResp, w.err)
-				handler := NewComplexHandler(f.usecase)
+				handler := NewComplexHandler(f.usecase, &zap.Logger{})
 				reqBody, _ := json.Marshal(a.data)
 				req := httptest.NewRequest(http.MethodPost, "/create/complex", bytes.NewBuffer(reqBody))
 				rec := httptest.NewRecorder()
@@ -225,7 +227,7 @@ func TestComplexHandler_CreateComplex(t *testing.T) {
 
 			prepare: func(f *fields, a *args, w *want) *httptest.ResponseRecorder {
 				f.usecase.EXPECT().CreateComplex(gomock.Any(), gomock.Eq(a.data)).Return(w.complexResp, w.err)
-				handler := NewComplexHandler(f.usecase)
+				handler := NewComplexHandler(f.usecase, &zap.Logger{})
 				reqBody, _ := json.Marshal(a.data)
 				req := httptest.NewRequest(http.MethodPost, "/create/complex", bytes.NewBuffer(reqBody))
 				rec := httptest.NewRecorder()
@@ -260,7 +262,7 @@ func TestComplexHandler_CreateComplex(t *testing.T) {
 
 			prepare: func(f *fields, a *args, w *want) *httptest.ResponseRecorder {
 				// f.usecase.EXPECT().CreateComplex(gomock.Any(), gomock.Eq(a.data)).Return(w.complexResp, w.err)
-				handler := NewComplexHandler(f.usecase)
+				handler := NewComplexHandler(f.usecase, &zap.Logger{})
 				// reqBody, _ := json.Marshal(a.data)
 				req := httptest.NewRequest(http.MethodPost, "/create/complex", nil)
 				rec := httptest.NewRecorder()
@@ -346,7 +348,7 @@ func TestComplexHandler_CreateBuilding(t *testing.T) {
 
 			prepare: func(f *fields, a *args, w *want) *httptest.ResponseRecorder {
 				f.usecase.EXPECT().CreateBuilding(gomock.Any(), gomock.Eq(a.data)).Return(w.complexResp, w.err)
-				handler := NewComplexHandler(f.usecase)
+				handler := NewComplexHandler(f.usecase, &zap.Logger{})
 				reqBody, _ := json.Marshal(a.data)
 				req := httptest.NewRequest(http.MethodPost, "/create/complex", bytes.NewBuffer(reqBody))
 				rec := httptest.NewRecorder()
@@ -379,7 +381,7 @@ func TestComplexHandler_CreateBuilding(t *testing.T) {
 
 			prepare: func(f *fields, a *args, w *want) *httptest.ResponseRecorder {
 				f.usecase.EXPECT().CreateBuilding(gomock.Any(), gomock.Eq(a.data)).Return(w.complexResp, w.err)
-				handler := NewComplexHandler(f.usecase)
+				handler := NewComplexHandler(f.usecase, &zap.Logger{})
 				reqBody, _ := json.Marshal(a.data)
 				req := httptest.NewRequest(http.MethodPost, "/create/complex", bytes.NewBuffer(reqBody))
 				rec := httptest.NewRecorder()
@@ -412,7 +414,7 @@ func TestComplexHandler_CreateBuilding(t *testing.T) {
 
 			prepare: func(f *fields, a *args, w *want) *httptest.ResponseRecorder {
 				// f.usecase.EXPECT().CreateBuilding(gomock.Any(), gomock.Eq(a.data)).Return(w.complexResp, w.err)
-				handler := NewComplexHandler(f.usecase)
+				handler := NewComplexHandler(f.usecase, &zap.Logger{})
 				// reqBody, _ := json.Marshal(a.data)
 				req := httptest.NewRequest(http.MethodPost, "/create/complex", nil)
 				rec := httptest.NewRecorder()
@@ -498,7 +500,7 @@ func TestComplexHandler_CreateHouseAdvert(t *testing.T) {
 
 			prepare: func(f *fields, a *args, w *want) *httptest.ResponseRecorder {
 				f.usecase.EXPECT().CreateHouseAdvert(gomock.Any(), gomock.Eq(a.data)).Return(w.complexResp, w.err)
-				handler := NewComplexHandler(f.usecase)
+				handler := NewComplexHandler(f.usecase, &zap.Logger{})
 				reqBody, _ := json.Marshal(a.data)
 				req := httptest.NewRequest(http.MethodPost, "/create/complex", bytes.NewBuffer(reqBody))
 				rec := httptest.NewRecorder()
@@ -530,7 +532,7 @@ func TestComplexHandler_CreateHouseAdvert(t *testing.T) {
 
 			prepare: func(f *fields, a *args, w *want) *httptest.ResponseRecorder {
 				f.usecase.EXPECT().CreateHouseAdvert(gomock.Any(), gomock.Eq(a.data)).Return(w.complexResp, w.err)
-				handler := NewComplexHandler(f.usecase)
+				handler := NewComplexHandler(f.usecase, &zap.Logger{})
 				reqBody, _ := json.Marshal(a.data)
 				req := httptest.NewRequest(http.MethodPost, "/create/complex", bytes.NewBuffer(reqBody))
 				rec := httptest.NewRecorder()
@@ -562,7 +564,7 @@ func TestComplexHandler_CreateHouseAdvert(t *testing.T) {
 
 			prepare: func(f *fields, a *args, w *want) *httptest.ResponseRecorder {
 				// f.usecase.EXPECT().CreateHouseAdvert(gomock.Any(), gomock.Eq(a.data)).Return(w.complexResp, w.err)
-				handler := NewComplexHandler(f.usecase)
+				handler := NewComplexHandler(f.usecase, &zap.Logger{})
 				// reqBody, _ := json.Marshal(a.data)
 				req := httptest.NewRequest(http.MethodPost, "/create/complex", nil)
 				rec := httptest.NewRecorder()
@@ -648,7 +650,7 @@ func TestComplexHandler_CreateFlatAdvert(t *testing.T) {
 
 			prepare: func(f *fields, a *args, w *want) *httptest.ResponseRecorder {
 				f.usecase.EXPECT().CreateFlatAdvert(gomock.Any(), gomock.Eq(a.data)).Return(w.complexResp, w.err)
-				handler := NewComplexHandler(f.usecase)
+				handler := NewComplexHandler(f.usecase, &zap.Logger{})
 				reqBody, _ := json.Marshal(a.data)
 				req := httptest.NewRequest(http.MethodPost, "/create/complex", bytes.NewBuffer(reqBody))
 				rec := httptest.NewRecorder()
@@ -680,7 +682,7 @@ func TestComplexHandler_CreateFlatAdvert(t *testing.T) {
 
 			prepare: func(f *fields, a *args, w *want) *httptest.ResponseRecorder {
 				f.usecase.EXPECT().CreateFlatAdvert(gomock.Any(), gomock.Eq(a.data)).Return(w.complexResp, w.err)
-				handler := NewComplexHandler(f.usecase)
+				handler := NewComplexHandler(f.usecase, &zap.Logger{})
 				reqBody, _ := json.Marshal(a.data)
 				req := httptest.NewRequest(http.MethodPost, "/create/complex", bytes.NewBuffer(reqBody))
 				rec := httptest.NewRecorder()
@@ -712,7 +714,7 @@ func TestComplexHandler_CreateFlatAdvert(t *testing.T) {
 
 			prepare: func(f *fields, a *args, w *want) *httptest.ResponseRecorder {
 				// f.usecase.EXPECT().CreateFlatAdvert(gomock.Any(), gomock.Eq(a.data)).Return(w.complexResp, w.err)
-				handler := NewComplexHandler(f.usecase)
+				handler := NewComplexHandler(f.usecase, &zap.Logger{})
 				// reqBody, _ := json.Marshal(a.data)
 				req := httptest.NewRequest(http.MethodPost, "/create/complex", nil)
 				rec := httptest.NewRecorder()
@@ -796,7 +798,7 @@ func TestComplexHandler_GetComplexById(t *testing.T) {
 
 			prepare: func(f *fields, a *args, w *want) *httptest.ResponseRecorder {
 				f.usecase.EXPECT().GetComplexById(gomock.Any(), gomock.Eq(a.data)).Return(w.complexResp, w.err)
-				handler := NewComplexHandler(f.usecase)
+				handler := NewComplexHandler(f.usecase, &zap.Logger{})
 				vars := map[string]string{
 					"id": id1.String(),
 				}
@@ -834,7 +836,7 @@ func TestComplexHandler_GetComplexById(t *testing.T) {
 
 			prepare: func(f *fields, a *args, w *want) *httptest.ResponseRecorder {
 				// f.usecase.EXPECT().GetComplexById(gomock.Any(), gomock.Eq(a.data)).Return(w.complexResp, w.err)
-				handler := NewComplexHandler(f.usecase)
+				handler := NewComplexHandler(f.usecase, &zap.Logger{})
 				// vars := map[string]string{
 				// 	"id": id1.String(),
 				// }
@@ -870,7 +872,7 @@ func TestComplexHandler_GetComplexById(t *testing.T) {
 
 			prepare: func(f *fields, a *args, w *want) *httptest.ResponseRecorder {
 				f.usecase.EXPECT().GetComplexById(gomock.Any(), gomock.Eq(a.data)).Return(w.complexResp, w.err)
-				handler := NewComplexHandler(f.usecase)
+				handler := NewComplexHandler(f.usecase, &zap.Logger{})
 				vars := map[string]string{
 					"id": id1.String(),
 				}

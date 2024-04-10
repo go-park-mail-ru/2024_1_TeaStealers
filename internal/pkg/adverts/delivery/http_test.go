@@ -18,6 +18,7 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/satori/uuid"
 	"github.com/stretchr/testify/assert"
+	"go.uber.org/zap"
 )
 
 /*
@@ -193,7 +194,8 @@ func TestComplexHandler_CreateFlatAdvert(t *testing.T) {
 
 			prepare: func(f *fields, a *args, w *want) *httptest.ResponseRecorder {
 				f.usecase.EXPECT().CreateFlatAdvert(gomock.Any(), gomock.Eq(a.data)).Return(w.complexResp, w.err)
-				handler := NewAdvertHandler(f.usecase)
+				logger := zap.Must(zap.NewDevelopment())
+				handler := NewAdvertHandler(f.usecase, logger)
 				reqBody, _ := json.Marshal(a.data)
 				req := httptest.NewRequest(http.MethodPost, "/create/complex", bytes.NewBuffer(reqBody))
 				req = req.WithContext(context.WithValue(req.Context(), middleware.CookieName, a.cookieId))
@@ -227,7 +229,8 @@ func TestComplexHandler_CreateFlatAdvert(t *testing.T) {
 
 			prepare: func(f *fields, a *args, w *want) *httptest.ResponseRecorder {
 				f.usecase.EXPECT().CreateFlatAdvert(gomock.Any(), gomock.Eq(a.data)).Return(w.complexResp, w.err)
-				handler := NewAdvertHandler(f.usecase)
+				logger := zap.Must(zap.NewDevelopment())
+				handler := NewAdvertHandler(f.usecase, logger)
 				reqBody, _ := json.Marshal(a.data)
 				req := httptest.NewRequest(http.MethodPost, "/create/complex", bytes.NewBuffer(reqBody))
 				req = req.WithContext(context.WithValue(req.Context(), middleware.CookieName, a.cookieId))
@@ -261,7 +264,8 @@ func TestComplexHandler_CreateFlatAdvert(t *testing.T) {
 
 			prepare: func(f *fields, a *args, w *want) *httptest.ResponseRecorder {
 				// f.usecase.EXPECT().CreateComplex(gomock.Any(), gomock.Eq(a.data)).Return(w.complexResp, w.err)
-				handler := NewAdvertHandler(f.usecase)
+				logger := zap.Must(zap.NewDevelopment())
+				handler := NewAdvertHandler(f.usecase, logger)
 				// reqBody, _ := json.Marshal(a.data)
 				req := httptest.NewRequest(http.MethodPost, "/create/complex", nil)
 				req = req.WithContext(context.WithValue(req.Context(), middleware.CookieName, a.cookieId))
@@ -350,7 +354,8 @@ func TestComplexHandler_CreateHouseAdvert(t *testing.T) {
 
 			prepare: func(f *fields, a *args, w *want) *httptest.ResponseRecorder {
 				f.usecase.EXPECT().CreateHouseAdvert(gomock.Any(), gomock.Eq(a.data)).Return(w.complexResp, w.err)
-				handler := NewAdvertHandler(f.usecase)
+				logger := zap.Must(zap.NewDevelopment())
+				handler := NewAdvertHandler(f.usecase, logger)
 				reqBody, _ := json.Marshal(a.data)
 				req := httptest.NewRequest(http.MethodPost, "/create/complex", bytes.NewBuffer(reqBody))
 				req = req.WithContext(context.WithValue(req.Context(), middleware.CookieName, a.cookieId))
@@ -384,7 +389,8 @@ func TestComplexHandler_CreateHouseAdvert(t *testing.T) {
 
 			prepare: func(f *fields, a *args, w *want) *httptest.ResponseRecorder {
 				f.usecase.EXPECT().CreateHouseAdvert(gomock.Any(), gomock.Eq(a.data)).Return(w.complexResp, w.err)
-				handler := NewAdvertHandler(f.usecase)
+				logger := zap.Must(zap.NewDevelopment())
+				handler := NewAdvertHandler(f.usecase, logger)
 				reqBody, _ := json.Marshal(a.data)
 				req := httptest.NewRequest(http.MethodPost, "/create/complex", bytes.NewBuffer(reqBody))
 				req = req.WithContext(context.WithValue(req.Context(), middleware.CookieName, a.cookieId))
@@ -418,7 +424,8 @@ func TestComplexHandler_CreateHouseAdvert(t *testing.T) {
 
 			prepare: func(f *fields, a *args, w *want) *httptest.ResponseRecorder {
 				// f.usecase.EXPECT().CreateHouseAdvert(gomock.Any(), gomock.Eq(a.data)).Return(w.complexResp, w.err)
-				handler := NewAdvertHandler(f.usecase)
+				logger := zap.Must(zap.NewDevelopment())
+				handler := NewAdvertHandler(f.usecase, logger)
 				// reqBody, _ := json.Marshal(a.data)
 				req := httptest.NewRequest(http.MethodPost, "/create/complex", nil)
 				req = req.WithContext(context.WithValue(req.Context(), middleware.CookieName, a.cookieId))
@@ -503,7 +510,8 @@ func TestComplexHandler_GetAdvertById(t *testing.T) {
 
 			prepare: func(f *fields, a *args, w *want) *httptest.ResponseRecorder {
 				f.usecase.EXPECT().GetAdvertById(gomock.Any(), gomock.Eq(a.data)).Return(w.complexResp, w.err)
-				handler := NewAdvertHandler(f.usecase)
+				logger := zap.Must(zap.NewDevelopment())
+				handler := NewAdvertHandler(f.usecase, logger)
 				vars := map[string]string{
 					"id": id1.String(),
 				}
@@ -541,7 +549,8 @@ func TestComplexHandler_GetAdvertById(t *testing.T) {
 
 			prepare: func(f *fields, a *args, w *want) *httptest.ResponseRecorder {
 				// f.usecase.EXPECT().GetComplexById(gomock.Any(), gomock.Eq(a.data)).Return(w.complexResp, w.err)
-				handler := NewAdvertHandler(f.usecase)
+				logger := zap.Must(zap.NewDevelopment())
+				handler := NewAdvertHandler(f.usecase, logger)
 				// vars := map[string]string{
 				// 	"id": id1.String(),
 				// }
@@ -577,7 +586,8 @@ func TestComplexHandler_GetAdvertById(t *testing.T) {
 
 			prepare: func(f *fields, a *args, w *want) *httptest.ResponseRecorder {
 				f.usecase.EXPECT().GetAdvertById(gomock.Any(), gomock.Eq(a.data)).Return(w.complexResp, w.err)
-				handler := NewAdvertHandler(f.usecase)
+				logger := zap.Must(zap.NewDevelopment())
+				handler := NewAdvertHandler(f.usecase, logger)
 				vars := map[string]string{
 					"id": id1.String(),
 				}
@@ -672,7 +682,8 @@ func TestComplexHandler_UpdateAdvertById(t *testing.T) {
 
 			prepare: func(f *fields, a *args, w *want) *httptest.ResponseRecorder {
 				f.usecase.EXPECT().UpdateAdvertById(gomock.Any(), gomock.Eq(a.data)).Return(w.err)
-				handler := NewAdvertHandler(f.usecase)
+				logger := zap.Must(zap.NewDevelopment())
+				handler := NewAdvertHandler(f.usecase, logger)
 				vars := map[string]string{
 					"id": id1.String(),
 				}
@@ -713,7 +724,8 @@ func TestComplexHandler_UpdateAdvertById(t *testing.T) {
 
 			prepare: func(f *fields, a *args, w *want) *httptest.ResponseRecorder {
 				// f.usecase.EXPECT().GetComplexById(gomock.Any(), gomock.Eq(a.data)).Return(w.complexResp, w.err)
-				handler := NewAdvertHandler(f.usecase)
+				logger := zap.Must(zap.NewDevelopment())
+				handler := NewAdvertHandler(f.usecase, logger)
 				// vars := map[string]string{
 				// 	"id": id1.String(),
 				// }
@@ -752,7 +764,8 @@ func TestComplexHandler_UpdateAdvertById(t *testing.T) {
 
 			prepare: func(f *fields, a *args, w *want) *httptest.ResponseRecorder {
 				f.usecase.EXPECT().UpdateAdvertById(gomock.Any(), gomock.Eq(a.data)).Return(w.err)
-				handler := NewAdvertHandler(f.usecase)
+				logger := zap.Must(zap.NewDevelopment())
+				handler := NewAdvertHandler(f.usecase, logger)
 				vars := map[string]string{
 					"id": id1.String(),
 				}
@@ -847,7 +860,8 @@ func TestComplexHandler_DeleteAdvertById(t *testing.T) {
 
 			prepare: func(f *fields, a *args, w *want) *httptest.ResponseRecorder {
 				f.usecase.EXPECT().DeleteAdvertById(gomock.Any(), gomock.Eq(id1)).Return(w.err)
-				handler := NewAdvertHandler(f.usecase)
+				logger := zap.Must(zap.NewDevelopment())
+				handler := NewAdvertHandler(f.usecase, logger)
 				vars := map[string]string{
 					"id": id1.String(),
 				}
@@ -888,7 +902,8 @@ func TestComplexHandler_DeleteAdvertById(t *testing.T) {
 
 			prepare: func(f *fields, a *args, w *want) *httptest.ResponseRecorder {
 				// f.usecase.EXPECT().DeleteAdvertById(gomock.Any(), gomock.Eq(a.data)).Return(w.complexResp, w.err)
-				handler := NewAdvertHandler(f.usecase)
+				logger := zap.Must(zap.NewDevelopment())
+				handler := NewAdvertHandler(f.usecase, logger)
 				// vars := map[string]string{
 				// 	"id": id1.String(),
 				// }
@@ -927,7 +942,8 @@ func TestComplexHandler_DeleteAdvertById(t *testing.T) {
 
 			prepare: func(f *fields, a *args, w *want) *httptest.ResponseRecorder {
 				f.usecase.EXPECT().DeleteAdvertById(gomock.Any(), gomock.Eq(id1)).Return(w.err)
-				handler := NewAdvertHandler(f.usecase)
+				logger := zap.Must(zap.NewDevelopment())
+				handler := NewAdvertHandler(f.usecase, logger)
 				vars := map[string]string{
 					"id": id1.String(),
 				}

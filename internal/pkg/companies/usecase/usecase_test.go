@@ -6,11 +6,12 @@ import (
 	"2024_1_TeaStealers/internal/pkg/users/usecase"
 	"2024_1_TeaStealers/internal/pkg/utils"
 	"errors"
+	"testing"
+	"time"
+
 	"github.com/golang/mock/gomock"
 	"github.com/satori/uuid"
 	"github.com/stretchr/testify/assert"
-	"testing"
-	"time"
 )
 
 func TestGetUser(t *testing.T) {

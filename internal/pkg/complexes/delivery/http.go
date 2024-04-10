@@ -12,17 +12,19 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/satori/uuid"
+	"go.uber.org/zap"
 )
 
 // ComplexHandler handles HTTP requests for complex changes.
 type ComplexHandler struct {
 	// uc represents the usecase interface for complex changes.
-	uc complexes.ComplexUsecase
+	uc     complexes.ComplexUsecase
+	logger *zap.Logger
 }
 
 // NewComplexHandler creates a new instance of ComplexHandler.
-func NewComplexHandler(uc complexes.ComplexUsecase) *ComplexHandler {
-	return &ComplexHandler{uc: uc}
+func NewComplexHandler(uc complexes.ComplexUsecase, logger *zap.Logger) *ComplexHandler {
+	return &ComplexHandler{uc: uc, logger: logger}
 }
 
 func (h *ComplexHandler) CreateComplex(w http.ResponseWriter, r *http.Request) {

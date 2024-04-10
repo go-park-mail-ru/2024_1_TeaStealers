@@ -6,11 +6,13 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"testing"
+
 	sqlmock "github.com/DATA-DOG/go-sqlmock"
 	"github.com/satori/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
-	"testing"
+	"go.uber.org/zap"
 )
 
 type UserRepoTestSuite struct {
@@ -135,7 +137,7 @@ func (suite *UserRepoTestSuite) TestCreateComplex() {
 	for _, tt := range tests {
 		suite.Run(tt.name, func() {
 			suite.setupMockCreateCompany(tt.args.complex, tt.args.errExec, tt.args.errQuery, tt.args.expExec, tt.args.expQuery)
-			rep := repo.NewRepository(suite.db)
+			rep := repo.NewRepository(suite.db, &zap.Logger{})
 			newComplex, gotErr := rep.CreateComplex(context.Background(), tt.args.complex)
 			suite.Assert().Equal(tt.want.err, gotErr)
 			if tt.want.err != nil {
@@ -254,7 +256,7 @@ func (suite *UserRepoTestSuite) TestCreateBuilding() {
 	for _, tt := range tests {
 		suite.Run(tt.name, func() {
 			suite.setupMockCreateBuilding(tt.args.building, tt.args.errExec, tt.args.errQuery, tt.args.expExec, tt.args.expQuery)
-			rep := repo.NewRepository(suite.db)
+			rep := repo.NewRepository(suite.db, &zap.Logger{})
 			newComplex, gotErr := rep.CreateBuilding(context.Background(), tt.args.building)
 			suite.Assert().Equal(tt.want.err, gotErr)
 			if tt.want.err != nil {
@@ -325,7 +327,7 @@ func (suite *UserRepoTestSuite) TestUpdateComplexPhoto() {
 	for _, tt := range tests {
 		suite.Run(tt.name, func() {
 			suite.setupMockUpdateComplexPhoto(tt.args.id, tt.args.filename, tt.args.errExec, tt.args.expExec)
-			rep := repo.NewRepository(suite.db)
+			rep := repo.NewRepository(suite.db, &zap.Logger{})
 			newFilename, gotErr := rep.UpdateComplexPhoto(tt.args.id, tt.args.filename)
 			suite.Assert().Equal(tt.want.err, gotErr)
 			if tt.want.err != nil {
@@ -406,7 +408,7 @@ func (suite *UserRepoTestSuite) TestGetComplexById() {
 	for _, tt := range tests {
 		suite.Run(tt.name, func() {
 			suite.setupMockGetComplexById(tt.want.compData, tt.args.errQuery, tt.args.expQuery)
-			rep := repo.NewRepository(suite.db)
+			rep := repo.NewRepository(suite.db, &zap.Logger{})
 			updCompany, gotErr := rep.GetComplexById(context.Background(), tt.want.compData.ID)
 			suite.Assert().Equal(tt.want.err, gotErr)
 			if tt.want.err != nil {
@@ -438,7 +440,7 @@ func TestBeginTx(t *testing.T) {
 		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
 	}
 	defer fakeDB.Close()
-	rep := repo.NewRepository(fakeDB)
+	rep := repo.NewRepository(fakeDB, &zap.Logger{})
 	// ctx := context.Background()
 	// tx := new(sql.Tx)
 	mock.ExpectBegin().WillReturnError(nil)
@@ -452,7 +454,7 @@ func TestBeginTxFail(t *testing.T) {
 		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
 	}
 	defer fakeDB.Close()
-	rep := repo.NewRepository(fakeDB)
+	rep := repo.NewRepository(fakeDB, &zap.Logger{})
 	// ctx := context.Background()
 	// tx := new(sql.Tx)
 	mock.ExpectBegin().WillReturnError(errors.New("error"))
@@ -515,7 +517,7 @@ func (suite *UserRepoTestSuite) TestCreateAdvertType() {
 				suite.T().Fatal("Error beginning transaction:", err)
 			}
 			suite.setupMockCreateAdvertType(tt.args.adv, tt.args.errExec, tt.args.expExec)
-			rep := repo.NewRepository(suite.db)
+			rep := repo.NewRepository(suite.db, &zap.Logger{})
 			gotErr := rep.CreateAdvertType(context.Background(), tx, tt.args.adv)
 			suite.Assert().Equal(tt.want.err, gotErr)
 			suite.Assert().NoError(suite.mock.ExpectationsWereMet())
@@ -595,7 +597,7 @@ func (suite *UserRepoTestSuite) TestCreateAdvert() {
 				suite.T().Fatal("Error beginning transaction:", err)
 			}
 			suite.setupMockCreateAdvert(tt.args.adv, tt.args.errExec, tt.args.expExec)
-			rep := repo.NewRepository(suite.db)
+			rep := repo.NewRepository(suite.db, &zap.Logger{})
 			gotErr := rep.CreateAdvert(context.Background(), tx, tt.args.adv)
 			suite.Assert().Equal(tt.want.err, gotErr)
 			suite.Assert().NoError(suite.mock.ExpectationsWereMet())
@@ -665,7 +667,7 @@ func (suite *UserRepoTestSuite) TestCreatePriceChange() {
 				suite.T().Fatal("Error beginning transaction:", err)
 			}
 			suite.setupMockCreatePriceChange(tt.args.adv, tt.args.errExec, tt.args.expExec)
-			rep := repo.NewRepository(suite.db)
+			rep := repo.NewRepository(suite.db, &zap.Logger{})
 			gotErr := rep.CreatePriceChange(context.Background(), tx, tt.args.adv)
 			suite.Assert().Equal(tt.want.err, gotErr)
 			suite.Assert().NoError(suite.mock.ExpectationsWereMet())
@@ -748,7 +750,7 @@ func (suite *UserRepoTestSuite) TestCreateHouse() {
 				suite.T().Fatal("Error beginning transaction:", err)
 			}
 			suite.setupMockCreateHouse(tt.args.adv, tt.args.errExec, tt.args.expExec)
-			rep := repo.NewRepository(suite.db)
+			rep := repo.NewRepository(suite.db, &zap.Logger{})
 			gotErr := rep.CreateHouse(context.Background(), tx, tt.args.adv)
 			suite.Assert().Equal(tt.want.err, gotErr)
 			suite.Assert().NoError(suite.mock.ExpectationsWereMet())
@@ -826,7 +828,7 @@ func (suite *UserRepoTestSuite) TestCreateFlat() {
 				suite.T().Fatal("Error beginning transaction:", err)
 			}
 			suite.setupMockCreateFlat(tt.args.adv, tt.args.errExec, tt.args.expExec)
-			rep := repo.NewRepository(suite.db)
+			rep := repo.NewRepository(suite.db, &zap.Logger{})
 			gotErr := rep.CreateFlat(context.Background(), tx, tt.args.adv)
 			suite.Assert().Equal(tt.want.err, gotErr)
 			suite.Assert().NoError(suite.mock.ExpectationsWereMet())
