@@ -13,6 +13,7 @@ import (
 	"github.com/satori/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
+	"go.uber.org/zap"
 )
 
 type UserRepoTestSuite struct {
@@ -42,11 +43,13 @@ func TestBeginTx(t *testing.T) {
 		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
 	}
 	defer fakeDB.Close()
-	rep := repo.NewRepository(fakeDB)
+	logger := zap.Must(zap.NewDevelopment())
+	rep := repo.NewRepository(fakeDB, logger)
 	// ctx := context.Background()
 	// tx := new(sql.Tx)
 	mock.ExpectBegin().WillReturnError(nil)
-	tx, err := rep.BeginTx(context.Background())
+
+	tx, err := rep.BeginTx(context.WithValue(context.Background(), "requestId", uuid.NewV4().String()))
 	assert.NoError(t, err)
 	assert.NotEmpty(t, tx)
 }
@@ -56,11 +59,11 @@ func TestBeginTxFail(t *testing.T) {
 		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
 	}
 	defer fakeDB.Close()
-	rep := repo.NewRepository(fakeDB)
-	// ctx := context.Background()
+	logger := zap.Must(zap.NewDevelopment())
+	rep := repo.NewRepository(fakeDB, logger) // ctx := context.Background()
 	// tx := new(sql.Tx)
 	mock.ExpectBegin().WillReturnError(errors.New("error"))
-	tx, err := rep.BeginTx(context.Background())
+	tx, err := rep.BeginTx(context.WithValue(context.Background(), "requestId", uuid.NewV4().String()))
 	assert.Error(t, err)
 	assert.Empty(t, tx)
 }
@@ -119,8 +122,9 @@ func (suite *UserRepoTestSuite) TestCreateAdvertType() {
 				suite.T().Fatal("Error beginning transaction:", err)
 			}
 			suite.setupMockCreateAdvertType(tt.args.adv, tt.args.errExec, tt.args.expExec)
-			rep := repo.NewRepository(suite.db)
-			gotErr := rep.CreateAdvertType(context.Background(), tx, tt.args.adv)
+			logger := zap.Must(zap.NewDevelopment())
+			rep := repo.NewRepository(suite.db, logger)
+			gotErr := rep.CreateAdvertType(context.WithValue(context.Background(), "requestId", uuid.NewV4().String()), tx, tt.args.adv)
 			suite.Assert().Equal(tt.want.err, gotErr)
 			suite.Assert().NoError(suite.mock.ExpectationsWereMet())
 		})
@@ -199,8 +203,9 @@ func (suite *UserRepoTestSuite) TestCreateAdvert() {
 				suite.T().Fatal("Error beginning transaction:", err)
 			}
 			suite.setupMockCreateAdvert(tt.args.adv, tt.args.errExec, tt.args.expExec)
-			rep := repo.NewRepository(suite.db)
-			gotErr := rep.CreateAdvert(context.Background(), tx, tt.args.adv)
+			logger := zap.Must(zap.NewDevelopment())
+			rep := repo.NewRepository(suite.db, logger)
+			gotErr := rep.CreateAdvert(context.WithValue(context.Background(), "requestId", uuid.NewV4().String()), tx, tt.args.adv)
 			suite.Assert().Equal(tt.want.err, gotErr)
 			suite.Assert().NoError(suite.mock.ExpectationsWereMet())
 		})
@@ -269,8 +274,9 @@ func (suite *UserRepoTestSuite) TestCreatePriceChange() {
 				suite.T().Fatal("Error beginning transaction:", err)
 			}
 			suite.setupMockCreatePriceChange(tt.args.adv, tt.args.errExec, tt.args.expExec)
-			rep := repo.NewRepository(suite.db)
-			gotErr := rep.CreatePriceChange(context.Background(), tx, tt.args.adv)
+			logger := zap.Must(zap.NewDevelopment())
+			rep := repo.NewRepository(suite.db, logger)
+			gotErr := rep.CreatePriceChange(context.WithValue(context.Background(), "requestId", uuid.NewV4().String()), tx, tt.args.adv)
 			suite.Assert().Equal(tt.want.err, gotErr)
 			suite.Assert().NoError(suite.mock.ExpectationsWereMet())
 		})
@@ -352,8 +358,9 @@ func (suite *UserRepoTestSuite) TestCreateHouse() {
 				suite.T().Fatal("Error beginning transaction:", err)
 			}
 			suite.setupMockCreateHouse(tt.args.adv, tt.args.errExec, tt.args.expExec)
-			rep := repo.NewRepository(suite.db)
-			gotErr := rep.CreateHouse(context.Background(), tx, tt.args.adv)
+			logger := zap.Must(zap.NewDevelopment())
+			rep := repo.NewRepository(suite.db, logger)
+			gotErr := rep.CreateHouse(context.WithValue(context.Background(), "requestId", uuid.NewV4().String()), tx, tt.args.adv)
 			suite.Assert().Equal(tt.want.err, gotErr)
 			suite.Assert().NoError(suite.mock.ExpectationsWereMet())
 		})
@@ -430,8 +437,9 @@ func (suite *UserRepoTestSuite) TestCreateFlat() {
 				suite.T().Fatal("Error beginning transaction:", err)
 			}
 			suite.setupMockCreateFlat(tt.args.adv, tt.args.errExec, tt.args.expExec)
-			rep := repo.NewRepository(suite.db)
-			gotErr := rep.CreateFlat(context.Background(), tx, tt.args.adv)
+			logger := zap.Must(zap.NewDevelopment())
+			rep := repo.NewRepository(suite.db, logger)
+			gotErr := rep.CreateFlat(context.WithValue(context.Background(), "requestId", uuid.NewV4().String()), tx, tt.args.adv)
 			suite.Assert().Equal(tt.want.err, gotErr)
 			suite.Assert().NoError(suite.mock.ExpectationsWereMet())
 		})
@@ -514,8 +522,9 @@ func (suite *UserRepoTestSuite) TestCreateBuilding() {
 				suite.T().Fatal("Error beginning transaction:", err)
 			}
 			suite.setupMockCreateBuilding(tt.args.building, tt.args.errExec, tt.args.errQuery, tt.args.expExec, tt.args.expQuery)
-			rep := repo.NewRepository(suite.db)
-			gotErr := rep.CreateBuilding(context.Background(), tx, tt.args.building)
+			logger := zap.Must(zap.NewDevelopment())
+			rep := repo.NewRepository(suite.db, logger)
+			gotErr := rep.CreateBuilding(context.WithValue(context.Background(), "requestId", uuid.NewV4().String()), tx, tt.args.building)
 			suite.Assert().Equal(tt.want.err, gotErr)
 			suite.Assert().NoError(suite.mock.ExpectationsWereMet())
 		})
@@ -587,8 +596,9 @@ func (suite *UserRepoTestSuite) TestCheckExistsBuilding1() {
 	for _, tt := range tests {
 		suite.Run(tt.name, func() {
 			suite.setupMockCheckExistsBuilding1(tt.want.build, tt.args.errQuery, tt.args.expQuery)
-			rep := repo.NewRepository(suite.db)
-			gotBuild, gotErr := rep.CheckExistsBuilding(context.Background(), tt.want.build.Address)
+			logger := zap.Must(zap.NewDevelopment())
+			rep := repo.NewRepository(suite.db, logger)
+			gotBuild, gotErr := rep.CheckExistsBuilding(context.WithValue(context.Background(), "requestId", uuid.NewV4().String()), tt.want.build.Address)
 			suite.Assert().Equal(tt.want.err, gotErr)
 			if tt.want.err != nil {
 				suite.Assert().Empty(gotBuild)
@@ -671,8 +681,9 @@ func (suite *UserRepoTestSuite) TestCheckExistsBuilding2() {
 	for _, tt := range tests {
 		suite.Run(tt.name, func() {
 			suite.setupMockCheckExistsBuilding2(tt.want.build, tt.args.pageS, tt.args.errQuery, tt.args.expQuery)
-			rep := repo.NewRepository(suite.db)
-			gotBuild, gotErr := rep.CheckExistsBuildings(context.Background(), tt.args.pageS, tt.want.build.Address)
+			logger := zap.Must(zap.NewDevelopment())
+			rep := repo.NewRepository(suite.db, logger)
+			gotBuild, gotErr := rep.CheckExistsBuildings(context.WithValue(context.Background(), "requestId", uuid.NewV4().String()), tt.args.pageS, tt.want.build.Address)
 			suite.Assert().Equal(tt.want.err, gotErr)
 			if tt.want.err != nil {
 				suite.Assert().Empty(gotBuild)
@@ -743,8 +754,9 @@ func (suite *UserRepoTestSuite) TestSelectImages() {
 	for _, tt := range tests {
 		suite.Run(tt.name, func() {
 			suite.setupMockSelectImage(tt.args.advertID, tt.want.images)
-			rep := repo.NewRepository(suite.db)
-			gotImages, gotErr := rep.SelectImages(tt.args.advertID)
+			logger := zap.Must(zap.NewDevelopment())
+			rep := repo.NewRepository(suite.db, logger)
+			gotImages, gotErr := rep.SelectImages(context.WithValue(context.Background(), "requestId", uuid.NewV4().String()), tt.args.advertID)
 			suite.Assert().Equal(tt.want.err, gotErr)
 			if tt.want.err != nil {
 				suite.Assert().Empty(gotImages)
@@ -813,8 +825,9 @@ func (suite *UserRepoTestSuite) TestCheckGetTypeAdvertById() {
 	for _, tt := range tests {
 		suite.Run(tt.name, func() {
 			suite.setupMockGetTypeAdvertById(tt.want.advertType, tt.args.id, tt.args.errQuery, tt.args.expQuery)
-			rep := repo.NewRepository(suite.db)
-			gotType, gotErr := rep.GetTypeAdvertById(context.Background(), tt.args.id)
+			logger := zap.Must(zap.NewDevelopment())
+			rep := repo.NewRepository(suite.db, logger)
+			gotType, gotErr := rep.GetTypeAdvertById(context.WithValue(context.Background(), "requestId", uuid.NewV4().String()), tt.args.id)
 			suite.Assert().Equal(tt.want.err, gotErr)
 			if tt.want.err != nil {
 				suite.Assert().Empty(gotType)
@@ -898,8 +911,9 @@ func (suite *UserRepoTestSuite) TestCheckGetHouseAdvertById() {
 	for _, tt := range tests {
 		suite.Run(tt.name, func() {
 			suite.setupMockGetHouseAdvertById(tt.want.advertData, tt.want.advertData.ID, tt.args.errQuery, tt.args.expQuery)
-			rep := repo.NewRepository(suite.db)
-			gotAdvertData, gotErr := rep.GetHouseAdvertById(context.Background(), tt.want.advertData.ID)
+			logger := zap.Must(zap.NewDevelopment())
+			rep := repo.NewRepository(suite.db, logger)
+			gotAdvertData, gotErr := rep.GetHouseAdvertById(context.WithValue(context.Background(), "requestId", uuid.NewV4().String()), tt.want.advertData.ID)
 			suite.Assert().Equal(tt.want.err, gotErr)
 			if tt.want.err != nil {
 				suite.Assert().Empty(gotAdvertData)
@@ -1045,8 +1059,9 @@ func (suite *UserRepoTestSuite) TestCheckExistsFlat() {
 	for _, tt := range tests {
 		suite.Run(tt.name, func() {
 			suite.SetupMockCheckExistsFlat(tt.want.flat, tt.args.errQuery, tt.args.expQuery)
-			rep := repo.NewRepository(suite.db)
-			gotFlat, gotErr := rep.CheckExistsFlat(context.Background(), tt.want.flat.ID)
+			logger := zap.Must(zap.NewDevelopment())
+			rep := repo.NewRepository(suite.db, logger)
+			gotFlat, gotErr := rep.CheckExistsFlat(context.WithValue(context.Background(), "requestId", uuid.NewV4().String()), tt.want.flat.ID)
 			suite.Assert().Equal(tt.want.err, gotErr)
 			if tt.want.err != nil {
 				suite.Assert().Empty(gotFlat)
@@ -1123,8 +1138,9 @@ func (suite *UserRepoTestSuite) TestCheckExistsHouse() {
 	for _, tt := range tests {
 		suite.Run(tt.name, func() {
 			suite.SetupMockCheckExistsHouse(tt.want.house, tt.args.advId, tt.args.errQuery, tt.args.expQuery)
-			rep := repo.NewRepository(suite.db)
-			gotHouse, gotErr := rep.CheckExistsHouse(context.Background(), tt.args.advId)
+			logger := zap.Must(zap.NewDevelopment())
+			rep := repo.NewRepository(suite.db, logger)
+			gotHouse, gotErr := rep.CheckExistsHouse(context.WithValue(context.Background(), "requestId", uuid.NewV4().String()), tt.args.advId)
 			suite.Assert().Equal(tt.want.err, gotErr)
 			if tt.want.err != nil {
 				suite.Assert().Empty(gotHouse)
@@ -1152,7 +1168,7 @@ func (suite *UserRepoTestSuite) TestUserRepo_DeleteFlatAdvertById() {
 	advertId := uuid.NewV4()
 	advertTypeId := uuid.NewV4()
 	flatId := uuid.NewV4()
-	ctx := context.Background()
+	ctx := context.WithValue(context.Background(), "requestId", uuid.NewV4().String())
 
 	suite.mock.ExpectBegin()
 	tx, err := suite.db.Begin()
@@ -1184,7 +1200,8 @@ func (suite *UserRepoTestSuite) TestUserRepo_DeleteFlatAdvertById() {
 	suite.mock.ExpectExec(queryDeletePriceChanges).WithArgs(advertId).WillReturnResult(sqlmock.NewResult(1, 1))
 	suite.mock.ExpectExec(queryDeleteImages).WithArgs(advertId).WillReturnResult(sqlmock.NewResult(1, 1))
 
-	rep := repo.NewRepository(suite.db)
+	logger := zap.Must(zap.NewDevelopment())
+	rep := repo.NewRepository(suite.db, logger)
 	err = rep.DeleteFlatAdvertById(ctx, tx, advertId)
 	suite.Assert().NoError(err)
 
@@ -1200,7 +1217,7 @@ func (suite *UserRepoTestSuite) TestUserRepo_DeleteHouseAdvertById() {
 	advertId := uuid.NewV4()
 	advertTypeId := uuid.NewV4()
 	houseId := uuid.NewV4()
-	ctx := context.Background()
+	ctx := context.WithValue(context.Background(), "requestId", uuid.NewV4().String())
 
 	suite.mock.ExpectBegin()
 	tx, err := suite.db.Begin()
@@ -1232,7 +1249,8 @@ func (suite *UserRepoTestSuite) TestUserRepo_DeleteHouseAdvertById() {
 	suite.mock.ExpectExec(queryDeletePriceChanges).WithArgs(advertId).WillReturnResult(sqlmock.NewResult(1, 1))
 	suite.mock.ExpectExec(queryDeleteImages).WithArgs(advertId).WillReturnResult(sqlmock.NewResult(1, 1))
 
-	rep := repo.NewRepository(suite.db)
+	logger := zap.Must(zap.NewDevelopment())
+	rep := repo.NewRepository(suite.db, logger)
 	err = rep.DeleteHouseAdvertById(ctx, tx, advertId)
 	suite.Assert().NoError(err)
 
@@ -1249,7 +1267,7 @@ func (suite *UserRepoTestSuite) TestAdvertRepo_ChangeTypeAdvert() {
 	advertTypeId := uuid.NewV4()
 	houseId := uuid.NewV4()
 	buildingId := uuid.NewV4()
-	ctx := context.Background()
+	ctx := context.WithValue(context.Background(), "requestId", uuid.NewV4().String())
 	advertType := models.AdvertTypeHouse
 	suite.mock.ExpectBegin()
 	tx, err := suite.db.Begin()
@@ -1276,7 +1294,8 @@ func (suite *UserRepoTestSuite) TestAdvertRepo_ChangeTypeAdvert() {
 	suite.mock.ExpectExec(queryDeleteHouseById).WithArgs(houseId).WillReturnError(errors.New("error")).
 		WillReturnResult(sqlmock.NewResult(1, 1))
 
-	rep := repo.NewRepository(suite.db)
+	logger := zap.Must(zap.NewDevelopment())
+	rep := repo.NewRepository(suite.db, logger)
 	err = rep.ChangeTypeAdvert(ctx, tx, advertId)
 	suite.Assert().Equal(errors.New("error"), err)
 
@@ -1294,7 +1313,7 @@ func (suite *UserRepoTestSuite) TestAdvertRepo_UpdateHouseAdvertById() {
 	advertTypeId := uuid.NewV4()
 	houseId := uuid.NewV4()
 	buildingId := uuid.NewV4()
-	ctx := context.Background()
+	ctx := context.WithValue(context.Background(), "requestId", uuid.NewV4().String())
 	// advertType := models.AdvertTypeHouse
 	suite.mock.ExpectBegin()
 	tx, err := suite.db.Begin()
@@ -1373,7 +1392,8 @@ func (suite *UserRepoTestSuite) TestAdvertRepo_UpdateHouseAdvertById() {
 	suite.mock.ExpectExec(queryInsertPriceChange).WithArgs(sqlmock.AnyArg(), advertUpdateData.ID, advertUpdateData.Price).WillReturnError(nil).
 		WillReturnResult(sqlmock.NewResult(1, 1))
 
-	rep := repo.NewRepository(suite.db)
+	logger := zap.Must(zap.NewDevelopment())
+	rep := repo.NewRepository(suite.db, logger)
 	err = rep.UpdateHouseAdvertById(ctx, tx, advertUpdateData)
 	suite.Assert().NoError(err)
 
@@ -1391,7 +1411,7 @@ func (suite *UserRepoTestSuite) TestAdvertRepo_UpdateFlatAdvertById() {
 	advertTypeId := uuid.NewV4()
 	houseId := uuid.NewV4()
 	buildingId := uuid.NewV4()
-	ctx := context.Background()
+	ctx := context.WithValue(context.Background(), "requestId", uuid.NewV4().String())
 	// advertType := models.AdvertTypeHouse
 	suite.mock.ExpectBegin()
 	tx, err := suite.db.Begin()
@@ -1467,7 +1487,8 @@ func (suite *UserRepoTestSuite) TestAdvertRepo_UpdateFlatAdvertById() {
 	suite.mock.ExpectExec(queryInsertPriceChange).WithArgs(sqlmock.AnyArg(), advertUpdateData.ID, advertUpdateData.Price).WillReturnError(nil).
 		WillReturnResult(sqlmock.NewResult(1, 1))
 
-	rep := repo.NewRepository(suite.db)
+	logger := zap.Must(zap.NewDevelopment())
+	rep := repo.NewRepository(suite.db, logger)
 	err = rep.UpdateFlatAdvertById(ctx, tx, advertUpdateData)
 	suite.Assert().NoError(err)
 
@@ -1482,7 +1503,7 @@ func (suite *UserRepoTestSuite) TestAdvertRepo_UpdateFlatAdvertById() {
 
 func (suite *UserRepoTestSuite) TestAdvertRepo_GetFlatAdvertById() {
 	// advertId := uuid.NewV4()
-	ctx := context.Background()
+	ctx := context.WithValue(context.Background(), "requestId", uuid.NewV4().String())
 	// advertType := models.AdvertTypeHouse
 	// suite.mock.ExpectBegin()
 
@@ -1595,7 +1616,8 @@ func (suite *UserRepoTestSuite) TestAdvertRepo_GetFlatAdvertById() {
 			advertData.ComplexProperties.NameCompany,
 			advertData.ComplexProperties.NameComplex))
 
-	rep := repo.NewRepository(suite.db)
+	logger := zap.Must(zap.NewDevelopment())
+	rep := repo.NewRepository(suite.db, logger)
 	_, err := rep.GetFlatAdvertById(ctx, id)
 	suite.Assert().NoError(err)
 
@@ -1610,7 +1632,7 @@ func (suite *UserRepoTestSuite) TestAdvertRepo_GetFlatAdvertById() {
 
 func (suite *UserRepoTestSuite) TestAdvertRepo_GetRectangleAdvertsByUserId() {
 	// advertId := uuid.NewV4()
-	ctx := context.Background()
+	ctx := context.WithValue(context.Background(), "requestId", uuid.NewV4().String())
 	// advertType := models.AdvertTypeHouse
 	// suite.mock.ExpectBegin()
 
@@ -1706,7 +1728,8 @@ func (suite *UserRepoTestSuite) TestAdvertRepo_GetRectangleAdvertsByUserId() {
 		WillReturnRows(sqlmock.NewRows([]string{"1", "2", "3", "4", "5"}).AddRow(
 			rectangleAdvert.Address,
 			true, 124.44, 444.444, 4))
-	rep := repo.NewRepository(suite.db)
+	logger := zap.Must(zap.NewDevelopment())
+	rep := repo.NewRepository(suite.db, logger)
 	_, err := rep.GetRectangleAdvertsByUserId(ctx, pageSize, offset, userId)
 	suite.Assert().NoError(err)
 
@@ -1721,7 +1744,7 @@ func (suite *UserRepoTestSuite) TestAdvertRepo_GetRectangleAdvertsByUserId() {
 
 func (suite *UserRepoTestSuite) TestAdvertRepo_GetRectangleAdvertsByComplexId() {
 	// advertId := uuid.NewV4()
-	ctx := context.Background()
+	ctx := context.WithValue(context.Background(), "requestId", uuid.NewV4().String())
 	// advertType := models.AdvertTypeHouse
 	// suite.mock.ExpectBegin()
 
@@ -1817,7 +1840,8 @@ func (suite *UserRepoTestSuite) TestAdvertRepo_GetRectangleAdvertsByComplexId() 
 		WillReturnRows(sqlmock.NewRows([]string{"1", "2", "3", "4", "5"}).AddRow(
 			rectangleAdvert.Address,
 			true, 124.44, 444.444, 4))
-	rep := repo.NewRepository(suite.db)
+	logger := zap.Must(zap.NewDevelopment())
+	rep := repo.NewRepository(suite.db, logger)
 	_, err := rep.GetRectangleAdvertsByComplexId(ctx, pageSize, offset, userId)
 	suite.Assert().NoError(err)
 

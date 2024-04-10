@@ -13,6 +13,7 @@ import (
 	"github.com/golang/mock/gomock"
 	"github.com/satori/uuid"
 	"github.com/stretchr/testify/assert"
+	"go.uber.org/zap"
 )
 
 func TestCreateFlatAdvert(t *testing.T) {
@@ -20,7 +21,8 @@ func TestCreateFlatAdvert(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockRepo := adverts_mock.NewMockAdvertRepo(ctrl)
-	usecase := usecase.NewAdvertUsecase(mockRepo)
+	logger := zap.Must(zap.NewDevelopment())
+	usecase := usecase.NewAdvertUsecase(mockRepo, logger)
 	id1 := uuid.NewV4()
 	type args struct {
 		data *models.AdvertFlatCreateData
@@ -94,7 +96,7 @@ func TestCreateFlatAdvert(t *testing.T) {
 			mockTr.EXPECT().Commit().Return(nil)
 			mockTr.EXPECT().Rollback().Return(nil)
 
-			_, goterr := usecase.CreateFlatAdvert(context.Background(), tt.args.data)
+			_, goterr := usecase.CreateFlatAdvert(context.WithValue(context.Background(), "requestId", uuid.NewV4().String()), tt.args.data)
 			// assert.Equal(t, tt.want.adv, gotAdv)
 			assert.Equal(t, tt.want.err, goterr)
 			ctrl2.Finish()
@@ -108,7 +110,8 @@ func TestCreateHouseAdvert(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockRepo := adverts_mock.NewMockAdvertRepo(ctrl)
-	usecase := usecase.NewAdvertUsecase(mockRepo)
+	logger := zap.Must(zap.NewDevelopment())
+	usecase := usecase.NewAdvertUsecase(mockRepo, logger)
 	id1 := uuid.NewV4()
 	type args struct {
 		data *models.AdvertHouseCreateData
@@ -177,7 +180,7 @@ func TestCreateHouseAdvert(t *testing.T) {
 			mockTr.EXPECT().Commit().Return(nil)
 			mockTr.EXPECT().Rollback().Return(nil)
 
-			_, goterr := usecase.CreateHouseAdvert(context.Background(), tt.args.data)
+			_, goterr := usecase.CreateHouseAdvert(context.WithValue(context.Background(), "requestId", uuid.NewV4().String()), tt.args.data)
 			// assert.Equal(t, tt.want.adv, gotAdv)
 			assert.Equal(t, tt.want.err, goterr)
 			ctrl2.Finish()
@@ -191,7 +194,8 @@ func TestGetAdvertById(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockRepo := adverts_mock.NewMockAdvertRepo(ctrl)
-	usecase := usecase.NewAdvertUsecase(mockRepo)
+	logger := zap.Must(zap.NewDevelopment())
+	usecase := usecase.NewAdvertUsecase(mockRepo, logger)
 
 	advData := &models.AdvertData{
 		ID:           uuid.NewV4(),
@@ -254,8 +258,8 @@ func TestGetAdvertById(t *testing.T) {
 			a := models.AdvertTypeHouse
 			mockRepo.EXPECT().GetTypeAdvertById(gomock.Any(), gomock.Any()).Return(&a, nil)
 			mockRepo.EXPECT().GetHouseAdvertById(gomock.Any(), gomock.Any()).Return(tt.want.adv, nil)
-			mockRepo.EXPECT().SelectImages(gomock.Any()).Return(nil, nil)
-			_, goterr := usecase.GetAdvertById(context.Background(), tt.args.idi)
+			mockRepo.EXPECT().SelectImages(gomock.Any(), gomock.Any()).Return(nil, nil)
+			_, goterr := usecase.GetAdvertById(context.WithValue(context.Background(), "requestId", uuid.NewV4().String()), tt.args.idi)
 
 			assert.Equal(t, tt.want.err, goterr)
 
@@ -268,7 +272,8 @@ func TestLUpdateAdvertById(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockRepo := adverts_mock.NewMockAdvertRepo(ctrl)
-	usecase := usecase.NewAdvertUsecase(mockRepo)
+	logger := zap.Must(zap.NewDevelopment())
+	usecase := usecase.NewAdvertUsecase(mockRepo, logger)
 
 	advData := &models.AdvertData{
 		ID:           uuid.NewV4(),
@@ -338,7 +343,7 @@ func TestLUpdateAdvertById(t *testing.T) {
 			mockTr.EXPECT().Commit().Return(nil)
 			mockTr.EXPECT().Rollback().Return(nil)
 
-			goterr := usecase.UpdateAdvertById(context.Background(), &models.AdvertUpdateData{})
+			goterr := usecase.UpdateAdvertById(context.WithValue(context.Background(), "requestId", uuid.NewV4().String()), &models.AdvertUpdateData{})
 			// assert.Equal(t, tt.want.adv, gotAdv)
 			assert.Equal(t, tt.want.err, goterr)
 			ctrl2.Finish()
@@ -351,7 +356,8 @@ func TestDeleteAdvertById(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockRepo := adverts_mock.NewMockAdvertRepo(ctrl)
-	usecase := usecase.NewAdvertUsecase(mockRepo)
+	logger := zap.Must(zap.NewDevelopment())
+	usecase := usecase.NewAdvertUsecase(mockRepo, logger)
 
 	advData := &models.AdvertData{
 		ID:           uuid.NewV4(),
@@ -422,7 +428,7 @@ func TestDeleteAdvertById(t *testing.T) {
 			mockTr.EXPECT().Commit().Return(nil)
 			mockTr.EXPECT().Rollback().Return(nil)
 
-			goterr := usecase.DeleteAdvertById(context.Background(), uuid.NewV4())
+			goterr := usecase.DeleteAdvertById(context.WithValue(context.Background(), "requestId", uuid.NewV4().String()), uuid.NewV4())
 			// assert.Equal(t, tt.want.adv, gotAdv)
 			assert.Equal(t, tt.want.err, goterr)
 			ctrl2.Finish()
@@ -435,10 +441,11 @@ func TestGetSquareAdvertsList(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockRepo := adverts_mock.NewMockAdvertRepo(ctrl)
-	usecase := usecase.NewAdvertUsecase(mockRepo)
+	logger := zap.Must(zap.NewDevelopment())
+	usecase := usecase.NewAdvertUsecase(mockRepo, logger)
 
 	// Prepare test data
-	ctx := context.Background()
+	ctx := context.WithValue(context.Background(), "requestId", uuid.NewV4().String())
 	// filter := AdvertFilter{ /* populate filter if needed */ }
 	mockResult := &models.AdvertSquareData{
 		ID:           uuid.NewV4(),
@@ -466,10 +473,11 @@ func TestGetRectangleAdvertsList(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockRepo := adverts_mock.NewMockAdvertRepo(ctrl)
-	usecase := usecase.NewAdvertUsecase(mockRepo)
+	logger := zap.Must(zap.NewDevelopment())
+	usecase := usecase.NewAdvertUsecase(mockRepo, logger)
 
 	// Prepare test data
-	ctx := context.Background()
+	ctx := context.WithValue(context.Background(), "requestId", uuid.NewV4().String())
 	// filter := AdvertFilter{ /* populate filter if needed */ }
 	// mockResult := &models.AdvertDataPage{}
 	// Set expectations
@@ -488,10 +496,11 @@ func TestGetExistBuildingsByAddress(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockRepo := adverts_mock.NewMockAdvertRepo(ctrl)
-	usecase := usecase.NewAdvertUsecase(mockRepo)
+	logger := zap.Must(zap.NewDevelopment())
+	usecase := usecase.NewAdvertUsecase(mockRepo, logger)
 
 	// Prepare test data
-	ctx := context.Background()
+	ctx := context.WithValue(context.Background(), "requestId", uuid.NewV4().String())
 	// filter := AdvertFilter{ /* populate filter if needed */ }
 	// mockResult := &models.AdvertDataPage{}
 	// Set expectations
@@ -510,10 +519,11 @@ func TestGetRectangleAdvertsByUserId(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockRepo := adverts_mock.NewMockAdvertRepo(ctrl)
-	usecase := usecase.NewAdvertUsecase(mockRepo)
+	logger := zap.Must(zap.NewDevelopment())
+	usecase := usecase.NewAdvertUsecase(mockRepo, logger)
 
 	// Prepare test data
-	ctx := context.Background()
+	ctx := context.WithValue(context.Background(), "requestId", uuid.NewV4().String())
 	// filter := AdvertFilter{ /* populate filter if needed */ }
 	// mockResult := &models.AdvertDataPage{}
 	// Set expectations
@@ -532,10 +542,11 @@ func TestGetRectangleAdvertsByComplexId(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockRepo := adverts_mock.NewMockAdvertRepo(ctrl)
-	usecase := usecase.NewAdvertUsecase(mockRepo)
+	logger := zap.Must(zap.NewDevelopment())
+	usecase := usecase.NewAdvertUsecase(mockRepo, logger)
 
 	// Prepare test data
-	ctx := context.Background()
+	ctx := context.WithValue(context.Background(), "requestId", uuid.NewV4().String())
 	// filter := AdvertFilter{ /* populate filter if needed */ }
 	// mockResult := &models.AdvertDataPage{}
 	// Set expectations

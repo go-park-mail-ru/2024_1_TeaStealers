@@ -11,17 +11,19 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/satori/uuid"
+	"go.uber.org/zap"
 )
 
 // CompanyHandler handles HTTP requests for company changes.
 type CompanyHandler struct {
 	// uc represents the usecase interface for company changes.
-	uc companies.CompanyUsecase
+	uc     companies.CompanyUsecase
+	logger *zap.Logger
 }
 
 // NewCompanyHandler creates a new instance of CompanyHandler.
-func NewCompanyHandler(uc companies.CompanyUsecase) *CompanyHandler {
-	return &CompanyHandler{uc: uc}
+func NewCompanyHandler(uc companies.CompanyUsecase, logger *zap.Logger) *CompanyHandler {
+	return &CompanyHandler{uc: uc, logger: logger}
 }
 
 func (h *CompanyHandler) CreateCompany(w http.ResponseWriter, r *http.Request) {

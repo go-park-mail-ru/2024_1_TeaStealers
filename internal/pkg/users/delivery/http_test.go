@@ -71,7 +71,7 @@ func TestUsersHandler_GetCurUser(t *testing.T) {
 				err:    nil,
 			},
 			prepare: func(f *fields, a *args, w *want) *httptest.ResponseRecorder {
-				f.usecase.EXPECT().GetUser(gomock.Eq(a.cookieId)).Return(w.user, w.err)
+				f.usecase.EXPECT().GetUser(gomock.Any(), gomock.Eq(a.cookieId)).Return(w.user, w.err)
 				handler := NewUserHandler(f.usecase)
 
 				req := httptest.NewRequest(http.MethodGet, "/me", nil)
@@ -106,7 +106,7 @@ func TestUsersHandler_GetCurUser(t *testing.T) {
 				err:     errors.New("error"),
 			},
 			prepare: func(f *fields, a *args, w *want) *httptest.ResponseRecorder {
-				f.usecase.EXPECT().GetUser(gomock.Eq(a.cookieId)).Return(w.user, w.err)
+				f.usecase.EXPECT().GetUser(gomock.Any(), gomock.Eq(a.cookieId)).Return(w.user, w.err)
 				handler := NewUserHandler(f.usecase)
 
 				req := httptest.NewRequest(http.MethodGet, "/me", nil)
@@ -238,7 +238,7 @@ func TestUsersHandler_UpdateUserPhoto(t *testing.T) {
 				status:   http.StatusOK,
 			},
 			prepare: func(f *fields, a *args, w *want) *httptest.ResponseRecorder {
-				f.usecase.EXPECT().UpdateUserPhoto(gomock.Any(), gomock.Eq(a.fileType), gomock.Eq(a.cookieId)).Return(w.filepath, a.updateUseCerr)
+				f.usecase.EXPECT().UpdateUserPhoto(gomock.Any(), gomock.Any(), gomock.Eq(a.fileType), gomock.Eq(a.cookieId)).Return(w.filepath, a.updateUseCerr)
 				handler := NewUserHandler(f.usecase)
 				fakeFormData := new(bytes.Buffer)
 				fakeWriter := multipart.NewWriter(fakeFormData)
@@ -349,7 +349,7 @@ func TestUsersHandler_UpdateUserPhoto(t *testing.T) {
 				message:  "failed upload file",
 			},
 			prepare: func(f *fields, a *args, w *want) *httptest.ResponseRecorder {
-				f.usecase.EXPECT().UpdateUserPhoto(gomock.Any(), gomock.Eq(a.fileType), gomock.Eq(a.cookieId)).Return(w.filepath, a.updateUseCerr)
+				f.usecase.EXPECT().UpdateUserPhoto(gomock.Any(), gomock.Any(), gomock.Eq(a.fileType), gomock.Eq(a.cookieId)).Return(w.filepath, a.updateUseCerr)
 				handler := NewUserHandler(f.usecase)
 				fakeFormData := new(bytes.Buffer)
 				fakeWriter := multipart.NewWriter(fakeFormData)
@@ -473,7 +473,7 @@ func TestUsersHandler_DeleteUserPhoto(t *testing.T) {
 				status:  http.StatusOK,
 			},
 			prepare: func(f *fields, a *args, w *want) *httptest.ResponseRecorder {
-				f.usecase.EXPECT().DeleteUserPhoto(gomock.Eq(a.cookieId)).Return(a.userDeleteErr)
+				f.usecase.EXPECT().DeleteUserPhoto(gomock.Any(), gomock.Eq(a.cookieId)).Return(a.userDeleteErr)
 				handler := NewUserHandler(f.usecase)
 				req := httptest.NewRequest(http.MethodDelete, "/avatar", nil)
 				req = req.WithContext(context.WithValue(req.Context(), middleware.CookieName, a.cookieId))
@@ -498,7 +498,7 @@ func TestUsersHandler_DeleteUserPhoto(t *testing.T) {
 				status:  http.StatusBadRequest,
 			},
 			prepare: func(f *fields, a *args, w *want) *httptest.ResponseRecorder {
-				f.usecase.EXPECT().DeleteUserPhoto(gomock.Eq(a.cookieId)).Return(a.userDeleteErr)
+				f.usecase.EXPECT().DeleteUserPhoto(gomock.Any(), gomock.Eq(a.cookieId)).Return(a.userDeleteErr)
 				handler := NewUserHandler(f.usecase)
 				req := httptest.NewRequest(http.MethodDelete, "/avatar", nil)
 				req = req.WithContext(context.WithValue(req.Context(), middleware.CookieName, a.cookieId))
@@ -623,7 +623,7 @@ func TestUsersHandler_UpdateUserInfo(t *testing.T) {
 				status:   http.StatusOK,
 			},
 			prepare: func(f *fields, a *args, w *want) *httptest.ResponseRecorder {
-				f.usecase.EXPECT().UpdateUserInfo(gomock.Eq(a.cookieId), gomock.Eq(a.userUpdData)).Return(w.wantUser, a.userUpdateErr)
+				f.usecase.EXPECT().UpdateUserInfo(gomock.Any(), gomock.Eq(a.cookieId), gomock.Eq(a.userUpdData)).Return(w.wantUser, a.userUpdateErr)
 				handler := NewUserHandler(f.usecase)
 				reqBody, _ := json.Marshal(a.userUpdData)
 				req := httptest.NewRequest(http.MethodPost, "/info", bytes.NewBuffer(reqBody))
@@ -706,7 +706,7 @@ func TestUsersHandler_UpdateUserInfo(t *testing.T) {
 				status:   http.StatusBadRequest,
 			},
 			prepare: func(f *fields, a *args, w *want) *httptest.ResponseRecorder {
-				f.usecase.EXPECT().UpdateUserInfo(gomock.Eq(a.cookieId), gomock.Eq(a.userUpdData)).Return(w.wantUser, a.userUpdateErr)
+				f.usecase.EXPECT().UpdateUserInfo(gomock.Any(), gomock.Eq(a.cookieId), gomock.Eq(a.userUpdData)).Return(w.wantUser, a.userUpdateErr)
 				handler := NewUserHandler(f.usecase)
 				reqBody, _ := json.Marshal(a.userUpdData)
 				req := httptest.NewRequest(http.MethodPost, "/info", bytes.NewBuffer(reqBody))
@@ -795,7 +795,7 @@ func TestUsersHandler_UpdateUserPassword(t *testing.T) {
 				status:  http.StatusOK,
 			},
 			prepare: func(f *fields, a *args, w *want) *httptest.ResponseRecorder {
-				f.usecase.EXPECT().UpdateUserPassword(gomock.Eq(a.userUpdData)).Return(a.token, time.Now(), a.userUpdateErr)
+				f.usecase.EXPECT().UpdateUserPassword(gomock.Any(), gomock.Eq(a.userUpdData)).Return(a.token, time.Now(), a.userUpdateErr)
 				handler := NewUserHandler(f.usecase)
 				reqBody, _ := json.Marshal(a.userUpdData)
 				req := httptest.NewRequest(http.MethodPost, "/password", bytes.NewBuffer(reqBody))
@@ -878,7 +878,7 @@ func TestUsersHandler_UpdateUserPassword(t *testing.T) {
 				status:  http.StatusBadRequest,
 			},
 			prepare: func(f *fields, a *args, w *want) *httptest.ResponseRecorder {
-				f.usecase.EXPECT().UpdateUserPassword(gomock.Eq(a.userUpdData)).Return(a.token, time.Now(), a.userUpdateErr)
+				f.usecase.EXPECT().UpdateUserPassword(gomock.Any(), gomock.Eq(a.userUpdData)).Return(a.token, time.Now(), a.userUpdateErr)
 				handler := NewUserHandler(f.usecase)
 				reqBody, _ := json.Marshal(a.userUpdData)
 				req := httptest.NewRequest(http.MethodPost, "/password", bytes.NewBuffer(reqBody))

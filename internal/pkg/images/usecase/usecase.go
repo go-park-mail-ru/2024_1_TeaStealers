@@ -4,20 +4,23 @@ import (
 	"2024_1_TeaStealers/internal/models"
 	"2024_1_TeaStealers/internal/pkg/images"
 	"fmt"
-	"github.com/satori/uuid"
 	"io"
 	"os"
 	"path/filepath"
+
+	"github.com/satori/uuid"
+	"go.uber.org/zap"
 )
 
 // ImageUsecase represents the usecase for images for advert.
 type ImageUsecase struct {
-	repo images.ImageRepo
+	repo   images.ImageRepo
+	logger *zap.Logger
 }
 
 // NewImageUsecase creates a new instance of ImageUsecase.
-func NewImageUsecase(repo images.ImageRepo) *ImageUsecase {
-	return &ImageUsecase{repo: repo}
+func NewImageUsecase(repo images.ImageRepo, logger *zap.Logger) *ImageUsecase {
+	return &ImageUsecase{repo: repo, logger: logger}
 }
 
 // UploadImage upload image for advert

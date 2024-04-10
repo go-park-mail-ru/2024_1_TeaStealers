@@ -7,16 +7,18 @@ import (
 	"log"
 
 	"github.com/satori/uuid"
+	"go.uber.org/zap"
 )
 
 // CompanyRepo represents a repository for company changes.
 type CompanyRepo struct {
-	db *sql.DB
+	db     *sql.DB
+	logger *zap.Logger
 }
 
 // NewRepository creates a new instance of CompanyRepo.
-func NewRepository(db *sql.DB) *CompanyRepo {
-	return &CompanyRepo{db: db}
+func NewRepository(db *sql.DB, logger *zap.Logger) *CompanyRepo {
+	return &CompanyRepo{db: db, logger: logger}
 }
 
 // CreateCompany creates a new company in the database.

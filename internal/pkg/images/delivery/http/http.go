@@ -11,17 +11,19 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/satori/uuid"
+	"go.uber.org/zap"
 )
 
 // ImagesHandler handles HTTP requests for images.
 type ImagesHandler struct {
 	// uc represents the usecase interface for images.
-	uc images.ImageUsecase
+	uc     images.ImageUsecase
+	logger *zap.Logger
 }
 
 // NewImageHandler creates a new instance of ImagesHandler.
-func NewImageHandler(uc images.ImageUsecase) *ImagesHandler {
-	return &ImagesHandler{uc: uc}
+func NewImageHandler(uc images.ImageUsecase, logger *zap.Logger) *ImagesHandler {
+	return &ImagesHandler{uc: uc, logger: logger}
 }
 
 // UploadImage upload image for advert

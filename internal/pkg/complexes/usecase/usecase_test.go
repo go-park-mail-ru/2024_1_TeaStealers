@@ -7,11 +7,13 @@ import (
 	"2024_1_TeaStealers/internal/pkg/complexes/usecase"
 	"context"
 	"errors"
+	"testing"
+	"time"
+
 	"github.com/golang/mock/gomock"
 	"github.com/satori/uuid"
 	"github.com/stretchr/testify/assert"
-	"testing"
-	"time"
+	"go.uber.org/zap"
 )
 
 func TestCreateComplex(t *testing.T) {
@@ -48,7 +50,7 @@ func TestCreateComplex(t *testing.T) {
 		Security:               true,
 	}
 	mockRepo := complexes_mock.NewMockComplexRepo(ctrl)
-	usecase := usecase.NewComplexUsecase(mockRepo)
+	usecase := usecase.NewComplexUsecase(mockRepo, &zap.Logger{})
 	type args struct {
 		crcompl *models.ComplexCreateData
 	}
@@ -103,7 +105,7 @@ func TestCreateBuilding(t *testing.T) {
 		Address: "adr",
 	}
 	mockRepo := complexes_mock.NewMockComplexRepo(ctrl)
-	usecase := usecase.NewComplexUsecase(mockRepo)
+	usecase := usecase.NewComplexUsecase(mockRepo, &zap.Logger{})
 	type args struct {
 		crbuild *models.BuildingCreateData
 	}
@@ -152,7 +154,7 @@ func TestGetComplexById(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockRepo := complexes_mock.NewMockComplexRepo(ctrl)
-	usecase := usecase.NewComplexUsecase(mockRepo)
+	usecase := usecase.NewComplexUsecase(mockRepo, &zap.Logger{})
 	name := "get complex by id ok"
 	foundCData := &models.ComplexData{}
 	t.Run(name, func(t *testing.T) {
@@ -168,7 +170,7 @@ func TestGetComplexById2(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockRepo := complexes_mock.NewMockComplexRepo(ctrl)
-	usecase := usecase.NewComplexUsecase(mockRepo)
+	usecase := usecase.NewComplexUsecase(mockRepo, &zap.Logger{})
 	name := "get complex by id error"
 	foundCData := &models.ComplexData{}
 	t.Run(name, func(t *testing.T) {
@@ -186,7 +188,7 @@ func TestCreateFlatAdvert(t *testing.T) {
 	defer ctrl2.Finish()
 	mockTrans := transaction.NewMockTransaction(ctrl2)
 	mockRepo := complexes_mock.NewMockComplexRepo(ctrl)
-	usecase := usecase.NewComplexUsecase(mockRepo)
+	usecase := usecase.NewComplexUsecase(mockRepo, &zap.Logger{})
 	name := "create flat advert ok"
 	AdvData := &models.ComplexAdvertFlatCreateData{}
 	t.Run(name, func(t *testing.T) {
@@ -211,7 +213,7 @@ func TestCreateHouseAdvert(t *testing.T) {
 	defer ctrl2.Finish()
 	mockTrans := transaction.NewMockTransaction(ctrl2)
 	mockRepo := complexes_mock.NewMockComplexRepo(ctrl)
-	usecase := usecase.NewComplexUsecase(mockRepo)
+	usecase := usecase.NewComplexUsecase(mockRepo, &zap.Logger{})
 	name := "create flat advert ok"
 	AdvData := &models.ComplexAdvertHouseCreateData{}
 	t.Run(name, func(t *testing.T) {

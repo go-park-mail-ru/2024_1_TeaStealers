@@ -4,7 +4,43 @@ package adverts
 import (
 	"2024_1_TeaStealers/internal/models"
 	"context"
+
 	"github.com/satori/uuid"
+)
+
+const (
+	CreateFlatAdvertMethod               = "CreateFlatAdvert"
+	CreateHouseAdvertMethod              = "CreateHouseAdvert"
+	GetAdvertByIdMethod                  = "GetAdvertById"
+	GetSquareAdvertsListMethod           = "GetSquareAdvertsList"
+	GetRectangleAdvertsListMethod        = "GetRectangleAdvertsList"
+	GetRectangleAdvertsByUserIdMethod    = "GetRectangleAdvertsByUserId"
+	UpdateAdvertByIdMethod               = "UpdateAdvertById"
+	DeleteAdvertByIdMethod               = "DeleteAdvertById"
+	GetRectangleAdvertsByComplexIdMethod = "GetRectangleAdvertsByComplexId"
+	GetExistBuildingsByAddressMethod     = "GetExistBuildingsByAddress"
+	BeginTxMethod                        = "BeginTx"
+	CreateAdvertTypeMethod               = "CreateAdvertType"
+	CreateAdvertMethod                   = "CreateAdvert"
+	CreatePriceChangeMethod              = "CreatePriceChange"
+	CreateBuildingMethod                 = "CreateBuilding"
+	CreateHouseMethod                    = "CreateHouse"
+	CreateFlatMethod                     = "CreateFlat"
+	CheckExistsBuildingMethod            = "CheckExistsBuilding"
+	GetHouseAdvertByIdMethod             = "GetHouseAdvertById"
+	GetFlatAdvertByIdMethod              = "GetFlatAdvertById"
+	GetTypeAdvertByIdMethod              = "GetTypeAdvertById"
+	GetSquareAdvertsMethod               = "GetSquareAdverts"
+	GetRectangleAdvertsMethod            = "GetRectangleAdverts"
+	UpdateFlatAdvertByIdMethod           = "UpdateFlatAdvertById"
+	UpdateHouseAdvertByIdMethod          = "UpdateHouseAdvertById"
+	ChangeTypeAdvertMethod               = "ChangeTypeAdvert"
+	DeleteHouseAdvertByIdMethod          = "DeleteHouseAdvertById"
+	DeleteFlatAdvertByIdMethod           = "DeleteFlatAdvertById"
+	CheckExistsBuildingsMethod           = "CheckExistsBuildings"
+	SelectImagesMethod                   = "SelectImages"
+	CheckExistsFlatMethod                = "CheckExistsFlat"
+	CheckExistsHouseMethod               = "CheckExistsHouse"
 )
 
 // AdvertUsecase represents the usecase interface for adverts.
@@ -44,5 +80,5 @@ type AdvertRepo interface {
 	DeleteFlatAdvertById(ctx context.Context, tx models.Transaction, advertId uuid.UUID) error
 	GetRectangleAdvertsByComplexId(ctx context.Context, pageSize, offset int, complexId uuid.UUID) ([]*models.AdvertRectangleData, error)
 	CheckExistsBuildings(ctx context.Context, pageSize int, adress string) ([]*models.BuildingData, error)
-	SelectImages(advertId uuid.UUID) ([]*models.ImageResp, error)
+	SelectImages(ctx context.Context, advertId uuid.UUID) ([]*models.ImageResp, error)
 }

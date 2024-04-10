@@ -2,27 +2,32 @@ package repo
 
 import (
 	"2024_1_TeaStealers/internal/models"
+	"2024_1_TeaStealers/internal/pkg/auth"
+	"2024_1_TeaStealers/internal/pkg/utils"
 	"context"
 	"database/sql"
 	"errors"
 
 	"github.com/satori/uuid"
+	"go.uber.org/zap"
 )
 
 // AuthRepo represents a repository for authentication.
 type AuthRepo struct {
-	db *sql.DB
+	db     *sql.DB
+	logger *zap.Logger
 }
 
 // NewRepository creates a new instance of AuthRepo.
-func NewRepository(db *sql.DB) *AuthRepo {
-	return &AuthRepo{db: db}
+func NewRepository(db *sql.DB, logger *zap.Logger) *AuthRepo {
+	return &AuthRepo{db: db, logger: logger}
 }
 
 // CreateUser creates a new user in the database.
 func (r *AuthRepo) CreateUser(ctx context.Context, user *models.User) (*models.User, error) {
 	insert := `INSERT INTO users (id, email, phone, passwordhash) VALUES ($1, $2, $3, $4)`
 	if _, err := r.db.ExecContext(ctx, insert, user.ID, user.Email, user.Phone, user.PasswordHash); err != nil {
+		utils.LogError(r.logger, ctx.Value("requestId").(string), utils.UsecaseLayer, auth.CreateUserMethod, err)
 		return nil, err
 	}
 	query := `SELECT id, email, phone, passwordhash, levelupdate FROM users WHERE id = $1`
@@ -31,8 +36,11 @@ func (r *AuthRepo) CreateUser(ctx context.Context, user *models.User) (*models.U
 
 	newUser := &models.User{}
 	if err := res.Scan(&newUser.ID, &newUser.Email, &newUser.Phone, &newUser.PasswordHash, &newUser.LevelUpdate); err != nil {
+		utils.LogError(r.logger, ctx.Value("requestId").(string), utils.UsecaseLayer, auth.CreateUserMethod, err)
 		return nil, err
 	}
+
+	utils.LogSucces(r.logger, ctx.Value("requestId").(string), utils.UsecaseLayer, auth.CreateUserMethod)
 	return newUser, nil
 }
 
@@ -44,9 +52,11 @@ func (r *AuthRepo) GetUserByLogin(ctx context.Context, login string) (*models.Us
 
 	user := &models.User{}
 	if err := res.Scan(&user.ID, &user.Email, &user.Phone, &user.PasswordHash, &user.LevelUpdate); err != nil {
+		utils.LogError(r.logger, ctx.Value("requestId").(string), utils.UsecaseLayer, auth.GetUserByLoginMethod, err)
 		return nil, err
 	}
 
+	utils.LogSucces(r.logger, ctx.Value("requestId").(string), utils.UsecaseLayer, auth.GetUserByLoginMethod)
 	return user, nil
 }
 
@@ -54,24 +64,30 @@ func (r *AuthRepo) GetUserByLogin(ctx context.Context, login string) (*models.Us
 func (r *AuthRepo) CheckUser(ctx context.Context, login string, passwordHash string) (*models.User, error) {
 	user, err := r.GetUserByLogin(ctx, login)
 	if err != nil {
+		utils.LogError(r.logger, ctx.Value("requestId").(string), utils.UsecaseLayer, auth.CheckUserMethod, err)
 		return nil, err
 	}
 
 	if user.PasswordHash != passwordHash {
+		utils.LogError(r.logger, ctx.Value("requestId").(string), utils.UsecaseLayer, auth.CheckUserMethod, errors.New("Password hash not equal"))
 		return nil, errors.New("wrong password")
 	}
 
+	utils.LogSucces(r.logger, ctx.Value("requestId").(string), utils.UsecaseLayer, auth.CheckUserMethod)
 	return user, nil
 }
 
-func (r *AuthRepo) GetUserLevelById(id uuid.UUID) (int, error) {
+func (r *AuthRepo) GetUserLevelById(ctx context.Context, id uuid.UUID) (int, error) {
 	query := `SELECT levelupdate FROM users WHERE id = $1`
 
 	res := r.db.QueryRow(query, id)
 
 	level := 0
 	if err := res.Scan(&level); err != nil {
+		utils.LogError(r.logger, ctx.Value("requestId").(string), utils.UsecaseLayer, auth.GetUserLevelByIdMethod, err)
 		return 0, err
 	}
+
+	utils.LogSucces(r.logger, ctx.Value("requestId").(string), utils.UsecaseLayer, auth.GetUserLevelByIdMethod)
 	return level, nil
 }

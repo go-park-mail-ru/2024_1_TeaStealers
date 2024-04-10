@@ -11,6 +11,7 @@ import (
 	sqlmock "github.com/DATA-DOG/go-sqlmock"
 	"github.com/satori/uuid"
 	"github.com/stretchr/testify/suite"
+	"go.uber.org/zap"
 )
 
 type ImageRepoTestSuite struct {
@@ -78,7 +79,7 @@ func (suite *ImageRepoTestSuite) TestSelectImages() {
 	for _, tt := range tests {
 		suite.Run(tt.name, func() {
 			suite.setupMockSelectImage(tt.args.advertID, tt.want.images)
-			rep := repo.NewRepository(suite.db)
+			rep := repo.NewRepository(suite.db, &zap.Logger{})
 			gotImages, gotErr := rep.SelectImages(tt.args.advertID)
 			suite.Assert().Equal(tt.want.err, gotErr)
 			if tt.want.err != nil {
@@ -162,7 +163,7 @@ func (suite *ImageRepoTestSuite) TestStoreImage() {
 	for _, tt := range tests {
 		suite.Run(tt.name, func() {
 			suite.setupMockStoreImage(tt.args.image, tt.want.imageResp, tt.want.err)
-			repo := repo.NewRepository(suite.db)
+			repo := repo.NewRepository(suite.db, &zap.Logger{})
 			gotImageResp, gotErr := repo.StoreImage(tt.args.image)
 			suite.Assert().Equal(tt.want.err, gotErr)
 			if tt.want.err != nil {
@@ -257,7 +258,7 @@ func (suite *ImageRepoTestSuite) TestDeleteImage() {
 		suite.Run(tt.name, func() {
 			advertId := uuid.NewV4()
 			suite.setupMockDeleteImage(tt.args.idImage, advertId, tt.want.imageResp, tt.want.err)
-			repo := repo.NewRepository(suite.db)
+			repo := repo.NewRepository(suite.db, &zap.Logger{})
 			gotImageResp, gotErr := repo.DeleteImage(tt.args.idImage)
 			suite.Assert().Equal(tt.want.err, gotErr)
 			if tt.want.err != nil {
