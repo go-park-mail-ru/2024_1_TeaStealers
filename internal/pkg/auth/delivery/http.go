@@ -92,7 +92,7 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-  data.Sanitize()
+	data.Sanitize()
 	user, token, exp, err := h.uc.Login(ctx, &data)
 
 	if err != nil {

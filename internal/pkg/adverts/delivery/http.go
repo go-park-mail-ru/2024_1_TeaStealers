@@ -91,7 +91,7 @@ func (h *AdvertHandler) CreateHouseAdvert(w http.ResponseWriter, r *http.Request
 
 	id, ok := ctx.Value(middleware.CookieName).(uuid.UUID)
 
-  if !ok {
+	if !ok {
 		utils.LogErrorResponse(h.logger, ctx.Value("requestId").(string), utils.DeliveryLayer, CreateHouseAdvertMethod, errors.New("error with cookie"), http.StatusBadRequest)
 		utils.WriteError(w, http.StatusBadRequest, "incorrect id")
 		return
@@ -143,7 +143,7 @@ func (h *AdvertHandler) GetAdvertById(w http.ResponseWriter, r *http.Request) {
 
 	advertData, err := h.uc.GetAdvertById(ctx, advertId)
 	advertData.Sanitize()
-  
+
 	if err != nil {
 		utils.LogErrorResponse(h.logger, ctx.Value("requestId").(string), utils.DeliveryLayer, GetAdvertByIdMethod, err, http.StatusBadRequest)
 		utils.WriteError(w, http.StatusBadRequest, err.Error())

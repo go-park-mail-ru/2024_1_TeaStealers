@@ -75,7 +75,7 @@ func main() {
 	autHandler := authH.NewAuthHandler(authUsecase, logger)
 
 	jwtMd := middleware.NewAuthMiddleware(authUsecase, logger)
-  csrfMd := middleware.NewCsrfMiddleware()
+	csrfMd := middleware.NewCsrfMiddleware()
 
 	auth := r.PathPrefix("/auth").Subrouter()
 	// auth.HandleFunc("/signup", autHandler.SignUp).Methods(http.MethodPost, http.MethodOptions)
