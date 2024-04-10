@@ -188,7 +188,7 @@ func (h *AdvertHandler) UpdateAdvertById(w http.ResponseWriter, r *http.Request)
 		utils.WriteError(w, http.StatusBadRequest, "incorrect data format")
 		return
 	}
-	data.Sanitize()
+	// data.Sanitize()
 
 	data.ID = advertId
 
