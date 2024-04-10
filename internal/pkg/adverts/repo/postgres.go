@@ -2,29 +2,35 @@ package repo
 
 import (
 	"2024_1_TeaStealers/internal/models"
+	"2024_1_TeaStealers/internal/pkg/adverts"
+	"2024_1_TeaStealers/internal/pkg/utils"
 	"context"
 	"database/sql"
 	"fmt"
-	"log"
 
 	"github.com/satori/uuid"
+	"go.uber.org/zap"
 )
 
 // AdvertRepo represents a repository for adverts changes.
 type AdvertRepo struct {
-	db *sql.DB
+	db     *sql.DB
+	logger *zap.Logger
 }
 
 // NewRepository creates a new instance of AdvertRepo.
-func NewRepository(db *sql.DB) *AdvertRepo {
-	return &AdvertRepo{db: db}
+func NewRepository(db *sql.DB, logger *zap.Logger) *AdvertRepo {
+	return &AdvertRepo{db: db, logger: logger}
 }
 
 func (r *AdvertRepo) BeginTx(ctx context.Context) (models.Transaction, error) {
 	tx, err := r.db.BeginTx(ctx, nil)
 	if err != nil {
+		utils.LogError(r.logger, ctx.Value("requestId").(string), utils.RepositoryLayer, adverts.BeginTxMethod, err)
 		return nil, err
 	}
+
+	utils.LogSucces(r.logger, ctx.Value("requestId").(string), utils.RepositoryLayer, adverts.BeginTxMethod)
 	return tx, nil
 }
 
@@ -32,8 +38,11 @@ func (r *AdvertRepo) BeginTx(ctx context.Context) (models.Transaction, error) {
 func (r *AdvertRepo) CreateAdvertType(ctx context.Context, tx models.Transaction, newAdvertType *models.AdvertType) error {
 	insert := `INSERT INTO adverttypes (id, adverttype) VALUES ($1, $2)`
 	if _, err := tx.ExecContext(ctx, insert, newAdvertType.ID, newAdvertType.AdvertType); err != nil {
+		utils.LogError(r.logger, ctx.Value("requestId").(string), utils.RepositoryLayer, adverts.CreateAdvertTypeMethod, err)
 		return err
 	}
+
+	utils.LogSucces(r.logger, ctx.Value("requestId").(string), utils.RepositoryLayer, adverts.CreateAdvertTypeMethod)
 	return nil
 }
 
@@ -41,8 +50,11 @@ func (r *AdvertRepo) CreateAdvertType(ctx context.Context, tx models.Transaction
 func (r *AdvertRepo) CreateAdvert(ctx context.Context, tx models.Transaction, newAdvert *models.Advert) error {
 	insert := `INSERT INTO adverts (id, userid, adverttypeid, adverttypeplacement, title, description, phone, isagent, priority) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`
 	if _, err := tx.ExecContext(ctx, insert, newAdvert.ID, newAdvert.UserID, newAdvert.AdvertTypeID, newAdvert.AdvertTypeSale, newAdvert.Title, newAdvert.Description, newAdvert.Phone, newAdvert.IsAgent, newAdvert.Priority); err != nil {
+		utils.LogError(r.logger, ctx.Value("requestId").(string), utils.RepositoryLayer, adverts.CreateAdvertMethod, err)
 		return err
 	}
+
+	utils.LogSucces(r.logger, ctx.Value("requestId").(string), utils.RepositoryLayer, adverts.CreateAdvertMethod)
 	return nil
 }
 
@@ -50,8 +62,11 @@ func (r *AdvertRepo) CreateAdvert(ctx context.Context, tx models.Transaction, ne
 func (r *AdvertRepo) CreatePriceChange(ctx context.Context, tx models.Transaction, newPriceChange *models.PriceChange) error {
 	insert := `INSERT INTO pricechanges (id, advertid, price) VALUES ($1, $2, $3)`
 	if _, err := tx.ExecContext(ctx, insert, newPriceChange.ID, newPriceChange.AdvertID, newPriceChange.Price); err != nil {
+		utils.LogError(r.logger, ctx.Value("requestId").(string), utils.RepositoryLayer, adverts.CreatePriceChangeMethod, err)
 		return err
 	}
+
+	utils.LogSucces(r.logger, ctx.Value("requestId").(string), utils.RepositoryLayer, adverts.CreatePriceChangeMethod)
 	return nil
 }
 
@@ -59,8 +74,11 @@ func (r *AdvertRepo) CreatePriceChange(ctx context.Context, tx models.Transactio
 func (r *AdvertRepo) CreateBuilding(ctx context.Context, tx models.Transaction, newBuilding *models.Building) error {
 	insert := `INSERT INTO buildings (id, floor, material, adress, adresspoint, yearcreation) VALUES ($1, $2, $3, $4, $5, $6)`
 	if _, err := tx.ExecContext(ctx, insert, newBuilding.ID, newBuilding.Floor, newBuilding.Material, newBuilding.Address, newBuilding.AddressPoint, newBuilding.YearCreation); err != nil {
+		utils.LogError(r.logger, ctx.Value("requestId").(string), utils.RepositoryLayer, adverts.CreateBuildingMethod, err)
 		return err
 	}
+
+	utils.LogSucces(r.logger, ctx.Value("requestId").(string), utils.RepositoryLayer, adverts.CreateBuildingMethod)
 	return nil
 }
 
@@ -73,9 +91,11 @@ func (r *AdvertRepo) CheckExistsBuilding(ctx context.Context, adress string) (*m
 	res := r.db.QueryRowContext(ctx, query, adress)
 
 	if err := res.Scan(&building.ID); err != nil { // Сканируем только id, потому что используем только id, если здание нашлось
+		utils.LogError(r.logger, ctx.Value("requestId").(string), utils.RepositoryLayer, adverts.CheckExistsBuildingMethod, err)
 		return nil, err
 	}
 
+	utils.LogSucces(r.logger, ctx.Value("requestId").(string), utils.RepositoryLayer, adverts.CheckExistsBuildingMethod)
 	return building, nil
 }
 
@@ -85,6 +105,7 @@ func (r *AdvertRepo) CheckExistsBuildings(ctx context.Context, pageSize int, adr
 
 	rows, err := r.db.Query(query, "%"+adress+"%", pageSize)
 	if err != nil {
+		utils.LogError(r.logger, ctx.Value("requestId").(string), utils.RepositoryLayer, adverts.CheckExistsBuildingsMethod, err)
 		return nil, err
 	}
 	defer rows.Close()
@@ -94,15 +115,18 @@ func (r *AdvertRepo) CheckExistsBuildings(ctx context.Context, pageSize int, adr
 		building := &models.BuildingData{}
 		err := rows.Scan(&building.ID, &building.Floor, &building.Material, &building.Address, &building.AddressPoint, &building.YearCreation, &building.ComplexName)
 		if err != nil {
+			utils.LogError(r.logger, ctx.Value("requestId").(string), utils.RepositoryLayer, adverts.CheckExistsBuildingsMethod, err)
 			return nil, err
 		}
 
 		buildings = append(buildings, building)
 	}
 	if err := rows.Err(); err != nil {
+		utils.LogError(r.logger, ctx.Value("requestId").(string), utils.RepositoryLayer, adverts.CheckExistsBuildingsMethod, err)
 		return nil, err
 	}
 
+	utils.LogSucces(r.logger, ctx.Value("requestId").(string), utils.RepositoryLayer, adverts.CheckExistsBuildingsMethod)
 	return buildings, nil
 }
 
@@ -110,8 +134,11 @@ func (r *AdvertRepo) CheckExistsBuildings(ctx context.Context, pageSize int, adr
 func (r *AdvertRepo) CreateHouse(ctx context.Context, tx models.Transaction, newHouse *models.House) error {
 	insert := `INSERT INTO houses (id, buildingid, adverttypeid, ceilingheight, squarearea, squarehouse, bedroomcount, statusarea, cottage, statushome) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`
 	if _, err := tx.ExecContext(ctx, insert, newHouse.ID, newHouse.BuildingID, newHouse.AdvertTypeID, newHouse.CeilingHeight, newHouse.SquareArea, newHouse.SquareHouse, newHouse.BedroomCount, newHouse.StatusArea, newHouse.Cottage, newHouse.StatusHome); err != nil {
+		utils.LogError(r.logger, ctx.Value("requestId").(string), utils.RepositoryLayer, adverts.CreateHouseMethod, err)
 		return err
 	}
+
+	utils.LogSucces(r.logger, ctx.Value("requestId").(string), utils.RepositoryLayer, adverts.CreateHouseMethod)
 	return nil
 }
 
@@ -119,16 +146,20 @@ func (r *AdvertRepo) CreateHouse(ctx context.Context, tx models.Transaction, new
 func (r *AdvertRepo) CreateFlat(ctx context.Context, tx models.Transaction, newFlat *models.Flat) error {
 	insert := `INSERT INTO flats (id, buildingid, adverttypeid, floor, ceilingheight, squaregeneral, roomcount, squareresidential, apartament) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`
 	if _, err := tx.ExecContext(ctx, insert, newFlat.ID, newFlat.BuildingID, newFlat.AdvertTypeID, newFlat.Floor, newFlat.CeilingHeight, newFlat.SquareGeneral, newFlat.RoomCount, newFlat.SquareResidential, newFlat.Apartment); err != nil {
+		utils.LogError(r.logger, ctx.Value("requestId").(string), utils.RepositoryLayer, adverts.CreateFlatMethod, err)
 		return err
 	}
+
+	utils.LogSucces(r.logger, ctx.Value("requestId").(string), utils.RepositoryLayer, adverts.CreateFlatMethod)
 	return nil
 }
 
 // SelectImages select list images for advert
-func (repo *AdvertRepo) SelectImages(advertId uuid.UUID) ([]*models.ImageResp, error) {
+func (r *AdvertRepo) SelectImages(ctx context.Context, advertId uuid.UUID) ([]*models.ImageResp, error) {
 	selectQuery := `SELECT id, photo, priority FROM images WHERE advertid = $1 AND isdeleted = false`
-	rows, err := repo.db.Query(selectQuery, advertId)
+	rows, err := r.db.Query(selectQuery, advertId)
 	if err != nil {
+		utils.LogError(r.logger, ctx.Value("requestId").(string), utils.RepositoryLayer, adverts.SelectImagesMethod, err)
 		return nil, err
 	}
 	defer rows.Close()
@@ -140,6 +171,7 @@ func (repo *AdvertRepo) SelectImages(advertId uuid.UUID) ([]*models.ImageResp, e
 		var photo string
 		var priority int
 		if err := rows.Scan(&id, &photo, &priority); err != nil {
+			utils.LogError(r.logger, ctx.Value("requestId").(string), utils.RepositoryLayer, adverts.SelectImagesMethod, err)
 			return nil, err
 		}
 		image := &models.ImageResp{
@@ -150,6 +182,7 @@ func (repo *AdvertRepo) SelectImages(advertId uuid.UUID) ([]*models.ImageResp, e
 		images = append(images, image)
 	}
 
+	utils.LogSucces(r.logger, ctx.Value("requestId").(string), utils.RepositoryLayer, adverts.SelectImagesMethod)
 	return images, nil
 }
 
@@ -162,9 +195,11 @@ func (r *AdvertRepo) GetTypeAdvertById(ctx context.Context, id uuid.UUID) (*mode
 	var advertType *models.AdvertTypeAdvert
 
 	if err := res.Scan(&advertType); err != nil {
+		utils.LogError(r.logger, ctx.Value("requestId").(string), utils.RepositoryLayer, adverts.GetTypeAdvertByIdMethod, err)
 		return nil, err
 	}
 
+	utils.LogSucces(r.logger, ctx.Value("requestId").(string), utils.RepositoryLayer, adverts.GetTypeAdvertByIdMethod)
 	return advertType, nil
 }
 
@@ -256,6 +291,7 @@ func (r *AdvertRepo) GetHouseAdvertById(ctx context.Context, id uuid.UUID) (*mod
 		&companyName,
 		&complexName,
 	); err != nil {
+		utils.LogError(r.logger, ctx.Value("requestId").(string), utils.RepositoryLayer, adverts.GetHouseAdvertByIdMethod, err)
 		return nil, err
 	}
 
@@ -277,6 +313,7 @@ func (r *AdvertRepo) GetHouseAdvertById(ctx context.Context, id uuid.UUID) (*mod
 		advertData.ComplexProperties.NameComplex = complexName.String
 	}
 
+	utils.LogSucces(r.logger, ctx.Value("requestId").(string), utils.RepositoryLayer, adverts.GetHouseAdvertByIdMethod)
 	return advertData, nil
 }
 
@@ -289,9 +326,11 @@ func (r *AdvertRepo) CheckExistsFlat(ctx context.Context, advertId uuid.UUID) (*
 	res := r.db.QueryRowContext(ctx, query, advertId)
 
 	if err := res.Scan(&flat.ID); err != nil {
+		utils.LogError(r.logger, ctx.Value("requestId").(string), utils.RepositoryLayer, adverts.CheckExistsFlatMethod, err)
 		return nil, err
 	}
 
+	utils.LogSucces(r.logger, ctx.Value("requestId").(string), utils.RepositoryLayer, adverts.CheckExistsFlatMethod)
 	return flat, nil
 }
 
@@ -304,9 +343,11 @@ func (r *AdvertRepo) CheckExistsHouse(ctx context.Context, advertId uuid.UUID) (
 	res := r.db.QueryRowContext(ctx, query, advertId)
 
 	if err := res.Scan(&house.ID); err != nil {
+		utils.LogError(r.logger, ctx.Value("requestId").(string), utils.RepositoryLayer, adverts.CheckExistsHouseMethod, err)
 		return nil, err
 	}
 
+	utils.LogSucces(r.logger, ctx.Value("requestId").(string), utils.RepositoryLayer, adverts.CheckExistsHouseMethod)
 	return house, nil
 }
 
@@ -328,6 +369,7 @@ func (r *AdvertRepo) DeleteFlatAdvertById(ctx context.Context, tx models.Transac
 
 	var advertTypeId, flatId uuid.UUID
 	if err := res.Scan(&advertTypeId, &flatId); err != nil {
+		utils.LogError(r.logger, ctx.Value("requestId").(string), utils.RepositoryLayer, adverts.DeleteFlatAdvertByIdMethod, err)
 		return err
 	}
 
@@ -338,21 +380,27 @@ func (r *AdvertRepo) DeleteFlatAdvertById(ctx context.Context, tx models.Transac
 	queryDeleteImages := `UPDATE images SET isdeleted=true WHERE advertid=$1;`
 
 	if _, err := tx.Exec(queryDeleteAdvertById, advertId); err != nil {
+		utils.LogError(r.logger, ctx.Value("requestId").(string), utils.RepositoryLayer, adverts.DeleteFlatAdvertByIdMethod, err)
 		return err
 	}
 	if _, err := tx.Exec(queryDeleteAdvertTypeById, advertTypeId); err != nil {
+		utils.LogError(r.logger, ctx.Value("requestId").(string), utils.RepositoryLayer, adverts.DeleteFlatAdvertByIdMethod, err)
 		return err
 	}
 	if _, err := tx.Exec(queryDeleteFlatById, flatId); err != nil {
+		utils.LogError(r.logger, ctx.Value("requestId").(string), utils.RepositoryLayer, adverts.DeleteFlatAdvertByIdMethod, err)
 		return err
 	}
 	if _, err := tx.Exec(queryDeletePriceChanges, advertId); err != nil {
+		utils.LogError(r.logger, ctx.Value("requestId").(string), utils.RepositoryLayer, adverts.DeleteFlatAdvertByIdMethod, err)
 		return err
 	}
 	if _, err := tx.Exec(queryDeleteImages, advertId); err != nil {
+		utils.LogError(r.logger, ctx.Value("requestId").(string), utils.RepositoryLayer, adverts.DeleteFlatAdvertByIdMethod, err)
 		return err
 	}
 
+	utils.LogSucces(r.logger, ctx.Value("requestId").(string), utils.RepositoryLayer, adverts.DeleteFlatAdvertByIdMethod)
 	return nil
 }
 
@@ -374,6 +422,7 @@ func (r *AdvertRepo) DeleteHouseAdvertById(ctx context.Context, tx models.Transa
 
 	var advertTypeId, houseId uuid.UUID
 	if err := res.Scan(&advertTypeId, &houseId); err != nil {
+		utils.LogError(r.logger, ctx.Value("requestId").(string), utils.RepositoryLayer, adverts.DeleteHouseAdvertByIdMethod, err)
 		return err
 	}
 
@@ -384,21 +433,27 @@ func (r *AdvertRepo) DeleteHouseAdvertById(ctx context.Context, tx models.Transa
 	queryDeleteImages := `UPDATE images SET isdeleted=true WHERE advertid=$1;`
 
 	if _, err := tx.Exec(queryDeleteAdvertById, advertId); err != nil {
+		utils.LogError(r.logger, ctx.Value("requestId").(string), utils.RepositoryLayer, adverts.DeleteHouseAdvertByIdMethod, err)
 		return err
 	}
 	if _, err := tx.Exec(queryDeleteAdvertTypeById, advertTypeId); err != nil {
+		utils.LogError(r.logger, ctx.Value("requestId").(string), utils.RepositoryLayer, adverts.DeleteHouseAdvertByIdMethod, err)
 		return err
 	}
 	if _, err := tx.Exec(queryDeleteHouseById, houseId); err != nil {
+		utils.LogError(r.logger, ctx.Value("requestId").(string), utils.RepositoryLayer, adverts.DeleteHouseAdvertByIdMethod, err)
 		return err
 	}
 	if _, err := tx.Exec(queryDeletePriceChanges, advertId); err != nil {
+		utils.LogError(r.logger, ctx.Value("requestId").(string), utils.RepositoryLayer, adverts.DeleteHouseAdvertByIdMethod, err)
 		return err
 	}
 	if _, err := tx.Exec(queryDeleteImages, advertId); err != nil {
+		utils.LogError(r.logger, ctx.Value("requestId").(string), utils.RepositoryLayer, adverts.DeleteHouseAdvertByIdMethod, err)
 		return err
 	}
 
+	utils.LogSucces(r.logger, ctx.Value("requestId").(string), utils.RepositoryLayer, adverts.DeleteHouseAdvertByIdMethod)
 	return nil
 }
 
@@ -421,6 +476,7 @@ func (r *AdvertRepo) ChangeTypeAdvert(ctx context.Context, tx models.Transaction
 	res := r.db.QueryRowContext(ctx, query, advertId)
 
 	if err := res.Scan(&advertTypeId, &advertType); err != nil {
+		utils.LogError(r.logger, ctx.Value("requestId").(string), utils.RepositoryLayer, adverts.ChangeTypeAdvertMethod, err)
 		return err
 	}
 	var buildingId uuid.UUID
@@ -431,10 +487,12 @@ func (r *AdvertRepo) ChangeTypeAdvert(ctx context.Context, tx models.Transaction
 		var flatId uuid.UUID
 
 		if err := res.Scan(&buildingId, &flatId); err != nil {
+			utils.LogError(r.logger, ctx.Value("requestId").(string), utils.RepositoryLayer, adverts.ChangeTypeAdvertMethod, err)
 			return err
 		}
 
 		if _, err := tx.Exec(queryDeleteFlatById, flatId); err != nil {
+			utils.LogError(r.logger, ctx.Value("requestId").(string), utils.RepositoryLayer, adverts.ChangeTypeAdvertMethod, err)
 			return err
 		}
 
@@ -442,10 +500,12 @@ func (r *AdvertRepo) ChangeTypeAdvert(ctx context.Context, tx models.Transaction
 		if err != nil {
 			house := &models.House{}
 			if _, err := tx.Exec(queryInsertHouse, uuid.NewV4(), buildingId, advertTypeId, house.CeilingHeight, house.SquareArea, house.SquareHouse, house.BedroomCount, models.StatusAreaDNP, house.Cottage, models.StatusHomeCompleteNeed); err != nil {
+				utils.LogError(r.logger, ctx.Value("requestId").(string), utils.RepositoryLayer, adverts.ChangeTypeAdvertMethod, err)
 				return err
 			}
 		} else {
 			if _, err := tx.Exec(queryRestoreHouseById, house.ID); err != nil {
+				utils.LogError(r.logger, ctx.Value("requestId").(string), utils.RepositoryLayer, adverts.ChangeTypeAdvertMethod, err)
 				return err
 			}
 		}
@@ -455,10 +515,12 @@ func (r *AdvertRepo) ChangeTypeAdvert(ctx context.Context, tx models.Transaction
 		var houseId uuid.UUID
 
 		if err := res.Scan(&buildingId, &houseId); err != nil {
+			utils.LogError(r.logger, ctx.Value("requestId").(string), utils.RepositoryLayer, adverts.ChangeTypeAdvertMethod, err)
 			return err
 		}
 
 		if _, err := tx.Exec(queryDeleteHouseById, houseId); err != nil {
+			utils.LogError(r.logger, ctx.Value("requestId").(string), utils.RepositoryLayer, adverts.ChangeTypeAdvertMethod, err)
 			return err
 		}
 
@@ -466,15 +528,18 @@ func (r *AdvertRepo) ChangeTypeAdvert(ctx context.Context, tx models.Transaction
 		if err != nil {
 			flat = &models.Flat{}
 			if _, err := tx.Exec(queryInsertFlat, uuid.NewV4(), buildingId, advertTypeId, flat.Floor, flat.CeilingHeight, flat.SquareGeneral, flat.RoomCount, flat.SquareResidential, flat.Apartment); err != nil {
+				utils.LogError(r.logger, ctx.Value("requestId").(string), utils.RepositoryLayer, adverts.ChangeTypeAdvertMethod, err)
 				return err
 			}
 		} else {
 			if _, err := tx.Exec(queryRestoreFlatById, flat.ID); err != nil {
+				utils.LogError(r.logger, ctx.Value("requestId").(string), utils.RepositoryLayer, adverts.ChangeTypeAdvertMethod, err)
 				return err
 			}
 		}
 	}
 
+	utils.LogSucces(r.logger, ctx.Value("requestId").(string), utils.RepositoryLayer, adverts.ChangeTypeAdvertMethod)
 	return nil
 }
 
@@ -509,6 +574,7 @@ func (r *AdvertRepo) UpdateHouseAdvertById(ctx context.Context, tx models.Transa
 	var advertTypeId, buildingId, houseId uuid.UUID
 	var price float64
 	if err := res.Scan(&advertTypeId, &buildingId, &houseId, &price); err != nil {
+		utils.LogError(r.logger, ctx.Value("requestId").(string), utils.RepositoryLayer, adverts.UpdateHouseAdvertByIdMethod, err)
 		return err
 	}
 
@@ -518,25 +584,31 @@ func (r *AdvertRepo) UpdateHouseAdvertById(ctx context.Context, tx models.Transa
 	queryUpdateHouseById := `UPDATE houses SET ceilingheight=$1, squarearea=$2, squarehouse=$3, bedroomcount=$4, statusarea=$5, cottage=$6, statushome=$7 WHERE id=$8;`
 
 	if _, err := tx.Exec(queryUpdateAdvertById, advertUpdateData.TypeSale, advertUpdateData.Title, advertUpdateData.Description, advertUpdateData.Phone, advertUpdateData.IsAgent, advertUpdateData.ID); err != nil {
+		utils.LogError(r.logger, ctx.Value("requestId").(string), utils.RepositoryLayer, adverts.UpdateHouseAdvertByIdMethod, err)
 		return err
 	}
 	if _, err := tx.Exec(queryUpdateAdvertTypeById, advertUpdateData.TypeAdvert, advertTypeId); err != nil {
+		utils.LogError(r.logger, ctx.Value("requestId").(string), utils.RepositoryLayer, adverts.UpdateHouseAdvertByIdMethod, err)
 		return err
 	}
 	if _, err := tx.Exec(queryUpdateBuildingById, advertUpdateData.HouseProperties.Floor, advertUpdateData.Material, advertUpdateData.Address, advertUpdateData.AddressPoint, advertUpdateData.YearCreation, buildingId); err != nil {
+		utils.LogError(r.logger, ctx.Value("requestId").(string), utils.RepositoryLayer, adverts.UpdateHouseAdvertByIdMethod, err)
 		return err
 	}
 	if _, err := tx.Exec(queryUpdateHouseById, advertUpdateData.HouseProperties.CeilingHeight, advertUpdateData.HouseProperties.SquareArea, advertUpdateData.HouseProperties.SquareHouse, advertUpdateData.HouseProperties.BedroomCount, advertUpdateData.HouseProperties.StatusArea, advertUpdateData.HouseProperties.Cottage, advertUpdateData.HouseProperties.StatusHome, houseId); err != nil {
+		utils.LogError(r.logger, ctx.Value("requestId").(string), utils.RepositoryLayer, adverts.UpdateHouseAdvertByIdMethod, err)
 		return err
 	}
 	if advertUpdateData.Price != price {
 		queryInsertPriceChange := `INSERT INTO pricechanges (id, advertId, price)
             VALUES ($1, $2, $3)`
 		if _, err := tx.Exec(queryInsertPriceChange, uuid.NewV4(), advertUpdateData.ID, advertUpdateData.Price); err != nil {
+			utils.LogError(r.logger, ctx.Value("requestId").(string), utils.RepositoryLayer, adverts.UpdateHouseAdvertByIdMethod, err)
 			return err
 		}
 	}
 
+	utils.LogSucces(r.logger, ctx.Value("requestId").(string), utils.RepositoryLayer, adverts.UpdateHouseAdvertByIdMethod)
 	return nil
 }
 
@@ -571,6 +643,7 @@ func (r *AdvertRepo) UpdateFlatAdvertById(ctx context.Context, tx models.Transac
 	var advertTypeId, buildingId, flatId uuid.UUID
 	var price float64
 	if err := res.Scan(&advertTypeId, &buildingId, &flatId, &price); err != nil {
+		utils.LogError(r.logger, ctx.Value("requestId").(string), utils.RepositoryLayer, adverts.UpdateFlatAdvertByIdMethod, err)
 		return err
 	}
 
@@ -580,15 +653,19 @@ func (r *AdvertRepo) UpdateFlatAdvertById(ctx context.Context, tx models.Transac
 	queryUpdateFlatById := `UPDATE flats SET floor=$1, ceilingheight=$2, squaregeneral=$3, roomcount=$4, squareresidential=$5, apartament=$6 WHERE id=$7;`
 
 	if _, err := tx.Exec(queryUpdateAdvertById, advertUpdateData.TypeSale, advertUpdateData.Title, advertUpdateData.Description, advertUpdateData.Phone, advertUpdateData.IsAgent, advertUpdateData.ID); err != nil {
+		utils.LogError(r.logger, ctx.Value("requestId").(string), utils.RepositoryLayer, adverts.UpdateFlatAdvertByIdMethod, err)
 		return err
 	}
 	if _, err := tx.Exec(queryUpdateAdvertTypeById, advertUpdateData.TypeAdvert, advertTypeId); err != nil {
+		utils.LogError(r.logger, ctx.Value("requestId").(string), utils.RepositoryLayer, adverts.UpdateFlatAdvertByIdMethod, err)
 		return err
 	}
 	if _, err := tx.Exec(queryUpdateBuildingById, advertUpdateData.FlatProperties.FloorGeneral, advertUpdateData.Material, advertUpdateData.Address, advertUpdateData.AddressPoint, advertUpdateData.YearCreation, buildingId); err != nil {
+		utils.LogError(r.logger, ctx.Value("requestId").(string), utils.RepositoryLayer, adverts.UpdateFlatAdvertByIdMethod, err)
 		return err
 	}
 	if _, err := tx.Exec(queryUpdateFlatById, advertUpdateData.FlatProperties.Floor, advertUpdateData.FlatProperties.CeilingHeight, advertUpdateData.FlatProperties.SquareGeneral, advertUpdateData.FlatProperties.RoomCount, advertUpdateData.FlatProperties.SquareResidential, advertUpdateData.FlatProperties.Apartment, flatId); err != nil {
+		utils.LogError(r.logger, ctx.Value("requestId").(string), utils.RepositoryLayer, adverts.UpdateFlatAdvertByIdMethod, err)
 		return err
 	}
 
@@ -596,10 +673,12 @@ func (r *AdvertRepo) UpdateFlatAdvertById(ctx context.Context, tx models.Transac
 		queryInsertPriceChange := `INSERT INTO pricechanges (id, advertId, price)
             VALUES ($1, $2, $3)`
 		if _, err := tx.Exec(queryInsertPriceChange, uuid.NewV4(), advertUpdateData.ID, advertUpdateData.Price); err != nil {
+			utils.LogError(r.logger, ctx.Value("requestId").(string), utils.RepositoryLayer, adverts.UpdateFlatAdvertByIdMethod, err)
 			return err
 		}
 	}
 
+	utils.LogSucces(r.logger, ctx.Value("requestId").(string), utils.RepositoryLayer, adverts.UpdateFlatAdvertByIdMethod)
 	return nil
 }
 
@@ -687,6 +766,7 @@ func (r *AdvertRepo) GetFlatAdvertById(ctx context.Context, id uuid.UUID) (*mode
 		&companyName,
 		&complexName,
 	); err != nil {
+		utils.LogError(r.logger, ctx.Value("requestId").(string), utils.RepositoryLayer, adverts.GetFlatAdvertByIdMethod, err)
 		return nil, err
 	}
 
@@ -707,6 +787,7 @@ func (r *AdvertRepo) GetFlatAdvertById(ctx context.Context, id uuid.UUID) (*mode
 		advertData.ComplexProperties.NameComplex = complexName.String
 	}
 
+	utils.LogSucces(r.logger, ctx.Value("requestId").(string), utils.RepositoryLayer, adverts.GetFlatAdvertByIdMethod)
 	return advertData, nil
 }
 
@@ -776,6 +857,7 @@ func (r *AdvertRepo) GetSquareAdverts(ctx context.Context, pageSize, offset int)
 
 	rows, err := r.db.Query(queryBaseAdvert, pageSize, offset)
 	if err != nil {
+		utils.LogError(r.logger, ctx.Value("requestId").(string), utils.RepositoryLayer, adverts.GetSquareAdvertsMethod, err)
 		return nil, err
 	}
 	defer rows.Close()
@@ -785,6 +867,7 @@ func (r *AdvertRepo) GetSquareAdverts(ctx context.Context, pageSize, offset int)
 		squareAdvert := &models.AdvertSquareData{}
 		err := rows.Scan(&squareAdvert.ID, &squareAdvert.TypeAdvert, &squareAdvert.TypeSale, &squareAdvert.Photo, &squareAdvert.Price, &squareAdvert.DateCreation)
 		if err != nil {
+			utils.LogError(r.logger, ctx.Value("requestId").(string), utils.RepositoryLayer, adverts.GetSquareAdvertsMethod, err)
 			return nil, err
 		}
 		switch squareAdvert.TypeAdvert {
@@ -793,6 +876,7 @@ func (r *AdvertRepo) GetSquareAdverts(ctx context.Context, pageSize, offset int)
 			var floor, floorGeneral, roomCount int
 			row := r.db.QueryRowContext(ctx, queryFlat, squareAdvert.ID)
 			if err := row.Scan(&squareGeneral, &floor, &squareAdvert.Address, &floorGeneral, &roomCount); err != nil {
+				utils.LogError(r.logger, ctx.Value("requestId").(string), utils.RepositoryLayer, adverts.GetSquareAdvertsMethod, err)
 				return nil, err
 			}
 			squareAdvert.FlatProperties = &models.FlatSquareProperties{}
@@ -806,6 +890,7 @@ func (r *AdvertRepo) GetSquareAdverts(ctx context.Context, pageSize, offset int)
 			var bedroomCount, floor int
 			row := r.db.QueryRowContext(ctx, queryHouse, squareAdvert.ID)
 			if err := row.Scan(&squareAdvert.Address, &cottage, &squareHouse, &squareArea, &bedroomCount, &floor); err != nil {
+				utils.LogError(r.logger, ctx.Value("requestId").(string), utils.RepositoryLayer, adverts.GetSquareAdvertsMethod, err)
 				return nil, err
 			}
 			squareAdvert.HouseProperties = &models.HouseSquareProperties{}
@@ -819,9 +904,11 @@ func (r *AdvertRepo) GetSquareAdverts(ctx context.Context, pageSize, offset int)
 		squareAdverts = append(squareAdverts, squareAdvert)
 	}
 	if err := rows.Err(); err != nil {
+		utils.LogError(r.logger, ctx.Value("requestId").(string), utils.RepositoryLayer, adverts.GetSquareAdvertsMethod, err)
 		return nil, err
 	}
 
+	utils.LogSucces(r.logger, ctx.Value("requestId").(string), utils.RepositoryLayer, adverts.GetSquareAdvertsMethod)
 	return squareAdverts, nil
 }
 
@@ -836,7 +923,7 @@ func (r *AdvertRepo) GetRectangleAdverts(ctx context.Context, advertFilter model
             CASE
                 WHEN at.adverttype = 'Flat' THEN f.roomcount
                 WHEN at.adverttype = 'House' THEN h.bedroomcount
-                ELSE NULL
+                ELSE 0
             END AS rcount,
             a.phone,
             a.adverttypeplacement,
@@ -928,8 +1015,8 @@ func (r *AdvertRepo) GetRectangleAdverts(ctx context.Context, advertFilter model
 	queryBaseAdvert += " ORDER BY datecreation DESC LIMIT $" + fmt.Sprint(i) + " OFFSET $" + fmt.Sprint(i+1) + ";"
 	rowCountQuery := r.db.QueryRowContext(ctx, queryCount, append([]interface{}{advertFilter.MinPrice, advertFilter.MaxPrice, advertFilter.Address}, argsForQuery...)...)
 
-	log.Println(queryCount)
 	if err := rowCountQuery.Scan(&pageInfo.TotalElements); err != nil {
+		utils.LogError(r.logger, ctx.Value("requestId").(string), utils.RepositoryLayer, adverts.GetRectangleAdvertsMethod, err)
 		return nil, err
 	}
 
@@ -937,6 +1024,7 @@ func (r *AdvertRepo) GetRectangleAdverts(ctx context.Context, advertFilter model
 	rows, err := r.db.Query(queryBaseAdvert, append([]interface{}{advertFilter.MinPrice, advertFilter.MaxPrice, advertFilter.Address}, argsForQuery...)...)
 
 	if err != nil {
+		utils.LogError(r.logger, ctx.Value("requestId").(string), utils.RepositoryLayer, adverts.GetRectangleAdvertsMethod, err)
 		return nil, err
 	}
 
@@ -950,6 +1038,7 @@ func (r *AdvertRepo) GetRectangleAdverts(ctx context.Context, advertFilter model
 		err := rows.Scan(&rectangleAdvert.ID, &rectangleAdvert.Title, &rectangleAdvert.Description, &rectangleAdvert.TypeAdvert, &roomCount, &rectangleAdvert.Phone, &rectangleAdvert.TypeSale, &rectangleAdvert.Address, &rectangleAdvert.Price, &rectangleAdvert.Photo, &rectangleAdvert.DateCreation)
 
 		if err != nil {
+			utils.LogError(r.logger, ctx.Value("requestId").(string), utils.RepositoryLayer, adverts.GetRectangleAdvertsMethod, err)
 			return nil, err
 		}
 
@@ -960,6 +1049,7 @@ func (r *AdvertRepo) GetRectangleAdverts(ctx context.Context, advertFilter model
 			row := r.db.QueryRowContext(ctx, queryFlat, rectangleAdvert.ID)
 
 			if err := row.Scan(&squareGeneral, &floor, &rectangleAdvert.Address, &floorGeneral); err != nil {
+				utils.LogError(r.logger, ctx.Value("requestId").(string), utils.RepositoryLayer, adverts.GetRectangleAdvertsMethod, err)
 				return nil, err
 			}
 
@@ -975,6 +1065,7 @@ func (r *AdvertRepo) GetRectangleAdverts(ctx context.Context, advertFilter model
 			row := r.db.QueryRowContext(ctx, queryHouse, rectangleAdvert.ID)
 
 			if err := row.Scan(&rectangleAdvert.Address, &cottage, &squareHouse, &squareArea, &floor); err != nil {
+				utils.LogError(r.logger, ctx.Value("requestId").(string), utils.RepositoryLayer, adverts.GetRectangleAdvertsMethod, err)
 				return nil, err
 			}
 
@@ -990,6 +1081,7 @@ func (r *AdvertRepo) GetRectangleAdverts(ctx context.Context, advertFilter model
 	}
 
 	if err := rows.Err(); err != nil {
+		utils.LogError(r.logger, ctx.Value("requestId").(string), utils.RepositoryLayer, adverts.GetRectangleAdvertsMethod, err)
 		return nil, err
 	}
 
@@ -1001,6 +1093,8 @@ func (r *AdvertRepo) GetRectangleAdverts(ctx context.Context, advertFilter model
 	}
 
 	pageInfo.CurrentPage = (advertFilter.Offset / pageInfo.PageSize) + 1
+
+	utils.LogSucces(r.logger, ctx.Value("requestId").(string), utils.RepositoryLayer, adverts.GetRectangleAdvertsMethod)
 
 	return &models.AdvertDataPage{
 		Adverts:  rectangleAdverts,
@@ -1085,6 +1179,7 @@ func (r *AdvertRepo) GetRectangleAdvertsByUserId(ctx context.Context, pageSize, 
 
 	rows, err := r.db.Query(queryBaseAdvert, userId, pageSize, offset)
 	if err != nil {
+		utils.LogError(r.logger, ctx.Value("requestId").(string), utils.RepositoryLayer, adverts.GetRectangleAdvertsByUserIdMethod, err)
 		return nil, err
 	}
 	defer rows.Close()
@@ -1099,6 +1194,7 @@ func (r *AdvertRepo) GetRectangleAdvertsByUserId(ctx context.Context, pageSize, 
 			&rectangleAdvert.Photo, &rectangleAdvert.DateCreation)
 
 		if err != nil {
+			utils.LogError(r.logger, ctx.Value("requestId").(string), utils.RepositoryLayer, adverts.GetRectangleAdvertsByUserIdMethod, err)
 			return nil, err
 		}
 
@@ -1109,6 +1205,7 @@ func (r *AdvertRepo) GetRectangleAdvertsByUserId(ctx context.Context, pageSize, 
 			row := r.db.QueryRowContext(ctx, queryFlat, rectangleAdvert.ID)
 
 			if err := row.Scan(&squareGeneral, &floor, &rectangleAdvert.Address, &floorGeneral); err != nil {
+				utils.LogError(r.logger, ctx.Value("requestId").(string), utils.RepositoryLayer, adverts.GetRectangleAdvertsByUserIdMethod, err)
 				return nil, err
 			}
 
@@ -1124,6 +1221,7 @@ func (r *AdvertRepo) GetRectangleAdvertsByUserId(ctx context.Context, pageSize, 
 			row := r.db.QueryRowContext(ctx, queryHouse, rectangleAdvert.ID)
 
 			if err := row.Scan(&rectangleAdvert.Address, &cottage, &squareHouse, &squareArea, &floor); err != nil {
+				utils.LogError(r.logger, ctx.Value("requestId").(string), utils.RepositoryLayer, adverts.GetRectangleAdvertsByUserIdMethod, err)
 				return nil, err
 			}
 
@@ -1138,9 +1236,11 @@ func (r *AdvertRepo) GetRectangleAdvertsByUserId(ctx context.Context, pageSize, 
 		rectangleAdverts = append(rectangleAdverts, rectangleAdvert)
 	}
 	if err := rows.Err(); err != nil {
+		utils.LogError(r.logger, ctx.Value("requestId").(string), utils.RepositoryLayer, adverts.GetRectangleAdvertsByUserIdMethod, err)
 		return nil, err
 	}
 
+	utils.LogSucces(r.logger, ctx.Value("requestId").(string), utils.RepositoryLayer, adverts.GetRectangleAdvertsByUserIdMethod)
 	return rectangleAdverts, nil
 }
 
@@ -1221,6 +1321,7 @@ func (r *AdvertRepo) GetRectangleAdvertsByComplexId(ctx context.Context, pageSiz
 
 	rows, err := r.db.Query(queryBaseAdvert, complexId, pageSize, offset)
 	if err != nil {
+		utils.LogError(r.logger, ctx.Value("requestId").(string), utils.RepositoryLayer, adverts.GetRectangleAdvertsByComplexIdMethod, err)
 		return nil, err
 	}
 	defer rows.Close()
@@ -1231,6 +1332,7 @@ func (r *AdvertRepo) GetRectangleAdvertsByComplexId(ctx context.Context, pageSiz
 		rectangleAdvert := &models.AdvertRectangleData{}
 		err := rows.Scan(&rectangleAdvert.ID, &rectangleAdvert.Title, &rectangleAdvert.Description, &rectangleAdvert.TypeAdvert, &roomCount, &rectangleAdvert.Phone, &rectangleAdvert.TypeSale, &rectangleAdvert.Address, &rectangleAdvert.Price, &rectangleAdvert.Photo, &rectangleAdvert.DateCreation)
 		if err != nil {
+			utils.LogError(r.logger, ctx.Value("requestId").(string), utils.RepositoryLayer, adverts.GetRectangleAdvertsByComplexIdMethod, err)
 			return nil, err
 		}
 		switch rectangleAdvert.TypeAdvert {
@@ -1239,6 +1341,7 @@ func (r *AdvertRepo) GetRectangleAdvertsByComplexId(ctx context.Context, pageSiz
 			var floor, floorGeneral int
 			row := r.db.QueryRowContext(ctx, queryFlat, rectangleAdvert.ID)
 			if err := row.Scan(&squareGeneral, &floor, &rectangleAdvert.Address, &floorGeneral); err != nil {
+				utils.LogError(r.logger, ctx.Value("requestId").(string), utils.RepositoryLayer, adverts.GetRectangleAdvertsByComplexIdMethod, err)
 				return nil, err
 			}
 			rectangleAdvert.FlatProperties = &models.FlatRectangleProperties{}
@@ -1252,6 +1355,7 @@ func (r *AdvertRepo) GetRectangleAdvertsByComplexId(ctx context.Context, pageSiz
 			var floor int
 			row := r.db.QueryRowContext(ctx, queryHouse, rectangleAdvert.ID)
 			if err := row.Scan(&rectangleAdvert.Address, &cottage, &squareHouse, &squareArea, &floor); err != nil {
+				utils.LogError(r.logger, ctx.Value("requestId").(string), utils.RepositoryLayer, adverts.GetRectangleAdvertsByComplexIdMethod, err)
 				return nil, err
 			}
 			rectangleAdvert.HouseProperties = &models.HouseRectangleProperties{}
@@ -1265,8 +1369,10 @@ func (r *AdvertRepo) GetRectangleAdvertsByComplexId(ctx context.Context, pageSiz
 		rectangleAdverts = append(rectangleAdverts, rectangleAdvert)
 	}
 	if err := rows.Err(); err != nil {
+		utils.LogError(r.logger, ctx.Value("requestId").(string), utils.RepositoryLayer, adverts.GetRectangleAdvertsByComplexIdMethod, err)
 		return nil, err
 	}
 
+	utils.LogSucces(r.logger, ctx.Value("requestId").(string), utils.RepositoryLayer, adverts.GetRectangleAdvertsByComplexIdMethod)
 	return rectangleAdverts, nil
 }

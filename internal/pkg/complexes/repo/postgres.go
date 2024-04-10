@@ -7,16 +7,18 @@ import (
 	"log"
 
 	"github.com/satori/uuid"
+	"go.uber.org/zap"
 )
 
 // ComplexRepo represents a repository for complex changes.
 type ComplexRepo struct {
-	db *sql.DB
+	db     *sql.DB
+	logger *zap.Logger
 }
 
 // NewRepository creates a new instance of ComplexRepo.
-func NewRepository(db *sql.DB) *ComplexRepo {
-	return &ComplexRepo{db: db}
+func NewRepository(db *sql.DB, logger *zap.Logger) *ComplexRepo {
+	return &ComplexRepo{db: db, logger: logger}
 }
 
 // CreateComplex creates a new complex in the database.

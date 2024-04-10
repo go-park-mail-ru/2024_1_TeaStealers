@@ -9,16 +9,18 @@ import (
 	"path/filepath"
 
 	"github.com/satori/uuid"
+	"go.uber.org/zap"
 )
 
 // CompanyUsecase represents the usecase for company using.
 type CompanyUsecase struct {
-	repo companies.CompanyRepo
+	repo   companies.CompanyRepo
+	logger *zap.Logger
 }
 
 // NewCompanyUsecase creates a new instance of CompanyUsecase.
-func NewCompanyUsecase(repo companies.CompanyRepo) *CompanyUsecase {
-	return &CompanyUsecase{repo: repo}
+func NewCompanyUsecase(repo companies.CompanyRepo, logger *zap.Logger) *CompanyUsecase {
+	return &CompanyUsecase{repo: repo, logger: logger}
 }
 
 // CreateCompany handles the company registration process.

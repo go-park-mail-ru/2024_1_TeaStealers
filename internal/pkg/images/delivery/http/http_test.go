@@ -15,6 +15,7 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/satori/uuid"
 	"github.com/stretchr/testify/assert"
+	"go.uber.org/zap"
 )
 
 /*
@@ -69,7 +70,7 @@ func TestImagesHandler_UploadImage(t *testing.T) {
 			},
 			prepare: func(f *fields, a *args, w *want) *http.Response {
 				f.usecase.EXPECT().UploadImage(gomock.Any(), gomock.Eq(a.fileType), gomock.Eq(a.advertId)).Return(w.imagesResp, nil)
-				handler := NewImageHandler(f.usecase)
+				handler := NewImageHandler(f.usecase, &zap.Logger{})
 				file, _ := os.Open(a.fileName)
 				defer file.Close()
 				body := &bytes.Buffer{}
@@ -172,7 +173,7 @@ func TestImagesHandler_GetAdvertImages(t *testing.T) {
 			},
 			prepare: func(f *fields, a *args, w *want) *http.Response {
 				f.usecase.EXPECT().GetAdvertImages(gomock.Eq(a.advertId)).Return(w.imagesResp, nil)
-				handler := NewImageHandler(f.usecase)
+				handler := NewImageHandler(f.usecase, &zap.Logger{})
 				vars := map[string]string{
 					"id": a.advertId.String(),
 				}
@@ -274,7 +275,7 @@ func TestImagesHandler_DeleteImage(t *testing.T) {
 			},
 			prepare: func(f *fields, a *args, w *want) *http.Response {
 				f.usecase.EXPECT().DeleteImage(gomock.Eq(a.ImageId)).Return(w.imagesResp, nil)
-				handler := NewImageHandler(f.usecase)
+				handler := NewImageHandler(f.usecase, &zap.Logger{})
 				vars := map[string]string{
 					"id": a.ImageId.String(),
 				}

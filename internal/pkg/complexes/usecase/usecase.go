@@ -9,16 +9,18 @@ import (
 	"path/filepath"
 
 	"github.com/satori/uuid"
+	"go.uber.org/zap"
 )
 
 // ComplexUsecase represents the usecase for complex using.
 type ComplexUsecase struct {
-	repo complexes.ComplexRepo
+	repo   complexes.ComplexRepo
+	logger *zap.Logger
 }
 
 // NewComplexUsecase creates a new instance of ComplexUsecase.
-func NewComplexUsecase(repo complexes.ComplexRepo) *ComplexUsecase {
-	return &ComplexUsecase{repo: repo}
+func NewComplexUsecase(repo complexes.ComplexRepo, logger *zap.Logger) *ComplexUsecase {
+	return &ComplexUsecase{repo: repo, logger: logger}
 }
 
 // CreateComplex handles the complex registration process.

@@ -1,6 +1,24 @@
 package delivery
-
 /*
+import (
+	"2024_1_TeaStealers/internal/models"
+	mocks "2024_1_TeaStealers/internal/pkg/companies/mock"
+	"bytes"
+	"encoding/json"
+	"errors"
+	"fmt"
+	"io"
+	"net/http"
+	"net/http/httptest"
+	"testing"
+
+	"github.com/golang/mock/gomock"
+	"github.com/gorilla/mux"
+	"github.com/satori/uuid"
+	"github.com/stretchr/testify/assert"
+	"go.uber.org/zap"
+)
+
 	func TestImagesHandler_CreateComplex(t *testing.T) {
 		type fields struct {
 			usecase *mocks.MockComplexUsecase
@@ -172,7 +190,7 @@ func TestComplexHandler_CreateCompany(t *testing.T) {
 
 			prepare: func(f *fields, a *args, w *want) *httptest.ResponseRecorder {
 				f.usecase.EXPECT().CreateCompany(gomock.Any(), gomock.Eq(a.data)).Return(w.complexResp, w.err)
-				handler := NewCompanyHandler(f.usecase)
+				handler := NewCompanyHandler(f.usecase, &zap.Logger{})
 				reqBody, _ := json.Marshal(a.data)
 				req := httptest.NewRequest(http.MethodPost, "/create/complex", bytes.NewBuffer(reqBody))
 				rec := httptest.NewRecorder()
@@ -206,7 +224,7 @@ func TestComplexHandler_CreateCompany(t *testing.T) {
 
 			prepare: func(f *fields, a *args, w *want) *httptest.ResponseRecorder {
 				f.usecase.EXPECT().CreateCompany(gomock.Any(), gomock.Eq(a.data)).Return(w.complexResp, w.err)
-				handler := NewCompanyHandler(f.usecase)
+				handler := NewCompanyHandler(f.usecase, &zap.Logger{})
 				reqBody, _ := json.Marshal(a.data)
 				req := httptest.NewRequest(http.MethodPost, "/create/complex", bytes.NewBuffer(reqBody))
 				rec := httptest.NewRecorder()
@@ -240,7 +258,7 @@ func TestComplexHandler_CreateCompany(t *testing.T) {
 
 			prepare: func(f *fields, a *args, w *want) *httptest.ResponseRecorder {
 				// f.usecase.EXPECT().CreateComplex(gomock.Any(), gomock.Eq(a.data)).Return(w.complexResp, w.err)
-				handler := NewCompanyHandler(f.usecase)
+				handler := NewCompanyHandler(f.usecase, &zap.Logger{})
 				// reqBody, _ := json.Marshal(a.data)
 				req := httptest.NewRequest(http.MethodPost, "/create/complex", nil)
 				rec := httptest.NewRecorder()
@@ -324,7 +342,7 @@ func TestComplexHandler_GetCompanyById(t *testing.T) {
 
 			prepare: func(f *fields, a *args, w *want) *httptest.ResponseRecorder {
 				f.usecase.EXPECT().GetCompanyById(gomock.Any(), gomock.Eq(a.data)).Return(w.complexResp, w.err)
-				handler := NewCompanyHandler(f.usecase)
+				handler := NewCompanyHandler(f.usecase, &zap.Logger{})
 				vars := map[string]string{
 					"id": id1.String(),
 				}
@@ -362,7 +380,7 @@ func TestComplexHandler_GetCompanyById(t *testing.T) {
 
 			prepare: func(f *fields, a *args, w *want) *httptest.ResponseRecorder {
 				// f.usecase.EXPECT().GetComplexById(gomock.Any(), gomock.Eq(a.data)).Return(w.complexResp, w.err)
-				handler := NewCompanyHandler(f.usecase)
+				handler := NewCompanyHandler(f.usecase, &zap.Logger{})
 				// vars := map[string]string{
 				// 	"id": id1.String(),
 				// }
@@ -398,7 +416,7 @@ func TestComplexHandler_GetCompanyById(t *testing.T) {
 
 			prepare: func(f *fields, a *args, w *want) *httptest.ResponseRecorder {
 				f.usecase.EXPECT().GetCompanyById(gomock.Any(), gomock.Eq(a.data)).Return(w.complexResp, w.err)
-				handler := NewCompanyHandler(f.usecase)
+				handler := NewCompanyHandler(f.usecase, &zap.Logger{})
 				vars := map[string]string{
 					"id": id1.String(),
 				}

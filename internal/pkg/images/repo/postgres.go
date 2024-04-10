@@ -6,16 +6,18 @@ import (
 	"fmt"
 
 	"github.com/satori/uuid"
+	"go.uber.org/zap"
 )
 
 // ImageRepo represents a repository for adverts images changes.
 type ImageRepo struct {
-	db *sql.DB
+	db     *sql.DB
+	logger *zap.Logger
 }
 
 // NewRepository creates a new instance of ImageRepo.
-func NewRepository(db *sql.DB) *ImageRepo {
-	return &ImageRepo{db: db}
+func NewRepository(db *sql.DB, logger *zap.Logger) *ImageRepo {
+	return &ImageRepo{db: db, logger: logger}
 }
 
 // StoreImage insert new images and create file in directory

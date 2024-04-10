@@ -32,7 +32,7 @@ func (h *UserHandler) GetCurUser(w http.ResponseWriter, r *http.Request) {
 		utils.WriteError(w, http.StatusBadRequest, "incorrect id")
 		return
 	}
-	userInfo, err := h.uc.GetUser(UUID)
+	userInfo, err := h.uc.GetUser(r.Context(), UUID)
 	if err != nil {
 		utils.WriteError(w, http.StatusBadRequest, "user is not exists")
 		return
@@ -76,7 +76,7 @@ func (h *UserHandler) UpdateUserPhoto(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	fileName, err := h.uc.UpdateUserPhoto(file, fileType, UUID)
+	fileName, err := h.uc.UpdateUserPhoto(r.Context(), file, fileType, UUID)
 	if err != nil {
 		utils.WriteError(w, http.StatusBadRequest, "failed upload file")
 		return
@@ -99,7 +99,7 @@ func (h *UserHandler) DeleteUserPhoto(w http.ResponseWriter, r *http.Request) {
 		utils.WriteError(w, http.StatusBadRequest, "incorrect id")
 		return
 	}
-	if err := h.uc.DeleteUserPhoto(UUID); err != nil {
+	if err := h.uc.DeleteUserPhoto(r.Context(), UUID); err != nil {
 		utils.WriteError(w, http.StatusBadRequest, "error delete avatar")
 		return
 	}
@@ -128,7 +128,7 @@ func (h *UserHandler) UpdateUserInfo(w http.ResponseWriter, r *http.Request) {
 	}
 	data.Sanitize()
 
-	user, err := h.uc.UpdateUserInfo(id, data)
+	user, err := h.uc.UpdateUserInfo(r.Context(), id, data)
 	if err != nil {
 		utils.WriteError(w, http.StatusBadRequest, err.Error())
 		return
@@ -162,7 +162,7 @@ func (h *UserHandler) UpdateUserPassword(w http.ResponseWriter, r *http.Request)
 	}
 	data.Sanitize()
 
-	token, exp, err := h.uc.UpdateUserPassword(data)
+	token, exp, err := h.uc.UpdateUserPassword(r.Context(), data)
 	if err != nil {
 		utils.WriteError(w, http.StatusBadRequest, err.Error())
 		return
