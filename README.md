@@ -7,4 +7,4 @@
 
 ## Deploy
 
-[Tean](http://5.35.16.157).
+[Tean](https://tean.homes/).

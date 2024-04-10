@@ -1,0 +1,2 @@
+DROP TABLE IF EXISTS complexes;
+DROP TYPE IF EXISTS classHouse;

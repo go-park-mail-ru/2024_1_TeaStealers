@@ -1,33 +1,76 @@
 package models
 
 import (
+	"html"
 	"time"
 
 	"github.com/satori/uuid"
 )
 
-// Company represents company information
+// Company represents a company entity.
 type Company struct {
-	// ID uniquely identifies the company.
+	// ID is the unique identifier for the company.
 	ID uuid.UUID `json:"id"`
+	// Photo is the filename of the company's photo.
+	Photo string `json:"photo"`
 	// Name is the name of the company.
 	Name string `json:"name"`
-	// Phone is the phone of the company.
-	Phone int `json:"phone"`
+	// YearFounded is the year when the company was founded.
+	YearFounded int `json:"yearFounded"`
+	// Phone is the phone number of the company.
+	Phone string `json:"phone"`
 	// Description is the description of the company.
-	Descpription string `json:"description"`
-	// DataCreation is the time of adding a record to the database.
-	DataCreation time.Time `json:"datacreation"`
-	// isDeleted means is the company deleted?.
-	IsDeleted bool `json:"isdeleted"`
+	Description string `json:"description"`
+	// DateCreation is the date when the company was published.
+	DateCreation time.Time `json:"-"`
+	// IsDeleted is a flag indicating whether the company is deleted.
+	IsDeleted bool `json:"-"`
 }
 
-// CompanyCreateData represents company information for name, phone and description
+func (comp *Company) Sanitize() {
+	comp.Photo = html.EscapeString(comp.Photo)
+	comp.Name = html.EscapeString(comp.Name)
+	comp.Phone = html.EscapeString(comp.Phone)
+	comp.Description = html.EscapeString(comp.Description)
+}
+
+// CompanyCreateData represents a data for creation company.
 type CompanyCreateData struct {
-	// Name stands for company name
+	// Name is the name of the company.
 	Name string `json:"name"`
-	// Phone stands for company phone
-	Phone int `json:"phone"`
-	// Descpription stands for company description
-	Descpription string `json:"description"`
+	// YearFounded is the year when the company was founded.
+	YearFounded int `json:"yearFounded"`
+	// Phone is the phone number of the company.
+	Phone string `json:"phone"`
+	// Description is the description of the company.
+	Description string `json:"description"`
+}
+
+func (compCrDat *CompanyCreateData) Sanitize() {
+	compCrDat.Name = html.EscapeString(compCrDat.Name)
+	compCrDat.Phone = html.EscapeString(compCrDat.Phone)
+	compCrDat.Description = html.EscapeString(compCrDat.Description)
+}
+
+// Company represents a company information.
+type CompanyData struct {
+	// ID is the unique identifier for the company.
+	ID uuid.UUID `json:"id"`
+	// Photo is the filename of the company's photo.
+	Photo string `json:"photo"`
+	// Name is the name of the company.
+	Name string `json:"name"`
+	// YearFounded is the year when the company was founded.
+	YearFounded int `json:"yearFounded"`
+	// Phone is the phone number of the company.
+	Phone string `json:"phone"`
+	// Description is the description of the company.
+	Description string `json:"description"`
+}
+
+func (compDat *CompanyData) Sanitize() {
+	compDat.Photo = html.EscapeString(compDat.Photo)
+	compDat.Name = html.EscapeString(compDat.Name)
+	compDat.Phone = html.EscapeString(compDat.Phone)
+	compDat.Description = html.EscapeString(compDat.Description)
 }

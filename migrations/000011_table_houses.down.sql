@@ -1,0 +1,3 @@
+DROP TABLE IF EXISTS houses;
+DROP TYPE IF EXISTS statusAreaHouse;
+DROP TYPE IF EXISTS statusHomeHouse;

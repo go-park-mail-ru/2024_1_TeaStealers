@@ -1,8 +1,9 @@
 FROM golang:1.21.0-alpine AS builder
 
-COPY . /github.com/go-park-mail-ru/2024_1_TeaStealers/
-
+COPY go.mod go.sum /github.com/go-park-mail-ru/2024_1_TeaStealers/
 WORKDIR /github.com/go-park-mail-ru/2024_1_TeaStealers/
+
+COPY . .
 
 RUN go mod download
 RUN go clean --modcache
