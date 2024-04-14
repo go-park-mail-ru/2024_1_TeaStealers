@@ -1,2 +1,1 @@
 DROP TABLE IF EXISTS complex;
-DROP TYPE IF EXISTS classHouse;
