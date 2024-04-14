@@ -7,9 +7,9 @@ erDiagram
         TEXT first_name
         TEXT surname
         DATE date_birthdate
-        TEXT phone
-        TEXT email
-        TEXT photo
+        TEXT phone UK
+        TEXT email UK
+        TEXT photo UK
         TIMESTAMP date_creation
         BOOLEAN is_deleted
     }
@@ -22,15 +22,14 @@ erDiagram
 
     FavouriteAdvert |{--|| User : user_favourite_adverts
 
-    StatisticViewAdvert {
+    StaticViewAdvert {
         BIGINT user_id PK,FK
         BIGINT advert_id PK,FK
-        TIMESTAMP date_creation
         BOOLEAN is_deleted
     }
 
-    StatisticViewAdvert ||--|| Advert : user_advert_link
-    StatisticViewAdvert }|--|| User : user_adverts
+    StaticViewAdvert ||--|| Advert : user_advert_link
+    StaticViewAdvert }|--|| User : user_adverts
     Advert ||--|| FavouriteAdvert : find_user_favourite_adverts
 
 
@@ -55,6 +54,7 @@ erDiagram
     Flat {
         BIGINT id PK
         BIGINT building_id FK
+        INTEGER floor
         FLOAT ceiling_height
         FLOAT square_general
         SMALLINT bedroom_count
@@ -72,9 +72,9 @@ erDiagram
         FLOAT square_area
         FLOAT square_house
         SMALLINT bedroom_count
-        statusArea status_area_house
+        TEXT status_area_house
         BOOLEAN cottage
-        statusHomeHouse status_home_house
+        TEXT status_home_house
         BOOLEAN is_deleted
     }
     House ||--|| Building : get_house_building_information
@@ -83,7 +83,7 @@ erDiagram
         BIGINT id PK
         BIGINT complex_id FK
         INTEGER floor
-        material material_building
+        TEXT material_building
         TEXT address
         GEOGRAPHY address_point
         SMALLINT year_creation
@@ -95,15 +95,15 @@ erDiagram
         BIGINT id PK
         BIGINT company_id FK
         TEXT name
-        TEXT address
-        TEXT photo
+        TEXT address UK
+        TEXT photo UK
         TEXT description
         DATE date_begin_build
         DATE date_end_build
         BOOLEAN without_finishing_option
         BOOLEAN finishing_option
         BOOLEAN pre_finishing_option
-        classHouse class_housing
+        TEXT class_housing
         BOOLEAN parking
         BOOLEAN security
         TIMESTAMP date_creation
@@ -116,10 +116,10 @@ erDiagram
 
     Company {
         BIGINT id PK
-        TEXT photo
-        TEXT name
+        TEXT photo UK
+        TEXT name UK
         SMALLINT creation_year
-        TEXT phone
+        TEXT phone UK
         TEXT description
         TIMESTAMP date_creation
         BOOLEAN is_deleted
@@ -140,7 +140,7 @@ erDiagram
     Image {
         BIGINT id PK
         BIGINT advert_id FK,UK
-        TEXT photo
+        TEXT photo UK
         SMALLINT priority UK
         TIMESTAMP date_creation
         BOOLEAN is_deleted
@@ -157,6 +157,10 @@ erDiagram
         BOOLEAN is_deleted
     }
 ```
+#
+
+is_deleted в таблицах используется для возможности просмотра удалённых объявлений, его восстановления, возможности сбора дополнительной статистики.
+
 # Описание таблиц
 ## User
 Таблица хранит информацию о пользователе, и о его jwt.
@@ -180,6 +184,8 @@ erDiagram
 
 {email} -> id, password_hash, level_update, first_name, surname, date_birthdate, phone, photo, date_creation, is_deleted
 
+### Нормальные формы
+
 Правилом первой формы является необходимость неделимости значения в каждом поле (столбце) строки – атомарность значений.
 
 Первая форма - каждое поле в таблицах неделимое - атомарность значение.
@@ -199,13 +205,15 @@ erDiagram
 - user_id - айди пользователя владельца объявления
 - title
 - description
-- phone
+- phone - номер не уникальный так как один пользователь может много выложить объявлений
 - is_agent - выставлено ли объявление риелтором
 - priority - какой рейтинг продвижения объявления
 - date_creation
 - is_deleted
 
 {id} -> user_id, title, description, phone, priority, date_creation, is_deleted
+
+### Нормальные формы
 
 Правилом первой формы является необходимость неделимости значения в каждом поле (столбце) строки – атомарность значений.
 
@@ -219,14 +227,15 @@ erDiagram
 
 Данная таблица удовлетворяет этим условиям.
 
-## StatisticViewAdvert
+## StaticViewAdvert
 Таблица позволяет просматривать созданные пользователем объявления в его личном кабинете.
 - user_id - для просмотра объявлений конкретного пользователя
 - advert_id
-- date_creation
 - is_deleted
 
-{user_id, advert_id} -> date_creation, is_deleted
+{user_id, advert_id} -> is_deleted
+
+### Нормальные формы
 
 Правилом первой формы является необходимость неделимости значения в каждом поле (столбце) строки – атомарность значений.
 
@@ -247,6 +256,8 @@ erDiagram
 - is_deleted
 
 {user_id, advert_id} -> is_deleted
+
+### Нормальные формы
 
 Правилом первой формы является необходимость неделимости значения в каждом поле (столбце) строки – атомарность значений.
 
@@ -275,6 +286,8 @@ erDiagram
 
 {advert_id, priority} -> id, photo, date_creation,is_deleted
 
+### Нормальные формы
+
 Правилом первой формы является необходимость неделимости значения в каждом поле (столбце) строки – атомарность значений.
 
 Первая форма - каждое поле в таблицах неделимое - атомарность значение.
@@ -297,6 +310,8 @@ erDiagram
 
 {id} -> advert_id, price, date_creation, is_deleted
 
+### Нормальные формы
+
 Правилом первой формы является необходимость неделимости значения в каждом поле (столбце) строки – атомарность значений.
 
 Первая форма - каждое поле в таблицах неделимое - атомарность значение.
@@ -317,6 +332,8 @@ erDiagram
 
 {advert_id, house_id} -> is_deleted
 
+### Нормальные формы
+
 Правилом первой формы является необходимость неделимости значения в каждом поле (столбце) строки – атомарность значений.
 
 Первая форма - каждое поле в таблицах неделимое - атомарность значение.
@@ -336,6 +353,8 @@ erDiagram
 - is_deleted
 
 {advert_id, flat_id} -> is_deleted
+
+### Нормальные формы
 
 Правилом первой формы является необходимость неделимости значения в каждом поле (столбце) строки – атомарность значений.
 
@@ -364,6 +383,8 @@ erDiagram
 
 {id} -> building_id, ceiling_height, square_area, square_house, bedroom_count, status_area_house, cottage, status_home_house, is_deleted
 
+### Нормальные формы
+
 Правилом первой формы является необходимость неделимости значения в каждом поле (столбце) строки – атомарность значений.
 
 Первая форма - каждое поле в таблицах неделимое - атомарность значение.
@@ -380,6 +401,7 @@ erDiagram
 Таблица хранит информацию о квартире.
 - id
 - building_id
+- floor - на каком этаже квартира
 - ceiling_height
 - square_general - общая площадь квартиры
 - bedroom_count - однушка, двушка и т.д.
@@ -388,6 +410,8 @@ erDiagram
 - is_deleted
 
 {id} -> building_id, floor, square_general, bedroom_count, square_residential, apartament,is_deleted
+
+### Нормальные формы
 
 Правилом первой формы является необходимость неделимости значения в каждом поле (столбце) строки – атомарность значений.
 
@@ -405,7 +429,7 @@ erDiagram
 Таблица хранит информацию о самом здании.
 - id
 - complex_id
-- floor - на каком этаже квартира или сколько этажей в доме
+- floor - сколько этажей в доме или квартире
 - material_building - из какого материала здание построено кирпич, блоки и т.п.
 - address
 - address_point - координаты дома
@@ -418,6 +442,8 @@ erDiagram
 {address} -> id, complex_id, material_building, address_point, date_creation, is_deleted
 
 {address_point} -> id, complex_id, material_building, address, date_creation, is_deleted
+
+### Нормальные формы
 
 Правилом первой формы является необходимость неделимости значения в каждом поле (столбце) строки – атомарность значений.
 
@@ -453,6 +479,8 @@ erDiagram
 {id} -> company_id, name, address, photo, description, date_begin_build, date_end_build, without_finishing_option, finishing_option, pre_finishing_option,
 class_housing, parking, security, date_creation, is_deleted
 
+### Нормальные формы
+
 Правилом первой формы является необходимость неделимости значения в каждом поле (столбце) строки – атомарность значений.
 
 Первая форма - каждое поле в таблицах неделимое - атомарность значение.
@@ -478,6 +506,8 @@ class_housing, parking, security, date_creation, is_deleted
 
 {id} -> photo, name, creation_year, phone, description, date_creation, is_deleted
 
+### Нормальные формы
+
 Правилом первой формы является необходимость неделимости значения в каждом поле (столбце) строки – атомарность значений.
 
 Первая форма - каждое поле в таблицах неделимое - атомарность значение.
@@ -489,7 +519,3 @@ class_housing, parking, security, date_creation, is_deleted
 Переменная отношения находится в НФБК тогда и только тогда, когда для любой нетривиальной функциональной зависимости X→Y, X является надключом.
 
 Данная таблица удовлетворяет этим условиям.
-
-#
-
-is_deleted в таблицах используется для возможности просмотра удалённых объявлений, его восстановления, возможности сбора дополнительной статистики.
