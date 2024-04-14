@@ -20,6 +20,6 @@ CREATE TABLE IF NOT EXISTS complex (
     class_housing classHouse NOT NULL DEFAULT 'None',
     parking BOOLEAN NOT NULL DEFAULT FALSE,
     security BOOLEAN NOT NULL DEFAULT FALSE,
-    creation_date TIMESTAMP NOT NULL DEFAULT NOW(),
+    date_creation TIMESTAMP NOT NULL DEFAULT NOW(),
     is_deleted BOOLEAN NOT NULL DEFAULT FALSE
 );

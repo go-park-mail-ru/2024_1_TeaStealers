@@ -19,9 +19,8 @@ CREATE TABLE IF NOT EXISTS house (
     square_area FLOAT NOT NULL,
     square_house FLOAT NOT NULL,
     bedroom_count INT NOT NULL,
-    status_area statusArea NOT NULL DEFAULT 'None',
+    status_area_house statusArea NOT NULL DEFAULT 'None',
     cottage BOOLEAN NOT NULL DEFAULT FALSE,
-    status_home statusHomeHouse NOT NULL DEFAULT 'None',
-    creation_date TIMESTAMP NOT NULL DEFAULT NOW(),
+    status_home_house statusHomeHouse NOT NULL DEFAULT 'None',
     is_deleted BOOLEAN NOT NULL DEFAULT FALSE
 );

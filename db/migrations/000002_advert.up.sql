@@ -6,6 +6,6 @@ CREATE TABLE IF NOT EXISTS advert (
     phone TEXT CONSTRAINT phone_length CHECK ( char_length(phone) <= 20) NOT NULL,
     is_agent BOOLEAN NOT NULL DEFAULT FALSE,
     priority SMALLINT NOT NULL DEFAULT 1,
-    creation_date TIMESTAMP NOT NULL DEFAULT NOW(),
+    date_creation TIMESTAMP NOT NULL DEFAULT NOW(),
     is_deleted BOOLEAN NOT NULL DEFAULT FALSE
 );

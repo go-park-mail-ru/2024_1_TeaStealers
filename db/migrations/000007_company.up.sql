@@ -5,6 +5,6 @@ CREATE TABLE IF NOT EXISTS company (
     creation_year SMALLINT NOT NULL,
     phone TEXT CONSTRAINT phone_length CHECK ( char_length(phone) <= 20) NOT NULL UNIQUE,
     description TEXT CONSTRAINT description_length CHECK ( char_length(description) <= 1500) NOT NULL,
-    creation_date TIMESTAMP NOT NULL DEFAULT NOW(),
+    date_creation TIMESTAMP NOT NULL DEFAULT NOW(),
     is_deleted BOOLEAN NOT NULL DEFAULT FALSE
 );
