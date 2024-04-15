@@ -8,6 +8,6 @@ CREATE TABLE IF NOT EXISTS building (
     address TEXT CONSTRAINT address_length CHECK ( char_length(address) <= 255) NOT NULL UNIQUE,
     address_point GEOGRAPHY(Point, 4326) NOT NULL UNIQUE,
     year_creation SMALLINT NOT NULL,
-    date_creation TIMESTAMP NOT NULL DEFAULT NOW(),
+    created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     is_deleted BOOLEAN NOT NULL DEFAULT FALSE
 );

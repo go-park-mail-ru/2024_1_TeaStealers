@@ -13,6 +13,6 @@ CREATE TABLE IF NOT EXISTS complex (
     class_housing TEXT CONSTRAINT class_housing_length CHECK ( char_length(class_housing) <= 10 AND class_housing IN ('Econom', 'Comfort', 'Business', 'Premium', 'Elite', 'None')) NOT NULL,
     parking BOOLEAN NOT NULL DEFAULT FALSE,
     security BOOLEAN NOT NULL DEFAULT FALSE,
-    date_creation TIMESTAMP NOT NULL DEFAULT NOW(),
+    created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     is_deleted BOOLEAN NOT NULL DEFAULT FALSE
 );
