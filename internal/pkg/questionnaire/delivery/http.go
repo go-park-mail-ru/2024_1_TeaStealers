@@ -4,6 +4,7 @@ import (
 	"2024_1_TeaStealers/internal/models"
 	"2024_1_TeaStealers/internal/pkg/questionnaire"
 	"2024_1_TeaStealers/internal/pkg/utils"
+	"github.com/gorilla/mux"
 	"go.uber.org/zap"
 	"net/http"
 )
@@ -22,25 +23,15 @@ func NewQuestionnaireHandler(uc questionnaire.QuestionnaireUsecase, logger *zap.
 
 // GetQuestionsByTheme handles the request for getting questions by theme
 func (h *QuestionnaireHandler) GetQuestionsByTheme(w http.ResponseWriter, r *http.Request) {
-	var data models.QuestionTheme
-
+	vars := mux.Vars(r)
+	data := vars["theme"]
+	th := models.QuestionTheme(data)
 	if err := utils.ReadRequestData(r, &data); err != nil {
 		utils.WriteError(w, http.StatusBadRequest, "incorrect data format")
 		return
 	}
 
-	switch data {
-	case models.MainPageTheme:
-	case models.CreateAdvertTheme:
-	case models.FilterPageTheme:
-	case models.ProfileTheme:
-	case models.MyAdvertsTheme:
-	default:
-		utils.WriteError(w, http.StatusBadRequest, "no such theme")
-		return
-	}
-
-	questions, err := h.uc.GetQuestionsByTheme(&data)
+	questions, err := h.uc.GetQuestionsByTheme(&th)
 	if err != nil {
 		utils.WriteError(w, http.StatusBadRequest, err.Error())
 		return
