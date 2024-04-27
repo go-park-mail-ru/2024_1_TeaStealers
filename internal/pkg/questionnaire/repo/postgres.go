@@ -5,6 +5,7 @@ import (
 	"2024_1_TeaStealers/internal/pkg/middleware"
 	"context"
 	"database/sql"
+	"fmt"
 
 	"github.com/google/uuid"
 	"go.uber.org/zap"
@@ -69,37 +70,57 @@ func (r *QuestionRepo) SelectQuestionsByTheme(ctx context.Context, theme models.
 	return questions, nil
 }
 
-// SelectQuestionsByTheme retrieves question from the database by theme.
 func (r *QuestionRepo) SelectAnswerStatistics(ctx context.Context) ([]*models.ThemeStatistic, error) {
-	queryAllAnswersByThemeAndUser := `SELECT q.question_text, mark, COUNT(*) as answer_count
-	FROM question_answer JOIN question as q ON q.id=question_answer.question_id GROUP BY q.question_text, mark`
+	query := `
+        SELECT q.question_text, qa.mark, q.theme, COUNT(*) as answer_count
+        FROM question_answer qa
+        JOIN question q ON q.id = qa.question_id
+        GROUP BY q.question_text, qa.mark, q.theme
+        ORDER BY q.theme, q.question_text, qa.mark
+    `
 
-	rows, err := r.db.Query(queryAllAnswersByThemeAndUser)
+	rows, err := r.db.QueryContext(ctx, query)
 	if err != nil {
-		//utils.LogError(r.logger, ctx.Value("requestId").(string), utils.RepositoryLayer, adverts.GetRectangleAdvertsByUserIdMethod, err)
-		return nil, err
+		return nil, fmt.Errorf("failed to query database: %w", err)
 	}
 	defer rows.Close()
 
-	statistic := []*models.ThemeStatistic{}
-	/*
-		for rows.Next() {
-			question := &models.QuestionResp{}
-			err := rows.Scan(&question.ID, &question.QuestionText, &question.MaxMark)
-
-			if err != nil {
-				//utils.LogError(r.logger, ctx.Value("requestId").(string), utils.RepositoryLayer, adverts.GetRectangleAdvertsByUserIdMethod, err)
-				return nil, err
-			}
-
-			questions = append(questions, question)
-		}
-		if err := rows.Err(); err != nil {
-			//utils.LogError(r.logger, ctx.Value("requestId").(string), utils.RepositoryLayer, adverts.GetRectangleAdvertsByUserIdMethod, err)
-			return nil, err
+	var themesMap = make(map[models.QuestionTheme]*models.ThemeStatistic)
+	for rows.Next() {
+		var questionText, theme string
+		var mark, answerCount int
+		if err := rows.Scan(&questionText, &mark, &theme, &answerCount); err != nil {
+			return nil, fmt.Errorf("failed to scan row: %w", err)
 		}
 
-		//utils.LogSucces(r.logger, ctx.Value("requestId").(string), utils.RepositoryLayer, adverts.GetRectangleAdvertsByUserIdMethod)
-	*/
-	return statistic, nil
+		themeStat, ok := themesMap[models.QuestionTheme(theme)]
+		if !ok {
+			themeStat = &models.ThemeStatistic{Theme: models.QuestionTheme(theme), Questions: []*models.QuestionAnswerStatisticsResp{}}
+			themesMap[models.QuestionTheme(theme)] = themeStat
+		}
+
+		questionStat := findQuestionAnswerStatisticsResp(themeStat.Questions, questionText)
+		if questionStat == nil {
+			questionStat = &models.QuestionAnswerStatisticsResp{Title: questionText, QuestionsTopic: []*models.QuestionWithTitleStat{}}
+			themeStat.Questions = append(themeStat.Questions, questionStat)
+		}
+
+		questionStat.QuestionsTopic = append(questionStat.QuestionsTopic, &models.QuestionWithTitleStat{CountAnswers: answerCount, Mark: mark})
+	}
+
+	var themes []*models.ThemeStatistic
+	for _, v := range themesMap {
+		themes = append(themes, v)
+	}
+
+	return themes, nil
+}
+
+func findQuestionAnswerStatisticsResp(questions []*models.QuestionAnswerStatisticsResp, title string) *models.QuestionAnswerStatisticsResp {
+	for _, q := range questions {
+		if q.Title == title {
+			return q
+		}
+	}
+	return nil
 }
