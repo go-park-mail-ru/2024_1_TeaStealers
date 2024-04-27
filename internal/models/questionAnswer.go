@@ -1,8 +1,9 @@
 package models
 
 import (
-	"github.com/satori/uuid"
 	"time"
+
+	"github.com/satori/uuid"
 )
 
 // QuestionAnswer represents a user answer for question.
@@ -30,7 +31,16 @@ type QuestionAnswerResp struct {
 
 type QuestionAnswerStatisticsResp struct {
 	// QuestionID is the unique identifier for the question.
-	QuestionID uuid.UUID `json:"question_id"`
-	// NumberMark is quantity of users with such answer for the question.
-	NumberMark int `json:"mark"`
+	Title string `json:"title"`
+	// CountAnswers is count of answers users with such answer for the question.
+	CountAnswers int `json:"count_answers"`
+	// Mark is quantity of users with such answer for the question.
+	Mark int `json:"mark"`
+}
+
+type ThemeStatistic struct {
+	// Theme is the theme for the questions.
+	Theme QuestionTheme `json:"theme"`
+	// Questions contains filenames of photos for advert.
+	Questions []*QuestionAnswerStatisticsResp `json:"questions"`
 }
