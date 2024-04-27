@@ -9,9 +9,9 @@ import (
 
 // QuestionnaireUsecase represents the usecase interface for questions iframes.
 type QuestionnaireUsecase interface {
-	GetQuestionsByTheme(*models.QuestionTheme) ([]*models.QuestionResp, error)
+	GetQuestionsByTheme(context.Context, *models.QuestionTheme) ([]*models.QuestionResp, error)
 	UploadAnswer(context.Context, *models.QuestionAnswerResp) error
-	GetAnswerStatistics() ([]*models.QuestionAnswerResp, error)
+	GetAnswerStatistics(ctx context.Context) ([]*models.QuestionAnswerResp, error)
 }
 
 // QuestionnaireRepo represents the repository interface for questions iframes.

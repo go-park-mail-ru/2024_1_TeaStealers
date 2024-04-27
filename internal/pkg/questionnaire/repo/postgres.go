@@ -7,7 +7,7 @@ import (
 	"database/sql"
 	"fmt"
 
-	"github.com/google/uuid"
+	"github.com/satori/uuid"
 	"go.uber.org/zap"
 )
 

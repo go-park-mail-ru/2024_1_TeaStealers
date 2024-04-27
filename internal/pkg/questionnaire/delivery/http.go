@@ -31,7 +31,7 @@ func (h *QuestionnaireHandler) GetQuestionsByTheme(w http.ResponseWriter, r *htt
 		return
 	}
 
-	questions, err := h.uc.GetQuestionsByTheme(&th)
+	questions, err := h.uc.GetQuestionsByTheme(r.Context(), &th)
 	if err != nil {
 		utils.WriteError(w, http.StatusBadRequest, err.Error())
 		return
@@ -65,7 +65,7 @@ func (h *QuestionnaireHandler) UploadAnswer(w http.ResponseWriter, r *http.Reque
 // GetAnswerStatistics handles the request for getting questionnaire statistics
 func (h *QuestionnaireHandler) GetAnswerStatistics(w http.ResponseWriter, r *http.Request) {
 
-	statistics, err := h.uc.GetAnswerStatistics()
+	statistics, err := h.uc.GetAnswerStatistics(r.Context())
 	if err != nil {
 		utils.WriteError(w, http.StatusBadRequest, err.Error())
 		return
