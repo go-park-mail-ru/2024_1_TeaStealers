@@ -9,15 +9,15 @@ type QuestionTheme string
 
 const (
 	// mainPageTheme represents questions for mainPage page.
-	mainPageTheme QuestionTheme = "mainPage"
+	MainPageTheme QuestionTheme = "mainPage"
 	// createAdvertTheme represents questions for createAdvert page.
-	createAdvertTheme QuestionTheme = "createAdvert"
+	CreateAdvertTheme QuestionTheme = "createAdvert"
 	// filterPageTheme represents questions for filterPage page.
-	filterPageTheme QuestionTheme = "filterPage"
+	FilterPageTheme QuestionTheme = "filterPage"
 	// profileTheme represents questions for profile page.
-	profileTheme QuestionTheme = "profile"
+	ProfileTheme QuestionTheme = "profile"
 	// myAdvertsTheme represents questions for myAdverts page.
-	myAdvertsTheme QuestionTheme = "myAdverts"
+	MyAdvertsTheme QuestionTheme = "myAdverts"
 )
 
 // Question represents a question for user.
