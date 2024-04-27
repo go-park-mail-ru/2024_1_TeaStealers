@@ -17,6 +17,9 @@ import (
 	imageR "2024_1_TeaStealers/internal/pkg/images/repo"
 	imageUc "2024_1_TeaStealers/internal/pkg/images/usecase"
 	"2024_1_TeaStealers/internal/pkg/middleware"
+	statsH "2024_1_TeaStealers/internal/pkg/questionnaire/delivery"
+	statsR "2024_1_TeaStealers/internal/pkg/questionnaire/repo"
+	statsUc "2024_1_TeaStealers/internal/pkg/questionnaire/usecase"
 	userH "2024_1_TeaStealers/internal/pkg/users/delivery"
 	userR "2024_1_TeaStealers/internal/pkg/users/repo"
 	userUc "2024_1_TeaStealers/internal/pkg/users/usecase"
@@ -84,6 +87,14 @@ func main() {
 	auth.Handle("/login", csrfMd.SetCSRFToken(http.HandlerFunc(autHandler.Login))).Methods(http.MethodPost, http.MethodOptions)
 	auth.Handle("/logout", jwtMd.JwtTMiddleware(http.HandlerFunc(autHandler.Logout))).Methods(http.MethodGet, http.MethodOptions)
 	auth.Handle("/check_auth", jwtMd.JwtTMiddleware(http.HandlerFunc(autHandler.CheckAuth))).Methods(http.MethodGet, http.MethodOptions)
+
+	statRepo := statsR.NewRepository(db, logger)
+	statUsecase := statsUc.NewQuestionnaireUsecase(statRepo, logger)
+	statHandler := statsH.NewQuestionnaireHandler(statUsecase, logger)
+	stat := r.PathPrefix("/stat").Subrouter()
+	stat.Handle("/answer", jwtMd.JwtTMiddleware(http.HandlerFunc(statHandler.UploadAnswer))).Methods(http.MethodPost, http.MethodOptions)
+	stat.Handle("/theme", jwtMd.JwtTMiddleware(http.HandlerFunc(statHandler.GetAnswerStatistics))).Methods(http.MethodGet, http.MethodOptions)
+	stat.Handle("/{theme}/questions", jwtMd.JwtTMiddleware(http.HandlerFunc(statHandler.GetQuestionsByTheme))).Methods(http.MethodGet, http.MethodOptions)
 
 	advertRepo := advertsR.NewRepository(db, logger)
 	advertUsecase := advertsUc.NewAdvertUsecase(advertRepo, logger)
