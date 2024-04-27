@@ -29,13 +29,17 @@ type QuestionAnswerResp struct {
 	Mark int `json:"mark"`
 }
 
-type QuestionAnswerStatisticsResp struct {
-	// QuestionID is the unique identifier for the question.
-	Title string `json:"title"`
+type QuestionWithTitleStat struct {
 	// CountAnswers is count of answers users with such answer for the question.
 	CountAnswers int `json:"count_answers"`
 	// Mark is quantity of users with such answer for the question.
 	Mark int `json:"mark"`
+}
+
+type QuestionAnswerStatisticsResp struct {
+	// QuestionID is the unique identifier for the question.
+	Title          string                   `json:"title"`
+	QuestionsTopic []*QuestionWithTitleStat `json:"questions_stat"`
 }
 
 type ThemeStatistic struct {
