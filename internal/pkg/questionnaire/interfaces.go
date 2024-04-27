@@ -4,6 +4,7 @@ package questionnaire
 
 import (
 	"2024_1_TeaStealers/internal/models"
+	"context"
 )
 
 // QuestionnaireUsecase represents the usecase interface for questions iframes.
@@ -15,7 +16,7 @@ type QuestionnaireUsecase interface {
 
 // QuestionnaireRepo represents the repository interface for questions iframes.
 type QuestionnaireRepo interface {
-	SelectQuestionsByTheme(*models.QuestionTheme) ([]*models.QuestionResp, error)
-	StoreAnswer(*models.QuestionAnswerResp) error
-	SelectAnswerStatistics() ([]*models.QuestionAnswerResp, error)
+	SelectQuestionsByTheme(context.Context, *models.QuestionTheme) ([]*models.QuestionResp, error)
+	StoreAnswer(context.Context, *models.QuestionAnswerResp) error
+	SelectAnswerStatistics(context.Context) ([]*models.ThemeStatistic, error)
 }
