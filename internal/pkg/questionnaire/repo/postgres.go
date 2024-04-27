@@ -26,11 +26,11 @@ func NewRepository(db *sql.DB, logger *zap.Logger) *QuestionRepo {
 func (r *QuestionRepo) StoreAnswer(ctx context.Context, newAnswer *models.QuestionAnswer) error {
 	insert := `INSERT INTO question_answer (user_id, question_id, mark) VALUES ($1, $2, $3)`
 	if _, err := r.db.ExecContext(ctx, insert, newAnswer.UserID, newAnswer.QuestionID, newAnswer.Mark); err != nil {
-		//utils.LogError(r.logger, ctx.Value("requestId").(string), utils.RepositoryLayer, adverts.CreateAdvertTypeMethod, err)
+		// utils.LogError(r.logger, ctx.Value("requestId").(string), utils.RepositoryLayer, adverts.CreateAdvertTypeMethod, err)
 		return err
 	}
 
-	//utils.LogSucces(r.logger, ctx.Value("requestId").(string), utils.RepositoryLayer, adverts.CreateAdvertTypeMethod)
+	// utils.LogSucces(r.logger, ctx.Value("requestId").(string), utils.RepositoryLayer, adverts.CreateAdvertTypeMethod)
 	return nil
 }
 
@@ -44,7 +44,7 @@ func (r *QuestionRepo) SelectQuestionsByTheme(ctx context.Context, theme *models
 	rows, err := r.db.Query(queryAllAnswersByThemeAndUser, *theme, UUID)
 
 	if err != nil {
-		//utils.LogError(r.logger, ctx.Value("requestId").(string), utils.RepositoryLayer, adverts.GetRectangleAdvertsByUserIdMethod, err)
+		// utils.LogError(r.logger, ctx.Value("requestId").(string), utils.RepositoryLayer, adverts.GetRectangleAdvertsByUserIdMethod, err)
 		return nil, err
 	}
 	defer rows.Close()
@@ -56,18 +56,18 @@ func (r *QuestionRepo) SelectQuestionsByTheme(ctx context.Context, theme *models
 		err := rows.Scan(&question.ID, &question.QuestionText, &question.MaxMark)
 
 		if err != nil {
-			//utils.LogError(r.logger, ctx.Value("requestId").(string), utils.RepositoryLayer, adverts.GetRectangleAdvertsByUserIdMethod, err)
+			// utils.LogError(r.logger, ctx.Value("requestId").(string), utils.RepositoryLayer, adverts.GetRectangleAdvertsByUserIdMethod, err)
 			return nil, err
 		}
 
 		questions = append(questions, question)
 	}
 	if err := rows.Err(); err != nil {
-		//utils.LogError(r.logger, ctx.Value("requestId").(string), utils.RepositoryLayer, adverts.GetRectangleAdvertsByUserIdMethod, err)
+		// utils.LogError(r.logger, ctx.Value("requestId").(string), utils.RepositoryLayer, adverts.GetRectangleAdvertsByUserIdMethod, err)
 		return nil, err
 	}
 
-	//utils.LogSucces(r.logger, ctx.Value("requestId").(string), utils.RepositoryLayer, adverts.GetRectangleAdvertsByUserIdMethod)
+	// utils.LogSucces(r.logger, ctx.Value("requestId").(string), utils.RepositoryLayer, adverts.GetRectangleAdvertsByUserIdMethod)
 	return questions, nil
 }
 
