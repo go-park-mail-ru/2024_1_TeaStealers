@@ -2,9 +2,11 @@ package usecase
 
 import (
 	"2024_1_TeaStealers/internal/models"
+	"2024_1_TeaStealers/internal/pkg/middleware"
 	"2024_1_TeaStealers/internal/pkg/questionnaire"
 	"context"
 
+	"github.com/satori/uuid"
 	"go.uber.org/zap"
 )
 
@@ -31,7 +33,10 @@ func (u *QuestionnaireUsecase) GetQuestionsByTheme(ctx context.Context, theme *m
 
 // UploadAnswer handles the creation of answer.
 func (u *QuestionnaireUsecase) UploadAnswer(ctx context.Context, answ *models.QuestionAnswerResp) error {
-	err := u.repo.StoreAnswer(ctx, answ)
+	id := ctx.Value(middleware.CookieName)
+	UUID, _ := id.(uuid.UUID)
+
+	err := u.repo.StoreAnswer(ctx, &models.QuestionAnswer{QuestionID: answ.QuestionID, UserID: UUID, Mark: answ.Mark})
 	return err
 }
 

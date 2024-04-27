@@ -2,11 +2,14 @@ package delivery
 
 import (
 	"2024_1_TeaStealers/internal/models"
+	"2024_1_TeaStealers/internal/pkg/middleware"
 	"2024_1_TeaStealers/internal/pkg/questionnaire"
 	"2024_1_TeaStealers/internal/pkg/utils"
-	"github.com/gorilla/mux"
-	"go.uber.org/zap"
 	"net/http"
+
+	"github.com/gorilla/mux"
+	"github.com/satori/uuid"
+	"go.uber.org/zap"
 )
 
 // QuestionnaireHandler handles HTTP requests for questionnaire.
@@ -24,14 +27,9 @@ func NewQuestionnaireHandler(uc questionnaire.QuestionnaireUsecase, logger *zap.
 // GetQuestionsByTheme handles the request for getting questions by theme
 func (h *QuestionnaireHandler) GetQuestionsByTheme(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
-	data := vars["theme"]
-	th := models.QuestionTheme(data)
-	if err := utils.ReadRequestData(r, &data); err != nil {
-		utils.WriteError(w, http.StatusBadRequest, "incorrect data format")
-		return
-	}
+	theme := models.QuestionTheme(vars["theme"])
 
-	questions, err := h.uc.GetQuestionsByTheme(r.Context(), &th)
+	questions, err := h.uc.GetQuestionsByTheme(r.Context(), &theme)
 	if err != nil {
 		utils.WriteError(w, http.StatusBadRequest, err.Error())
 		return
@@ -44,6 +42,13 @@ func (h *QuestionnaireHandler) GetQuestionsByTheme(w http.ResponseWriter, r *htt
 
 // UploadAnswer handles the request for uploading answer for question
 func (h *QuestionnaireHandler) UploadAnswer(w http.ResponseWriter, r *http.Request) {
+	id := r.Context().Value(middleware.CookieName)
+	_, ok := id.(uuid.UUID)
+	if !ok {
+		utils.WriteError(w, http.StatusBadRequest, "incorrect id")
+		return
+	}
+
 	data := models.QuestionAnswerResp{}
 
 	if err := utils.ReadRequestData(r, &data); err != nil {

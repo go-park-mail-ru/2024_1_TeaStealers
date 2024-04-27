@@ -21,8 +21,6 @@ type QuestionAnswer struct {
 }
 
 type QuestionAnswerResp struct {
-	// UserID is the unique identifier for the user.
-	UserID uuid.UUID `json:"user_id"`
 	// QuestionID is the unique identifier for the question.
 	QuestionID uuid.UUID `json:"question_id"`
 	// Mark is user mark for the question.

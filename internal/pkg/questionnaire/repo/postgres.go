@@ -35,13 +35,14 @@ func (r *QuestionRepo) StoreAnswer(ctx context.Context, newAnswer *models.Questi
 }
 
 // SelectQuestionsByTheme retrieves question from the database by theme.
-func (r *QuestionRepo) SelectQuestionsByTheme(ctx context.Context, theme models.QuestionTheme) ([]*models.QuestionResp, error) {
+func (r *QuestionRepo) SelectQuestionsByTheme(ctx context.Context, theme *models.QuestionTheme) ([]*models.QuestionResp, error) {
 	queryAllAnswersByThemeAndUser := `(SELECT q.id, q.question_text, q.max_mark FROM question AS q  WHERE q.theme=$1) EXCEPT (SELECT q.id, q.question_text, q.max_mark FROM question AS q JOIN question_answer AS qa ON qa.question_id=q.id WHERE q.theme=$1 AND qa.user_id=$2)`
 
 	id := ctx.Value(middleware.CookieName)
 	UUID, _ := id.(uuid.UUID)
 
-	rows, err := r.db.Query(queryAllAnswersByThemeAndUser, theme, UUID)
+	rows, err := r.db.Query(queryAllAnswersByThemeAndUser, *theme, UUID)
+
 	if err != nil {
 		//utils.LogError(r.logger, ctx.Value("requestId").(string), utils.RepositoryLayer, adverts.GetRectangleAdvertsByUserIdMethod, err)
 		return nil, err
