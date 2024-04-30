@@ -2,16 +2,17 @@ package delivery
 
 import (
 	"2024_1_TeaStealers/internal/models"
-	"2024_1_TeaStealers/internal/pkg/auth"
+	genAuth "2024_1_TeaStealers/internal/pkg/auth/delivery/grpc/gen"
 	"2024_1_TeaStealers/internal/pkg/jwt"
 	"2024_1_TeaStealers/internal/pkg/middleware"
 	"2024_1_TeaStealers/internal/pkg/utils"
 	"context"
 	"errors"
+	"go.uber.org/zap"
+	"google.golang.org/grpc"
 	"net/http"
 
 	"github.com/satori/uuid"
-	"go.uber.org/zap"
 )
 
 const (
@@ -22,15 +23,16 @@ const (
 )
 
 // AuthHandler handles HTTP requests for user authentication.
-type AuthHandler struct {
-	// uc represents the usecase interface for authentication.
-	uc     auth.AuthUsecase
+type AuthClientHandler struct {
+	client genAuth.AuthClient
 	logger *zap.Logger
+	// uc represents the usecase interface for authentication.
 }
 
 // NewAuthHandler creates a new instance of AuthHandler.
-func NewAuthHandler(uc auth.AuthUsecase, logger *zap.Logger) *AuthHandler {
-	return &AuthHandler{uc: uc, logger: logger}
+func NewClientAuthHandler(grcpConn *grpc.ClientConn, logger *zap.Logger) *AuthClientHandler {
+
+	return &AuthClientHandler{client: genAuth.NewAuthClient(grcpConn), logger: logger}
 }
 
 // @Summary Register a new user
@@ -43,7 +45,7 @@ func NewAuthHandler(uc auth.AuthUsecase, logger *zap.Logger) *AuthHandler {
 // @Failure 400 {string} string "Incorrect data format"
 // @Failure 500 {string} string "Internal server error"
 // @Router /auth/signup [post]
-func (h *AuthHandler) SignUp(w http.ResponseWriter, r *http.Request) {
+func (h *AuthClientHandler) SignUp(w http.ResponseWriter, r *http.Request) {
 	ctx := context.WithValue(r.Context(), "requestId", uuid.NewV4().String())
 
 	data := models.UserSignUpData{}
@@ -53,18 +55,18 @@ func (h *AuthHandler) SignUp(w http.ResponseWriter, r *http.Request) {
 		utils.WriteError(w, http.StatusBadRequest, "incorrect data format")
 		return
 	}
+	data.Sanitize()
 
-	newUser, token, exp, err := h.uc.SignUp(ctx, &data)
+	TokenExp, err := h.client.SignUp(r.Context(), &genAuth.SignUpRequest{Email: data.Email, Phone: data.Phone, Password: data.Password})
 	if err != nil {
-		utils.LogErrorResponse(h.logger, ctx.Value("requestId").(string), utils.DeliveryLayer, SignUpMethod, err, http.StatusBadRequest)
-		utils.WriteError(w, http.StatusBadRequest, "data already is used")
-		return
+		utils.LogErrorResponse(h.logger, ctx.Value("requestId").(string), utils.DeliveryLayer, SignUpMethod, err, http.StatusInternalServerError)
+		utils.WriteError(w, http.StatusInternalServerError, err.Error())
 	}
-	newUser.Sanitize()
+	token, exp := TokenExp.Token, TokenExp.Exp
+	expTime, _ := utils.StringToTime("2006-01-02 15:04:05", exp) // todo обработать!
+	http.SetCookie(w, jwt.TokenCookie(middleware.CookieName, token, expTime))
 
-	http.SetCookie(w, jwt.TokenCookie(middleware.CookieName, token, exp))
-
-	if err = utils.WriteResponse(w, http.StatusCreated, newUser); err != nil {
+	if err = utils.WriteResponse(w, http.StatusCreated, "newUser"); err != nil {
 		utils.LogErrorResponse(h.logger, ctx.Value("requestId").(string), utils.DeliveryLayer, SignUpMethod, err, http.StatusInternalServerError)
 		utils.WriteError(w, http.StatusInternalServerError, err.Error())
 	} else {
@@ -82,7 +84,7 @@ func (h *AuthHandler) SignUp(w http.ResponseWriter, r *http.Request) {
 // @Failure 400 {string} string "Incorrect password or login"
 // @Failure 500 {string} string "Internal server error"
 // @Router /auth/login [post]
-func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
+func (h *AuthClientHandler) Login(w http.ResponseWriter, r *http.Request) {
 	ctx := context.WithValue(r.Context(), "requestId", uuid.NewV4().String())
 
 	data := models.UserLoginData{}
@@ -93,18 +95,17 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data.Sanitize()
-	user, token, exp, err := h.uc.Login(ctx, &data)
-
+	loginResp, err := h.client.Login(ctx, &genAuth.SignInRequest{Email: data.Login, Password: data.Password})
 	if err != nil {
-		utils.LogErrorResponse(h.logger, ctx.Value("requestId").(string), utils.DeliveryLayer, LoginMethod, err, http.StatusBadRequest)
+		utils.LogErrorResponse(h.logger, ctx.Value("requestId").(string), utils.DeliveryLayer, SignUpMethod, err, http.StatusInternalServerError)
 		utils.WriteError(w, http.StatusBadRequest, "incorrect password or login")
-		return
 	}
-	user.Sanitize()
 
-	http.SetCookie(w, jwt.TokenCookie(middleware.CookieName, token, exp))
+	token, exp := loginResp.Token, loginResp.Exp
+	expTime, _ := utils.StringToTime("2006-01-02 15:04:05", exp) // todo обработать!
+	http.SetCookie(w, jwt.TokenCookie(middleware.CookieName, token, expTime))
 
-	if err := utils.WriteResponse(w, http.StatusOK, user); err != nil {
+	if err := utils.WriteResponse(w, http.StatusOK, "user"); err != nil {
 		utils.LogErrorResponse(h.logger, ctx.Value("requestId").(string), utils.DeliveryLayer, LoginMethod, err, http.StatusInternalServerError)
 		utils.WriteError(w, http.StatusInternalServerError, err.Error())
 	} else {
@@ -117,7 +118,7 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 // @Tags auth
 // @Success 200 {string} string "Logged out"
 // @Router /auth/logout [get]
-func (h *AuthHandler) Logout(w http.ResponseWriter, r *http.Request) {
+func (h *AuthClientHandler) Logout(w http.ResponseWriter, r *http.Request) {
 	ctx := context.WithValue(r.Context(), "requestId", uuid.NewV4().String())
 
 	http.SetCookie(w, &http.Cookie{
@@ -133,7 +134,7 @@ func (h *AuthHandler) Logout(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (h *AuthHandler) CheckAuth(w http.ResponseWriter, r *http.Request) {
+func (h *AuthClientHandler) CheckAuth(w http.ResponseWriter, r *http.Request) {
 	ctx := context.WithValue(r.Context(), "requestId", uuid.NewV4().String())
 
 	idUser := ctx.Value(middleware.CookieName)
@@ -142,22 +143,25 @@ func (h *AuthHandler) CheckAuth(w http.ResponseWriter, r *http.Request) {
 		utils.WriteError(w, http.StatusUnauthorized, "token not found")
 		return
 	}
-	uuidUser, ok := idUser.(uuid.UUID)
-	if !ok {
-		utils.LogErrorResponse(h.logger, ctx.Value("requestId").(string), utils.DeliveryLayer, CheckAuthMethod, errors.New("user id is incorrect"), http.StatusUnauthorized)
-		utils.WriteError(w, http.StatusUnauthorized, "incorrect user id")
-		return
-	}
-	err := h.uc.CheckAuth(ctx, uuidUser)
-	if err != nil {
+	// uuidUser, ok := idUser.(uuid.UUID)
+	// if !ok {
+	//	utils.LogErrorResponse(h.logger, ctx.Value("requestId").(string), utils.DeliveryLayer, CheckAuthMethod, errors.New("user id is incorrect"), http.StatusUnauthorized)
+	//	utils.WriteError(w, http.StatusUnauthorized, "incorrect user id")
+	//	return
+	//}
+	resp, err := h.client.CheckAuth(ctx, &genAuth.CheckAuthRequst{Id: idUser.(string)})
+	if !resp.Authorized || err != nil { // todo надо добавить проверок
 		utils.LogErrorResponse(h.logger, ctx.Value("requestId").(string), utils.DeliveryLayer, CheckAuthMethod, err, http.StatusUnauthorized)
 		utils.WriteError(w, http.StatusUnauthorized, "user not exists")
 		return
 	}
-	if err = utils.WriteResponse(w, http.StatusOK, uuidUser); err != nil {
-		utils.LogErrorResponse(h.logger, ctx.Value("requestId").(string), utils.DeliveryLayer, CheckAuthMethod, err, http.StatusInternalServerError)
-		utils.WriteError(w, http.StatusInternalServerError, err.Error())
-	} else {
-		utils.LogSuccesResponse(h.logger, ctx.Value("requestId").(string), utils.DeliveryLayer, CheckAuthMethod)
-	}
+	/*
+		if err = utils.WriteResponse(w, http.StatusOK, uuidUser); err != nil {
+			utils.LogErrorResponse(h.logger, ctx.Value("requestId").(string), utils.DeliveryLayer, CheckAuthMethod, err, http.StatusInternalServerError)
+			utils.WriteError(w, http.StatusInternalServerError, err.Error())
+		} else {
+			utils.LogSuccesResponse(h.logger, ctx.Value("requestId").(string), utils.DeliveryLayer, CheckAuthMethod)
+		}
+
+	*/
 }

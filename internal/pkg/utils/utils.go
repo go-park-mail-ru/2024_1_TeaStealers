@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"io"
 	"net/http"
+	"time"
 
 	"github.com/satori/uuid"
 )
@@ -75,4 +76,12 @@ func GetIdUserByRequest(r *http.Request) uuid.UUID {
 		return uuid.Nil
 	}
 	return UUID
+}
+
+func StringToTime(layout, value string) (time.Time, error) {
+	t, err := time.Parse(layout, value)
+	if err != nil {
+		return time.Time{}, err
+	}
+	return t, nil
 }

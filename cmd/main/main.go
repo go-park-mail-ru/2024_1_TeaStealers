@@ -26,6 +26,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"google.golang.org/grpc"
 	"log"
 	"net/http"
 	"os"
@@ -73,10 +74,20 @@ func main() {
 	r.HandleFunc("/ping", pingPongHandler).Methods(http.MethodGet)
 	r.PathPrefix("/docs/").Handler(httpSwagger.WrapHandler)
 
+	grcpConn, err := grpc.Dial(
+		"127.0.0.1:8081", // todo порт!!!
+		grpc.WithInsecure(),
+	)
+	if err != nil {
+		log.Fatalf("cant connect to grpc")
+	}
+	defer grcpConn.Close()
+
+	// sessManager = genAuthNewAuthCheckerClient(grcpConn)
+
 	authRepo := authR.NewRepository(db, logger)
 	authUsecase := authUc.NewAuthUsecase(authRepo, logger)
-	autHandler := authH.NewAuthHandler(authUsecase, logger)
-
+	autHandler := authH.NewClientAuthHandler(grcpConn, logger)
 	jwtMd := middleware.NewAuthMiddleware(authUsecase, logger)
 	csrfMd := middleware.NewCsrfMiddleware()
 
