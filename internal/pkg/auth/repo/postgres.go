@@ -69,7 +69,7 @@ func (r *AuthRepo) CheckUser(ctx context.Context, login string, passwordHash str
 	}
 
 	if user.PasswordHash != passwordHash {
-		utils.LogError(r.logger, ctx.Value("requestId").(string), utils.UsecaseLayer, auth.CheckUserMethod, errors.New("Password hash not equal"))
+		utils.LogError(r.logger, ctx.Value("requestId").(string), utils.UsecaseLayer, auth.CheckUserMethod, errors.New("password hash not equal"))
 		return nil, errors.New("wrong password")
 	}
 

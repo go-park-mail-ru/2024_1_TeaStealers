@@ -26,8 +26,6 @@ func main() {
 }
 
 func run() (err error) {
-	// здесь сетап для слоев
-
 	_ = godotenv.Load()
 	logger := zap.Must(zap.NewDevelopment())
 
@@ -49,20 +47,17 @@ func run() (err error) {
 
 	authRepo := authR.NewRepository(db, logger)
 	authUsecase := authUc.NewAuthUsecase(authRepo, logger)
-	// слой grpc
 	authHandler := grpcAuth.NewServerAuthHandler(authUsecase, logger)
 	gRPCServer := grpc.NewServer()
-	// регистрация сервиса
 	genAuth.RegisterAuthServer(gRPCServer, authHandler)
 
-	// запуск grpc сервиса
 	go func() {
-		listener, err := net.Listen("tcp", "PORT") // todo порт
+		listener, err := net.Listen("tcp", GateWayPort)
 		if err != nil {
-			// log.Error(errr)
+			log.Fatal(err)
 		}
 		if err := gRPCServer.Serve(listener); err != nil {
-			// log.Error(errr)
+			log.Fatal(err)
 		}
 	}()
 

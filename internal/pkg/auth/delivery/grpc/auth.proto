@@ -1,18 +1,15 @@
 syntax = "proto3";
-package auth; //как будет называться пакет
-option go_package = "./internal/pkg/auth/delivery/grpc/gen/;gen"; //куда он сгенерится
+package auth;
+option go_package = "./internal/pkg/auth/delivery/grpc/gen/;gen";
 
 //protoc --go_out=./gen --go-grpc_out=./gen --go-grpc_opt=paths=source_relative --go_opt=paths=source_relative *.proto
-// rpc Logout(SignInRequest) returns (SignInResponse) {} // todo а нужен?
 
-//описание сервиса
 service Auth {
   rpc SignUp(SignUpRequest) returns (SignUpInResponse) {}
   rpc Login(SignInRequest) returns (SignUpInResponse) {}
   rpc CheckAuth(CheckAuthRequst) returns (CheckAuthResponse) {}
 }
 
-//описание сообщения
 message SignUpRequest {
   string Email = 1;
   string Phone = 2;

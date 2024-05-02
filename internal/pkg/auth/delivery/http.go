@@ -22,19 +22,18 @@ const (
 	CheckAuthMethod = "CheckAuth"
 )
 
-// AuthHandler handles HTTP requests for user authentication.
+// AuthClientHandler handles HTTP requests for user authentication.
 type AuthClientHandler struct {
 	client genAuth.AuthClient
 	logger *zap.Logger
-	// uc represents the usecase interface for authentication.
 }
 
-// NewAuthHandler creates a new instance of AuthHandler.
-func NewClientAuthHandler(grcpConn *grpc.ClientConn, logger *zap.Logger) *AuthClientHandler {
-
-	return &AuthClientHandler{client: genAuth.NewAuthClient(grcpConn), logger: logger}
+// NewClientAuthHandler creates a new instance of AuthHandler.
+func NewClientAuthHandler(grpcConn *grpc.ClientConn, logger *zap.Logger) *AuthClientHandler {
+	return &AuthClientHandler{client: genAuth.NewAuthClient(grpcConn), logger: logger}
 }
 
+// SignUp
 // @Summary Register a new user
 // @Description Register a new user
 // @Tags auth
@@ -47,7 +46,6 @@ func NewClientAuthHandler(grcpConn *grpc.ClientConn, logger *zap.Logger) *AuthCl
 // @Router /auth/signup [post]
 func (h *AuthClientHandler) SignUp(w http.ResponseWriter, r *http.Request) {
 	ctx := context.WithValue(r.Context(), "requestId", uuid.NewV4().String())
-
 	data := models.UserSignUpData{}
 
 	if err := utils.ReadRequestData(r, &data); err != nil {
@@ -57,23 +55,34 @@ func (h *AuthClientHandler) SignUp(w http.ResponseWriter, r *http.Request) {
 	}
 	data.Sanitize()
 
-	TokenExp, err := h.client.SignUp(r.Context(), &genAuth.SignUpRequest{Email: data.Email, Phone: data.Phone, Password: data.Password})
+	TokenExp, err := h.client.SignUp(ctx, &genAuth.SignUpRequest{Email: data.Email, Phone: data.Phone, Password: data.Password})
+	if err != nil {
+		utils.LogErrorResponse(h.logger, ctx.Value("requestId").(string), utils.DeliveryLayer, SignUpMethod, err, http.StatusConflict)
+		utils.WriteError(w, http.StatusConflict, err.Error())
+		return
+	}
+
+	token, exp := TokenExp.Token, TokenExp.Exp
+	expTime, err := utils.StringToTime("2006-01-02 15:04:05", exp)
 	if err != nil {
 		utils.LogErrorResponse(h.logger, ctx.Value("requestId").(string), utils.DeliveryLayer, SignUpMethod, err, http.StatusInternalServerError)
 		utils.WriteError(w, http.StatusInternalServerError, err.Error())
+		return
 	}
-	token, exp := TokenExp.Token, TokenExp.Exp
-	expTime, _ := utils.StringToTime("2006-01-02 15:04:05", exp) // todo обработать!
+
 	http.SetCookie(w, jwt.TokenCookie(middleware.CookieName, token, expTime))
 
-	if err = utils.WriteResponse(w, http.StatusCreated, "newUser"); err != nil {
+	if err = utils.WriteResponse(w, http.StatusCreated, "newUser"); err != nil { //todo а здесь нужно возвращать newUser???
 		utils.LogErrorResponse(h.logger, ctx.Value("requestId").(string), utils.DeliveryLayer, SignUpMethod, err, http.StatusInternalServerError)
 		utils.WriteError(w, http.StatusInternalServerError, err.Error())
+		return
 	} else {
 		utils.LogSuccesResponse(h.logger, ctx.Value("requestId").(string), utils.DeliveryLayer, SignUpMethod)
+		return
 	}
 }
 
+// Login
 // @Summary User login
 // @Description User login
 // @Tags auth
@@ -99,13 +108,20 @@ func (h *AuthClientHandler) Login(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		utils.LogErrorResponse(h.logger, ctx.Value("requestId").(string), utils.DeliveryLayer, SignUpMethod, err, http.StatusInternalServerError)
 		utils.WriteError(w, http.StatusBadRequest, "incorrect password or login")
+		return
 	}
 
 	token, exp := loginResp.Token, loginResp.Exp
-	expTime, _ := utils.StringToTime("2006-01-02 15:04:05", exp) // todo обработать!
+	expTime, err := utils.StringToTime("2006-01-02 15:04:05", exp)
+	if err != nil {
+		utils.LogErrorResponse(h.logger, ctx.Value("requestId").(string), utils.DeliveryLayer, LoginMethod, err, http.StatusInternalServerError)
+		utils.WriteError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
 	http.SetCookie(w, jwt.TokenCookie(middleware.CookieName, token, expTime))
 
-	if err := utils.WriteResponse(w, http.StatusOK, "user"); err != nil {
+	if err := utils.WriteResponse(w, http.StatusOK, "user"); err != nil { //todo нужен user?
 		utils.LogErrorResponse(h.logger, ctx.Value("requestId").(string), utils.DeliveryLayer, LoginMethod, err, http.StatusInternalServerError)
 		utils.WriteError(w, http.StatusInternalServerError, err.Error())
 	} else {
@@ -113,6 +129,7 @@ func (h *AuthClientHandler) Login(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// Logout
 // @Summary User logout
 // @Description User logout
 // @Tags auth
@@ -129,8 +146,10 @@ func (h *AuthClientHandler) Logout(w http.ResponseWriter, r *http.Request) {
 	if err := utils.WriteResponse(w, http.StatusOK, "success logout"); err != nil {
 		utils.LogErrorResponse(h.logger, ctx.Value("requestId").(string), utils.DeliveryLayer, LogoutMethod, err, http.StatusInternalServerError)
 		utils.WriteError(w, http.StatusInternalServerError, err.Error())
+		return
 	} else {
 		utils.LogSuccesResponse(h.logger, ctx.Value("requestId").(string), utils.DeliveryLayer, LogoutMethod)
+		return
 	}
 }
 
@@ -139,29 +158,37 @@ func (h *AuthClientHandler) CheckAuth(w http.ResponseWriter, r *http.Request) {
 
 	idUser := ctx.Value(middleware.CookieName)
 	if idUser == nil {
-		utils.LogErrorResponse(h.logger, ctx.Value("requestId").(string), utils.DeliveryLayer, CheckAuthMethod, errors.New("user id is nill"), http.StatusUnauthorized)
+		utils.LogErrorResponse(h.logger, ctx.Value("requestId").(string), utils.DeliveryLayer, CheckAuthMethod, errors.New("user id is nil"), http.StatusUnauthorized)
 		utils.WriteError(w, http.StatusUnauthorized, "token not found")
 		return
 	}
-	// uuidUser, ok := idUser.(uuid.UUID)
-	// if !ok {
-	//	utils.LogErrorResponse(h.logger, ctx.Value("requestId").(string), utils.DeliveryLayer, CheckAuthMethod, errors.New("user id is incorrect"), http.StatusUnauthorized)
-	//	utils.WriteError(w, http.StatusUnauthorized, "incorrect user id")
-	//	return
-	//}
-	resp, err := h.client.CheckAuth(ctx, &genAuth.CheckAuthRequst{Id: idUser.(string)})
-	if !resp.Authorized || err != nil { // todo надо добавить проверок
-		utils.LogErrorResponse(h.logger, ctx.Value("requestId").(string), utils.DeliveryLayer, CheckAuthMethod, err, http.StatusUnauthorized)
-		utils.WriteError(w, http.StatusUnauthorized, "user not exists")
+	uuidUser, ok := idUser.(string)
+	if !ok {
+		utils.LogErrorResponse(h.logger, ctx.Value("requestId").(string), utils.DeliveryLayer, CheckAuthMethod, errors.New("user id is not a string"), http.StatusInternalServerError)
+		utils.WriteError(w, http.StatusInternalServerError, "user id is not a string")
 		return
 	}
-	/*
-		if err = utils.WriteResponse(w, http.StatusOK, uuidUser); err != nil {
-			utils.LogErrorResponse(h.logger, ctx.Value("requestId").(string), utils.DeliveryLayer, CheckAuthMethod, err, http.StatusInternalServerError)
-			utils.WriteError(w, http.StatusInternalServerError, err.Error())
-		} else {
-			utils.LogSuccesResponse(h.logger, ctx.Value("requestId").(string), utils.DeliveryLayer, CheckAuthMethod)
-		}
 
-	*/
+	resp, err := h.client.CheckAuth(ctx, &genAuth.CheckAuthRequst{Id: uuidUser})
+	if err != nil {
+		utils.LogErrorResponse(h.logger, ctx.Value("requestId").(string), utils.DeliveryLayer, CheckAuthMethod, err, http.StatusInternalServerError)
+		utils.WriteError(w, http.StatusInternalServerError, "error check auth")
+		return
+	}
+
+	if !resp.Authorized {
+		utils.LogErrorResponse(h.logger, ctx.Value("requestId").(string), utils.DeliveryLayer, CheckAuthMethod, err, http.StatusUnauthorized)
+		utils.WriteError(w, http.StatusUnauthorized, "fail check auth")
+		return
+	}
+
+	if err = utils.WriteResponse(w, http.StatusOK, uuidUser); err != nil {
+		utils.LogErrorResponse(h.logger, ctx.Value("requestId").(string), utils.DeliveryLayer, CheckAuthMethod, err, http.StatusInternalServerError)
+		utils.WriteError(w, http.StatusInternalServerError, err.Error())
+		return
+	} else {
+		utils.LogSuccesResponse(h.logger, ctx.Value("requestId").(string), utils.DeliveryLayer, CheckAuthMethod)
+		return
+	}
+
 }

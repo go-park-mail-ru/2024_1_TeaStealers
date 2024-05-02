@@ -20,7 +20,6 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-// описание сообщения
 type SignUpRequest struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache

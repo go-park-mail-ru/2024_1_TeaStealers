@@ -25,8 +25,10 @@ import (
 	userUc "2024_1_TeaStealers/internal/pkg/users/usecase"
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 	"log"
 	"net/http"
 	"os"
@@ -75,29 +77,25 @@ func main() {
 	r.PathPrefix("/docs/").Handler(httpSwagger.WrapHandler)
 
 	grcpConn, err := grpc.Dial(
-		"127.0.0.1:8081", // todo порт!!!
-		grpc.WithInsecure(),
+		AuthServerPort,
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
 	)
 	if err != nil {
 		log.Fatalf("cant connect to grpc")
 	}
 	defer grcpConn.Close()
 
-	// sessManager = genAuthNewAuthCheckerClient(grcpConn)
-
 	authRepo := authR.NewRepository(db, logger)
 	authUsecase := authUc.NewAuthUsecase(authRepo, logger)
-	autHandler := authH.NewClientAuthHandler(grcpConn, logger)
+	authHandler := authH.NewClientAuthHandler(grcpConn, logger)
 	jwtMd := middleware.NewAuthMiddleware(authUsecase, logger)
 	csrfMd := middleware.NewCsrfMiddleware()
 
 	auth := r.PathPrefix("/auth").Subrouter()
-	// auth.HandleFunc("/signup", autHandler.SignUp).Methods(http.MethodPost, http.MethodOptions)
-	// auth.HandleFunc("/login", autHandler.Login).Methods(http.MethodPost, http.MethodOptions)
-	auth.Handle("/signup", csrfMd.SetCSRFToken(http.HandlerFunc(autHandler.SignUp))).Methods(http.MethodPost, http.MethodOptions)
-	auth.Handle("/login", csrfMd.SetCSRFToken(http.HandlerFunc(autHandler.Login))).Methods(http.MethodPost, http.MethodOptions)
-	auth.Handle("/logout", jwtMd.JwtTMiddleware(http.HandlerFunc(autHandler.Logout))).Methods(http.MethodGet, http.MethodOptions)
-	auth.Handle("/check_auth", jwtMd.JwtTMiddleware(http.HandlerFunc(autHandler.CheckAuth))).Methods(http.MethodGet, http.MethodOptions)
+	auth.Handle("/signup", csrfMd.SetCSRFToken(http.HandlerFunc(authHandler.SignUp))).Methods(http.MethodPost, http.MethodOptions)
+	auth.Handle("/login", csrfMd.SetCSRFToken(http.HandlerFunc(authHandler.Login))).Methods(http.MethodPost, http.MethodOptions)
+	auth.Handle("/logout", jwtMd.JwtTMiddleware(http.HandlerFunc(authHandler.Logout))).Methods(http.MethodGet, http.MethodOptions)
+	auth.Handle("/check_auth", jwtMd.JwtTMiddleware(http.HandlerFunc(authHandler.CheckAuth))).Methods(http.MethodGet, http.MethodOptions)
 
 	statRepo := statsR.NewRepository(db, logger)
 	statUsecase := statsUc.NewQuestionnaireUsecase(statRepo, logger)
@@ -153,15 +151,14 @@ func main() {
 	complexUsecase := complexUc.NewComplexUsecase(complexRepo, logger)
 	complexHandler := complexH.NewComplexHandler(complexUsecase, logger)
 
-	complex := r.PathPrefix("/complexes").Subrouter()
-	complex.HandleFunc("/", complexHandler.CreateComplex).Methods(http.MethodPost, http.MethodOptions)
-	complex.HandleFunc("/{id}", complexHandler.GetComplexById).Methods(http.MethodGet, http.MethodOptions)
-	complex.HandleFunc("/{id}/rectanglelist/", advertHandler.GetComplexAdverts).Methods(http.MethodGet, http.MethodOptions)
-	complex.HandleFunc("/houses", complexHandler.CreateHouseAdvert).Methods(http.MethodPost, http.MethodOptions)
-	complex.HandleFunc("/flats", complexHandler.CreateFlatAdvert).Methods(http.MethodPost, http.MethodOptions)
-	complex.HandleFunc("/buildings", complexHandler.CreateBuilding).Methods(http.MethodPost, http.MethodOptions)
-	complex.HandleFunc("/images/{id}", complexHandler.UpdateComplexPhoto).Methods(http.MethodPost, http.MethodOptions)
-
+	complexRoute := r.PathPrefix("/complexes").Subrouter()
+	complexRoute.HandleFunc("/", complexHandler.CreateComplex).Methods(http.MethodPost, http.MethodOptions)
+	complexRoute.HandleFunc("/{id}", complexHandler.GetComplexById).Methods(http.MethodGet, http.MethodOptions)
+	complexRoute.HandleFunc("/{id}/rectanglelist/", advertHandler.GetComplexAdverts).Methods(http.MethodGet, http.MethodOptions)
+	complexRoute.HandleFunc("/houses", complexHandler.CreateHouseAdvert).Methods(http.MethodPost, http.MethodOptions)
+	complexRoute.HandleFunc("/flats", complexHandler.CreateFlatAdvert).Methods(http.MethodPost, http.MethodOptions)
+	complexRoute.HandleFunc("/buildings", complexHandler.CreateBuilding).Methods(http.MethodPost, http.MethodOptions)
+	complexRoute.HandleFunc("/images/{id}", complexHandler.UpdateComplexPhoto).Methods(http.MethodPost, http.MethodOptions)
 	srv := &http.Server{
 		Addr:              ":8080",
 		Handler:           r,
@@ -175,7 +172,7 @@ func main() {
 
 	go func() {
 		logger.Info(fmt.Sprintf("Start server on %s\n", srv.Addr))
-		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+		if err := srv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
 			logger.Error(fmt.Sprintf("listen: %s\n", err))
 		}
 	}()
