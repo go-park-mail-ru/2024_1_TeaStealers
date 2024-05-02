@@ -72,7 +72,7 @@ func (h *AuthClientHandler) SignUp(w http.ResponseWriter, r *http.Request) {
 
 	http.SetCookie(w, jwt.TokenCookie(middleware.CookieName, token, expTime))
 
-	if err = utils.WriteResponse(w, http.StatusCreated, "newUser"); err != nil { //todo а здесь нужно возвращать newUser???
+	if err = utils.WriteResponse(w, http.StatusCreated, "newUser"); err != nil { // todo а здесь нужно возвращать newUser???
 		utils.LogErrorResponse(h.logger, ctx.Value("requestId").(string), utils.DeliveryLayer, SignUpMethod, err, http.StatusInternalServerError)
 		utils.WriteError(w, http.StatusInternalServerError, err.Error())
 		return
@@ -121,7 +121,7 @@ func (h *AuthClientHandler) Login(w http.ResponseWriter, r *http.Request) {
 
 	http.SetCookie(w, jwt.TokenCookie(middleware.CookieName, token, expTime))
 
-	if err = utils.WriteResponse(w, http.StatusOK, "user"); err != nil { //todo нужен user?
+	if err = utils.WriteResponse(w, http.StatusOK, "user"); err != nil { // todo нужен user?
 		utils.LogErrorResponse(h.logger, ctx.Value("requestId").(string), utils.DeliveryLayer, LoginMethod, err, http.StatusInternalServerError)
 		utils.WriteError(w, http.StatusInternalServerError, err.Error())
 	} else {

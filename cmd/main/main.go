@@ -79,9 +79,20 @@ func main() {
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
 	)
 	if err != nil {
-		log.Fatalf("cant connect to grpc")
+		log.Println("cant connect to grpc")
+		return
 	}
 	defer grcpConnAuth.Close()
+
+	grcpConnUsers, err := grpc.Dial(
+		UsersServerPort,
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
+	)
+	if err != nil {
+		log.Println("cant connect to grpc")
+		return
+	}
+	defer grcpConnUsers.Close()
 
 	authHandler := authH.NewClientAuthHandler(grcpConnAuth, logger)
 	jwtMd := middleware.NewAuthMiddleware(grcpConnAuth, logger)
@@ -124,12 +135,13 @@ func main() {
 
 	userRepo := userR.NewRepository(db)
 	userUsecase := userUc.NewUserUsecase(userRepo)
-	userHandler := userH.NewUserHandler(userUsecase)
+	userHandler := userH.NewClientUserHandler(grcpConnAuth)
+	userHandlerPhoto := userH.NewUserHandlerPhoto(userUsecase)
 
 	user := r.PathPrefix("/users").Subrouter()
 	user.Handle("/me", jwtMd.JwtMiddleware(http.HandlerFunc(userHandler.GetCurUser))).Methods(http.MethodGet, http.MethodOptions)
-	user.Handle("/avatar", jwtMd.JwtMiddleware(http.HandlerFunc(userHandler.UpdateUserPhoto))).Methods(http.MethodPost, http.MethodOptions)
-	user.Handle("/avatar", jwtMd.JwtMiddleware(http.HandlerFunc(userHandler.DeleteUserPhoto))).Methods(http.MethodDelete, http.MethodOptions)
+	user.Handle("/avatar", jwtMd.JwtMiddleware(http.HandlerFunc(userHandlerPhoto.UpdateUserPhoto))).Methods(http.MethodPost, http.MethodOptions)
+	user.Handle("/avatar", jwtMd.JwtMiddleware(http.HandlerFunc(userHandlerPhoto.DeleteUserPhoto))).Methods(http.MethodDelete, http.MethodOptions)
 	user.Handle("/info", jwtMd.JwtMiddleware(http.HandlerFunc(userHandler.UpdateUserInfo))).Methods(http.MethodPost, http.MethodOptions)
 	user.Handle("/password", jwtMd.JwtMiddleware(http.HandlerFunc(userHandler.UpdateUserPassword))).Methods(http.MethodPost, http.MethodOptions)
 	user.Handle("/myadverts", jwtMd.JwtMiddleware(http.HandlerFunc(advertHandler.GetUserAdverts))).Methods(http.MethodGet, http.MethodOptions)

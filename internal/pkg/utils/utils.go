@@ -1,15 +1,12 @@
 package utils
 
 import (
-	"2024_1_TeaStealers/internal/pkg/middleware"
 	"crypto/sha1"
 	"encoding/hex"
 	"encoding/json"
 	"io"
 	"net/http"
 	"time"
-
-	"github.com/satori/uuid"
 )
 
 // WriteError prints error in json
@@ -69,15 +66,16 @@ func GenerateHashString(s string) string {
 	return hex.EncodeToString(h.Sum(nil))
 }
 
-func GetIdUserByRequest(r *http.Request) uuid.UUID {
-	id := r.Context().Value(middleware.CookieName)
-	UUID, ok := id.(uuid.UUID)
-	if !ok {
-		return uuid.Nil
+/*
+	func GetIdUserByRequest(r *http.Request) uuid.UUID {
+		id := r.Context().Value(middleware.CookieName)
+		UUID, ok := id.(uuid.UUID)
+		if !ok {
+			return uuid.Nil
+		}
+		return UUID
 	}
-	return UUID
-}
-
+*/
 func StringToTime(layout, value string) (time.Time, error) {
 	t, err := time.Parse(layout, value)
 	if err != nil {

@@ -4,39 +4,44 @@ import (
 	"2024_1_TeaStealers/internal/models"
 	"2024_1_TeaStealers/internal/pkg/jwt"
 	"2024_1_TeaStealers/internal/pkg/middleware"
-	"2024_1_TeaStealers/internal/pkg/users"
+	genUsers "2024_1_TeaStealers/internal/pkg/users/delivery/grpc/gen"
 	"2024_1_TeaStealers/internal/pkg/utils"
-	"net/http"
-	"path/filepath"
-	"slices"
-	"strings"
-
 	"github.com/satori/uuid"
+	"google.golang.org/grpc"
+	"net/http"
 )
 
-// UserHandler handles HTTP requests for user.
-type UserHandler struct {
-	// uc represents the usecase interface for user.
-	uc users.UserUsecase
+// UserClientHandler handles HTTP requests for user.
+type UserClientHandler struct {
+	client genUsers.UsersClient
 }
 
-// NewUserHandler creates a new instance of UserHandler.
-func NewUserHandler(uc users.UserUsecase) *UserHandler {
-	return &UserHandler{uc: uc}
+// NewClientUserHandler creates a new instance of UserHandler.
+func NewClientUserHandler(grpcConn *grpc.ClientConn) *UserClientHandler {
+	return &UserClientHandler{client: genUsers.NewUsersClient(grpcConn)}
 }
 
-func (h *UserHandler) GetCurUser(w http.ResponseWriter, r *http.Request) {
-	id := r.Context().Value(middleware.CookieName)
-	UUID, ok := id.(uuid.UUID)
-	if !ok {
-		utils.WriteError(w, http.StatusBadRequest, "incorrect id")
+func (h *UserClientHandler) GetCurUser(w http.ResponseWriter, r *http.Request) {
+	id := r.Context().Value(middleware.CookieName).(string)
+	uId, err := uuid.FromString(id)
+	if err != nil {
+		utils.WriteError(w, http.StatusBadRequest, "error parse id")
 		return
 	}
-	userInfo, err := h.uc.GetUser(r.Context(), UUID)
+
+	resp, err := h.client.GetCurUser(r.Context(), &genUsers.GetUserRequest{Id: id})
 	if err != nil {
 		utils.WriteError(w, http.StatusBadRequest, "user is not exists")
 		return
 	}
+	dateBirth, err := utils.StringToTime(resp.DateBirthday, resp.DateBirthday)
+	if err != nil {
+		utils.WriteError(w, http.StatusBadRequest, "error parse time")
+		return
+	}
+
+	userInfo := &models.User{ID: uId, FirstName: resp.FirstName, SecondName: resp.Surname,
+		DateBirthday: dateBirth, Phone: resp.Phone, Email: resp.Email}
 	userInfo.Sanitize()
 
 	if err := utils.WriteResponse(w, http.StatusOK, userInfo); err != nil {
@@ -45,76 +50,7 @@ func (h *UserHandler) GetCurUser(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (h *UserHandler) UpdateUserPhoto(w http.ResponseWriter, r *http.Request) {
-	_, err := r.Cookie("csrftoken")
-	if err != nil {
-		utils.WriteError(w, http.StatusUnauthorized, "csrf cookie not found")
-		return
-	}
-	id := r.Context().Value(middleware.CookieName)
-	UUID, ok := id.(uuid.UUID)
-	if !ok {
-		utils.WriteError(w, http.StatusBadRequest, "incorrect id")
-		return
-	}
-	if err := r.ParseMultipartForm(5 << 20); err != nil {
-		utils.WriteError(w, http.StatusBadRequest, "max size file 5 mb")
-		return
-	}
-
-	file, head, err := r.FormFile("file")
-	if err != nil {
-		utils.WriteError(w, http.StatusBadRequest, "bad data request")
-		return
-	}
-	defer file.Close()
-
-	allowedExtensions := []string{".jpg", ".jpeg", ".png"}
-	fileType := strings.ToLower(filepath.Ext(head.Filename))
-	if !slices.Contains(allowedExtensions, fileType) {
-		utils.WriteError(w, http.StatusBadRequest, "jpg, jpeg, png only")
-		return
-	}
-
-	fileName, err := h.uc.UpdateUserPhoto(r.Context(), file, fileType, UUID)
-	if err != nil {
-		utils.WriteError(w, http.StatusBadRequest, "failed upload file")
-		return
-	}
-	if err := utils.WriteResponse(w, http.StatusOK, fileName); err != nil {
-		utils.WriteError(w, http.StatusInternalServerError, "error write response")
-		return
-	}
-}
-
-func (h *UserHandler) DeleteUserPhoto(w http.ResponseWriter, r *http.Request) {
-	_, err := r.Cookie("csrftoken")
-	if err != nil {
-		utils.WriteError(w, http.StatusUnauthorized, "csrf cookie not found")
-		return
-	}
-	id := r.Context().Value(middleware.CookieName)
-	UUID, ok := id.(uuid.UUID)
-	if !ok {
-		utils.WriteError(w, http.StatusBadRequest, "incorrect id")
-		return
-	}
-	if err := h.uc.DeleteUserPhoto(r.Context(), UUID); err != nil {
-		utils.WriteError(w, http.StatusBadRequest, "error delete avatar")
-		return
-	}
-	if err := utils.WriteResponse(w, http.StatusOK, "success delete avatar"); err != nil {
-		utils.WriteError(w, http.StatusInternalServerError, "error write response")
-		return
-	}
-}
-
-func (h *UserHandler) UpdateUserInfo(w http.ResponseWriter, r *http.Request) {
-	_, err := r.Cookie("csrftoken")
-	if err != nil {
-		utils.WriteError(w, http.StatusUnauthorized, "csrf cookie not found")
-		return
-	}
+func (h *UserClientHandler) UpdateUserInfo(w http.ResponseWriter, r *http.Request) {
 	id, ok := r.Context().Value(middleware.CookieName).(uuid.UUID)
 	if !ok {
 		utils.WriteError(w, http.StatusBadRequest, "incorrect id")
@@ -128,30 +64,29 @@ func (h *UserHandler) UpdateUserInfo(w http.ResponseWriter, r *http.Request) {
 	}
 	data.Sanitize()
 
-	user, err := h.uc.UpdateUserInfo(r.Context(), id, data)
+	resp, err := h.client.UpdateUserInfo(r.Context(), &genUsers.UpdateUserInfoRequest{Id: id.String(),
+		FirstName: data.FirstName, Surname: data.SecondName, DateBirthday: data.DateBirthday.String(),
+		Phone: data.Phone, Email: data.Email})
+
 	if err != nil {
 		utils.WriteError(w, http.StatusBadRequest, err.Error())
 		return
 	}
-	user.Sanitize()
-
-	if err := utils.WriteResponse(w, http.StatusOK, user); err != nil {
-		utils.WriteError(w, http.StatusInternalServerError, "error write response")
+	if resp.Updated {
+		if err := utils.WriteResponse(w, http.StatusOK, data); err != nil {
+			utils.WriteError(w, http.StatusInternalServerError, "error write response")
+		}
 	}
 }
 
-func (h *UserHandler) UpdateUserPassword(w http.ResponseWriter, r *http.Request) {
-	_, err := r.Cookie("csrftoken")
-	if err != nil {
-		utils.WriteError(w, http.StatusUnauthorized, "csrf cookie not found")
-		return
-	}
+func (h *UserClientHandler) UpdateUserPassword(w http.ResponseWriter, r *http.Request) {
 	id := r.Context().Value(middleware.CookieName)
 	UUID, ok := id.(uuid.UUID)
 	if !ok {
 		utils.WriteError(w, http.StatusBadRequest, "incorrect id")
 		return
 	}
+
 	data := &models.UserUpdatePassword{
 		ID: UUID,
 	}
@@ -162,14 +97,21 @@ func (h *UserHandler) UpdateUserPassword(w http.ResponseWriter, r *http.Request)
 	}
 	data.Sanitize()
 
-	token, exp, err := h.uc.UpdateUserPassword(r.Context(), data)
+	resp, err := h.client.UpdateUserPassword(r.Context(), &genUsers.UpdatePasswordRequest{Id: UUID.String(),
+		OldPassword: data.OldPassword, NewPassword: data.NewPassword})
 	if err != nil {
 		utils.WriteError(w, http.StatusBadRequest, err.Error())
 		return
 	}
-	http.SetCookie(w, jwt.TokenCookie(middleware.CookieName, token, exp))
 
-	if err := utils.WriteResponse(w, http.StatusOK, "success update password"); err != nil {
+	exp, err := utils.StringToTime(resp.Exp, resp.Exp)
+	if err != nil {
+		utils.WriteError(w, http.StatusBadRequest, "error parse time")
+		return
+	}
+
+	http.SetCookie(w, jwt.TokenCookie(middleware.CookieName, resp.Token, exp))
+	if err = utils.WriteResponse(w, http.StatusOK, "success update password"); err != nil {
 		utils.WriteError(w, http.StatusInternalServerError, "error write response")
 	}
 }
