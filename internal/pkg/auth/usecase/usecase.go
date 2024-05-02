@@ -69,17 +69,7 @@ func (u *AuthUsecase) Login(ctx context.Context, data *models.UserLoginData) (*m
 }
 
 // CheckAuth checking autorizing
-func (u *AuthUsecase) CheckAuth(ctx context.Context, idUser uuid.UUID) error {
-	if _, err := u.repo.GetUserLevelById(ctx, idUser); err != nil {
-		utils.LogError(u.logger, ctx.Value("requestId").(string), utils.UsecaseLayer, auth.CheckAuthMethod, err)
-		return errors.New("user not found")
-	}
-
-	utils.LogSucces(u.logger, ctx.Value("requestId").(string), utils.UsecaseLayer, auth.CheckAuthMethod)
-	return nil
-}
-
-func (u *AuthUsecase) GetUserLevelById(ctx context.Context, id uuid.UUID, jwtLevel int) error {
+func (u *AuthUsecase) CheckAuth(ctx context.Context, id uuid.UUID, jwtLevel int) error {
 	level, err := u.repo.GetUserLevelById(ctx, id)
 	if err != nil {
 		utils.LogError(u.logger, ctx.Value("requestId").(string), utils.UsecaseLayer, auth.GetUserLevelByIdMethod, err)
@@ -87,7 +77,7 @@ func (u *AuthUsecase) GetUserLevelById(ctx context.Context, id uuid.UUID, jwtLev
 	}
 	if jwtLevel != level {
 		utils.LogError(u.logger, ctx.Value("requestId").(string), utils.UsecaseLayer, auth.GetUserLevelByIdMethod, errors.New("jwt levels not equal"))
-		return errors.New("levels don't much")
+		return errors.New("levels don't match")
 	}
 
 	utils.LogSucces(u.logger, ctx.Value("requestId").(string), utils.UsecaseLayer, auth.GetUserLevelByIdMethod)

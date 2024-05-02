@@ -121,7 +121,7 @@ func (h *AuthClientHandler) Login(w http.ResponseWriter, r *http.Request) {
 
 	http.SetCookie(w, jwt.TokenCookie(middleware.CookieName, token, expTime))
 
-	if err := utils.WriteResponse(w, http.StatusOK, "user"); err != nil { //todo нужен user?
+	if err = utils.WriteResponse(w, http.StatusOK, "user"); err != nil { //todo нужен user?
 		utils.LogErrorResponse(h.logger, ctx.Value("requestId").(string), utils.DeliveryLayer, LoginMethod, err, http.StatusInternalServerError)
 		utils.WriteError(w, http.StatusInternalServerError, err.Error())
 	} else {
@@ -155,8 +155,8 @@ func (h *AuthClientHandler) Logout(w http.ResponseWriter, r *http.Request) {
 
 func (h *AuthClientHandler) CheckAuth(w http.ResponseWriter, r *http.Request) {
 	ctx := context.WithValue(r.Context(), "requestId", uuid.NewV4().String())
-
 	idUser := ctx.Value(middleware.CookieName)
+
 	if idUser == nil {
 		utils.LogErrorResponse(h.logger, ctx.Value("requestId").(string), utils.DeliveryLayer, CheckAuthMethod, errors.New("user id is nil"), http.StatusUnauthorized)
 		utils.WriteError(w, http.StatusUnauthorized, "token not found")
@@ -169,20 +169,7 @@ func (h *AuthClientHandler) CheckAuth(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	resp, err := h.client.CheckAuth(ctx, &genAuth.CheckAuthRequst{Id: uuidUser})
-	if err != nil {
-		utils.LogErrorResponse(h.logger, ctx.Value("requestId").(string), utils.DeliveryLayer, CheckAuthMethod, err, http.StatusInternalServerError)
-		utils.WriteError(w, http.StatusInternalServerError, "error check auth")
-		return
-	}
-
-	if !resp.Authorized {
-		utils.LogErrorResponse(h.logger, ctx.Value("requestId").(string), utils.DeliveryLayer, CheckAuthMethod, err, http.StatusUnauthorized)
-		utils.WriteError(w, http.StatusUnauthorized, "fail check auth")
-		return
-	}
-
-	if err = utils.WriteResponse(w, http.StatusOK, uuidUser); err != nil {
+	if err := utils.WriteResponse(w, http.StatusOK, uuidUser); err != nil {
 		utils.LogErrorResponse(h.logger, ctx.Value("requestId").(string), utils.DeliveryLayer, CheckAuthMethod, err, http.StatusInternalServerError)
 		utils.WriteError(w, http.StatusInternalServerError, err.Error())
 		return

@@ -20,7 +20,7 @@ const _ = grpc.SupportPackageIsVersion7
 type AuthClient interface {
 	SignUp(ctx context.Context, in *SignUpRequest, opts ...grpc.CallOption) (*SignUpInResponse, error)
 	Login(ctx context.Context, in *SignInRequest, opts ...grpc.CallOption) (*SignUpInResponse, error)
-	CheckAuth(ctx context.Context, in *CheckAuthRequst, opts ...grpc.CallOption) (*CheckAuthResponse, error)
+	CheckAuth(ctx context.Context, in *CheckAuthRequest, opts ...grpc.CallOption) (*CheckAuthResponse, error)
 }
 
 type authClient struct {
@@ -49,7 +49,7 @@ func (c *authClient) Login(ctx context.Context, in *SignInRequest, opts ...grpc.
 	return out, nil
 }
 
-func (c *authClient) CheckAuth(ctx context.Context, in *CheckAuthRequst, opts ...grpc.CallOption) (*CheckAuthResponse, error) {
+func (c *authClient) CheckAuth(ctx context.Context, in *CheckAuthRequest, opts ...grpc.CallOption) (*CheckAuthResponse, error) {
 	out := new(CheckAuthResponse)
 	err := c.cc.Invoke(ctx, "/auth.Auth/CheckAuth", in, out, opts...)
 	if err != nil {
@@ -64,7 +64,7 @@ func (c *authClient) CheckAuth(ctx context.Context, in *CheckAuthRequst, opts ..
 type AuthServer interface {
 	SignUp(context.Context, *SignUpRequest) (*SignUpInResponse, error)
 	Login(context.Context, *SignInRequest) (*SignUpInResponse, error)
-	CheckAuth(context.Context, *CheckAuthRequst) (*CheckAuthResponse, error)
+	CheckAuth(context.Context, *CheckAuthRequest) (*CheckAuthResponse, error)
 	mustEmbedUnimplementedAuthServer()
 }
 
@@ -78,7 +78,7 @@ func (UnimplementedAuthServer) SignUp(context.Context, *SignUpRequest) (*SignUpI
 func (UnimplementedAuthServer) Login(context.Context, *SignInRequest) (*SignUpInResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Login not implemented")
 }
-func (UnimplementedAuthServer) CheckAuth(context.Context, *CheckAuthRequst) (*CheckAuthResponse, error) {
+func (UnimplementedAuthServer) CheckAuth(context.Context, *CheckAuthRequest) (*CheckAuthResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CheckAuth not implemented")
 }
 func (UnimplementedAuthServer) mustEmbedUnimplementedAuthServer() {}
@@ -131,7 +131,7 @@ func _Auth_Login_Handler(srv interface{}, ctx context.Context, dec func(interfac
 }
 
 func _Auth_CheckAuth_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(CheckAuthRequst)
+	in := new(CheckAuthRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -143,7 +143,7 @@ func _Auth_CheckAuth_Handler(srv interface{}, ctx context.Context, dec func(inte
 		FullMethod: "/auth.Auth/CheckAuth",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(AuthServer).CheckAuth(ctx, req.(*CheckAuthRequst))
+		return srv.(AuthServer).CheckAuth(ctx, req.(*CheckAuthRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }

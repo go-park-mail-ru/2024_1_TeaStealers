@@ -7,7 +7,7 @@ option go_package = "./internal/pkg/auth/delivery/grpc/gen/;gen";
 service Auth {
   rpc SignUp(SignUpRequest) returns (SignUpInResponse) {}
   rpc Login(SignInRequest) returns (SignUpInResponse) {}
-  rpc CheckAuth(CheckAuthRequst) returns (CheckAuthResponse) {}
+  rpc CheckAuth(CheckAuthRequest) returns (CheckAuthResponse) {}
 }
 
 message SignUpRequest {
@@ -21,8 +21,9 @@ message SignInRequest {
   string Password = 2;
 }
 
-message CheckAuthRequst {
+message CheckAuthRequest {
   string Id = 1;
+  int64 Level = 2;
 }
 
 message CheckAuthResponse {
