@@ -3,7 +3,6 @@ package middleware
 import (
 	genAuth "2024_1_TeaStealers/internal/pkg/auth/delivery/grpc/gen"
 	"2024_1_TeaStealers/internal/pkg/jwt"
-	"2024_1_TeaStealers/internal/pkg/utils"
 	"context"
 	"github.com/satori/uuid"
 	"google.golang.org/grpc"
@@ -60,12 +59,12 @@ func (md *AuthMiddleware) JwtMiddleware(next http.Handler) http.Handler {
 		ctx := context.WithValue(r.Context(), "requestId", uuid.NewV4().String())
 		resp, err := md.client.CheckAuth(ctx, &genAuth.CheckAuthRequest{Id: id.String(), Level: int64(level)})
 		if err != nil {
-			utils.WriteError(w, http.StatusInternalServerError, "error check auth")
+			w.WriteHeader(http.StatusUnauthorized)
 			return
 		}
 
 		if !resp.Authorized {
-			utils.WriteError(w, http.StatusUnauthorized, "user not authorized")
+			w.WriteHeader(http.StatusUnauthorized)
 			return
 		}
 
