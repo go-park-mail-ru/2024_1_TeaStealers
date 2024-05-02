@@ -4,11 +4,8 @@ import (
 	"2024_1_TeaStealers/internal/models"
 	"2024_1_TeaStealers/internal/pkg/auth"
 	genAuth "2024_1_TeaStealers/internal/pkg/auth/delivery/grpc/gen"
-	"2024_1_TeaStealers/internal/pkg/utils"
 	"context"
 	"errors"
-	"net/http"
-
 	"github.com/satori/uuid"
 	"go.uber.org/zap"
 )
@@ -48,13 +45,18 @@ func (h *AuthServerHandler) SignUp(ctx context.Context, req *genAuth.SignUpReque
 	data.Sanitize()
 	newUser, token, exp, err := h.uc.SignUp(ctx, &data)
 	if err != nil {
-		utils.LogErrorResponse(h.logger, ctx.Value("requestId").(string), utils.DeliveryLayer, SignUpMethod, err, http.StatusBadRequest)
+		h.logger.Error(err.Error())
+		// utils.LogErrorResponse(h.logger, ctx.Value("requestId").(string), utils.DeliveryLayer, SignUpMethod, err, http.StatusBadRequest)
 		return nil, errors.New("error signup")
 	}
 	newUser.Sanitize()
 
-	utils.LogSuccesResponse(h.logger, ctx.Value("requestId").(string), utils.DeliveryLayer, SignUpMethod)
-	return &genAuth.SignUpInResponse{Token: token, Exp: exp.String()}, nil
+	layout := "2006-01-02 15:04:05"
+	dateString := exp.Format(layout)
+
+	h.logger.Info("success logIn")
+	// utils.LogSuccesResponse(h.logger, ctx.Value("requestId").(string), utils.DeliveryLayer, SignUpMethod)
+	return &genAuth.SignUpInResponse{Token: token, Exp: dateString}, nil
 
 }
 
@@ -74,27 +76,34 @@ func (h *AuthServerHandler) Login(ctx context.Context, req *genAuth.SignInReques
 	_, token, exp, err := h.uc.Login(ctx, &data)
 
 	if err != nil {
-		utils.LogErrorResponse(h.logger, ctx.Value("requestId").(string), utils.DeliveryLayer, LoginMethod, err, http.StatusBadRequest)
+		h.logger.Error(err.Error())
+		// utils.LogErrorResponse(h.logger, ctx.Value("requestId").(string), utils.DeliveryLayer, LoginMethod, err, http.StatusBadRequest)
 		return nil, errors.New("error login")
 	}
 
-	utils.LogSuccesResponse(h.logger, ctx.Value("requestId").(string), utils.DeliveryLayer, LoginMethod)
-	return &genAuth.SignUpInResponse{Token: token, Exp: exp.String()}, nil
+	layout := "2006-01-02 15:04:05"
+	dateString := exp.Format(layout)
+
+	h.logger.Info("success signUp")
+	// utils.LogSuccesResponse(h.logger, ctx.Value("requestId").(string), utils.DeliveryLayer, LoginMethod)
+	return &genAuth.SignUpInResponse{Token: token, Exp: dateString}, nil
 }
 
 func (h *AuthServerHandler) CheckAuth(ctx context.Context, req *genAuth.CheckAuthRequest) (*genAuth.CheckAuthResponse, error) {
 
 	uuidUser, err := uuid.FromString(req.Id)
 	if err != nil {
-		utils.LogErrorResponse(h.logger, ctx.Value("requestId").(string), utils.DeliveryLayer, CheckAuthMethod, errors.New("user id is incorrect"), http.StatusUnauthorized)
+		h.logger.Error(err.Error())
+		// utils.LogErrorResponse(h.logger, ctx.Value("requestId").(string), utils.DeliveryLayer, CheckAuthMethod, errors.New("user id is incorrect"), http.StatusUnauthorized)
 		return nil, errors.New("incorrect user id")
 	}
 	err = h.uc.CheckAuth(ctx, uuidUser, int(req.Level))
 	if err != nil {
-		utils.LogErrorResponse(h.logger, ctx.Value("requestId").(string), utils.DeliveryLayer, CheckAuthMethod, err, http.StatusUnauthorized)
+		h.logger.Error(err.Error())
+		// utils.LogErrorResponse(h.logger, ctx.Value("requestId").(string), utils.DeliveryLayer, CheckAuthMethod, err, http.StatusUnauthorized)
 		return nil, errors.New("user not exists")
 	}
-
-	utils.LogSuccesResponse(h.logger, ctx.Value("requestId").(string), utils.DeliveryLayer, CheckAuthMethod)
+	h.logger.Info("success checkAuth")
+	// utils.LogSuccesResponse(h.logger, ctx.Value("requestId").(string), utils.DeliveryLayer, CheckAuthMethod)
 	return &genAuth.CheckAuthResponse{Authorized: true}, nil
 }

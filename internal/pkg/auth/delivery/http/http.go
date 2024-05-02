@@ -1,4 +1,4 @@
-package delivery
+package http
 
 import (
 	"2024_1_TeaStealers/internal/models"
@@ -162,7 +162,7 @@ func (h *AuthClientHandler) CheckAuth(w http.ResponseWriter, r *http.Request) {
 		utils.WriteError(w, http.StatusUnauthorized, "token not found")
 		return
 	}
-	uuidUser, ok := idUser.(string)
+	uuidUser, ok := idUser.(uuid.UUID)
 	if !ok {
 		utils.LogErrorResponse(h.logger, ctx.Value("requestId").(string), utils.DeliveryLayer, CheckAuthMethod, errors.New("user id is not a string"), http.StatusInternalServerError)
 		utils.WriteError(w, http.StatusInternalServerError, "user id is not a string")

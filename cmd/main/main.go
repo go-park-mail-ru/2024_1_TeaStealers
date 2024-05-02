@@ -4,7 +4,7 @@ import (
 	advertsH "2024_1_TeaStealers/internal/pkg/adverts/delivery"
 	advertsR "2024_1_TeaStealers/internal/pkg/adverts/repo"
 	advertsUc "2024_1_TeaStealers/internal/pkg/adverts/usecase"
-	authH "2024_1_TeaStealers/internal/pkg/auth/delivery"
+	authH "2024_1_TeaStealers/internal/pkg/auth/delivery/http"
 	companyH "2024_1_TeaStealers/internal/pkg/companies/delivery"
 	companyR "2024_1_TeaStealers/internal/pkg/companies/repo"
 	companyUc "2024_1_TeaStealers/internal/pkg/companies/usecase"
