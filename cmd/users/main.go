@@ -4,6 +4,7 @@ import (
 	genUsers "2024_1_TeaStealers/internal/pkg/users/delivery/grpc/gen"
 	UsersR "2024_1_TeaStealers/internal/pkg/users/repo"
 	UsersUc "2024_1_TeaStealers/internal/pkg/users/usecase"
+	"go.uber.org/zap"
 
 	"database/sql"
 	"fmt"
@@ -27,7 +28,7 @@ func main() {
 
 func run() (err error) {
 	_ = godotenv.Load()
-	// logger := zap.Must(zap.NewDevelopment())
+	logger := zap.Must(zap.NewDevelopment())
 
 	db, err := sql.Open("postgres", fmt.Sprintf("postgres://%v:%v@%v:%v/%v?sslmode=disable",
 		os.Getenv("DB_USER"),
@@ -44,7 +45,6 @@ func run() (err error) {
 		err = fmt.Errorf("error happened in db.Ping: %w", err)
 		log.Println(err)
 	}
-
 	usersRepo := UsersR.NewRepository(db)
 	usersUsecase := UsersUc.NewUserUsecase(usersRepo)
 	usersHandler := grpcUsers.NewUserServerHandler(usersUsecase)
@@ -52,7 +52,8 @@ func run() (err error) {
 	genUsers.RegisterUsersServer(gRPCServer, usersHandler)
 
 	go func() {
-		listener, err := net.Listen("tcp", GateWayPort)
+		logger.Info(fmt.Sprintf("Start server on %s\n", ":8082"))
+		listener, err := net.Listen("tcp", ":8082")
 		if err != nil {
 			log.Fatal(err)
 		}

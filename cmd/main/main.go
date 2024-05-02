@@ -19,7 +19,7 @@ import (
 	statsH "2024_1_TeaStealers/internal/pkg/questionnaire/delivery"
 	statsR "2024_1_TeaStealers/internal/pkg/questionnaire/repo"
 	statsUc "2024_1_TeaStealers/internal/pkg/questionnaire/usecase"
-	userH "2024_1_TeaStealers/internal/pkg/users/delivery"
+	http2 "2024_1_TeaStealers/internal/pkg/users/delivery/http"
 	userR "2024_1_TeaStealers/internal/pkg/users/repo"
 	userUc "2024_1_TeaStealers/internal/pkg/users/usecase"
 	"context"
@@ -136,8 +136,8 @@ func main() {
 
 	userRepo := userR.NewRepository(db)
 	userUsecase := userUc.NewUserUsecase(userRepo)
-	userHandler := userH.NewClientUserHandler(grcpConnAuth)
-	userHandlerPhoto := userH.NewUserHandlerPhoto(userUsecase)
+	userHandler := http2.NewClientUserHandler(grcpConnAuth)
+	userHandlerPhoto := http2.NewUserHandlerPhoto(userUsecase)
 
 	user := r.PathPrefix("/users").Subrouter()
 	user.Handle("/me", jwtMd.JwtMiddleware(http.HandlerFunc(userHandler.GetCurUser))).Methods(http.MethodGet, http.MethodOptions)
