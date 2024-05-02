@@ -11,6 +11,7 @@ import (
 	complexH "2024_1_TeaStealers/internal/pkg/complexes/delivery"
 	complexR "2024_1_TeaStealers/internal/pkg/complexes/repo"
 	complexUc "2024_1_TeaStealers/internal/pkg/complexes/usecase"
+	"2024_1_TeaStealers/internal/pkg/config"
 	imageH "2024_1_TeaStealers/internal/pkg/images/delivery/http"
 	imageR "2024_1_TeaStealers/internal/pkg/images/repo"
 	imageUc "2024_1_TeaStealers/internal/pkg/images/usecase"
@@ -51,6 +52,7 @@ import (
 // @BasePath /api
 // @schemes http https
 func main() {
+	cfg := config.MustLoad()
 	_ = godotenv.Load()
 	logger := zap.Must(zap.NewDevelopment())
 	db, err := sql.Open("postgres", fmt.Sprintf("postgres://%v:%v@%v:%v/%v?sslmode=disable",
@@ -75,17 +77,16 @@ func main() {
 	r.PathPrefix("/docs/").Handler(httpSwagger.WrapHandler)
 
 	grcpConnAuth, err := grpc.Dial(
-		AuthServerPort,
+		fmt.Sprintf("%s:%d", cfg.GRPC.AuthContainerIP, cfg.GRPC.AuthPort),
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
 	)
 	if err != nil {
-		log.Println("cant connect to grpc")
-		return
+		log.Fatalf("cant connect to grpc")
 	}
 	defer grcpConnAuth.Close()
 
 	grcpConnUsers, err := grpc.Dial(
-		UsersServerPort,
+		fmt.Sprintf("%s:%d", cfg.GRPC.UsersContainerIP, cfg.GRPC.UserPort),
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
 	)
 	if err != nil {
