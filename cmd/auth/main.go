@@ -53,8 +53,8 @@ func run() (err error) {
 	genAuth.RegisterAuthServer(gRPCServer, authHandler)
 
 	go func() {
-		logger.Info(fmt.Sprintf("Start server on %s\n", "127.0.0.1:8081"))
-		listener, err := net.Listen("tcp", "127.0.0.1:8081")
+		logger.Info(fmt.Sprintf("Start server on %s\n", ":8081"))
+		listener, err := net.Listen("tcp", ":8081")
 		if err != nil {
 			log.Fatal(err)
 		}
