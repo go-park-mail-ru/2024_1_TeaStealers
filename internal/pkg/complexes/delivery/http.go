@@ -8,10 +8,10 @@ import (
 	"net/http"
 	"path/filepath"
 	"slices"
+	"strconv"
 	"strings"
 
 	"github.com/gorilla/mux"
-	"github.com/satori/uuid"
 	"go.uber.org/zap"
 )
 
@@ -94,7 +94,7 @@ func (h *ComplexHandler) UpdateComplexPhoto(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	complexId, err := uuid.FromString(id)
+	complexId, err := strconv.ParseInt(id, 10, 64)
 	if err != nil {
 		utils.WriteError(w, http.StatusBadRequest, "invalid id parameter")
 		return
@@ -138,7 +138,7 @@ func (h *ComplexHandler) GetComplexById(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	complexId, err := uuid.FromString(id)
+	complexId, err := strconv.ParseInt(id, 10, 64)
 	if err != nil {
 		utils.WriteError(w, http.StatusBadRequest, "invalid id parameter")
 		return

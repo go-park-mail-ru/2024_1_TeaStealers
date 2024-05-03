@@ -142,7 +142,7 @@ func (h *AuthHandler) CheckAuth(w http.ResponseWriter, r *http.Request) {
 		utils.WriteError(w, http.StatusUnauthorized, "token not found")
 		return
 	}
-	uuidUser, ok := idUser.(uuid.UUID)
+	uuidUser, ok := idUser.(int64)
 	if !ok {
 		utils.LogErrorResponse(h.logger, ctx.Value("requestId").(string), utils.DeliveryLayer, CheckAuthMethod, errors.New("user id is incorrect"), http.StatusUnauthorized)
 		utils.WriteError(w, http.StatusUnauthorized, "incorrect user id")

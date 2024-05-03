@@ -2,9 +2,6 @@ package models
 
 import (
 	"html"
-	"time"
-
-	"github.com/satori/uuid"
 )
 
 // StatusAreaHouse represents the status area of a house.
@@ -40,11 +37,9 @@ const (
 // House represents a house entity.
 type House struct {
 	// ID is the unique identifier for the house.
-	ID uuid.UUID `json:"id"`
+	ID int64 `json:"id"`
 	// BuildingID is the identifier of the building to which the house belongs.
-	BuildingID uuid.UUID `json:"buildingId"`
-	// AdvertTypeID is the identifier of the advert type of the house.
-	AdvertTypeID uuid.UUID `json:"advertTypeId"`
+	BuildingID int64 `json:"buildingId"`
 	// CeilingHeight is the ceiling height of the house.
 	CeilingHeight float64 `json:"ceilingHeight"`
 	// SquareArea is the square area of the house.
@@ -59,8 +54,6 @@ type House struct {
 	Cottage bool `json:"cottage"`
 	// StatusHome is the status home of the house.
 	StatusHome StatusHomeHouse `json:"statusHome"`
-	// DateCreation is the date when the house was published.
-	DateCreation time.Time `json:"-"`
 	// IsDeleted is a flag indicating whether the house is deleted.
 	IsDeleted bool `json:"-"`
 }

@@ -1,0 +1,5 @@
+CREATE TABLE IF NOT EXISTS town (
+    id BIGINT NOT NULL GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    province_id BIGINT NOT NULL REFERENCES province(id),
+    name TEXT CONSTRAINT name_length CHECK ( char_length(name) <= 60) NOT NULL
+);

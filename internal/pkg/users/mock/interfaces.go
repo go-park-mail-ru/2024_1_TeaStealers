@@ -12,7 +12,6 @@ import (
 	time "time"
 
 	gomock "github.com/golang/mock/gomock"
-	uuid "github.com/satori/uuid"
 )
 
 // MockUserUsecase is a mock of UserUsecase interface.
@@ -39,7 +38,7 @@ func (m *MockUserUsecase) EXPECT() *MockUserUsecaseMockRecorder {
 }
 
 // DeleteUserPhoto mocks base method.
-func (m *MockUserUsecase) DeleteUserPhoto(arg0 context.Context, arg1 uuid.UUID) error {
+func (m *MockUserUsecase) DeleteUserPhoto(arg0 context.Context, arg1 int64) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "DeleteUserPhoto", arg0, arg1)
 	ret0, _ := ret[0].(error)
@@ -53,7 +52,7 @@ func (mr *MockUserUsecaseMockRecorder) DeleteUserPhoto(arg0, arg1 interface{}) *
 }
 
 // GetUser mocks base method.
-func (m *MockUserUsecase) GetUser(arg0 context.Context, arg1 uuid.UUID) (*models.User, error) {
+func (m *MockUserUsecase) GetUser(arg0 context.Context, arg1 int64) (*models.User, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetUser", arg0, arg1)
 	ret0, _ := ret[0].(*models.User)
@@ -68,7 +67,7 @@ func (mr *MockUserUsecaseMockRecorder) GetUser(arg0, arg1 interface{}) *gomock.C
 }
 
 // UpdateUserInfo mocks base method.
-func (m *MockUserUsecase) UpdateUserInfo(arg0 context.Context, arg1 uuid.UUID, arg2 *models.UserUpdateData) (*models.User, error) {
+func (m *MockUserUsecase) UpdateUserInfo(arg0 context.Context, arg1 int64, arg2 *models.UserUpdateData) (*models.User, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "UpdateUserInfo", arg0, arg1, arg2)
 	ret0, _ := ret[0].(*models.User)
@@ -99,7 +98,7 @@ func (mr *MockUserUsecaseMockRecorder) UpdateUserPassword(arg0, arg1 interface{}
 }
 
 // UpdateUserPhoto mocks base method.
-func (m *MockUserUsecase) UpdateUserPhoto(arg0 context.Context, arg1 io.Reader, arg2 string, arg3 uuid.UUID) (string, error) {
+func (m *MockUserUsecase) UpdateUserPhoto(arg0 context.Context, arg1 io.Reader, arg2 string, arg3 int64) (string, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "UpdateUserPhoto", arg0, arg1, arg2, arg3)
 	ret0, _ := ret[0].(string)
@@ -137,7 +136,7 @@ func (m *MockUserRepo) EXPECT() *MockUserRepoMockRecorder {
 }
 
 // CheckUserPassword mocks base method.
-func (m *MockUserRepo) CheckUserPassword(arg0 context.Context, arg1 uuid.UUID, arg2 string) error {
+func (m *MockUserRepo) CheckUserPassword(arg0 context.Context, arg1 int64, arg2 string) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "CheckUserPassword", arg0, arg1, arg2)
 	ret0, _ := ret[0].(error)
@@ -151,7 +150,7 @@ func (mr *MockUserRepoMockRecorder) CheckUserPassword(arg0, arg1, arg2 interface
 }
 
 // DeleteUserPhoto mocks base method.
-func (m *MockUserRepo) DeleteUserPhoto(arg0 context.Context, arg1 uuid.UUID) error {
+func (m *MockUserRepo) DeleteUserPhoto(arg0 context.Context, arg1 int64) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "DeleteUserPhoto", arg0, arg1)
 	ret0, _ := ret[0].(error)
@@ -165,7 +164,7 @@ func (mr *MockUserRepoMockRecorder) DeleteUserPhoto(arg0, arg1 interface{}) *gom
 }
 
 // GetUserById mocks base method.
-func (m *MockUserRepo) GetUserById(arg0 context.Context, arg1 uuid.UUID) (*models.User, error) {
+func (m *MockUserRepo) GetUserById(arg0 context.Context, arg1 int64) (*models.User, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetUserById", arg0, arg1)
 	ret0, _ := ret[0].(*models.User)
@@ -180,7 +179,7 @@ func (mr *MockUserRepoMockRecorder) GetUserById(arg0, arg1 interface{}) *gomock.
 }
 
 // UpdateUserInfo mocks base method.
-func (m *MockUserRepo) UpdateUserInfo(arg0 context.Context, arg1 uuid.UUID, arg2 *models.UserUpdateData) (*models.User, error) {
+func (m *MockUserRepo) UpdateUserInfo(arg0 context.Context, arg1 int64, arg2 *models.UserUpdateData) (*models.User, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "UpdateUserInfo", arg0, arg1, arg2)
 	ret0, _ := ret[0].(*models.User)
@@ -195,7 +194,7 @@ func (mr *MockUserRepoMockRecorder) UpdateUserInfo(arg0, arg1, arg2 interface{})
 }
 
 // UpdateUserPassword mocks base method.
-func (m *MockUserRepo) UpdateUserPassword(arg0 context.Context, arg1 uuid.UUID, arg2 string) (int, error) {
+func (m *MockUserRepo) UpdateUserPassword(arg0 context.Context, arg1 int64, arg2 string) (int, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "UpdateUserPassword", arg0, arg1, arg2)
 	ret0, _ := ret[0].(int)
@@ -210,7 +209,7 @@ func (mr *MockUserRepoMockRecorder) UpdateUserPassword(arg0, arg1, arg2 interfac
 }
 
 // UpdateUserPhoto mocks base method.
-func (m *MockUserRepo) UpdateUserPhoto(arg0 context.Context, arg1 uuid.UUID, arg2 string) (string, error) {
+func (m *MockUserRepo) UpdateUserPhoto(arg0 context.Context, arg1 int64, arg2 string) (string, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "UpdateUserPhoto", arg0, arg1, arg2)
 	ret0, _ := ret[0].(string)

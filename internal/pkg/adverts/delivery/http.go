@@ -48,7 +48,7 @@ func (h *AdvertHandler) CreateFlatAdvert(w http.ResponseWriter, r *http.Request)
 	}
 	ctx := context.WithValue(r.Context(), "requestId", uuid.NewV4().String())
 
-	id, ok := ctx.Value(middleware.CookieName).(uuid.UUID)
+	id, ok := ctx.Value(middleware.CookieName).(int64)
 	if !ok {
 		utils.LogErrorResponse(h.logger, ctx.Value("requestId").(string), utils.DeliveryLayer, CreateFlatAdvertMethod, errors.New("error with cookie"), http.StatusBadRequest)
 		utils.WriteError(w, http.StatusBadRequest, "incorrect id")
@@ -89,7 +89,7 @@ func (h *AdvertHandler) CreateHouseAdvert(w http.ResponseWriter, r *http.Request
 
 	ctx := context.WithValue(r.Context(), "requestId", uuid.NewV4().String())
 
-	id, ok := ctx.Value(middleware.CookieName).(uuid.UUID)
+	id, ok := ctx.Value(middleware.CookieName).(int64)
 
 	if !ok {
 		utils.LogErrorResponse(h.logger, ctx.Value("requestId").(string), utils.DeliveryLayer, CreateHouseAdvertMethod, errors.New("error with cookie"), http.StatusBadRequest)
@@ -134,7 +134,7 @@ func (h *AdvertHandler) GetAdvertById(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	advertId, err := uuid.FromString(id)
+	advertId, err := strconv.ParseInt(id, 10, 64)
 	if err != nil {
 		utils.LogErrorResponse(h.logger, ctx.Value("requestId").(string), utils.DeliveryLayer, GetAdvertByIdMethod, err, http.StatusBadRequest)
 		utils.WriteError(w, http.StatusBadRequest, "invalid id parameter")
@@ -174,7 +174,7 @@ func (h *AdvertHandler) UpdateAdvertById(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	advertId, err := uuid.FromString(id)
+	advertId, err := strconv.ParseInt(id, 10, 64)
 	if err != nil {
 		utils.LogErrorResponse(h.logger, ctx.Value("requestId").(string), utils.DeliveryLayer, UpdateAdvertByIdMethod, err, http.StatusBadRequest)
 		utils.WriteError(w, http.StatusBadRequest, "invalid id parameter")
@@ -225,7 +225,7 @@ func (h *AdvertHandler) DeleteAdvertById(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	advertId, err := uuid.FromString(id)
+	advertId, err := strconv.ParseInt(id, 10, 64)
 	if err != nil {
 		utils.LogErrorResponse(h.logger, ctx.Value("requestId").(string), utils.DeliveryLayer, DeleteAdvertByIdMethod, err, http.StatusBadRequest)
 		utils.WriteError(w, http.StatusBadRequest, "invalid id parameter")
@@ -284,28 +284,25 @@ func (h *AdvertHandler) GetSquareAdvertsList(w http.ResponseWriter, r *http.Requ
 }
 
 // GetExistBuildingsByAddress handles the request for retrieving an existing buildings by address.
-func (h *AdvertHandler) GetExistBuildingsByAddress(w http.ResponseWriter, r *http.Request) {
+func (h *AdvertHandler) GetExistBuildingByAddress(w http.ResponseWriter, r *http.Request) {
 	ctx := context.WithValue(r.Context(), "requestId", uuid.NewV4().String())
 
-	pageStr := r.URL.Query().Get("page")
-	address := r.URL.Query().Get("address")
+	data := models.AddressData{}
 
-	page, err := strconv.Atoi(pageStr)
-	if err != nil {
-		page = 5
+	if err := utils.ReadRequestData(r, &data); err != nil {
+		utils.LogErrorResponse(h.logger, ctx.Value("requestId").(string), utils.DeliveryLayer, CreateHouseAdvertMethod, err, http.StatusBadRequest)
+		utils.WriteError(w, http.StatusBadRequest, "incorrect data format")
+		return
 	}
 
-	adverts, err := h.uc.GetExistBuildingsByAddress(ctx, address, page)
+	building, err := h.uc.GetExistBuildingByAddress(ctx, &data)
 	if err != nil {
 		utils.LogErrorResponse(h.logger, ctx.Value("requestId").(string), utils.DeliveryLayer, GetExistBuildingsByAddressMethod, err, http.StatusBadRequest)
 		utils.WriteError(w, http.StatusBadRequest, err.Error())
 		return
 	}
-	for _, adv := range adverts {
-		adv.Sanitize()
-	}
 
-	if err = utils.WriteResponse(w, http.StatusOK, adverts); err != nil {
+	if err = utils.WriteResponse(w, http.StatusOK, building); err != nil {
 		utils.LogErrorResponse(h.logger, ctx.Value("requestId").(string), utils.DeliveryLayer, GetExistBuildingsByAddressMethod, err, http.StatusInternalServerError)
 		utils.WriteError(w, http.StatusInternalServerError, err.Error())
 	} else {
@@ -401,7 +398,7 @@ func (h *AdvertHandler) GetUserAdverts(w http.ResponseWriter, r *http.Request) {
 		size = 0
 	}
 
-	UUID, ok := id.(uuid.UUID)
+	ID, ok := id.(int64)
 	if !ok {
 		utils.LogErrorResponse(h.logger, ctx.Value("requestId").(string), utils.DeliveryLayer, GetUserAdvertsMethod, errors.New("error with id user"), http.StatusBadRequest)
 		utils.WriteError(w, http.StatusBadRequest, "incorrect id")
@@ -409,7 +406,7 @@ func (h *AdvertHandler) GetUserAdverts(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var userAdverts []*models.AdvertRectangleData
-	if userAdverts, err = h.uc.GetRectangleAdvertsByUserId(ctx, page, size, UUID); err != nil {
+	if userAdverts, err = h.uc.GetRectangleAdvertsByUserId(ctx, page, size, ID); err != nil {
 		utils.LogErrorResponse(h.logger, ctx.Value("requestId").(string), utils.DeliveryLayer, GetUserAdvertsMethod, err, http.StatusBadRequest)
 		utils.WriteError(w, http.StatusBadRequest, "error getting user adverts")
 		return
@@ -451,7 +448,7 @@ func (h *AdvertHandler) GetComplexAdverts(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	complexId, err := uuid.FromString(id)
+	complexId, err := strconv.ParseInt(id, 10, 64)
 	if err != nil {
 		utils.LogErrorResponse(h.logger, ctx.Value("requestId").(string), utils.DeliveryLayer, GetComplexAdvertsMethod, err, http.StatusBadRequest)
 		utils.WriteError(w, http.StatusBadRequest, "invalid id parameter")

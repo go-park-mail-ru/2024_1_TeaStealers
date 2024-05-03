@@ -3,14 +3,12 @@ package models
 import (
 	"html"
 	"time"
-
-	"github.com/satori/uuid"
 )
 
 // User represents user information
 type User struct {
 	// ID uniquely identifies the user.
-	ID uuid.UUID `json:"id"`
+	ID int64 `json:"id"`
 	// PasswordHash is the hashed password of the user.
 	PasswordHash string `json:"-"`
 	// LevelUpdate is the level of changes password of the user.
@@ -66,7 +64,7 @@ func (user *UserUpdateData) Sanitize() {
 
 type UserUpdatePassword struct {
 	// ID uniquely identifies the user.
-	ID uuid.UUID `json:"id"`
+	ID int64 `json:"id"`
 	// OldPassword ...
 	OldPassword string `json:"oldPassword"`
 	// NewPassword ...

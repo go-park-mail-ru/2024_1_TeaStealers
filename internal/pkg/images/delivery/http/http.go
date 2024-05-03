@@ -3,10 +3,12 @@ package delivery
 import (
 	"2024_1_TeaStealers/internal/pkg/images"
 	"2024_1_TeaStealers/internal/pkg/utils"
+	"context"
 	"fmt"
 	"net/http"
 	"path/filepath"
 	"slices"
+	"strconv"
 	"strings"
 
 	"github.com/gorilla/mux"
@@ -45,12 +47,15 @@ func (h *ImagesHandler) UploadImage(w http.ResponseWriter, r *http.Request) {
 		utils.WriteError(w, http.StatusUnauthorized, "csrf cookie not found")
 		return
 	}
+
+	ctx := context.WithValue(r.Context(), "requestId", uuid.NewV4().String())
+
 	if err := r.ParseMultipartForm(5 << 20); err != nil {
 		utils.WriteError(w, http.StatusBadRequest, "max size 5 mb")
 		return
 	}
 	advertIdStr := r.FormValue("id")
-	advertUUID, err := uuid.FromString(advertIdStr)
+	advertID, err := strconv.ParseInt(advertIdStr, 10, 64)
 	if err != nil {
 		utils.WriteError(w, http.StatusBadRequest, "incorrect advert id")
 		return
@@ -70,7 +75,7 @@ func (h *ImagesHandler) UploadImage(w http.ResponseWriter, r *http.Request) {
 		utils.WriteError(w, http.StatusBadRequest, "jpg, jpeg, png only")
 	}
 
-	image, err := h.uc.UploadImage(file, fileType, advertUUID)
+	image, err := h.uc.UploadImage(ctx, file, fileType, advertID)
 	if err != nil {
 		utils.WriteError(w, http.StatusInternalServerError, "failed to upload image")
 		return
@@ -93,13 +98,15 @@ func (h *ImagesHandler) UploadImage(w http.ResponseWriter, r *http.Request) {
 // @Failure 500 {string} string "Internal Server Error"
 // @Router /advert/{id}/image [get]
 func (h *ImagesHandler) GetAdvertImages(w http.ResponseWriter, r *http.Request) {
+	ctx := context.WithValue(r.Context(), "requestId", uuid.NewV4().String())
+
 	queryParam := mux.Vars(r)["id"]
-	advrtUUID, err := uuid.FromString(queryParam)
+	advertID, err := strconv.ParseInt(queryParam, 10, 64)
 	if err != nil {
 		utils.WriteError(w, http.StatusBadRequest, "incorrect advert id")
 		return
 	}
-	resp, err := h.uc.GetAdvertImages(advrtUUID)
+	resp, err := h.uc.GetAdvertImages(ctx, advertID)
 	if err != nil {
 		utils.WriteError(w, http.StatusBadRequest, "incorrect data")
 		return
@@ -124,18 +131,20 @@ func (h *ImagesHandler) GetAdvertImages(w http.ResponseWriter, r *http.Request) 
 // @Failure 500 {string} string "Internal Server Error"
 // @Router /advert/{id}/image [delete]
 func (h *ImagesHandler) DeleteImage(w http.ResponseWriter, r *http.Request) {
+	ctx := context.WithValue(r.Context(), "requestId", uuid.NewV4().String())
+
 	_, err := r.Cookie("csrftoken")
 	if err != nil {
 		utils.WriteError(w, http.StatusUnauthorized, "csrf cookie not found")
 		return
 	}
 	queryParam := mux.Vars(r)["id"]
-	imageUUID, err := uuid.FromString(queryParam)
+	imageID, err := strconv.ParseInt(queryParam, 10, 64)
 	if err != nil {
 		utils.WriteError(w, http.StatusBadRequest, "incorrect image id")
 		return
 	}
-	resp, err := h.uc.DeleteImage(imageUUID)
+	resp, err := h.uc.DeleteImage(ctx, imageID)
 
 	if err != nil {
 		utils.WriteError(w, http.StatusBadRequest, "incorrect data")

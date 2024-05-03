@@ -31,6 +31,7 @@ func (md *AuthMiddleware) JwtTMiddleware(next http.Handler) http.Handler {
 			w.WriteHeader(http.StatusUnauthorized)
 			return
 		}
+
 		token := cookie.Value
 		claims, err := jwt.ParseToken(token)
 		if err != nil {

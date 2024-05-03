@@ -10,8 +10,6 @@ import (
 	"path/filepath"
 	"slices"
 	"strings"
-
-	"github.com/satori/uuid"
 )
 
 // UserHandler handles HTTP requests for user.
@@ -27,12 +25,12 @@ func NewUserHandler(uc users.UserUsecase) *UserHandler {
 
 func (h *UserHandler) GetCurUser(w http.ResponseWriter, r *http.Request) {
 	id := r.Context().Value(middleware.CookieName)
-	UUID, ok := id.(uuid.UUID)
+	idInt64, ok := id.(int64)
 	if !ok {
 		utils.WriteError(w, http.StatusBadRequest, "incorrect id")
 		return
 	}
-	userInfo, err := h.uc.GetUser(r.Context(), UUID)
+	userInfo, err := h.uc.GetUser(r.Context(), idInt64)
 	if err != nil {
 		utils.WriteError(w, http.StatusBadRequest, "user is not exists")
 		return
@@ -52,7 +50,7 @@ func (h *UserHandler) UpdateUserPhoto(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	id := r.Context().Value(middleware.CookieName)
-	UUID, ok := id.(uuid.UUID)
+	idInt64, ok := id.(int64)
 	if !ok {
 		utils.WriteError(w, http.StatusBadRequest, "incorrect id")
 		return
@@ -76,7 +74,7 @@ func (h *UserHandler) UpdateUserPhoto(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	fileName, err := h.uc.UpdateUserPhoto(r.Context(), file, fileType, UUID)
+	fileName, err := h.uc.UpdateUserPhoto(r.Context(), file, fileType, idInt64)
 	if err != nil {
 		utils.WriteError(w, http.StatusBadRequest, "failed upload file")
 		return
@@ -94,12 +92,12 @@ func (h *UserHandler) DeleteUserPhoto(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	id := r.Context().Value(middleware.CookieName)
-	UUID, ok := id.(uuid.UUID)
+	idInt64, ok := id.(int64)
 	if !ok {
 		utils.WriteError(w, http.StatusBadRequest, "incorrect id")
 		return
 	}
-	if err := h.uc.DeleteUserPhoto(r.Context(), UUID); err != nil {
+	if err := h.uc.DeleteUserPhoto(r.Context(), idInt64); err != nil {
 		utils.WriteError(w, http.StatusBadRequest, "error delete avatar")
 		return
 	}
@@ -115,7 +113,7 @@ func (h *UserHandler) UpdateUserInfo(w http.ResponseWriter, r *http.Request) {
 		utils.WriteError(w, http.StatusUnauthorized, "csrf cookie not found")
 		return
 	}
-	id, ok := r.Context().Value(middleware.CookieName).(uuid.UUID)
+	id, ok := r.Context().Value(middleware.CookieName).(int64)
 	if !ok {
 		utils.WriteError(w, http.StatusBadRequest, "incorrect id")
 		return
@@ -147,13 +145,13 @@ func (h *UserHandler) UpdateUserPassword(w http.ResponseWriter, r *http.Request)
 		return
 	}
 	id := r.Context().Value(middleware.CookieName)
-	UUID, ok := id.(uuid.UUID)
+	idInt64, ok := id.(int64)
 	if !ok {
 		utils.WriteError(w, http.StatusBadRequest, "incorrect id")
 		return
 	}
 	data := &models.UserUpdatePassword{
-		ID: UUID,
+		ID: idInt64,
 	}
 
 	if err := utils.ReadRequestData(r, &data); err != nil {

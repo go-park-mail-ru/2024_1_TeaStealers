@@ -5,8 +5,6 @@ import (
 	"context"
 	"database/sql"
 	"errors"
-
-	"github.com/satori/uuid"
 )
 
 // UserRepo represents a repository for user.
@@ -19,9 +17,9 @@ func NewRepository(db *sql.DB) *UserRepo {
 	return &UserRepo{db: db}
 }
 
-func (r *UserRepo) GetUserById(ctx context.Context, id uuid.UUID) (*models.User, error) {
+func (r *UserRepo) GetUserById(ctx context.Context, id int64) (*models.User, error) {
 	user := &models.User{}
-	query := `SELECT id, firstname, secondname, datebirthday, phone, email, photo FROM users WHERE id=$1`
+	query := `SELECT id, first_name, surname, birthdate, phone, email, photo FROM user_data WHERE id=$1`
 	res := r.db.QueryRow(query, id)
 	var firstname, secondname, photo sql.NullString
 	var dateBirthday sql.NullTime
@@ -36,29 +34,30 @@ func (r *UserRepo) GetUserById(ctx context.Context, id uuid.UUID) (*models.User,
 	return user, nil
 }
 
-func (r *UserRepo) UpdateUserPhoto(ctx context.Context, id uuid.UUID, fileName string) (string, error) {
-	query := `UPDATE users SET photo = $1 WHERE id = $2`
+func (r *UserRepo) UpdateUserPhoto(ctx context.Context, id int64, fileName string) (string, error) {
+	query := `UPDATE user_data SET photo = $1 WHERE id = $2`
 	if _, err := r.db.Query(query, fileName, id); err != nil {
 		return "", err
 	}
 	return fileName, nil
 }
 
-func (r *UserRepo) DeleteUserPhoto(ctx context.Context, id uuid.UUID) error {
-	query := `UPDATE users SET photo = '' WHERE id = $1`
+func (r *UserRepo) DeleteUserPhoto(ctx context.Context, id int64) error {
+	query := `UPDATE user_data SET photo = '' WHERE id = $1`
 	if _, err := r.db.Query(query, id); err != nil {
 		return err
 	}
 	return nil
 }
 
-func (r *UserRepo) UpdateUserInfo(ctx context.Context, id uuid.UUID, data *models.UserUpdateData) (*models.User, error) {
-	query := `UPDATE users SET firstname = $1, secondname = $2, datebirthday = $3, phone = $4, email = $5 WHERE id = $6`
+func (r *UserRepo) UpdateUserInfo(ctx context.Context, id int64, data *models.UserUpdateData) (*models.User, error) {
+	query := `UPDATE user_data SET first_name = $1, surname = $2, birthdate = $3, phone = $4, email = $5 WHERE id = $6`
+
 	if _, err := r.db.Exec(query, data.FirstName, data.SecondName, data.DateBirthday, data.Phone, data.Email, id); err != nil {
 		return nil, err
 	}
 	user := &models.User{}
-	querySelect := `SELECT id, firstname, secondname, datebirthday, phone, email FROM users WHERE id = $1`
+	querySelect := `SELECT id, first_name, surname, birthdate, phone, email FROM user_data WHERE id = $1`
 	res := r.db.QueryRow(querySelect, id)
 	if err := res.Scan(&user.ID, &user.FirstName, &user.SecondName, &user.DateBirthday, &user.Phone, &user.Email); err != nil {
 		return nil, err
@@ -67,12 +66,12 @@ func (r *UserRepo) UpdateUserInfo(ctx context.Context, id uuid.UUID, data *model
 	return user, nil
 }
 
-func (r *UserRepo) UpdateUserPassword(ctx context.Context, id uuid.UUID, newPasswordHash string) (int, error) {
-	query := `UPDATE users SET passwordhash=$1, levelupdate = levelupdate+1 WHERE id = $2`
+func (r *UserRepo) UpdateUserPassword(ctx context.Context, id int64, newPasswordHash string) (int, error) {
+	query := `UPDATE user_data SET password_hash=$1, level_update = level_update+1 WHERE id = $2`
 	if _, err := r.db.Exec(query, newPasswordHash, id); err != nil {
 		return 0, err
 	}
-	querySelect := `SELECT levelupdate FROM users WHERE id = $1`
+	querySelect := `SELECT level_update FROM user_data WHERE id = $1`
 	level := 0
 	res := r.db.QueryRow(querySelect, id)
 	if err := res.Scan(&level); err != nil {
@@ -81,9 +80,9 @@ func (r *UserRepo) UpdateUserPassword(ctx context.Context, id uuid.UUID, newPass
 	return level, nil
 }
 
-func (r *UserRepo) CheckUserPassword(ctx context.Context, id uuid.UUID, passwordHash string) error {
+func (r *UserRepo) CheckUserPassword(ctx context.Context, id int64, passwordHash string) error {
 	passwordHashCur := ""
-	querySelect := `SELECT passwordhash FROM users WHERE id = $1`
+	querySelect := `SELECT password_hash FROM user_data WHERE id = $1`
 	res := r.db.QueryRow(querySelect, id)
 	if err := res.Scan(&passwordHashCur); err != nil {
 		return err

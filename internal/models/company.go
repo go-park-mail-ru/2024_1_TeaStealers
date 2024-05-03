@@ -3,14 +3,12 @@ package models
 import (
 	"html"
 	"time"
-
-	"github.com/satori/uuid"
 )
 
 // Company represents a company entity.
 type Company struct {
 	// ID is the unique identifier for the company.
-	ID uuid.UUID `json:"id"`
+	ID int64 `json:"id"`
 	// Photo is the filename of the company's photo.
 	Photo string `json:"photo"`
 	// Name is the name of the company.
@@ -55,7 +53,7 @@ func (compCrDat *CompanyCreateData) Sanitize() {
 // Company represents a company information.
 type CompanyData struct {
 	// ID is the unique identifier for the company.
-	ID uuid.UUID `json:"id"`
+	ID int64 `json:"id"`
 	// Photo is the filename of the company's photo.
 	Photo string `json:"photo"`
 	// Name is the name of the company.

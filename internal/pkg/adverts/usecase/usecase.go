@@ -6,7 +6,6 @@ import (
 	"2024_1_TeaStealers/internal/pkg/utils"
 	"context"
 
-	"github.com/satori/uuid"
 	"go.uber.org/zap"
 )
 
@@ -24,54 +23,64 @@ func NewAdvertUsecase(repo adverts.AdvertRepo, logger *zap.Logger) *AdvertUsecas
 // CreateFlatAdvert handles the creation advert process.
 func (u *AdvertUsecase) CreateFlatAdvert(ctx context.Context, data *models.AdvertFlatCreateData) (*models.Advert, error) {
 	tx, err := u.repo.BeginTx(ctx)
-
 	if err != nil {
-		utils.LogError(u.logger, ctx.Value("requestId").(string), utils.UsecaseLayer, adverts.CreateFlatAdvertMethod, err)
+		utils.LogError(u.logger, ctx.Value("requestId").(string), utils.UsecaseLayer, adverts.CreateHouseAdvertMethod, err)
 		return nil, err
 	}
+
 	defer func() {
 		if err := tx.Rollback(); err != nil {
-			utils.LogError(u.logger, ctx.Value("requestId").(string), utils.UsecaseLayer, adverts.CreateFlatAdvertMethod, err)
+			utils.LogError(u.logger, ctx.Value("requestId").(string), utils.UsecaseLayer, adverts.CreateHouseAdvertMethod, err)
 		}
 	}()
 
-	newAdvertType := &models.AdvertType{
-		ID:         uuid.NewV4(),
-		AdvertType: data.AdvertTypePlacement,
-	}
-
-	newAdvert := &models.Advert{
-		ID:             uuid.NewV4(),
-		UserID:         data.UserID,
-		AdvertTypeID:   newAdvertType.ID,
-		AdvertTypeSale: data.AdvertTypeSale,
-		Title:          data.Title,
-		Description:    data.Description,
-		Phone:          data.Phone,
-		IsAgent:        data.IsAgent,
-		Priority:       1, // Разобраться в будущем, как это менять за деньги(money)
-	}
-
-	building, err := u.repo.CheckExistsBuilding(ctx, data.Address)
+	building, err := u.repo.CheckExistsBuilding(ctx, &data.Address)
 	if err != nil {
+
+		id, err := u.repo.CreateProvince(ctx, tx, data.Address.Province)
+		if err != nil {
+			utils.LogError(u.logger, ctx.Value("requestId").(string), utils.UsecaseLayer, adverts.CreateHouseAdvertMethod, err)
+			return nil, err
+		}
+
+		id, err = u.repo.CreateTown(ctx, tx, id, data.Address.Town)
+		if err != nil {
+			utils.LogError(u.logger, ctx.Value("requestId").(string), utils.UsecaseLayer, adverts.CreateHouseAdvertMethod, err)
+			return nil, err
+		}
+
+		id, err = u.repo.CreateStreet(ctx, tx, id, data.Address.Street)
+		if err != nil {
+			utils.LogError(u.logger, ctx.Value("requestId").(string), utils.UsecaseLayer, adverts.CreateHouseAdvertMethod, err)
+			return nil, err
+		}
+
+		id, err = u.repo.CreateHouseAddress(ctx, tx, id, data.Address.House)
+		if err != nil {
+			utils.LogError(u.logger, ctx.Value("requestId").(string), utils.UsecaseLayer, adverts.CreateHouseAdvertMethod, err)
+			return nil, err
+		}
+
+		id, err = u.repo.CreateAddress(ctx, tx, id, data.Address.Metro, data.Address.AddressPoint)
+		if err != nil {
+			utils.LogError(u.logger, ctx.Value("requestId").(string), utils.UsecaseLayer, adverts.CreateHouseAdvertMethod, err)
+			return nil, err
+		}
+
 		building = &models.Building{
-			ID:           uuid.NewV4(),
 			Floor:        data.FloorGeneral,
 			Material:     data.Material,
-			Address:      data.Address,
-			AddressPoint: data.AddressPoint,
+			AddressID:    id,
 			YearCreation: data.YearCreation,
 		}
-		if err := u.repo.CreateBuilding(ctx, tx, building); err != nil {
-			utils.LogError(u.logger, ctx.Value("requestId").(string), utils.UsecaseLayer, adverts.CreateFlatAdvertMethod, err)
+		if building.ID, err = u.repo.CreateBuilding(ctx, tx, building); err != nil {
+			utils.LogError(u.logger, ctx.Value("requestId").(string), utils.UsecaseLayer, adverts.CreateHouseAdvertMethod, err)
 			return nil, err
 		}
 	}
 
 	newFlat := &models.Flat{
-		ID:                uuid.NewV4(),
 		BuildingID:        building.ID,
-		AdvertTypeID:      newAdvertType.ID,
 		RoomCount:         data.RoomCount,
 		Floor:             data.Floor,
 		CeilingHeight:     data.CeilingHeight,
@@ -80,39 +89,56 @@ func (u *AdvertUsecase) CreateFlatAdvert(ctx context.Context, data *models.Adver
 		Apartment:         data.Apartment,
 	}
 
+	idFlat, err := u.repo.CreateFlat(ctx, tx, newFlat)
+	if err != nil {
+		utils.LogError(u.logger, ctx.Value("requestId").(string), utils.UsecaseLayer, adverts.CreateHouseAdvertMethod, err)
+		return nil, err
+	}
+
+	newAdvert := &models.Advert{
+		UserID:         data.UserID,
+		AdvertTypeSale: data.AdvertTypeSale,
+		Title:          data.Title,
+		Description:    data.Description,
+		Phone:          data.Phone,
+		IsAgent:        data.IsAgent,
+		Priority:       1, // Разобраться в будущем, как это менять за деньги(money)
+	}
+
+	idAdvert, err := u.repo.CreateAdvert(ctx, tx, newAdvert)
+	if err != nil {
+		utils.LogError(u.logger, ctx.Value("requestId").(string), utils.UsecaseLayer, adverts.CreateHouseAdvertMethod, err)
+		return nil, err
+	}
+	newAdvert.ID = idAdvert
+
+	newAdvertTypeFlat := &models.FlatTypeAdvert{
+		FlatID:   idFlat,
+		AdvertID: idAdvert,
+	}
+
+	if err := u.repo.CreateAdvertTypeFlat(ctx, tx, newAdvertTypeFlat); err != nil {
+		utils.LogError(u.logger, ctx.Value("requestId").(string), utils.UsecaseLayer, adverts.CreateHouseAdvertMethod, err)
+		return nil, err
+	}
+
 	newPriceChange := &models.PriceChange{
-		ID:       uuid.NewV4(),
-		AdvertID: newAdvert.ID,
+		AdvertID: idAdvert,
 		Price:    data.Price,
 	}
 
-	if err := u.repo.CreateAdvertType(ctx, tx, newAdvertType); err != nil {
-		utils.LogError(u.logger, ctx.Value("requestId").(string), utils.UsecaseLayer, adverts.CreateFlatAdvertMethod, err)
-		return nil, err
-	}
-
-	if err := u.repo.CreateFlat(ctx, tx, newFlat); err != nil {
-		utils.LogError(u.logger, ctx.Value("requestId").(string), utils.UsecaseLayer, adverts.CreateFlatAdvertMethod, err)
-		return nil, err
-	}
-
-	if err := u.repo.CreateAdvert(ctx, tx, newAdvert); err != nil {
-		utils.LogError(u.logger, ctx.Value("requestId").(string), utils.UsecaseLayer, adverts.CreateFlatAdvertMethod, err)
-		return nil, err
-	}
-
 	if err := u.repo.CreatePriceChange(ctx, tx, newPriceChange); err != nil {
-		utils.LogError(u.logger, ctx.Value("requestId").(string), utils.UsecaseLayer, adverts.CreateFlatAdvertMethod, err)
+		utils.LogError(u.logger, ctx.Value("requestId").(string), utils.UsecaseLayer, adverts.CreateHouseAdvertMethod, err)
 		return nil, err
 	}
 
 	err = tx.Commit()
 	if err != nil {
-		utils.LogError(u.logger, ctx.Value("requestId").(string), utils.UsecaseLayer, adverts.CreateFlatAdvertMethod, err)
+		utils.LogError(u.logger, ctx.Value("requestId").(string), utils.UsecaseLayer, adverts.CreateHouseAdvertMethod, err)
 		return nil, err
 	}
 
-	utils.LogSucces(u.logger, ctx.Value("requestId").(string), utils.UsecaseLayer, adverts.CreateFlatAdvertMethod)
+	utils.LogSucces(u.logger, ctx.Value("requestId").(string), utils.UsecaseLayer, adverts.CreateHouseAdvertMethod)
 	return newAdvert, nil
 }
 
@@ -130,43 +156,53 @@ func (u *AdvertUsecase) CreateHouseAdvert(ctx context.Context, data *models.Adve
 		}
 	}()
 
-	newAdvertType := &models.AdvertType{
-		ID:         uuid.NewV4(),
-		AdvertType: data.AdvertTypePlacement,
-	}
-
-	newAdvert := &models.Advert{
-		ID:             uuid.NewV4(),
-		UserID:         data.UserID,
-		AdvertTypeID:   newAdvertType.ID,
-		AdvertTypeSale: data.AdvertTypeSale,
-		Title:          data.Title,
-		Description:    data.Description,
-		Phone:          data.Phone,
-		IsAgent:        data.IsAgent,
-		Priority:       1, // Разобраться в будущем, как это менять за деньги(money)
-	}
-
-	building, err := u.repo.CheckExistsBuilding(ctx, data.Address)
+	building, err := u.repo.CheckExistsBuilding(ctx, &data.Address)
 	if err != nil {
+
+		id, err := u.repo.CreateProvince(ctx, tx, data.Address.Province)
+		if err != nil {
+			utils.LogError(u.logger, ctx.Value("requestId").(string), utils.UsecaseLayer, adverts.CreateHouseAdvertMethod, err)
+			return nil, err
+		}
+
+		id, err = u.repo.CreateTown(ctx, tx, id, data.Address.Town)
+		if err != nil {
+			utils.LogError(u.logger, ctx.Value("requestId").(string), utils.UsecaseLayer, adverts.CreateHouseAdvertMethod, err)
+			return nil, err
+		}
+
+		id, err = u.repo.CreateStreet(ctx, tx, id, data.Address.Street)
+		if err != nil {
+			utils.LogError(u.logger, ctx.Value("requestId").(string), utils.UsecaseLayer, adverts.CreateHouseAdvertMethod, err)
+			return nil, err
+		}
+
+		id, err = u.repo.CreateHouseAddress(ctx, tx, id, data.Address.House)
+		if err != nil {
+			utils.LogError(u.logger, ctx.Value("requestId").(string), utils.UsecaseLayer, adverts.CreateHouseAdvertMethod, err)
+			return nil, err
+		}
+
+		id, err = u.repo.CreateAddress(ctx, tx, id, data.Address.Metro, data.Address.AddressPoint)
+		if err != nil {
+			utils.LogError(u.logger, ctx.Value("requestId").(string), utils.UsecaseLayer, adverts.CreateHouseAdvertMethod, err)
+			return nil, err
+		}
+
 		building = &models.Building{
-			ID:           uuid.NewV4(),
 			Floor:        data.FloorGeneral,
 			Material:     data.Material,
-			Address:      data.Address,
-			AddressPoint: data.AddressPoint,
+			AddressID:    id,
 			YearCreation: data.YearCreation,
 		}
-		if err := u.repo.CreateBuilding(ctx, tx, building); err != nil {
+		if building.ID, err = u.repo.CreateBuilding(ctx, tx, building); err != nil {
 			utils.LogError(u.logger, ctx.Value("requestId").(string), utils.UsecaseLayer, adverts.CreateHouseAdvertMethod, err)
 			return nil, err
 		}
 	}
 
 	newHouse := &models.House{
-		ID:            uuid.NewV4(),
 		BuildingID:    building.ID,
-		AdvertTypeID:  newAdvertType.ID,
 		CeilingHeight: data.CeilingHeight,
 		SquareArea:    data.SquareArea,
 		SquareHouse:   data.SquareHouse,
@@ -176,25 +212,42 @@ func (u *AdvertUsecase) CreateHouseAdvert(ctx context.Context, data *models.Adve
 		StatusHome:    data.StatusHome,
 	}
 
+	idHouse, err := u.repo.CreateHouse(ctx, tx, newHouse)
+	if err != nil {
+		utils.LogError(u.logger, ctx.Value("requestId").(string), utils.UsecaseLayer, adverts.CreateHouseAdvertMethod, err)
+		return nil, err
+	}
+
+	newAdvert := &models.Advert{
+		UserID:         data.UserID,
+		AdvertTypeSale: data.AdvertTypeSale,
+		Title:          data.Title,
+		Description:    data.Description,
+		Phone:          data.Phone,
+		IsAgent:        data.IsAgent,
+		Priority:       1, // Разобраться в будущем, как это менять за деньги(money)
+	}
+
+	idAdvert, err := u.repo.CreateAdvert(ctx, tx, newAdvert)
+	if err != nil {
+		utils.LogError(u.logger, ctx.Value("requestId").(string), utils.UsecaseLayer, adverts.CreateHouseAdvertMethod, err)
+		return nil, err
+	}
+	newAdvert.ID = idAdvert
+
+	newAdvertTypeHouse := &models.HouseTypeAdvert{
+		HouseID:  idHouse,
+		AdvertID: idAdvert,
+	}
+
+	if err := u.repo.CreateAdvertTypeHouse(ctx, tx, newAdvertTypeHouse); err != nil {
+		utils.LogError(u.logger, ctx.Value("requestId").(string), utils.UsecaseLayer, adverts.CreateHouseAdvertMethod, err)
+		return nil, err
+	}
+
 	newPriceChange := &models.PriceChange{
-		ID:       uuid.NewV4(),
-		AdvertID: newAdvert.ID,
+		AdvertID: idAdvert,
 		Price:    data.Price,
-	}
-
-	if err := u.repo.CreateAdvertType(ctx, tx, newAdvertType); err != nil {
-		utils.LogError(u.logger, ctx.Value("requestId").(string), utils.UsecaseLayer, adverts.CreateHouseAdvertMethod, err)
-		return nil, err
-	}
-
-	if err := u.repo.CreateHouse(ctx, tx, newHouse); err != nil {
-		utils.LogError(u.logger, ctx.Value("requestId").(string), utils.UsecaseLayer, adverts.CreateHouseAdvertMethod, err)
-		return nil, err
-	}
-
-	if err := u.repo.CreateAdvert(ctx, tx, newAdvert); err != nil {
-		utils.LogError(u.logger, ctx.Value("requestId").(string), utils.UsecaseLayer, adverts.CreateHouseAdvertMethod, err)
-		return nil, err
 	}
 
 	if err := u.repo.CreatePriceChange(ctx, tx, newPriceChange); err != nil {
@@ -213,7 +266,7 @@ func (u *AdvertUsecase) CreateHouseAdvert(ctx context.Context, data *models.Adve
 }
 
 // GetAdvertById handles the getting house advert process.
-func (u *AdvertUsecase) GetAdvertById(ctx context.Context, id uuid.UUID) (foundAdvert *models.AdvertData, err error) {
+func (u *AdvertUsecase) GetAdvertById(ctx context.Context, id int64) (foundAdvert *models.AdvertData, err error) {
 	var typeAdvert *models.AdvertTypeAdvert
 	typeAdvert, err = u.repo.GetTypeAdvertById(ctx, id)
 	if err != nil {
@@ -297,7 +350,7 @@ func (u *AdvertUsecase) UpdateAdvertById(ctx context.Context, advertUpdateData *
 }
 
 // DeleteAdvertById handles the deleting advert process.
-func (u *AdvertUsecase) DeleteAdvertById(ctx context.Context, advertId uuid.UUID) (err error) {
+func (u *AdvertUsecase) DeleteAdvertById(ctx context.Context, advertId int64) (err error) {
 	tx, err := u.repo.BeginTx(ctx)
 	if err != nil {
 		utils.LogError(u.logger, ctx.Value("requestId").(string), utils.UsecaseLayer, adverts.DeleteAdvertByIdMethod, err)
@@ -360,19 +413,19 @@ func (u *AdvertUsecase) GetRectangleAdvertsList(ctx context.Context, advertFilte
 	return foundAdverts, nil
 }
 
-// GetExistBuildingsByAddress handles the buildings getting process by address with paggination.
-func (u *AdvertUsecase) GetExistBuildingsByAddress(ctx context.Context, address string, pageSize int) (foundBuildings []*models.BuildingData, err error) {
-	if foundBuildings, err = u.repo.CheckExistsBuildings(ctx, pageSize, address); err != nil {
+// GetExistBuildingByAddress handles the buildings getting process by address with paggination.
+func (u *AdvertUsecase) GetExistBuildingByAddress(ctx context.Context, address *models.AddressData) (foundBuilding *models.BuildingData, err error) {
+	if foundBuilding, err = u.repo.CheckExistsBuildingData(ctx, address); err != nil {
 		utils.LogError(u.logger, ctx.Value("requestId").(string), utils.UsecaseLayer, adverts.GetExistBuildingsByAddressMethod, err)
 		return nil, err
 	}
 
 	utils.LogSucces(u.logger, ctx.Value("requestId").(string), utils.UsecaseLayer, adverts.GetExistBuildingsByAddressMethod)
-	return foundBuildings, nil
+	return foundBuilding, nil
 }
 
 // GetRectangleAdvertsByUserId handles the rectangle adverts getting process with paggination by userId.
-func (u *AdvertUsecase) GetRectangleAdvertsByUserId(ctx context.Context, pageSize, offset int, userId uuid.UUID) (foundAdverts []*models.AdvertRectangleData, err error) {
+func (u *AdvertUsecase) GetRectangleAdvertsByUserId(ctx context.Context, pageSize, offset int, userId int64) (foundAdverts []*models.AdvertRectangleData, err error) {
 	if foundAdverts, err = u.repo.GetRectangleAdvertsByUserId(ctx, pageSize, offset, userId); err != nil {
 		utils.LogError(u.logger, ctx.Value("requestId").(string), utils.UsecaseLayer, adverts.GetRectangleAdvertsByUserIdMethod, err)
 		return nil, err
@@ -383,7 +436,7 @@ func (u *AdvertUsecase) GetRectangleAdvertsByUserId(ctx context.Context, pageSiz
 }
 
 // GetRectangleAdvertsByComplexId handles the rectangle adverts getting process with paggination by complexId.
-func (u *AdvertUsecase) GetRectangleAdvertsByComplexId(ctx context.Context, pageSize, offset int, comlexId uuid.UUID) (foundAdverts []*models.AdvertRectangleData, err error) {
+func (u *AdvertUsecase) GetRectangleAdvertsByComplexId(ctx context.Context, pageSize, offset int, comlexId int64) (foundAdverts []*models.AdvertRectangleData, err error) {
 	if foundAdverts, err = u.repo.GetRectangleAdvertsByComplexId(ctx, pageSize, offset, comlexId); err != nil {
 		utils.LogError(u.logger, ctx.Value("requestId").(string), utils.UsecaseLayer, adverts.GetRectangleAdvertsByComplexIdMethod, err)
 		return nil, err
