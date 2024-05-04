@@ -283,6 +283,8 @@ type AdvertRectangleData struct {
 	TypeSale string `json:"typeSale"`
 	// Address is the address of the advertisement.
 	Address string `json:"adress"`
+	// AddressPoint is the address of the advertisement.
+	AddressPoint string `json:"adressPoint"`
 	// Metro is the metro of the advertisement.
 	Metro string `json:"metro"`
 	// Complex represents residential complex information.

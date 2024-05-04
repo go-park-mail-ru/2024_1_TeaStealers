@@ -1231,6 +1231,7 @@ func (r *AdvertRepo) GetRectangleAdverts(ctx context.Context, advertFilter model
         SELECT
             f.square_general,
             f.floor,
+			ad.address_point,
 			ad.metro,
 			hn.name,
 			s.name,
@@ -1252,6 +1253,7 @@ func (r *AdvertRepo) GetRectangleAdverts(ctx context.Context, advertFilter model
             a.created_at DESC;`
 	queryHouse := `
         SELECT
+			ad.address_point,
 			ad.metro,
 			hn.name,
 			s.name,
@@ -1339,7 +1341,7 @@ func (r *AdvertRepo) GetRectangleAdverts(ctx context.Context, advertFilter model
 			var floor, floorGeneral int
 			row := r.db.QueryRowContext(ctx, queryFlat, rectangleAdvert.ID)
 
-			if err := row.Scan(&squareGeneral, &floor, &metro, &houseName, &street, &town, &province, &floorGeneral); err != nil {
+			if err := row.Scan(&squareGeneral, &floor, &rectangleAdvert.AddressPoint, &metro, &houseName, &street, &town, &province, &floorGeneral); err != nil {
 				utils.LogError(r.logger, ctx.Value("requestId").(string), utils.RepositoryLayer, adverts.GetRectangleAdvertsMethod, err)
 				return nil, err
 			}
@@ -1355,7 +1357,7 @@ func (r *AdvertRepo) GetRectangleAdverts(ctx context.Context, advertFilter model
 			var floor int
 			row := r.db.QueryRowContext(ctx, queryHouse, rectangleAdvert.ID)
 
-			if err := row.Scan(&metro, &houseName, &street, &town, &province, &cottage, &squareHouse, &squareArea, &floor); err != nil {
+			if err := row.Scan(&rectangleAdvert.AddressPoint, &metro, &houseName, &street, &town, &province, &cottage, &squareHouse, &squareArea, &floor); err != nil {
 				utils.LogError(r.logger, ctx.Value("requestId").(string), utils.RepositoryLayer, adverts.GetRectangleAdvertsMethod, err)
 				return nil, err
 			}
