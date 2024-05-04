@@ -136,7 +136,7 @@ func main() {
 
 	userRepo := userR.NewRepository(db)
 	userUsecase := userUc.NewUserUsecase(userRepo)
-	userHandler := http2.NewClientUserHandler(grcpConnAuth)
+	userHandler := http2.NewClientUserHandler(grcpConnUsers)
 	userHandlerPhoto := http2.NewUserHandlerPhoto(userUsecase)
 
 	user := r.PathPrefix("/users").Subrouter()
