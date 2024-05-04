@@ -54,6 +54,8 @@ func (h *AuthHandler) SignUp(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	data.Sanitize()
+
 	newUser, token, exp, err := h.uc.SignUp(ctx, &data)
 	if err != nil {
 		utils.LogErrorResponse(h.logger, ctx.Value("requestId").(string), utils.DeliveryLayer, SignUpMethod, err, http.StatusBadRequest)

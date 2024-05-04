@@ -42,14 +42,15 @@ func (r *AuthRepo) CreateUser(ctx context.Context, user *models.User) (*models.U
 		return nil, err
 	}
 
-	query := `SELECT id, email, phone, password_hash, level_update FROM user_data WHERE id = $1`
+	query := `SELECT email, phone, password_hash, level_update FROM user_data WHERE id = $1`
 
 	res := r.db.QueryRow(query, lastInsertID)
 
-	newUser := &models.User{}
-	if err := res.Scan(&newUser.ID, &newUser.Email, &newUser.Phone, &newUser.PasswordHash, &newUser.LevelUpdate); err != nil {
+	newUser := &models.User{ID: lastInsertID}
+	if err := res.Scan(&newUser.Email, &newUser.Phone, &newUser.PasswordHash, &newUser.LevelUpdate); err != nil {
 		utils.LogError(r.logger, ctx.Value("requestId").(string), utils.RepositoryLayer, auth.CreateUserMethod, err)
-		return nil, err
+		return nil,
+			err
 	}
 
 	utils.LogSucces(r.logger, ctx.Value("requestId").(string), utils.RepositoryLayer, auth.CreateUserMethod)

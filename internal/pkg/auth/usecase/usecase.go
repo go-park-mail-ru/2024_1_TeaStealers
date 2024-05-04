@@ -2,7 +2,6 @@ package usecase
 
 import (
 	"2024_1_TeaStealers/internal/models"
-	"2024_1_TeaStealers/internal/pkg/adverts"
 	"2024_1_TeaStealers/internal/pkg/auth"
 	"2024_1_TeaStealers/internal/pkg/jwt"
 	"2024_1_TeaStealers/internal/pkg/utils"
@@ -38,15 +37,11 @@ func (u *AuthUsecase) SignUp(ctx context.Context, data *models.UserSignUpData) (
 		utils.LogError(u.logger, ctx.Value("requestId").(string), utils.UsecaseLayer, auth.SignUpMethod, err)
 		return nil, "", time.Now(), err
 	}
+	newUser.ID = userResponse.ID
 
 	token, exp, err := jwt.GenerateToken(newUser)
 	if err != nil {
 		utils.LogError(u.logger, ctx.Value("requestId").(string), utils.UsecaseLayer, auth.SignUpMethod, err)
-		return nil, "", time.Now(), err
-	}
-
-	if err != nil {
-		utils.LogError(u.logger, ctx.Value("requestId").(string), utils.UsecaseLayer, adverts.CreateFlatAdvertMethod, err)
 		return nil, "", time.Now(), err
 	}
 
