@@ -53,6 +53,8 @@ type AdvertUsecase interface {
 	DeleteAdvertById(ctx context.Context, advertId int64) (err error)
 	GetRectangleAdvertsByComplexId(ctx context.Context, pageSize, offset int, comlexId int64) (foundAdverts []*models.AdvertRectangleData, err error)
 	GetExistBuildingByAddress(ctx context.Context, address *models.AddressData) (foundBuilding *models.BuildingData, err error)
+	LikeAdvert(ctx context.Context, advertId int64, userId int64) error
+	DislikeAdvert(ctx context.Context, advertId int64, userId int64) error
 }
 
 // AdvertRepo represents the repository interface for adverts.
@@ -85,4 +87,6 @@ type AdvertRepo interface {
 	CreateStreet(ctx context.Context, tx models.Transaction, idTown int64, name string) (int64, error)
 	CreateTown(ctx context.Context, tx models.Transaction, idProvince int64, name string) (int64, error)
 	CreateProvince(ctx context.Context, tx models.Transaction, name string) (int64, error)
+	LikeAdvert(ctx context.Context, advertId int64, userId int64) error
+	DislikeAdvert(ctx context.Context, advertId int64, userId int64) error
 }

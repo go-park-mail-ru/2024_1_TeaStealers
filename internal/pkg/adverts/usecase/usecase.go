@@ -445,3 +445,23 @@ func (u *AdvertUsecase) GetRectangleAdvertsByComplexId(ctx context.Context, page
 	utils.LogSucces(u.logger, ctx.Value("requestId").(string), utils.UsecaseLayer, adverts.GetRectangleAdvertsByComplexIdMethod)
 	return foundAdverts, nil
 }
+
+func (u *AdvertUsecase) LikeAdvert(ctx context.Context, advertId int64, userId int64) error {
+	if err := u.repo.LikeAdvert(ctx, advertId, userId); err != nil {
+		utils.LogError(u.logger, ctx.Value("requestId").(string), utils.UsecaseLayer, adverts.GetRectangleAdvertsByComplexIdMethod, err)
+		return err
+	}
+
+	utils.LogSucces(u.logger, ctx.Value("requestId").(string), utils.UsecaseLayer, adverts.GetRectangleAdvertsByComplexIdMethod)
+	return nil
+}
+
+func (u *AdvertUsecase) DislikeAdvert(ctx context.Context, advertId int64, userId int64) error {
+	if err := u.repo.DislikeAdvert(ctx, advertId, userId); err != nil {
+		utils.LogError(u.logger, ctx.Value("requestId").(string), utils.UsecaseLayer, adverts.GetRectangleAdvertsByComplexIdMethod, err)
+		return err
+	}
+
+	utils.LogSucces(u.logger, ctx.Value("requestId").(string), utils.UsecaseLayer, adverts.GetRectangleAdvertsByComplexIdMethod)
+	return nil
+}

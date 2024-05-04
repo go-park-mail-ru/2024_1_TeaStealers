@@ -473,3 +473,95 @@ func (h *AdvertHandler) GetComplexAdverts(w http.ResponseWriter, r *http.Request
 		utils.LogSuccesResponse(h.logger, ctx.Value("requestId").(string), utils.DeliveryLayer, GetComplexAdvertsMethod)
 	}
 }
+
+func (h *AdvertHandler) LikeAdvert(w http.ResponseWriter, r *http.Request) {
+	_, err := r.Cookie("csrftoken")
+	if err != nil {
+		utils.WriteError(w, http.StatusUnauthorized, "csrf cookie not found")
+		return
+	}
+	ctx := context.WithValue(r.Context(), "requestId", uuid.NewV4().String())
+
+	id, ok := ctx.Value(middleware.CookieName).(int64)
+	if !ok {
+		utils.LogErrorResponse(h.logger, ctx.Value("requestId").(string), utils.DeliveryLayer, CreateFlatAdvertMethod, errors.New("error with cookie"), http.StatusBadRequest)
+		utils.WriteError(w, http.StatusBadRequest, "incorrect id")
+		return
+	}
+
+	vars := mux.Vars(r)
+	advertId := vars["id"]
+	if advertId == "" {
+		utils.LogErrorResponse(h.logger, ctx.Value("requestId").(string), utils.DeliveryLayer, GetComplexAdvertsMethod, errors.New("error with id complex"), http.StatusBadRequest)
+		utils.WriteError(w, http.StatusBadRequest, "id parameter is required")
+		return
+	}
+
+	advertIdInt, err := strconv.ParseInt(advertId, 10, 64)
+	if err != nil {
+		utils.LogErrorResponse(h.logger, ctx.Value("requestId").(string), utils.DeliveryLayer, GetComplexAdvertsMethod, err, http.StatusBadRequest)
+		utils.WriteError(w, http.StatusBadRequest, "invalid id parameter")
+		return
+	}
+
+	err = h.uc.LikeAdvert(ctx, advertIdInt, id)
+
+	if err != nil {
+		utils.LogErrorResponse(h.logger, ctx.Value("requestId").(string), CreateFlatAdvertMethod, utils.DeliveryLayer, err, http.StatusBadRequest)
+		utils.WriteError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	if err = utils.WriteResponse(w, http.StatusCreated, "success liked"); err != nil {
+		utils.LogErrorResponse(h.logger, ctx.Value("requestId").(string), CreateFlatAdvertMethod, utils.DeliveryLayer, err, http.StatusInternalServerError)
+		utils.WriteError(w, http.StatusInternalServerError, err.Error())
+	} else {
+		utils.LogSuccesResponse(h.logger, ctx.Value("requestId").(string), utils.DeliveryLayer, CreateFlatAdvertMethod)
+	}
+}
+
+func (h *AdvertHandler) DislikeAdvert(w http.ResponseWriter, r *http.Request) {
+	_, err := r.Cookie("csrftoken")
+	if err != nil {
+		utils.WriteError(w, http.StatusUnauthorized, "csrf cookie not found")
+		return
+	}
+	ctx := context.WithValue(r.Context(), "requestId", uuid.NewV4().String())
+
+	id, ok := ctx.Value(middleware.CookieName).(int64)
+	if !ok {
+		utils.LogErrorResponse(h.logger, ctx.Value("requestId").(string), utils.DeliveryLayer, CreateFlatAdvertMethod, errors.New("error with cookie"), http.StatusBadRequest)
+		utils.WriteError(w, http.StatusBadRequest, "incorrect id")
+		return
+	}
+
+	vars := mux.Vars(r)
+	advertId := vars["id"]
+	if advertId == "" {
+		utils.LogErrorResponse(h.logger, ctx.Value("requestId").(string), utils.DeliveryLayer, GetComplexAdvertsMethod, errors.New("error with id complex"), http.StatusBadRequest)
+		utils.WriteError(w, http.StatusBadRequest, "id parameter is required")
+		return
+	}
+
+	advertIdInt, err := strconv.ParseInt(advertId, 10, 64)
+	if err != nil {
+		utils.LogErrorResponse(h.logger, ctx.Value("requestId").(string), utils.DeliveryLayer, GetComplexAdvertsMethod, err, http.StatusBadRequest)
+		utils.WriteError(w, http.StatusBadRequest, "invalid id parameter")
+		return
+	}
+
+	err = h.uc.DislikeAdvert(ctx, advertIdInt, id)
+
+	if err != nil {
+		utils.LogErrorResponse(h.logger, ctx.Value("requestId").(string), CreateFlatAdvertMethod, utils.DeliveryLayer, err, http.StatusBadRequest)
+		utils.WriteError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	if err = utils.WriteResponse(w, http.StatusCreated, "success disliked"); err != nil {
+		utils.LogErrorResponse(h.logger, ctx.Value("requestId").(string), CreateFlatAdvertMethod, utils.DeliveryLayer, err, http.StatusInternalServerError)
+		utils.WriteError(w, http.StatusInternalServerError, err.Error())
+	} else {
+		utils.LogSuccesResponse(h.logger, ctx.Value("requestId").(string), utils.DeliveryLayer, CreateFlatAdvertMethod)
+	}
+}

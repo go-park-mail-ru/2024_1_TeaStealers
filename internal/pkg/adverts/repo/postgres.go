@@ -1743,3 +1743,49 @@ func (r *AdvertRepo) GetRectangleAdvertsByComplexId(ctx context.Context, pageSiz
 	utils.LogSucces(r.logger, ctx.Value("requestId").(string), utils.RepositoryLayer, adverts.GetRectangleAdvertsByUserIdMethod)
 	return rectangleAdverts, nil
 }
+
+// LikeAdvert creates a like in the database.
+func (r *AdvertRepo) LikeAdvert(ctx context.Context, advertId int64, userId int64) error {
+	query := `SELECT advert_id, user_id FROM favourite_advert WHERE advert_id = $1 AND user_id = $2`
+
+	res := r.db.QueryRow(query, advertId, userId)
+
+	var adId, usId int64
+	if err := res.Scan(&adId, &usId); err == nil {
+		update := `UPDATE favourite_advert SET is_deleted = false WHERE advert_id = $1 AND user_id = $2`
+		if _, err := r.db.Exec(update, adId, usId); err != nil {
+			// utils.LogError(r.logger, ctx.Value("requestId").(string), utils.RepositoryLayer, adverts.CreateAdvertMethod, err)
+			return err
+		}
+		// utils.LogError(r.logger, ctx.Value("requestId").(string), utils.RepositoryLayer, adverts.CreateAdvertMethod, err)
+		return nil
+	}
+
+	insert := `INSERT INTO favourite_advert (advert_id, user_id) VALUES ($1, $2)`
+	if _, err := r.db.Exec(insert, advertId, userId); err != nil {
+		// utils.LogError(r.logger, ctx.Value("requestId").(string), utils.RepositoryLayer, adverts.CreateAdvertMethod, err)
+		return err
+	}
+
+	// utils.LogSucces(r.logger, ctx.Value("requestId").(string), utils.RepositoryLayer, adverts.CreateAdvertMethod)
+	return nil
+}
+
+// DislikeAdvert set dislike in the database.
+func (r *AdvertRepo) DislikeAdvert(ctx context.Context, advertId int64, userId int64) error {
+	query := `SELECT advert_id, user_id FROM favourite_advert WHERE advert_id = $1 AND user_id = $2`
+
+	res := r.db.QueryRow(query, advertId, userId)
+
+	var adId, usId int64
+	if err := res.Scan(&adId, &usId); err == nil {
+		update := `UPDATE favourite_advert SET is_deleted = true WHERE advert_id = $1 AND user_id = $2`
+		if _, err := r.db.Exec(update, adId, usId); err != nil {
+			// utils.LogError(r.logger, ctx.Value("requestId").(string), utils.RepositoryLayer, adverts.CreateAdvertMethod, err)
+			return err
+		}
+	}
+
+	// utils.LogSucces(r.logger, ctx.Value("requestId").(string), utils.RepositoryLayer, adverts.CreateAdvertMethod)
+	return nil
+}
