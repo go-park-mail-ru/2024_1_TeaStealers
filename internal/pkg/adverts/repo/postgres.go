@@ -7,6 +7,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"time"
 
 	"go.uber.org/zap"
 )
@@ -295,6 +296,36 @@ func (r *AdvertRepo) SelectImages(ctx context.Context, advertId int64) ([]*model
 
 	utils.LogSucces(r.logger, ctx.Value("requestId").(string), utils.RepositoryLayer, adverts.SelectImagesMethod)
 	return images, nil
+}
+
+// SelectPriceChanges select list priceChanges for advert
+func (r *AdvertRepo) SelectPriceChanges(ctx context.Context, advertId int64) ([]*models.PriceChangeData, error) {
+	selectQuery := `SELECT price, created_at FROM price_change WHERE advert_id = $1 AND is_deleted = false`
+	rows, err := r.db.Query(selectQuery, advertId)
+	if err != nil {
+		utils.LogError(r.logger, ctx.Value("requestId").(string), utils.RepositoryLayer, adverts.SelectImagesMethod, err)
+		return nil, err
+	}
+	defer rows.Close()
+
+	prices := []*models.PriceChangeData{}
+
+	for rows.Next() {
+		var price int64
+		var data time.Time
+		if err := rows.Scan(&price, &data); err != nil {
+			utils.LogError(r.logger, ctx.Value("requestId").(string), utils.RepositoryLayer, adverts.SelectImagesMethod, err)
+			return nil, err
+		}
+		priceChange := &models.PriceChangeData{
+			Price:        price,
+			DateCreation: data,
+		}
+		prices = append(prices, priceChange)
+	}
+
+	utils.LogSucces(r.logger, ctx.Value("requestId").(string), utils.RepositoryLayer, adverts.SelectImagesMethod)
+	return prices, nil
 }
 
 // GetTypeAdvertById return type of advert
@@ -795,7 +826,7 @@ func (r *AdvertRepo) UpdateHouseAdvertById(ctx context.Context, tx models.Transa
 		return err
 	}
 	if advertUpdateData.Price != price {
-		queryInsertPriceChange := `INSERT INTO price_change (advertId, price)
+		queryInsertPriceChange := `INSERT INTO price_change (advert_id, price)
             VALUES ($1, $2)`
 		if _, err := tx.Exec(queryInsertPriceChange, advertUpdateData.ID, advertUpdateData.Price); err != nil {
 			utils.LogError(r.logger, ctx.Value("requestId").(string), utils.RepositoryLayer, adverts.UpdateHouseAdvertByIdMethod, err)

@@ -330,6 +330,8 @@ type AdvertData struct {
 	Address string `json:"adress"`
 	// AddressPoint is the address of the advertisement.
 	AddressPoint string `json:"adressPoint"`
+	// PriceChange contains changes of price for advert.
+	PriceChange []*PriceChangeData `json:"priceHistory"`
 	// Images contains filenames of photos for advert.
 	Images []*ImageResp `json:"images"`
 	// HouseProperties contains additional properties for house.

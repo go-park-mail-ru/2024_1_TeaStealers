@@ -82,6 +82,7 @@ type AdvertRepo interface {
 	GetRectangleAdvertsByComplexId(ctx context.Context, pageSize, offset int, complexId int64) ([]*models.AdvertRectangleData, error)
 	CheckExistsBuildingData(ctx context.Context, adress *models.AddressData) (*models.BuildingData, error)
 	SelectImages(ctx context.Context, advertId int64) ([]*models.ImageResp, error)
+	SelectPriceChanges(ctx context.Context, advertId int64) ([]*models.PriceChangeData, error)
 	CreateAddress(ctx context.Context, tx models.Transaction, idHouse int64, metro string, address_point string) (int64, error)
 	CreateHouseAddress(ctx context.Context, tx models.Transaction, idStreet int64, name string) (int64, error)
 	CreateStreet(ctx context.Context, tx models.Transaction, idTown int64, name string) (int64, error)

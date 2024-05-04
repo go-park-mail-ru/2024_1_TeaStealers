@@ -17,3 +17,11 @@ type PriceChange struct {
 	// IsDeleted is a flag indicating whether the price change is deleted.
 	IsDeleted bool `json:"-"`
 }
+
+// PriceChangeData represents a change in the price of an advert.
+type PriceChangeData struct {
+	// Price is the new price of the advert.
+	Price int64 `json:"price"`
+	// DateCreation is the date when the price change was created.
+	DateCreation time.Time `json:"data"`
+}

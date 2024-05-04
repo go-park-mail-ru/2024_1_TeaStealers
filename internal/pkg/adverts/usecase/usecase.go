@@ -295,6 +295,14 @@ func (u *AdvertUsecase) GetAdvertById(ctx context.Context, id int64) (foundAdver
 
 	foundAdvert.Images = foundImages
 
+	var priceChanges []*models.PriceChangeData
+	if priceChanges, err = u.repo.SelectPriceChanges(ctx, foundAdvert.ID); err != nil {
+		utils.LogError(u.logger, ctx.Value("requestId").(string), utils.UsecaseLayer, adverts.GetAdvertByIdMethod, err)
+		return nil, err
+	}
+
+	foundAdvert.PriceChange = priceChanges
+
 	utils.LogSucces(u.logger, ctx.Value("requestId").(string), utils.UsecaseLayer, adverts.GetAdvertByIdMethod)
 	return foundAdvert, nil
 }
