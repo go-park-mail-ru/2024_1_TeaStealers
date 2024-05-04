@@ -334,7 +334,7 @@ func (r *AdvertRepo) GetHouseAdvertById(ctx context.Context, id int64) (*models.
 		s.name,
 		t.name,
 		p.name,
-		ad.address_point,
+		ST_AsText(ad.address_point::geometry),
         h.ceiling_height,
         h.square_area,
         h.square_house,
@@ -917,7 +917,7 @@ func (r *AdvertRepo) GetFlatAdvertById(ctx context.Context, id int64) (*models.A
 		s.name,
 		t.name,
 		p.name,
-		ad.address_point,
+		ST_AsText(ad.address_point::geometry),
         f.floor,
         f.ceiling_height,
         f.square_general,
@@ -1231,7 +1231,7 @@ func (r *AdvertRepo) GetRectangleAdverts(ctx context.Context, advertFilter model
         SELECT
             f.square_general,
             f.floor,
-			ad.address_point,
+			ST_AsText(ad.address_point::geometry),
 			ad.metro,
 			hn.name,
 			s.name,
@@ -1253,7 +1253,7 @@ func (r *AdvertRepo) GetRectangleAdverts(ctx context.Context, advertFilter model
             a.created_at DESC;`
 	queryHouse := `
         SELECT
-			ad.address_point,
+			ST_AsText(ad.address_point::geometry),
 			ad.metro,
 			hn.name,
 			s.name,
