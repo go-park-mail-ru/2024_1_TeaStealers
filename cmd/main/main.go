@@ -111,7 +111,7 @@ func main() {
 	advert.Handle("/{id}/like", jwtMd.JwtTMiddleware(http.HandlerFunc(advertHandler.LikeAdvert))).Methods(http.MethodPost, http.MethodOptions)
 	advert.Handle("/{id}/dislike", jwtMd.JwtTMiddleware(http.HandlerFunc(advertHandler.DislikeAdvert))).Methods(http.MethodPost, http.MethodOptions)
 	advert.Handle("/houses/", jwtMd.JwtTMiddleware(http.HandlerFunc(advertHandler.CreateHouseAdvert))).Methods(http.MethodPost, http.MethodOptions)
-	advert.HandleFunc("/building/", advertHandler.GetExistBuildingByAddress).Methods(http.MethodGet, http.MethodOptions)
+	advert.HandleFunc("/building/", advertHandler.GetExistBuildingByAddress).Methods(http.MethodPost, http.MethodOptions)
 	advert.Handle("/flats/", jwtMd.JwtTMiddleware(http.HandlerFunc(advertHandler.CreateFlatAdvert))).Methods(http.MethodPost, http.MethodOptions)
 	advert.HandleFunc("/squarelist/", advertHandler.GetSquareAdvertsList).Methods(http.MethodGet, http.MethodOptions)
 	advert.HandleFunc("/rectanglelist/", advertHandler.GetRectangeAdvertsList).Methods(http.MethodGet, http.MethodOptions)
