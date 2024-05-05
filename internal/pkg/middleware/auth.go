@@ -65,3 +65,20 @@ func (md *AuthMiddleware) JwtTMiddleware(next http.Handler) http.Handler {
 		next.ServeHTTP(w, r)
 	})
 }
+
+// StatMiddleware is a middleware function that handles urls for likes and stat view.
+func (md *AuthMiddleware) StatMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		cookie, err := r.Cookie(CookieName)
+
+		if err == nil {
+			token := cookie.Value
+			claims, err := jwt.ParseToken(token)
+			if err == nil {
+				id, _, _ := jwt.ParseClaims(claims)
+				r = r.WithContext(context.WithValue(r.Context(), CookieName, id))
+			}
+		}
+		next.ServeHTTP(w, r)
+	})
+}

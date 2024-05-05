@@ -443,6 +443,17 @@ func (u *AdvertUsecase) GetRectangleAdvertsByUserId(ctx context.Context, pageSiz
 	return foundAdverts, nil
 }
 
+// GetRectangleAdvertsLikedByUserId handles the rectangle adverts getting process with paggination by userId.
+func (u *AdvertUsecase) GetRectangleAdvertsLikedByUserId(ctx context.Context, pageSize, offset int, userId int64) (foundAdverts []*models.AdvertRectangleData, err error) {
+	if foundAdverts, err = u.repo.GetRectangleAdvertsLikedByUserId(ctx, pageSize, offset, userId); err != nil {
+		utils.LogError(u.logger, ctx.Value("requestId").(string), utils.UsecaseLayer, adverts.GetRectangleAdvertsByUserIdMethod, err)
+		return nil, err
+	}
+
+	utils.LogSucces(u.logger, ctx.Value("requestId").(string), utils.UsecaseLayer, adverts.GetRectangleAdvertsByUserIdMethod)
+	return foundAdverts, nil
+}
+
 // GetRectangleAdvertsByComplexId handles the rectangle adverts getting process with paggination by complexId.
 func (u *AdvertUsecase) GetRectangleAdvertsByComplexId(ctx context.Context, pageSize, offset int, comlexId int64) (foundAdverts []*models.AdvertRectangleData, err error) {
 	if foundAdverts, err = u.repo.GetRectangleAdvertsByComplexId(ctx, pageSize, offset, comlexId); err != nil {

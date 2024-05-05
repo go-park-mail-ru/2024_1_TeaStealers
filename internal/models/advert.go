@@ -287,6 +287,8 @@ type AdvertRectangleData struct {
 	AddressPoint string `json:"adressPoint"`
 	// Metro is the metro of the advertisement.
 	Metro string `json:"metro"`
+	// IsLiked indicates whether the advert is liked.
+	IsLiked bool `json:"isLiked"`
 	// Complex represents residential complex information.
 	// Complex map[string]interface{} `json:"complex"`
 	// FlatProperties contains additional properties for flats.
@@ -322,6 +324,8 @@ type AdvertData struct {
 	Price int64 `json:"price"`
 	// Phone is the phone number associated with the advert.
 	Phone string `json:"phone"`
+	// IsLiked indicates whether the advert is liked.
+	IsLiked bool `json:"isLiked"`
 	// IsAgent indicates whether the advert is posted by an agent.
 	IsAgent bool `json:"isAgent"`
 	// Metro is the metro of the advertisement.

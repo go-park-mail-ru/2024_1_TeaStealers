@@ -140,7 +140,6 @@ func (h *AdvertHandler) GetAdvertById(w http.ResponseWriter, r *http.Request) {
 		utils.WriteError(w, http.StatusBadRequest, "invalid id parameter")
 		return
 	}
-
 	advertData, err := h.uc.GetAdvertById(ctx, advertId)
 
 	if err != nil {
@@ -563,5 +562,48 @@ func (h *AdvertHandler) DislikeAdvert(w http.ResponseWriter, r *http.Request) {
 		utils.WriteError(w, http.StatusInternalServerError, err.Error())
 	} else {
 		utils.LogSuccesResponse(h.logger, ctx.Value("requestId").(string), utils.DeliveryLayer, CreateFlatAdvertMethod)
+	}
+}
+
+func (h *AdvertHandler) GetLikedUserAdverts(w http.ResponseWriter, r *http.Request) {
+	ctx := context.WithValue(r.Context(), "requestId", uuid.NewV4().String())
+
+	id := ctx.Value(middleware.CookieName)
+	pageStr := r.URL.Query().Get("page")
+	sizeStr := r.URL.Query().Get("size")
+
+	page, err := strconv.Atoi(pageStr)
+	if err != nil {
+		page = 1000000
+	}
+
+	size, err := strconv.Atoi(sizeStr)
+	if err != nil {
+		size = 0
+	}
+
+	ID, ok := id.(int64)
+	if !ok {
+		utils.LogErrorResponse(h.logger, ctx.Value("requestId").(string), utils.DeliveryLayer, GetUserAdvertsMethod, errors.New("error with id user"), http.StatusBadRequest)
+		utils.WriteError(w, http.StatusBadRequest, "incorrect id")
+		return
+	}
+
+	var userAdverts []*models.AdvertRectangleData
+	if userAdverts, err = h.uc.GetRectangleAdvertsLikedByUserId(ctx, page, size, ID); err != nil {
+		utils.LogErrorResponse(h.logger, ctx.Value("requestId").(string), utils.DeliveryLayer, GetUserAdvertsMethod, err, http.StatusBadRequest)
+		utils.WriteError(w, http.StatusBadRequest, "error getting user adverts")
+		return
+	}
+	for _, adv := range userAdverts {
+		adv.Sanitize()
+	}
+
+	if err := utils.WriteResponse(w, http.StatusOK, userAdverts); err != nil {
+		utils.LogErrorResponse(h.logger, ctx.Value("requestId").(string), utils.DeliveryLayer, GetUserAdvertsMethod, err, http.StatusInternalServerError)
+		utils.WriteError(w, http.StatusInternalServerError, "error write response")
+		return
+	} else {
+		utils.LogSuccesResponse(h.logger, ctx.Value("requestId").(string), utils.DeliveryLayer, GetUserAdvertsMethod)
 	}
 }

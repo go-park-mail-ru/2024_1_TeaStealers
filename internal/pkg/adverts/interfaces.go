@@ -55,6 +55,7 @@ type AdvertUsecase interface {
 	GetExistBuildingByAddress(ctx context.Context, address *models.AddressData) (foundBuilding *models.BuildingData, err error)
 	LikeAdvert(ctx context.Context, advertId int64, userId int64) error
 	DislikeAdvert(ctx context.Context, advertId int64, userId int64) error
+	GetRectangleAdvertsLikedByUserId(ctx context.Context, pageSize, offset int, userId int64) (foundAdverts []*models.AdvertRectangleData, err error)
 }
 
 // AdvertRepo represents the repository interface for adverts.
@@ -90,4 +91,5 @@ type AdvertRepo interface {
 	CreateProvince(ctx context.Context, tx models.Transaction, name string) (int64, error)
 	LikeAdvert(ctx context.Context, advertId int64, userId int64) error
 	DislikeAdvert(ctx context.Context, advertId int64, userId int64) error
+	GetRectangleAdvertsLikedByUserId(ctx context.Context, pageSize, offset int, userId int64) ([]*models.AdvertRectangleData, error)
 }

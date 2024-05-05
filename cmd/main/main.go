@@ -105,7 +105,7 @@ func main() {
 	imageHandler := imageH.NewImageHandler(imageUsecase, logger)
 
 	advert := r.PathPrefix("/adverts").Subrouter()
-	advert.HandleFunc("/{id}", advertHandler.GetAdvertById).Methods(http.MethodGet, http.MethodOptions)
+	advert.Handle("/{id}", jwtMd.StatMiddleware(http.HandlerFunc(advertHandler.GetAdvertById))).Methods(http.MethodGet, http.MethodOptions)
 	advert.Handle("/{id}", jwtMd.JwtTMiddleware(http.HandlerFunc(advertHandler.UpdateAdvertById))).Methods(http.MethodPost, http.MethodOptions)
 	advert.Handle("/{id}", jwtMd.JwtTMiddleware(http.HandlerFunc(advertHandler.DeleteAdvertById))).Methods(http.MethodDelete, http.MethodOptions)
 	advert.Handle("/{id}/like", jwtMd.JwtTMiddleware(http.HandlerFunc(advertHandler.LikeAdvert))).Methods(http.MethodPost, http.MethodOptions)
@@ -114,7 +114,7 @@ func main() {
 	advert.HandleFunc("/building/", advertHandler.GetExistBuildingByAddress).Methods(http.MethodPost, http.MethodOptions)
 	advert.Handle("/flats/", jwtMd.JwtTMiddleware(http.HandlerFunc(advertHandler.CreateFlatAdvert))).Methods(http.MethodPost, http.MethodOptions)
 	advert.HandleFunc("/squarelist/", advertHandler.GetSquareAdvertsList).Methods(http.MethodGet, http.MethodOptions)
-	advert.HandleFunc("/rectanglelist/", advertHandler.GetRectangeAdvertsList).Methods(http.MethodGet, http.MethodOptions)
+	advert.Handle("/rectanglelist/", jwtMd.StatMiddleware(http.HandlerFunc(advertHandler.GetRectangeAdvertsList))).Methods(http.MethodGet, http.MethodOptions)
 	advert.Handle("/image/", jwtMd.JwtTMiddleware(http.HandlerFunc(imageHandler.UploadImage))).Methods(http.MethodPost, http.MethodOptions)
 	advert.HandleFunc("/{id}/image", imageHandler.GetAdvertImages).Methods(http.MethodGet, http.MethodOptions)
 	advert.Handle("/{id}/image", jwtMd.JwtTMiddleware(http.HandlerFunc(imageHandler.DeleteImage))).Methods(http.MethodDelete, http.MethodOptions)
@@ -130,6 +130,7 @@ func main() {
 	user.Handle("/info", jwtMd.JwtTMiddleware(http.HandlerFunc(userHandler.UpdateUserInfo))).Methods(http.MethodPost, http.MethodOptions)
 	user.Handle("/password", jwtMd.JwtTMiddleware(http.HandlerFunc(userHandler.UpdateUserPassword))).Methods(http.MethodPost, http.MethodOptions)
 	user.Handle("/myadverts", jwtMd.JwtTMiddleware(http.HandlerFunc(advertHandler.GetUserAdverts))).Methods(http.MethodGet, http.MethodOptions)
+	user.Handle("/likedadverts", jwtMd.JwtTMiddleware(http.HandlerFunc(advertHandler.GetLikedUserAdverts))).Methods(http.MethodGet, http.MethodOptions)
 
 	companyRepo := companyR.NewRepository(db, logger)
 	companyUsecase := companyUc.NewCompanyUsecase(companyRepo, logger)

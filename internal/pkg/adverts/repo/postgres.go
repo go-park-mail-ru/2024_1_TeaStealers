@@ -3,6 +3,7 @@ package repo
 import (
 	"2024_1_TeaStealers/internal/models"
 	"2024_1_TeaStealers/internal/pkg/adverts"
+	"2024_1_TeaStealers/internal/pkg/middleware"
 	"2024_1_TeaStealers/internal/pkg/utils"
 	"context"
 	"database/sql"
@@ -377,6 +378,10 @@ func (r *AdvertRepo) GetHouseAdvertById(ctx context.Context, id int64) (*models.
         b.year_creation,
         COALESCE(b.material_building, 'Brick') as material,
         a.created_at,
+		CASE
+			WHEN fa.advert_id IS NOT NULL AND fa.is_deleted=false THEN true
+			ELSE false
+		END AS is_liked,
         cx.id AS complexid,
         c.photo AS companyphoto,
         c.name AS companyname,
@@ -394,6 +399,8 @@ func (r *AdvertRepo) GetHouseAdvertById(ctx context.Context, id int64) (*models.
 		JOIN street AS s ON s.id=hn.street_id
 		JOIN town AS t ON t.id=s.town_id
 		JOIN province AS p ON p.id=t.province_id
+	LEFT JOIN
+		favourite_advert AS fa ON fa.advert_id=a.id AND fa.user_id=$2
     LEFT JOIN
         complex AS cx ON b.complex_id = cx.id
     LEFT JOIN
@@ -408,7 +415,14 @@ func (r *AdvertRepo) GetHouseAdvertById(ctx context.Context, id int64) (*models.
         ) AS pc ON TRUE
     WHERE
         a.id = $1 AND a.is_deleted = FALSE;`
-	res := r.db.QueryRowContext(ctx, query, id)
+
+	userId, ok := ctx.Value(middleware.CookieName).(int64)
+
+	if !ok {
+		userId = 0
+	}
+
+	res := r.db.QueryRowContext(ctx, query, id, userId)
 
 	advertData := &models.AdvertData{}
 	var cottage bool
@@ -444,6 +458,7 @@ func (r *AdvertRepo) GetHouseAdvertById(ctx context.Context, id int64) (*models.
 		&advertData.YearCreation,
 		&advertData.Material,
 		&advertData.DateCreation,
+		&advertData.IsLiked,
 		&complexId,
 		&companyPhoto,
 		&companyName,
@@ -959,6 +974,10 @@ func (r *AdvertRepo) GetFlatAdvertById(ctx context.Context, id int64) (*models.A
         b.year_creation,
         COALESCE(b.material_building, 'Brick') as material,
         a.created_at,
+		CASE
+			WHEN fa.advert_id IS NOT NULL AND fa.is_deleted=false THEN true
+			ELSE false
+		END AS is_liked,
         cx.id AS complexid,
         c.photo AS companyphoto,
         c.name AS companyname,
@@ -976,6 +995,8 @@ func (r *AdvertRepo) GetFlatAdvertById(ctx context.Context, id int64) (*models.A
 		JOIN street AS s ON s.id=hn.street_id
 		JOIN town AS t ON t.id=s.town_id
 		JOIN province AS p ON p.id=t.province_id
+	LEFT JOIN
+		favourite_advert AS fa ON fa.advert_id=a.id AND fa.user_id=$2
     LEFT JOIN
         complex AS cx ON b.complex_id = cx.id
     LEFT JOIN
@@ -990,7 +1011,14 @@ func (r *AdvertRepo) GetFlatAdvertById(ctx context.Context, id int64) (*models.A
         ) AS pc ON TRUE
     WHERE
         a.id = $1 AND a.is_deleted = FALSE;`
-	res := r.db.QueryRowContext(ctx, query, id)
+
+	userId, ok := ctx.Value(middleware.CookieName).(int64)
+
+	if !ok {
+		userId = 0
+	}
+
+	res := r.db.QueryRowContext(ctx, query, id, userId)
 
 	advertData := &models.AdvertData{}
 	var floor, floorGeneral, roomCount int
@@ -1023,6 +1051,7 @@ func (r *AdvertRepo) GetFlatAdvertById(ctx context.Context, id int64) (*models.A
 		&advertData.YearCreation,
 		&advertData.Material,
 		&advertData.DateCreation,
+		&advertData.IsLiked,
 		&complexId,
 		&companyPhoto,
 		&companyName,
@@ -1450,11 +1479,16 @@ func (r *AdvertRepo) GetRectangleAdvertsByUserId(ctx context.Context, pageSize, 
             a.type_placement,
             pc.price,
             i.photo,
-            a.created_at
+            a.created_at,
+			CASE
+				WHEN fa.advert_id IS NOT NULL AND fa.is_deleted=false THEN true
+				ELSE false
+			END AS is_liked
         FROM
             advert AS a
             LEFT JOIN advert_type_house AS ath ON a.id = ath.advert_id
 			LEFT JOIN advert_type_flat AS atf ON a.id = atf.advert_id
+			LEFT JOIN favourite_advert AS fa ON a.id=fa.advert_id AND fa.user_id=$1
             LEFT JOIN flat AS f ON f.id = atf.flat_id
             LEFT JOIN house AS h ON h.id = ath.house_id
             JOIN building AS b ON (f.building_id = b.id OR h.building_id = b.id)
@@ -1546,7 +1580,7 @@ func (r *AdvertRepo) GetRectangleAdvertsByUserId(ctx context.Context, pageSize, 
 		rectangleAdvert := &models.AdvertRectangleData{}
 		err := rows.Scan(&rectangleAdvert.ID, &rectangleAdvert.Title, &rectangleAdvert.Description, &rectangleAdvert.TypeAdvert,
 			&roomCount, &rectangleAdvert.Phone, &rectangleAdvert.TypeSale, &rectangleAdvert.Price,
-			&rectangleAdvert.Photo, &rectangleAdvert.DateCreation)
+			&rectangleAdvert.Photo, &rectangleAdvert.DateCreation, &rectangleAdvert.IsLiked)
 
 		if err != nil {
 			utils.LogError(r.logger, ctx.Value("requestId").(string), utils.RepositoryLayer, adverts.GetRectangleAdvertsByUserIdMethod, err)
@@ -1819,4 +1853,182 @@ func (r *AdvertRepo) DislikeAdvert(ctx context.Context, advertId int64, userId i
 
 	// utils.LogSucces(r.logger, ctx.Value("requestId").(string), utils.RepositoryLayer, adverts.CreateAdvertMethod)
 	return nil
+}
+
+// GetRectangleAdvertsByUserId retrieves rectangle adverts from the database by user id.
+func (r *AdvertRepo) GetRectangleAdvertsLikedByUserId(ctx context.Context, pageSize, offset int, userId int64) ([]*models.AdvertRectangleData, error) {
+	queryBaseAdvert := `
+        SELECT
+			a.id,
+			a.title,
+			a.description,
+			CASE
+			   WHEN ath.house_id IS NOT NULL THEN 'House'
+			   WHEN atf.flat_id IS NOT NULL THEN 'Flat'
+			   ELSE 'None'
+		    END AS type_advert, 
+            CASE
+                WHEN atf.flat_id IS NOT NULL THEN f.bedroom_count
+                WHEN ath.house_id IS NOT NULL THEN h.bedroom_count
+                ELSE 0
+            END AS rcount,
+            a.phone,
+            a.type_placement,
+            pc.price,
+            i.photo,
+            a.created_at,
+			CASE
+				WHEN fa.advert_id IS NOT NULL AND fa.is_deleted=false THEN true
+				ELSE false
+			END AS is_liked
+        FROM
+            advert AS a
+            LEFT JOIN advert_type_house AS ath ON a.id = ath.advert_id
+			LEFT JOIN advert_type_flat AS atf ON a.id = atf.advert_id
+			JOIN favourite_advert AS fa ON (a.id=fa.advert_id AND fa.user_id=$1 AND fa.is_deleted = false)
+            LEFT JOIN flat AS f ON f.id = atf.flat_id
+            LEFT JOIN house AS h ON h.id = ath.house_id
+            JOIN building AS b ON (f.building_id = b.id OR h.building_id = b.id)
+			JOIN address AS ad ON b.address_id=ad.id
+			JOIN house_name AS hn ON hn.id=ad.house_name_id
+			JOIN street AS s ON s.id=hn.street_id
+			JOIN town AS t ON t.id=s.town_id
+			JOIN province AS p ON p.id=t.province_id
+            LEFT JOIN LATERAL (
+                SELECT *
+                FROM price_change AS pc
+                WHERE pc.advert_id = a.id
+                ORDER BY pc.created_at DESC
+                LIMIT 1
+            ) AS pc ON TRUE
+            JOIN image AS i ON i.advert_id = a.id
+        WHERE i.priority = (
+                SELECT MIN(priority)
+                FROM image
+                WHERE advert_id = a.id
+                    AND is_deleted = FALSE
+            )
+            AND i.is_deleted = FALSE
+            AND a.is_deleted = FALSE
+            AND a.user_id = $1
+			ORDER BY a.created_at DESC
+			LIMIT $2
+			OFFSET $3`
+	queryFlat := `
+        SELECT
+            f.square_general,
+            f.floor,
+			ad.metro,
+			hn.name,
+			s.name,
+			t.name,
+			p.name,
+            b.floor AS floorgeneral
+        FROM
+            advert AS a
+            JOIN advert_type_flat AS at ON a.id = at.advert_id
+            JOIN flat AS f ON f.id = at.flat_id
+            JOIN building AS b ON f.building_id = b.id
+			JOIN address AS ad ON b.address_id=ad.id
+			JOIN house_name AS hn ON hn.id=ad.house_name_id
+			JOIN street AS s ON s.id=hn.street_id
+			JOIN town AS t ON t.id=s.town_id
+			JOIN province AS p ON p.id=t.province_id
+        WHERE a.id = $1
+        ORDER BY
+            a.created_at DESC;`
+	queryHouse := `
+        SELECT
+			ad.metro,
+			hn.name,
+			s.name,
+			t.name,
+			p.name,
+            h.cottage,
+            h.square_house,
+            h.square_area,
+            b.floor
+        FROM
+			advert AS a
+			JOIN advert_type_house AS at ON a.id = at.advert_id
+			JOIN house AS h ON h.id = at.house_id
+			JOIN building AS b ON h.building_id = b.id
+			JOIN address AS ad ON b.address_id=ad.id
+			JOIN house_name AS hn ON hn.id=ad.house_name_id
+			JOIN street AS s ON s.id=hn.street_id
+			JOIN town AS t ON t.id=s.town_id
+			JOIN province AS p ON p.id=t.province_id
+        WHERE a.id = $1
+        ORDER BY
+            a.created_at DESC;`
+
+	rows, err := r.db.Query(queryBaseAdvert, userId, pageSize, offset)
+	if err != nil {
+		utils.LogError(r.logger, ctx.Value("requestId").(string), utils.RepositoryLayer, adverts.GetRectangleAdvertsByUserIdMethod, err)
+		return nil, err
+	}
+	defer rows.Close()
+
+	rectangleAdverts := []*models.AdvertRectangleData{}
+
+	for rows.Next() {
+		var metro, houseName, street, town, province string
+		var roomCount int
+		rectangleAdvert := &models.AdvertRectangleData{}
+		err := rows.Scan(&rectangleAdvert.ID, &rectangleAdvert.Title, &rectangleAdvert.Description, &rectangleAdvert.TypeAdvert,
+			&roomCount, &rectangleAdvert.Phone, &rectangleAdvert.TypeSale, &rectangleAdvert.Price,
+			&rectangleAdvert.Photo, &rectangleAdvert.DateCreation, &rectangleAdvert.IsLiked)
+
+		if err != nil {
+			utils.LogError(r.logger, ctx.Value("requestId").(string), utils.RepositoryLayer, adverts.GetRectangleAdvertsByUserIdMethod, err)
+			return nil, err
+		}
+
+		switch rectangleAdvert.TypeAdvert {
+		case string(models.AdvertTypeFlat):
+			var squareGeneral float64
+			var floor, floorGeneral int
+			row := r.db.QueryRowContext(ctx, queryFlat, rectangleAdvert.ID)
+
+			if err := row.Scan(&squareGeneral, &floor, &metro, &houseName, &street, &town, &province, &floorGeneral); err != nil {
+				utils.LogError(r.logger, ctx.Value("requestId").(string), utils.RepositoryLayer, adverts.GetRectangleAdvertsByUserIdMethod, err)
+				return nil, err
+			}
+
+			rectangleAdvert.FlatProperties = &models.FlatRectangleProperties{}
+			rectangleAdvert.FlatProperties.Floor = floor
+			rectangleAdvert.FlatProperties.FloorGeneral = floorGeneral
+			rectangleAdvert.FlatProperties.SquareGeneral = squareGeneral
+			rectangleAdvert.FlatProperties.RoomCount = roomCount
+		case string(models.AdvertTypeHouse):
+			var cottage bool
+			var squareHouse, squareArea float64
+			var floor int
+			row := r.db.QueryRowContext(ctx, queryHouse, rectangleAdvert.ID)
+
+			if err := row.Scan(&metro, &houseName, &street, &town, &province, &cottage, &squareHouse, &squareArea, &floor); err != nil {
+				utils.LogError(r.logger, ctx.Value("requestId").(string), utils.RepositoryLayer, adverts.GetRectangleAdvertsByUserIdMethod, err)
+				return nil, err
+			}
+
+			rectangleAdvert.HouseProperties = &models.HouseRectangleProperties{}
+			rectangleAdvert.HouseProperties.Cottage = cottage
+			rectangleAdvert.HouseProperties.SquareHouse = squareHouse
+			rectangleAdvert.HouseProperties.SquareArea = squareArea
+			rectangleAdvert.HouseProperties.BedroomCount = roomCount
+			rectangleAdvert.HouseProperties.Floor = floor
+		}
+
+		rectangleAdvert.Address = province + ", " + town + ", " + street + ", " + houseName
+		rectangleAdvert.Metro = metro
+
+		rectangleAdverts = append(rectangleAdverts, rectangleAdvert)
+	}
+	if err := rows.Err(); err != nil {
+		utils.LogError(r.logger, ctx.Value("requestId").(string), utils.RepositoryLayer, adverts.GetRectangleAdvertsByUserIdMethod, err)
+		return nil, err
+	}
+
+	utils.LogSucces(r.logger, ctx.Value("requestId").(string), utils.RepositoryLayer, adverts.GetRectangleAdvertsByUserIdMethod)
+	return rectangleAdverts, nil
 }
