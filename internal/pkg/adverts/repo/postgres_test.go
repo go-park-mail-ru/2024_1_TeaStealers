@@ -1,230 +1,415 @@
 package repo_test
 
-/*
 import (
-
 	"2024_1_TeaStealers/internal/models"
 	"2024_1_TeaStealers/internal/pkg/adverts/repo"
 	"context"
 	"database/sql"
 	"errors"
-	"regexp"
-	"testing"
-
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/satori/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 	"go.uber.org/zap"
-
+	"math/rand"
+	"regexp"
+	"testing"
 )
 
-	type UserRepoTestSuite struct {
-		suite.Suite
-		db   *sql.DB
-		mock sqlmock.Sqlmock
+type AdvertRepoTestSuite struct {
+	suite.Suite
+	db   *sql.DB
+	mock sqlmock.Sqlmock
+}
+
+func (suite *AdvertRepoTestSuite) SetupTest() {
+	var err error
+	suite.db, suite.mock, err = sqlmock.New()
+	suite.Require().NoError(err)
+}
+
+func (suite *AdvertRepoTestSuite) TearDownTest() {
+	suite.mock.ExpectClose()
+	suite.Require().NoError(suite.db.Close())
+}
+
+func TestUserRepoTestSuite(t *testing.T) {
+	suite.Run(t, new(AdvertRepoTestSuite))
+}
+
+func TestBeginTx(t *testing.T) {
+	fakeDB, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
+	}
+	defer fakeDB.Close()
+	logger := zap.Must(zap.NewDevelopment())
+	rep := repo.NewRepository(fakeDB, logger)
+	// ctx := context.Background()
+	// tx := new(sql.Tx)
+	mock.ExpectBegin().WillReturnError(nil)
+
+	tx, err := rep.BeginTx(context.WithValue(context.Background(), "requestId", uuid.NewV4().String()))
+	assert.NoError(t, err)
+	assert.NotEmpty(t, tx)
+}
+
+func TestBeginTxFail(t *testing.T) {
+	fakeDB, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
+	}
+	defer fakeDB.Close()
+	logger := zap.Must(zap.NewDevelopment())
+	rep := repo.NewRepository(fakeDB, logger) // ctx := context.Background()
+	// tx := new(sql.Tx)
+	mock.ExpectBegin().WillReturnError(errors.New("error"))
+	tx, err := rep.BeginTx(context.WithValue(context.Background(), "requestId", uuid.NewV4().String()))
+	assert.Error(t, err)
+	assert.Empty(t, tx)
+}
+
+func (suite *AdvertRepoTestSuite) TestCreateAdvertTypeHouse() {
+	type args struct {
+		adv     *models.HouseTypeAdvert
+		errExec error
+		expExec bool
+	}
+	type want struct {
+		err error
 	}
 
-	func (suite *UserRepoTestSuite) SetupTest() {
-		var err error
-		suite.db, suite.mock, err = sqlmock.New()
-		suite.Require().NoError(err)
-	}
-
-	func (suite *UserRepoTestSuite) TearDownTest() {
-		suite.mock.ExpectClose()
-		suite.Require().NoError(suite.db.Close())
-	}
-
-	func TestUserRepoTestSuite(t *testing.T) {
-		suite.Run(t, new(UserRepoTestSuite))
-	}
-
-	func TestBeginTx(t *testing.T) {
-		fakeDB, mock, err := sqlmock.New()
-		if err != nil {
-			t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
-		}
-		defer fakeDB.Close()
-		logger := zap.Must(zap.NewDevelopment())
-		rep := repo.NewRepository(fakeDB, logger)
-		// ctx := context.Background()
-		// tx := new(sql.Tx)
-		mock.ExpectBegin().WillReturnError(nil)
-
-		tx, err := rep.BeginTx(context.WithValue(context.Background(), "requestId", uuid.NewV4().String()))
-		assert.NoError(t, err)
-		assert.NotEmpty(t, tx)
-	}
-
-	func TestBeginTxFail(t *testing.T) {
-		fakeDB, mock, err := sqlmock.New()
-		if err != nil {
-			t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
-		}
-		defer fakeDB.Close()
-		logger := zap.Must(zap.NewDevelopment())
-		rep := repo.NewRepository(fakeDB, logger) // ctx := context.Background()
-		// tx := new(sql.Tx)
-		mock.ExpectBegin().WillReturnError(errors.New("error"))
-		tx, err := rep.BeginTx(context.WithValue(context.Background(), "requestId", uuid.NewV4().String()))
-		assert.Error(t, err)
-		assert.Empty(t, tx)
-	}
-
-	func (suite *UserRepoTestSuite) TestCreateAdvertType() {
-		type args struct {
-			adv     *models.AdvertType
-			errExec error
-			expExec bool
-		}
-		type want struct {
-			err error
-		}
-		// id1 := uuid.NewV4()
-		tests := []struct {
-			name string
-			args args
-			want want
-		}{
-			{
-				name: "successful create advert type",
-				args: args{
-					adv: &models.AdvertType{
-						ID:         uuid.NewV4(),
-						AdvertType: models.AdvertTypeHouse,
-						IsDeleted:  false,
-					},
-					errExec: nil,
-					expExec: true,
+	tests := []struct {
+		name string
+		args args
+		want want
+	}{
+		{
+			name: "successful create advert type",
+			args: args{
+				adv: &models.HouseTypeAdvert{
+					HouseID:   rand.Int63(),
+					AdvertID:  rand.Int63(),
+					IsDeleted: false,
 				},
-				want: want{
-					err: nil,
-				},
+				errExec: nil,
+				expExec: true,
 			},
-			{
-				name: "fail create advert type",
-				args: args{
-					adv: &models.AdvertType{
-						ID:         uuid.NewV4(),
-						AdvertType: models.AdvertTypeHouse,
-						IsDeleted:  false,
-					},
-					errExec: errors.New("some error"),
-					expExec: true,
-				},
-				want: want{
-					err: errors.New("some error"),
-				},
+			want: want{
+				err: nil,
 			},
-		}
-		for _, tt := range tests {
-			suite.Run(tt.name, func() {
-				suite.mock.ExpectBegin()
-				tx, err := suite.db.Begin()
-				if err != nil {
-					suite.T().Fatal("Error beginning transaction:", err)
-				}
-				suite.setupMockCreateAdvertType(tt.args.adv, tt.args.errExec, tt.args.expExec)
-				logger := zap.Must(zap.NewDevelopment())
-				rep := repo.NewRepository(suite.db, logger)
-				gotErr := rep.CreateAdvertType(context.WithValue(context.Background(), "requestId", uuid.NewV4().String()), tx, tt.args.adv)
-				suite.Assert().Equal(tt.want.err, gotErr)
-				suite.Assert().NoError(suite.mock.ExpectationsWereMet())
-			})
-		}
+		},
+		{
+			name: "fail create advert type",
+			args: args{
+				adv: &models.HouseTypeAdvert{
+					HouseID:   rand.Int63(),
+					AdvertID:  rand.Int63(),
+					IsDeleted: false,
+				},
+				errExec: errors.New("some error"),
+				expExec: true,
+			},
+			want: want{
+				err: errors.New("some error"),
+			},
+		},
+	}
+	for _, tt := range tests {
+		suite.Run(tt.name, func() {
+			suite.mock.ExpectBegin()
+			tx, err := suite.db.Begin()
+			if err != nil {
+				suite.T().Fatal("Error beginning transaction:", err)
+			}
+			suite.setupMockCreateAdvertTypeHouse(tt.args.adv, tt.args.errExec, tt.args.expExec)
+			logger := zap.Must(zap.NewDevelopment())
+			rep := repo.NewRepository(suite.db, logger)
+			gotErr := rep.CreateAdvertTypeHouse(context.WithValue(context.Background(), "requestId", uuid.NewV4().String()), tx, tt.args.adv)
+			suite.Assert().Equal(tt.want.err, gotErr)
+			suite.Assert().NoError(suite.mock.ExpectationsWereMet())
+		})
+	}
+}
+
+func (suite *AdvertRepoTestSuite) setupMockCreateAdvertTypeHouse(advType *models.HouseTypeAdvert, errExec error, expExec bool) {
+	if expExec {
+		query := `INSERT INTO advert_type_house (house_id, advert_id) VALUES ($1, $2)`
+		escapedQuery := regexp.QuoteMeta(query)
+		suite.mock.ExpectExec(escapedQuery).
+			WillReturnError(errExec).WillReturnResult(sqlmock.NewResult(1, 1)).WithArgs(
+			advType.HouseID, advType.AdvertID)
+	}
+}
+
+func (suite *AdvertRepoTestSuite) TestCreateAdvertTypeFlat() {
+	type args struct {
+		adv     *models.FlatTypeAdvert
+		errExec error
+		expExec bool
+	}
+	type want struct {
+		err error
 	}
 
-	func (suite *UserRepoTestSuite) setupMockCreateAdvertType(advType *models.AdvertType, errExec error, expExec bool) {
+	tests := []struct {
+		name string
+		args args
+		want want
+	}{
+		{
+			name: "successful create advert type",
+			args: args{
+				adv: &models.FlatTypeAdvert{
+					FlatID:    rand.Int63(),
+					AdvertID:  rand.Int63(),
+					IsDeleted: false,
+				},
+				errExec: nil,
+				expExec: true,
+			},
+			want: want{
+				err: nil,
+			},
+		},
+		{
+			name: "fail create advert type",
+			args: args{
+				adv: &models.FlatTypeAdvert{
+					FlatID:    rand.Int63(),
+					AdvertID:  rand.Int63(),
+					IsDeleted: false,
+				},
+				errExec: errors.New("some error"),
+				expExec: true,
+			},
+			want: want{
+				err: errors.New("some error"),
+			},
+		},
+	}
+	for _, tt := range tests {
+		suite.Run(tt.name, func() {
+			suite.mock.ExpectBegin()
+			tx, err := suite.db.Begin()
+			if err != nil {
+				suite.T().Fatal("Error beginning transaction:", err)
+			}
+			suite.setupMockCreateAdvertTypeFlat(tt.args.adv, tt.args.errExec, tt.args.expExec)
+			logger := zap.Must(zap.NewDevelopment())
+			rep := repo.NewRepository(suite.db, logger)
+			gotErr := rep.CreateAdvertTypeFlat(context.WithValue(context.Background(), "requestId", uuid.NewV4().String()), tx, tt.args.adv)
+			suite.Assert().Equal(tt.want.err, gotErr)
+			suite.Assert().NoError(suite.mock.ExpectationsWereMet())
+		})
+	}
+}
+
+func (suite *AdvertRepoTestSuite) setupMockCreateAdvertTypeFlat(advType *models.FlatTypeAdvert, errExec error, expExec bool) {
+	if expExec {
+		query := `INSERT INTO advert_type_flat (flat_id, advert_id) VALUES ($1, $2)`
+		escapedQuery := regexp.QuoteMeta(query)
+		suite.mock.ExpectExec(escapedQuery).
+			WillReturnError(errExec).WillReturnResult(sqlmock.NewResult(1, 1)).WithArgs(
+			advType.FlatID, advType.AdvertID)
+	}
+}
+
+func (suite *AdvertRepoTestSuite) TestCreateAdvert() {
+	type args struct {
+		adv     *models.Advert
+		errExec error
+		expExec bool
+	}
+	type want struct {
+		newId int64
+		err   error
+	}
+	tests := []struct {
+		name string
+		args args
+		want want
+	}{
+		{
+			name: "successful create advert",
+			args: args{
+				adv: &models.Advert{
+					ID:             11,
+					UserID:         22,
+					AdvertTypeSale: models.TypePlacementRent,
+					Title:          "title",
+					Description:    "descr",
+					Phone:          "phone",
+					IsAgent:        true,
+					Priority:       1,
+				},
+				errExec: nil,
+				expExec: true,
+			},
+			want: want{
+				newId: 11,
+				err:   nil,
+			},
+		},
+		{
+			name: "fail create advert",
+			args: args{
+				adv: &models.Advert{
+					ID:             11,
+					UserID:         22,
+					AdvertTypeSale: models.TypePlacementRent,
+					Title:          "title",
+					Description:    "descr",
+					Phone:          "phone",
+					IsAgent:        true,
+					Priority:       1,
+				},
+				errExec: errors.New("some error"),
+				expExec: true,
+			},
+			want: want{
+				newId: 0,
+				err:   errors.New("some error"),
+			},
+		},
+	}
+	for _, tt := range tests {
+		suite.Run(tt.name, func() {
+			suite.mock.ExpectBegin()
+			tx, err := suite.db.Begin()
+			if err != nil {
+				suite.T().Fatal("Error beginning transaction:", err)
+			}
+			suite.setupMockCreateAdvert(tt.args.adv, tt.want.newId, tt.args.errExec, tt.args.expExec)
+			logger := zap.Must(zap.NewDevelopment())
+			rep := repo.NewRepository(suite.db, logger)
+			advId, gotErr := rep.CreateAdvert(context.WithValue(context.Background(), "requestId", uuid.NewV4().String()), tx, tt.args.adv)
+			suite.Assert().Equal(tt.want.err, gotErr)
+			suite.Assert().Equal(tt.want.newId, advId)
+			suite.Assert().NoError(suite.mock.ExpectationsWereMet())
+		})
+	}
+}
+
+func (suite *AdvertRepoTestSuite) setupMockCreateAdvert(newAdvert *models.Advert, advId int64, errExec error, expExec bool) {
+	if expExec {
+		query := `INSERT INTO advert (user_id, type_placement, title, description, phone, is_agent, priority) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id`
+		escapedQuery := regexp.QuoteMeta(query)
+		//suite.mock.ExpectExec(escapedQuery).
+		//		WillReturnError(errExec).WillReturnResult(sqlmock.NewResult(advId, 1)).WithArgs(
+		//			newAdvert.UserID, newAdvert.AdvertTypeSale, newAdvert.Title, newAdvert.Description,
+		//			newAdvert.Phone, newAdvert.IsAgent, newAdvert.Priority)
+		/*
+			suite.mock.ExpectExec(query).
+				WillReturnResult(sqlmock.NewResult(1, 1)).WillReturnError(nil).
+				WithArgs(newAdvert.UserID, newAdvert.AdvertTypeSale, newAdvert.Title,
+					newAdvert.Description, newAdvert.Phone, newAdvert.IsAgent, newAdvert.Priority)
+
+		*/
+		rows := sqlmock.NewRows([]string{"id"})
+		rows = rows.AddRow(newAdvert.ID)
+
 		if expExec {
-			suite.mock.ExpectExec(`INSERT INTO adverttypes \(id, adverttype\) VALUES \(\$1, \$2\)`).
-				WillReturnError(errExec).WillReturnResult(sqlmock.NewResult(1, 1)).WithArgs(advType.ID, advType.AdvertType)
+			suite.mock.ExpectQuery(escapedQuery).
+				WillReturnError(errExec).WithArgs(
+				newAdvert.UserID, newAdvert.AdvertTypeSale, newAdvert.Title, newAdvert.Description,
+				newAdvert.Phone, newAdvert.IsAgent, newAdvert.Priority).WillReturnRows(rows)
 		}
-	}
 
-	func (suite *UserRepoTestSuite) TestCreateAdvert() {
-		type args struct {
-			adv     *models.Advert
-			errExec error
-			expExec bool
-		}
-		type want struct {
-			err error
-		}
-		tests := []struct {
-			name string
-			args args
-			want want
-		}{
-			{
-				name: "successful create advert",
-				args: args{
-					adv: &models.Advert{
-						ID:             uuid.NewV4(),
-						UserID:         uuid.NewV4(),
-						AdvertTypeID:   uuid.NewV4(),
-						AdvertTypeSale: models.TypePlacementRent,
-						Title:          "title",
-						Description:    "descr",
-						Phone:          "phone",
-						IsAgent:        true,
-						Priority:       1,
-					},
-					errExec: nil,
-					expExec: true,
-				},
-				want: want{
-					err: nil,
-				},
+	}
+}
+
+func (suite *AdvertRepoTestSuite) TestCreateProvince() {
+	type args struct {
+		adv       string
+		errQuery1 error
+		errQuery2 error
+		expQuery1 bool
+		expQuery2 bool
+	}
+	type want struct {
+		newId int64
+		err   error
+	}
+	tests := []struct {
+		name string
+		args args
+		want want
+	}{
+		{
+			name: "successful create province",
+			args: args{
+				adv:       "PROVINCE",
+				errQuery1: nil,
+				errQuery2: nil,
+				expQuery1: true,
+				expQuery2: false,
 			},
-			{
-				name: "fail create advert",
-				args: args{
-					adv: &models.Advert{
-						ID:             uuid.NewV4(),
-						UserID:         uuid.NewV4(),
-						AdvertTypeID:   uuid.NewV4(),
-						AdvertTypeSale: models.TypePlacementRent,
-						Title:          "title",
-						Description:    "descr",
-						Phone:          "phone",
-						IsAgent:        true,
-						Priority:       1,
-					},
-					errExec: errors.New("some error"),
-					expExec: true,
-				},
-				want: want{
-					err: errors.New("some error"),
-				},
+			want: want{
+				newId: 11,
+				err:   nil,
 			},
-		}
-		for _, tt := range tests {
-			suite.Run(tt.name, func() {
-				suite.mock.ExpectBegin()
-				tx, err := suite.db.Begin()
-				if err != nil {
-					suite.T().Fatal("Error beginning transaction:", err)
-				}
-				suite.setupMockCreateAdvert(tt.args.adv, tt.args.errExec, tt.args.expExec)
-				logger := zap.Must(zap.NewDevelopment())
-				rep := repo.NewRepository(suite.db, logger)
-				gotErr := rep.CreateAdvert(context.WithValue(context.Background(), "requestId", uuid.NewV4().String()), tx, tt.args.adv)
-				suite.Assert().Equal(tt.want.err, gotErr)
-				suite.Assert().NoError(suite.mock.ExpectationsWereMet())
-			})
-		}
+		},
+		{
+			name: "fail create province",
+			args: args{
+				adv:       "PROVINCE",
+				errQuery1: nil,
+				errQuery2: nil,
+				expQuery1: true,
+				expQuery2: false,
+			},
+			want: want{
+				newId: 0,
+				err:   errors.New("some error"),
+			},
+		},
+	}
+	for _, tt := range tests {
+		suite.Run(tt.name, func() {
+			suite.mock.ExpectBegin()
+			tx, err := suite.db.Begin()
+			if err != nil {
+				suite.T().Fatal("Error beginning transaction:", err)
+			}
+			suite.setupMockCreateProvince(tt.args.adv, tt.want.newId, tt.args.errQuery1, tt.args.errQuery2,
+				tt.args.expQuery1, tt.args.expQuery2)
+			logger := zap.Must(zap.NewDevelopment())
+			rep := repo.NewRepository(suite.db, logger)
+			advId, gotErr := rep.CreateProvince(context.WithValue(context.Background(), "requestId", uuid.NewV4().String()), tx, tt.args.adv)
+			suite.Assert().Equal(tt.want.err, gotErr)
+			suite.Assert().Equal(tt.want.newId, advId)
+			suite.Assert().NoError(suite.mock.ExpectationsWereMet())
+		})
+	}
+}
+
+func (suite *AdvertRepoTestSuite) setupMockCreateProvince(newProvince string, provId int64, errExec1 error, errExec2 error,
+	expExec1 bool, expExec2 bool) {
+	if expExec1 {
+		query := `SELECT id FROM province WHERE name=$1`
+		escapedQuery := regexp.QuoteMeta(query)
+		rows := sqlmock.NewRows([]string{"id"})
+		rows = rows.AddRow(provId)
+
+		suite.mock.ExpectQuery(escapedQuery).
+			WillReturnError(errExec1).WithArgs(
+			newProvince).WillReturnRows(rows)
 	}
 
-	func (suite *UserRepoTestSuite) setupMockCreateAdvert(newAdvert *models.Advert, errExec error, expExec bool) {
-		if expExec {
-			suite.mock.ExpectExec(`INSERT INTO adverts \(id, userid, adverttypeid, adverttypeplacement, title, description, phone, isagent, priority\) VALUES \(\$1, \$2, \$3, \$4, \$5, \$6, \$7, \$8, \$9\)`).
-				WillReturnError(errExec).WillReturnResult(sqlmock.NewResult(1, 1)).WithArgs(newAdvert.ID,
-				newAdvert.UserID, newAdvert.AdvertTypeID, newAdvert.AdvertTypeSale, newAdvert.Title, newAdvert.Description,
-				newAdvert.Phone, newAdvert.IsAgent, newAdvert.Priority)
-		}
-	}
+	if expExec2 {
+		insert := `INSERT INTO province (name) VALUES ($1) RETURNING id`
+		escapedQuery := regexp.QuoteMeta(insert)
+		rows := sqlmock.NewRows([]string{"id"})
+		rows = rows.AddRow(provId)
 
+		suite.mock.ExpectQuery(escapedQuery).
+			WillReturnError(errExec2).WithArgs(
+			newProvince).WillReturnRows(rows)
+	}
+}
+
+/*
 	func (suite *UserRepoTestSuite) TestCreatePriceChange() {
 		type args struct {
 			adv     *models.PriceChange

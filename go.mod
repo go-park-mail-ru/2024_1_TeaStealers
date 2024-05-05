@@ -13,6 +13,7 @@ require (
 	github.com/stretchr/testify v1.9.0
 	github.com/swaggo/http-swagger v1.3.4
 	github.com/swaggo/swag v1.16.3
+	go.uber.org/zap v1.27.0
 )
 
 require (
@@ -27,7 +28,6 @@ require (
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/swaggo/files v1.0.1 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
-	go.uber.org/zap v1.27.0 // indirect
 	golang.org/x/net v0.22.0 // indirect
 	golang.org/x/tools v0.18.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
