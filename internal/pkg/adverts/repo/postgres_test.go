@@ -354,14 +354,28 @@ func (suite *AdvertRepoTestSuite) TestCreateProvince() {
 			name: "fail create province",
 			args: args{
 				adv:       "PROVINCE",
-				errQuery1: nil,
-				errQuery2: nil,
+				errQuery1: errors.New("some error"),
+				errQuery2: errors.New("some error"),
 				expQuery1: true,
-				expQuery2: false,
+				expQuery2: true,
 			},
 			want: want{
 				newId: 0,
 				err:   errors.New("some error"),
+			},
+		},
+		{
+			name: "create province",
+			args: args{
+				adv:       "PROVINCE",
+				errQuery1: errors.New("some error"),
+				errQuery2: nil,
+				expQuery1: true,
+				expQuery2: true,
+			},
+			want: want{
+				newId: 12,
+				err:   nil,
 			},
 		},
 	}
@@ -406,6 +420,445 @@ func (suite *AdvertRepoTestSuite) setupMockCreateProvince(newProvince string, pr
 		suite.mock.ExpectQuery(escapedQuery).
 			WillReturnError(errExec2).WithArgs(
 			newProvince).WillReturnRows(rows)
+	}
+}
+
+func (suite *AdvertRepoTestSuite) TestCreateTown() {
+	type args struct {
+		prId      int64
+		name      string
+		errQuery1 error
+		errQuery2 error
+		expQuery1 bool
+		expQuery2 bool
+	}
+	type want struct {
+		newId int64
+		err   error
+	}
+	tests := []struct {
+		name string
+		args args
+		want want
+	}{
+		{
+			name: "successful found town",
+			args: args{
+				prId:      100,
+				name:      "Town",
+				errQuery1: nil,
+				errQuery2: nil,
+				expQuery1: true,
+				expQuery2: false,
+			},
+			want: want{
+				newId: 11,
+				err:   nil,
+			},
+		},
+		{
+			name: "fail create town",
+			args: args{
+				prId:      100,
+				name:      "Town",
+				errQuery1: errors.New("some error"),
+				errQuery2: errors.New("some error"),
+				expQuery1: true,
+				expQuery2: true,
+			},
+			want: want{
+				newId: 0,
+				err:   errors.New("some error"),
+			},
+		},
+		{
+			name: "create town",
+			args: args{
+				prId:      100,
+				name:      "Town",
+				errQuery1: errors.New("some error"),
+				errQuery2: nil,
+				expQuery1: true,
+				expQuery2: true,
+			},
+			want: want{
+				newId: 100,
+				err:   nil,
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		suite.Run(tt.name, func() {
+			suite.mock.ExpectBegin()
+			tx, err := suite.db.Begin()
+			if err != nil {
+				suite.T().Fatal("Error beginning transaction:", err)
+			}
+			suite.setupMockCreateTown(tt.args.prId, tt.args.name, tt.want.newId, tt.args.errQuery1, tt.args.errQuery2,
+				tt.args.expQuery1, tt.args.expQuery2)
+			logger := zap.Must(zap.NewDevelopment())
+			rep := repo.NewRepository(suite.db, logger)
+			advId, gotErr := rep.CreateTown(context.WithValue(context.Background(), "requestId", uuid.NewV4().String()), tx, tt.args.prId, tt.args.name)
+			suite.Assert().Equal(tt.want.err, gotErr)
+			suite.Assert().Equal(tt.want.newId, advId)
+			suite.Assert().NoError(suite.mock.ExpectationsWereMet())
+		})
+	}
+}
+
+func (suite *AdvertRepoTestSuite) setupMockCreateTown(prId int64, townName string, townId int64, errExec1 error, errExec2 error,
+	expExec1 bool, expExec2 bool) {
+	if expExec1 {
+		query := `SELECT id FROM town WHERE name=$1 AND province_id=$2`
+		escapedQuery := regexp.QuoteMeta(query)
+		rows := sqlmock.NewRows([]string{"id"})
+		rows = rows.AddRow(townId)
+
+		suite.mock.ExpectQuery(escapedQuery).
+			WillReturnError(errExec1).WithArgs(
+			townName, prId).WillReturnRows(rows)
+	}
+
+	if expExec2 {
+		insert := `INSERT INTO town (name, province_id) VALUES ($1, $2) RETURNING id`
+		escapedQuery := regexp.QuoteMeta(insert)
+		rows := sqlmock.NewRows([]string{"id"})
+		rows = rows.AddRow(townId)
+
+		suite.mock.ExpectQuery(escapedQuery).
+			WillReturnError(errExec2).WithArgs(
+			townName, prId).WillReturnRows(rows)
+	}
+}
+
+func (suite *AdvertRepoTestSuite) TestCreateStreet() {
+	type args struct {
+		idTown    int64
+		name      string
+		errQuery1 error
+		errQuery2 error
+		expQuery1 bool
+		expQuery2 bool
+	}
+	type want struct {
+		newId int64
+		err   error
+	}
+	tests := []struct {
+		name string
+		args args
+		want want
+	}{
+		{
+			name: "successful found street",
+			args: args{
+				idTown:    100,
+				name:      "Town",
+				errQuery1: nil,
+				errQuery2: nil,
+				expQuery1: true,
+				expQuery2: false,
+			},
+			want: want{
+				newId: 11,
+				err:   nil,
+			},
+		},
+		{
+			name: "fail create street",
+			args: args{
+				idTown:    100,
+				name:      "Town",
+				errQuery1: errors.New("some error"),
+				errQuery2: errors.New("some error"),
+				expQuery1: true,
+				expQuery2: true,
+			},
+			want: want{
+				newId: 0,
+				err:   errors.New("some error"),
+			},
+		},
+		{
+			name: "create street",
+			args: args{
+				idTown:    100,
+				name:      "Town",
+				errQuery1: errors.New("some error"),
+				errQuery2: nil,
+				expQuery1: true,
+				expQuery2: true,
+			},
+			want: want{
+				newId: 100,
+				err:   nil,
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		suite.Run(tt.name, func() {
+			suite.mock.ExpectBegin()
+			tx, err := suite.db.Begin()
+			if err != nil {
+				suite.T().Fatal("Error beginning transaction:", err)
+			}
+			suite.setupMockCreateStreet(tt.args.idTown, tt.args.name, tt.want.newId, tt.args.errQuery1, tt.args.errQuery2,
+				tt.args.expQuery1, tt.args.expQuery2)
+			logger := zap.Must(zap.NewDevelopment())
+			rep := repo.NewRepository(suite.db, logger)
+			strId, gotErr := rep.CreateStreet(context.WithValue(context.Background(), "requestId", uuid.NewV4().String()), tx, tt.args.idTown, tt.args.name)
+			suite.Assert().Equal(tt.want.err, gotErr)
+			suite.Assert().Equal(tt.want.newId, strId)
+			suite.Assert().NoError(suite.mock.ExpectationsWereMet())
+		})
+	}
+}
+
+func (suite *AdvertRepoTestSuite) setupMockCreateStreet(prId int64, townName string, strId int64, errExec1 error, errExec2 error,
+	expExec1 bool, expExec2 bool) {
+	if expExec1 {
+		query := `SELECT id FROM street WHERE name=$1 AND town_id=$2`
+		escapedQuery := regexp.QuoteMeta(query)
+		rows := sqlmock.NewRows([]string{"id"})
+		rows = rows.AddRow(strId)
+
+		suite.mock.ExpectQuery(escapedQuery).
+			WillReturnError(errExec1).WithArgs(
+			townName, prId).WillReturnRows(rows)
+	}
+
+	if expExec2 {
+		insert := `INSERT INTO street (name, town_id) VALUES ($1, $2) RETURNING id`
+		escapedQuery := regexp.QuoteMeta(insert)
+		rows := sqlmock.NewRows([]string{"id"})
+		rows = rows.AddRow(strId)
+
+		suite.mock.ExpectQuery(escapedQuery).
+			WillReturnError(errExec2).WithArgs(
+			townName, prId).WillReturnRows(rows)
+	}
+}
+
+func (suite *AdvertRepoTestSuite) TestCreateHouseAddress() {
+	type args struct {
+		strId     int64
+		houseAdr  string
+		errQuery1 error
+		errQuery2 error
+		expQuery1 bool
+		expQuery2 bool
+	}
+	type want struct {
+		newId int64
+		err   error
+	}
+	tests := []struct {
+		name string
+		args args
+		want want
+	}{
+		{
+			name: "successful found house address",
+			args: args{
+				strId:     100,
+				houseAdr:  "adr",
+				errQuery1: nil,
+				errQuery2: nil,
+				expQuery1: true,
+				expQuery2: false,
+			},
+			want: want{
+				newId: 11,
+				err:   nil,
+			},
+		},
+		{
+			name: "fail create house address",
+			args: args{
+				strId:     100,
+				houseAdr:  "adr",
+				errQuery1: errors.New("some error"),
+				errQuery2: errors.New("some error"),
+				expQuery1: true,
+				expQuery2: true,
+			},
+			want: want{
+				newId: 0,
+				err:   errors.New("some error"),
+			},
+		},
+		{
+			name: "create house address",
+			args: args{
+				strId:     100,
+				houseAdr:  "adr",
+				errQuery1: errors.New("some error"),
+				errQuery2: nil,
+				expQuery1: true,
+				expQuery2: true,
+			},
+			want: want{
+				newId: 100,
+				err:   nil,
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		suite.Run(tt.name, func() {
+			suite.mock.ExpectBegin()
+			tx, err := suite.db.Begin()
+			if err != nil {
+				suite.T().Fatal("Error beginning transaction:", err)
+			}
+			suite.setupMockCreateHouseAddress(tt.args.strId, tt.args.houseAdr, tt.want.newId, tt.args.errQuery1, tt.args.errQuery2,
+				tt.args.expQuery1, tt.args.expQuery2)
+			logger := zap.Must(zap.NewDevelopment())
+			rep := repo.NewRepository(suite.db, logger)
+			strId, gotErr := rep.CreateHouseAddress(context.WithValue(context.Background(), "requestId", uuid.NewV4().String()), tx, tt.args.strId, tt.args.houseAdr)
+			suite.Assert().Equal(tt.want.err, gotErr)
+			suite.Assert().Equal(tt.want.newId, strId)
+			suite.Assert().NoError(suite.mock.ExpectationsWereMet())
+		})
+	}
+}
+
+func (suite *AdvertRepoTestSuite) setupMockCreateHouseAddress(prId int64, townName string, strId int64, errExec1 error, errExec2 error,
+	expExec1 bool, expExec2 bool) {
+	if expExec1 {
+		query := `SELECT id FROM house_name WHERE name=$1 AND street_id=$2`
+		escapedQuery := regexp.QuoteMeta(query)
+		rows := sqlmock.NewRows([]string{"id"})
+		rows = rows.AddRow(strId)
+
+		suite.mock.ExpectQuery(escapedQuery).
+			WillReturnError(errExec1).WithArgs(
+			townName, prId).WillReturnRows(rows)
+	}
+
+	if expExec2 {
+		insert := `INSERT INTO house_name (name, street_id) VALUES ($1, $2) RETURNING id`
+		escapedQuery := regexp.QuoteMeta(insert)
+		rows := sqlmock.NewRows([]string{"id"})
+		rows = rows.AddRow(strId)
+
+		suite.mock.ExpectQuery(escapedQuery).
+			WillReturnError(errExec2).WithArgs(
+			townName, prId).WillReturnRows(rows)
+	}
+}
+
+func (suite *AdvertRepoTestSuite) TestCreateAddress() {
+	type args struct {
+		hId       int64
+		metro     string
+		adrPoint  string
+		errQuery1 error
+		errQuery2 error
+		expQuery1 bool
+		expQuery2 bool
+	}
+	type want struct {
+		newId int64
+		err   error
+	}
+	tests := []struct {
+		name string
+		args args
+		want want
+	}{
+		{
+			name: "successful found house address",
+			args: args{
+				hId:       100,
+				metro:     "metro",
+				adrPoint:  "adr",
+				errQuery1: nil,
+				errQuery2: nil,
+				expQuery1: true,
+				expQuery2: false,
+			},
+			want: want{
+				newId: 11,
+				err:   nil,
+			},
+		},
+		{
+			name: "fail create house address",
+			args: args{
+				hId:       100,
+				metro:     "metro",
+				adrPoint:  "adr",
+				errQuery1: errors.New("some error"),
+				errQuery2: errors.New("some error"),
+				expQuery1: true,
+				expQuery2: true,
+			},
+			want: want{
+				newId: 0,
+				err:   errors.New("some error"),
+			},
+		},
+		{
+			name: "create house address",
+			args: args{
+				hId:       100,
+				metro:     "metro",
+				adrPoint:  "adr",
+				errQuery1: errors.New("some error"),
+				errQuery2: nil,
+				expQuery1: true,
+				expQuery2: true,
+			},
+			want: want{
+				newId: 10,
+				err:   nil,
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		suite.Run(tt.name, func() {
+			suite.mock.ExpectBegin()
+			tx, err := suite.db.Begin()
+			if err != nil {
+				suite.T().Fatal("Error beginning transaction:", err)
+			}
+			suite.setupMockCreateAddress(tt.args.hId, tt.args.adrPoint, tt.args.metro, tt.want.newId, tt.args.errQuery1, tt.args.errQuery2,
+				tt.args.expQuery1, tt.args.expQuery2)
+			logger := zap.Must(zap.NewDevelopment())
+			rep := repo.NewRepository(suite.db, logger)
+			strId, gotErr := rep.CreateAddress(context.WithValue(context.Background(), "requestId", uuid.NewV4().String()), tx, tt.args.hId, tt.args.metro, tt.args.adrPoint)
+			suite.Assert().Equal(tt.want.err, gotErr)
+			suite.Assert().Equal(tt.want.newId, strId)
+			suite.Assert().NoError(suite.mock.ExpectationsWereMet())
+		})
+	}
+}
+
+func (suite *AdvertRepoTestSuite) setupMockCreateAddress(hId int64, point string, metro string, adrId int64, errExec1 error, errExec2 error,
+	expExec1 bool, expExec2 bool) {
+	if expExec1 {
+		query := `SELECT id FROM address WHERE house_name_id=$1`
+		escapedQuery := regexp.QuoteMeta(query)
+		rows := sqlmock.NewRows([]string{"id"})
+		rows = rows.AddRow(adrId)
+
+		suite.mock.ExpectQuery(escapedQuery).
+			WillReturnError(errExec1).WithArgs(hId).WillReturnRows(rows)
+	}
+
+	if expExec2 {
+		insert := `INSERT INTO address (metro, house_name_id, address_point) VALUES ($1, $2, $3) RETURNING id`
+		escapedQuery := regexp.QuoteMeta(insert)
+		rows := sqlmock.NewRows([]string{"id"})
+		rows = rows.AddRow(adrId)
+
+		suite.mock.ExpectQuery(escapedQuery).
+			WillReturnError(errExec2).WithArgs(metro,
+			hId, point).WillReturnRows(rows)
 	}
 }
 
