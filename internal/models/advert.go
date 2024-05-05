@@ -320,6 +320,10 @@ type AdvertData struct {
 	Title string `json:"title"`
 	// Description is the description of the advert.
 	Description string `json:"description"`
+	// CountViews is the count of views the advertisement.
+	CountViews int64 `json:"countViews"`
+	// CountLikes is the count of likes the advertisement.
+	CountLikes int64 `json:"countLikes"`
 	// Price is the price of the advertisement.
 	Price int64 `json:"price"`
 	// Phone is the phone number associated with the advert.

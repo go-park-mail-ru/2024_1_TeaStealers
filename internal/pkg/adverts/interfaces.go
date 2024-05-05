@@ -92,4 +92,6 @@ type AdvertRepo interface {
 	LikeAdvert(ctx context.Context, advertId int64, userId int64) error
 	DislikeAdvert(ctx context.Context, advertId int64, userId int64) error
 	GetRectangleAdvertsLikedByUserId(ctx context.Context, pageSize, offset int, userId int64) ([]*models.AdvertRectangleData, error)
+	SelectCountLikes(ctx context.Context, id int64) (int64, error)
+	SelectCountViews(ctx context.Context, id int64) (int64, error)
 }

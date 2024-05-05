@@ -303,6 +303,16 @@ func (u *AdvertUsecase) GetAdvertById(ctx context.Context, id int64) (foundAdver
 
 	foundAdvert.PriceChange = priceChanges
 
+	if foundAdvert.CountLikes, err = u.repo.SelectCountLikes(ctx, foundAdvert.ID); err != nil {
+		utils.LogError(u.logger, ctx.Value("requestId").(string), utils.UsecaseLayer, adverts.GetAdvertByIdMethod, err)
+		return nil, err
+	}
+
+	if foundAdvert.CountViews, err = u.repo.SelectCountViews(ctx, foundAdvert.ID); err != nil {
+		utils.LogError(u.logger, ctx.Value("requestId").(string), utils.UsecaseLayer, adverts.GetAdvertByIdMethod, err)
+		return nil, err
+	}
+
 	utils.LogSucces(u.logger, ctx.Value("requestId").(string), utils.UsecaseLayer, adverts.GetAdvertByIdMethod)
 	return foundAdvert, nil
 }

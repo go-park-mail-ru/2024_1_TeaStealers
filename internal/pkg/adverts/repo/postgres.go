@@ -2032,3 +2032,35 @@ func (r *AdvertRepo) GetRectangleAdvertsLikedByUserId(ctx context.Context, pageS
 	utils.LogSucces(r.logger, ctx.Value("requestId").(string), utils.RepositoryLayer, adverts.GetRectangleAdvertsByUserIdMethod)
 	return rectangleAdverts, nil
 }
+
+// SelectCountLikes count likes by advert in the database.
+func (r *AdvertRepo) SelectCountLikes(ctx context.Context, id int64) (int64, error) {
+	query := `SELECT COUNT (*) FROM favourite_advert WHERE advert_id=$1 AND is_deleted=false;`
+
+	res := r.db.QueryRow(query, id)
+
+	var countLikes int64
+	if err := res.Scan(&countLikes); err != nil {
+		// utils.LogError(r.logger, ctx.Value("requestId").(string), utils.RepositoryLayer, adverts.CreateAdvertMethod, err)
+		return 0, err
+	}
+
+	// utils.LogSucces(r.logger, ctx.Value("requestId").(string), utils.RepositoryLayer, adverts.CreateAdvertMethod)
+	return countLikes, nil
+}
+
+// SelectCountViews count views by advert in the database.
+func (r *AdvertRepo) SelectCountViews(ctx context.Context, id int64) (int64, error) {
+	query := `SELECT COUNT (*) FROM statistic_view_advert WHERE advert_id=$1`
+
+	res := r.db.QueryRow(query, id)
+
+	var countViews int64
+	if err := res.Scan(&countViews); err != nil {
+		// utils.LogError(r.logger, ctx.Value("requestId").(string), utils.RepositoryLayer, adverts.CreateAdvertMethod, err)
+		return 0, err
+	}
+
+	// utils.LogSucces(r.logger, ctx.Value("requestId").(string), utils.RepositoryLayer, adverts.CreateAdvertMethod)
+	return countViews, nil
+}
