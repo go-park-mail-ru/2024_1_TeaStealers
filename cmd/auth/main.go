@@ -4,6 +4,8 @@ import (
 	genAuth "2024_1_TeaStealers/internal/pkg/auth/delivery/grpc/gen"
 	authR "2024_1_TeaStealers/internal/pkg/auth/repo"
 	authUc "2024_1_TeaStealers/internal/pkg/auth/usecase"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"net/http"
 
 	"database/sql"
 	"fmt"
@@ -17,6 +19,8 @@ import (
 	"syscall"
 
 	grpcAuth "2024_1_TeaStealers/internal/pkg/auth/delivery/grpc"
+	metricsMw "2024_1_TeaStealers/internal/pkg/metrics/middleware"
+
 	"google.golang.org/grpc"
 )
 
@@ -46,10 +50,13 @@ func run() (err error) {
 		log.Println(err)
 	}
 
+	http.Handle("/metrics", promhttp.Handler())
+
 	authRepo := authR.NewRepository(db, logger)
 	authUsecase := authUc.NewAuthUsecase(authRepo, logger)
 	authHandler := grpcAuth.NewServerAuthHandler(authUsecase, logger)
-	gRPCServer := grpc.NewServer()
+	metricMw := metricsMw.Create()
+	gRPCServer := grpc.NewServer(grpc.UnaryInterceptor(metricMw.ServerMetricsInterceptor))
 	genAuth.RegisterAuthServer(gRPCServer, authHandler)
 
 	go func() {

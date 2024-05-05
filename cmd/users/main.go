@@ -1,10 +1,13 @@
 package main
 
 import (
+	metricsMw "2024_1_TeaStealers/internal/pkg/metrics/middleware"
 	genUsers "2024_1_TeaStealers/internal/pkg/users/delivery/grpc/gen"
 	UsersR "2024_1_TeaStealers/internal/pkg/users/repo"
 	UsersUc "2024_1_TeaStealers/internal/pkg/users/usecase"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"go.uber.org/zap"
+	"net/http"
 
 	"database/sql"
 	"fmt"
@@ -45,10 +48,14 @@ func run() (err error) {
 		err = fmt.Errorf("error happened in db.Ping: %w", err)
 		log.Println(err)
 	}
+
+	http.Handle("/metrics", promhttp.Handler())
+
 	usersRepo := UsersR.NewRepository(db)
 	usersUsecase := UsersUc.NewUserUsecase(usersRepo)
 	usersHandler := grpcUsers.NewUserServerHandler(usersUsecase)
-	gRPCServer := grpc.NewServer()
+	metricMw := metricsMw.Create()
+	gRPCServer := grpc.NewServer(grpc.UnaryInterceptor(metricMw.ServerMetricsInterceptor))
 	genUsers.RegisterUsersServer(gRPCServer, usersHandler)
 
 	go func() {

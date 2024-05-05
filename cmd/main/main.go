@@ -36,10 +36,10 @@ import (
 	"time"
 
 	_ "2024_1_TeaStealers/docs"
-
 	"github.com/gorilla/mux"
 	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	httpSwagger "github.com/swaggo/http-swagger"
 	"go.uber.org/zap"
 )
@@ -70,6 +70,8 @@ func main() {
 		err = fmt.Errorf("error happened in db.Ping: %w", err)
 		log.Println(err)
 	}
+
+	http.Handle("/metrics", promhttp.Handler())
 
 	r := mux.NewRouter().PathPrefix("/api").Subrouter()
 	r.Use(middleware.CORSMiddleware)
