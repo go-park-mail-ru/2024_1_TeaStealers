@@ -862,6 +862,421 @@ func (suite *AdvertRepoTestSuite) setupMockCreateAddress(hId int64, point string
 	}
 }
 
+func (suite *AdvertRepoTestSuite) TestCreatePriceChange() {
+	type args struct {
+		newPrice  models.PriceChange
+		errQuery1 error
+		expQuery1 bool
+	}
+	type want struct {
+		err error
+	}
+	tests := []struct {
+		name string
+		args args
+		want want
+	}{
+		{
+			name: "successful cr price change",
+			args: args{
+				newPrice: models.PriceChange{Price: 10, ID: 124,
+					AdvertID: 234, IsDeleted: false},
+				errQuery1: nil,
+				expQuery1: true,
+			},
+			want: want{
+				err: nil,
+			},
+		},
+		{
+			name: "fail cr price change",
+			args: args{
+				newPrice: models.PriceChange{Price: 10, ID: 124,
+					AdvertID: 234, IsDeleted: false},
+				errQuery1: errors.New("some error"),
+				expQuery1: true,
+			},
+			want: want{
+				err: errors.New("some error"),
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		suite.Run(tt.name, func() {
+			suite.mock.ExpectBegin()
+			tx, err := suite.db.Begin()
+			if err != nil {
+				suite.T().Fatal("Error beginning transaction:", err)
+			}
+			suite.setupMockCreatePriceChange(tt.args.newPrice,
+				tt.args.errQuery1, tt.args.expQuery1)
+			logger := zap.Must(zap.NewDevelopment())
+			rep := repo.NewRepository(suite.db, logger)
+			gotErr := rep.CreatePriceChange(context.WithValue(context.Background(), "requestId", uuid.NewV4().String()),
+				tx, &tt.args.newPrice)
+			suite.Assert().Equal(tt.want.err, gotErr)
+			// suite.Assert().Equal(tt.want.newId, strId)
+			suite.Assert().NoError(suite.mock.ExpectationsWereMet())
+		})
+	}
+}
+
+func (suite *AdvertRepoTestSuite) setupMockCreatePriceChange(newPrice models.PriceChange, errExec1 error,
+	expExec1 bool) {
+	if expExec1 {
+		insert := `INSERT INTO price_change (advert_id, price) VALUES ($1, $2)`
+		escapedQuery := regexp.QuoteMeta(insert)
+		// rows := sqlmock.NewRows([]string{"id"})
+		// rows = rows.AddRow(adrId)
+
+		suite.mock.ExpectExec(escapedQuery).
+			WillReturnError(errExec1).WithArgs(newPrice.AdvertID, newPrice.Price).
+			WillReturnResult(sqlmock.NewResult(1, 1))
+	}
+}
+
+func (suite *AdvertRepoTestSuite) TestCreateBuilding() {
+	type args struct {
+		newPrice  models.Building
+		errQuery1 error
+		expQuery1 bool
+	}
+	type want struct {
+		wId int64
+		err error
+	}
+	tests := []struct {
+		name string
+		args args
+		want want
+	}{
+		{
+			name: "successful cr price change",
+			args: args{
+				newPrice: models.Building{ID: 124,
+					ComplexID: 234, Floor: 2, IsDeleted: false},
+				errQuery1: nil,
+				expQuery1: true,
+			},
+			want: want{
+				wId: 124,
+				err: nil,
+			},
+		},
+		{
+			name: "fail cr price change",
+			args: args{
+				newPrice: models.Building{ID: 124,
+					ComplexID: 234, Floor: 2, IsDeleted: false},
+				errQuery1: errors.New("some error"),
+				expQuery1: true,
+			},
+			want: want{
+				wId: 0,
+				err: errors.New("some error"),
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		suite.Run(tt.name, func() {
+			suite.mock.ExpectBegin()
+			tx, err := suite.db.Begin()
+			if err != nil {
+				suite.T().Fatal("Error beginning transaction:", err)
+			}
+			suite.setupMockCreateBuilding(tt.args.newPrice,
+				tt.args.errQuery1, tt.args.expQuery1)
+			logger := zap.Must(zap.NewDevelopment())
+			rep := repo.NewRepository(suite.db, logger)
+			bId, gotErr := rep.CreateBuilding(context.WithValue(context.Background(), "requestId", uuid.NewV4().String()),
+				tx, &tt.args.newPrice)
+			suite.Assert().Equal(tt.want.err, gotErr)
+			suite.Assert().Equal(tt.want.wId, bId)
+			suite.Assert().NoError(suite.mock.ExpectationsWereMet())
+		})
+	}
+}
+
+func (suite *AdvertRepoTestSuite) setupMockCreateBuilding(newPrice models.Building, errExec1 error,
+	expExec1 bool) {
+	if expExec1 {
+		insert := `INSERT INTO building (floor, material_building, address_id, year_creation) VALUES ($1, $2, $3, $4) RETURNING id`
+		escapedQuery := regexp.QuoteMeta(insert)
+		rows := sqlmock.NewRows([]string{"id"})
+		rows = rows.AddRow(newPrice.ID)
+
+		suite.mock.ExpectQuery(escapedQuery).
+			WillReturnError(errExec1).WithArgs(newPrice.Floor, newPrice.Material,
+			newPrice.AddressID, newPrice.YearCreation).WillReturnRows(rows)
+	}
+}
+
+func (suite *AdvertRepoTestSuite) TestCheckExistsBuilding() {
+	type args struct {
+		adr       models.AddressData
+		build     models.Building
+		errQuery1 error
+		expQuery1 bool
+	}
+	type want struct {
+		err error
+	}
+	tests := []struct {
+		name string
+		args args
+		want want
+	}{
+		{
+			name: "successful check ex",
+			args: args{
+				adr: models.AddressData{
+					Province: "pr",
+					Town:     "town",
+					Street:   "street",
+				},
+				build: models.Building{ID: 124,
+					ComplexID: 0, Floor: 2, IsDeleted: false,
+				},
+				errQuery1: nil,
+				expQuery1: true,
+			},
+			want: want{
+				err: nil,
+			},
+		},
+		{
+			name: "fail check ex",
+			args: args{
+				adr: models.AddressData{
+					Province: "pr",
+					Town:     "town",
+					Street:   "street",
+				},
+				build: models.Building{ID: 124,
+					ComplexID: 0, Floor: 2, IsDeleted: false,
+				},
+				errQuery1: errors.New("some error"),
+				expQuery1: true,
+			},
+			want: want{
+				err: errors.New("some error"),
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		suite.Run(tt.name, func() {
+			suite.mock.ExpectBegin()
+			_, err := suite.db.Begin()
+			if err != nil {
+				suite.T().Fatal("Error beginning transaction:", err)
+			}
+			suite.setupMockCheckExistsBuilding(tt.args.adr, tt.args.build,
+				tt.args.errQuery1, tt.args.expQuery1)
+			logger := zap.Must(zap.NewDevelopment())
+			rep := repo.NewRepository(suite.db, logger)
+			gotBuild, gotErr := rep.CheckExistsBuilding(context.WithValue(context.Background(), "requestId", uuid.NewV4().String()),
+				&tt.args.adr)
+			suite.Assert().Equal(tt.want.err, gotErr)
+			if tt.want.err != nil {
+				suite.Assert().Nil(gotBuild)
+			} else {
+				suite.Assert().Equal(&tt.args.build, gotBuild)
+			}
+			// suite.Assert().Equal(tt.want.wId, bId)
+			suite.Assert().NoError(suite.mock.ExpectationsWereMet())
+		})
+	}
+}
+
+func (suite *AdvertRepoTestSuite) setupMockCheckExistsBuilding(Adr models.AddressData, build models.Building,
+	errExec1 error, expExec1 bool) {
+	if expExec1 {
+		query := `SELECT b.id, b.address_id, b.floor, b.material_building, b.year_creation FROM building AS b JOIN address AS a ON b.address_id=a.id JOIN house_name AS h ON a.house_name_id=h.id JOIN street AS s ON h.street_id=s.id JOIN town AS t ON s.town_id=t.id JOIN province AS p ON t.province_id=p.id WHERE p.name=$1 AND t.name=$2 AND s.name=$3 AND h.name=$4;`
+		escapedQuery := regexp.QuoteMeta(query)
+		rows := sqlmock.NewRows([]string{"id", "address", "floor", "material", "yearCreation"})
+		rows = rows.AddRow(build.ID, build.AddressID, build.Floor, build.Material,
+			build.YearCreation)
+
+		suite.mock.ExpectQuery(escapedQuery).
+			WillReturnError(errExec1).WithArgs(Adr.Province, Adr.Town, Adr.Street, Adr.House).
+			WillReturnRows(rows)
+	}
+}
+
+func (suite *AdvertRepoTestSuite) TestCheckExistsBuildingData() {
+	type args struct {
+		adr       models.AddressData
+		build     models.BuildingData
+		errQuery1 error
+		expQuery1 bool
+	}
+	type want struct {
+		err error
+	}
+	tests := []struct {
+		name string
+		args args
+		want want
+	}{
+		{
+			name: "successful check ex",
+			args: args{
+				adr: models.AddressData{
+					Province: "pr",
+					Town:     "town",
+					Street:   "street",
+				},
+				build: models.BuildingData{ComplexName: "name",
+					Material: "material", YearCreation: 2020, Floor: 2,
+				},
+				errQuery1: nil,
+				expQuery1: true,
+			},
+			want: want{
+				err: nil,
+			},
+		},
+		{
+			name: "fail check ex",
+			args: args{
+				adr: models.AddressData{
+					Province: "pr",
+					Town:     "town",
+					Street:   "street",
+				},
+				build: models.BuildingData{ComplexName: "name",
+					Material: "material", YearCreation: 2020, Floor: 2,
+				},
+				errQuery1: errors.New("not found"),
+				expQuery1: true,
+			},
+			want: want{
+				err: nil,
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		suite.Run(tt.name, func() {
+			suite.mock.ExpectBegin()
+			_, err := suite.db.Begin()
+			if err != nil {
+				suite.T().Fatal("Error beginning transaction:", err)
+			}
+			suite.setupMockCheckExistsBuildingData(tt.args.adr, tt.args.build,
+				tt.args.errQuery1, tt.args.expQuery1)
+			logger := zap.Must(zap.NewDevelopment())
+			rep := repo.NewRepository(suite.db, logger)
+			gotBuild, gotErr := rep.CheckExistsBuildingData(context.WithValue(context.Background(), "requestId", uuid.NewV4().String()),
+				&tt.args.adr)
+			suite.Assert().Equal(tt.want.err, gotErr)
+			if tt.want.err != nil || tt.args.errQuery1 != nil {
+				suite.Assert().Nil(gotBuild)
+			} else {
+				suite.Assert().Equal(&tt.args.build, gotBuild)
+			}
+			// suite.Assert().Equal(tt.want.wId, bId)
+			suite.Assert().NoError(suite.mock.ExpectationsWereMet())
+		})
+	}
+}
+
+func (suite *AdvertRepoTestSuite) setupMockCheckExistsBuildingData(Adr models.AddressData, build models.BuildingData,
+	errExec1 error, expExec1 bool) {
+	if expExec1 {
+		query := `SELECT b.floor, b.material_building, b.year_creation, COALESCE(c.name, '') 
+		FROM building AS b JOIN address AS a ON b.address_id=a.id JOIN house_name AS h ON a.house_name_id=h.id 
+		    JOIN street AS s ON h.street_id=s.id JOIN town AS t ON s.town_id=t.id JOIN province AS p ON 
+		        t.province_id=p.id LEFT JOIN complex AS c ON c.id=b.complex_id WHERE p.name=$1 AND t.name=$2 AND 
+		                                                                             s.name=$3 AND h.name=$4;`
+		escapedQuery := regexp.QuoteMeta(query)
+		rows := sqlmock.NewRows([]string{"id", "address", "floor", "material"})
+		rows = rows.AddRow(build.Floor, build.Material, build.YearCreation, build.ComplexName)
+
+		suite.mock.ExpectQuery(escapedQuery).
+			WillReturnError(errExec1).WithArgs(Adr.Province, Adr.Town, Adr.Street, Adr.House).
+			WillReturnRows(rows)
+	}
+}
+
+func (suite *AdvertRepoTestSuite) TestCreateHouse() {
+	type args struct {
+		house     models.House
+		errQuery1 error
+		expQuery1 bool
+	}
+	type want struct {
+		err error
+	}
+	tests := []struct {
+		name string
+		args args
+		want want
+	}{
+		{
+			name: "successful check ex",
+			args: args{
+				house:     models.House{ID: 124, BuildingID: 122, CeilingHeight: 124.214},
+				errQuery1: nil,
+				expQuery1: true,
+			},
+			want: want{
+				err: nil,
+			},
+		},
+		{
+			name: "fail check ex",
+			args: args{
+				house:     models.House{ID: 0, BuildingID: 122, CeilingHeight: 124.214},
+				errQuery1: errors.New("some error"),
+				expQuery1: true,
+			},
+			want: want{
+				err: errors.New("some error"),
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		suite.Run(tt.name, func() {
+			suite.mock.ExpectBegin()
+			tx, err := suite.db.Begin()
+			if err != nil {
+				suite.T().Fatal("Error beginning transaction:", err)
+			}
+			suite.setupMockCreateHouse(tt.args.house,
+				tt.args.errQuery1, tt.args.expQuery1)
+			logger := zap.Must(zap.NewDevelopment())
+			rep := repo.NewRepository(suite.db, logger)
+			gotHouseId, gotErr := rep.CreateHouse(context.WithValue(context.Background(), "requestId", uuid.NewV4().String()),
+				tx, &tt.args.house)
+			suite.Assert().Equal(tt.want.err, gotErr)
+			suite.Assert().Equal(tt.args.house.ID, gotHouseId)
+			// suite.Assert().Equal(tt.want.wId, bId)
+			suite.Assert().NoError(suite.mock.ExpectationsWereMet())
+		})
+	}
+}
+
+func (suite *AdvertRepoTestSuite) setupMockCreateHouse(newHouse models.House,
+	errExec1 error, expExec1 bool) {
+	if expExec1 {
+		insert := `INSERT INTO house (building_id, ceiling_height, square_area, square_house, bedroom_count, status_area_house, cottage, status_home_house) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id`
+
+		escapedQuery := regexp.QuoteMeta(insert)
+		rows := sqlmock.NewRows([]string{"id"})
+		rows = rows.AddRow(newHouse.ID)
+
+		suite.mock.ExpectQuery(escapedQuery).
+			WillReturnError(errExec1).WithArgs(newHouse.BuildingID, newHouse.CeilingHeight, newHouse.SquareArea,
+			newHouse.SquareHouse, newHouse.BedroomCount, newHouse.StatusArea, newHouse.Cottage, newHouse.StatusHome).
+			WillReturnRows(rows)
+	}
+}
+
 /*
 	func (suite *UserRepoTestSuite) TestCreatePriceChange() {
 		type args struct {
