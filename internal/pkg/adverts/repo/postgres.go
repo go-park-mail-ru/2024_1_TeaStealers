@@ -382,6 +382,10 @@ func (r *AdvertRepo) GetHouseAdvertById(ctx context.Context, id int64) (*models.
 			WHEN fa.advert_id IS NOT NULL AND fa.is_deleted=false THEN true
 			ELSE false
 		END AS is_liked,
+		CASE
+			WHEN sva.advert_id IS NOT NULL THEN true
+			ELSE false
+		END AS is_viewed,
         cx.id AS complexid,
         c.photo AS companyphoto,
         c.name AS companyname,
@@ -401,6 +405,8 @@ func (r *AdvertRepo) GetHouseAdvertById(ctx context.Context, id int64) (*models.
 		JOIN province AS p ON p.id=t.province_id
 	LEFT JOIN
 		favourite_advert AS fa ON fa.advert_id=a.id AND fa.user_id=$2
+	LEFT JOIN
+		statistic_view_advert AS sva ON sva.advert_id=a.id AND sva.user_id=$2
     LEFT JOIN
         complex AS cx ON b.complex_id = cx.id
     LEFT JOIN
@@ -425,7 +431,7 @@ func (r *AdvertRepo) GetHouseAdvertById(ctx context.Context, id int64) (*models.
 	res := r.db.QueryRowContext(ctx, query, id, userId)
 
 	advertData := &models.AdvertData{}
-	var cottage bool
+	var cottage, isViewed bool
 	var squareHouse, squareArea, ceilingHeight float64
 	var bedroomCount, floor int
 	var statusArea models.StatusAreaHouse
@@ -459,6 +465,7 @@ func (r *AdvertRepo) GetHouseAdvertById(ctx context.Context, id int64) (*models.
 		&advertData.Material,
 		&advertData.DateCreation,
 		&advertData.IsLiked,
+		&isViewed,
 		&complexId,
 		&companyPhoto,
 		&companyName,
@@ -466,6 +473,12 @@ func (r *AdvertRepo) GetHouseAdvertById(ctx context.Context, id int64) (*models.
 	); err != nil {
 		utils.LogError(r.logger, ctx.Value("requestId").(string), utils.RepositoryLayer, adverts.GetHouseAdvertByIdMethod, err)
 		return nil, err
+	}
+
+	if !isViewed && userId != 0 {
+		if err := r.CreateView(ctx, id, userId); err != nil {
+			return nil, err
+		}
 	}
 
 	advertData.AdvertType = "House"
@@ -978,6 +991,10 @@ func (r *AdvertRepo) GetFlatAdvertById(ctx context.Context, id int64) (*models.A
 			WHEN fa.advert_id IS NOT NULL AND fa.is_deleted=false THEN true
 			ELSE false
 		END AS is_liked,
+		CASE
+			WHEN sva.advert_id IS NOT NULL THEN true
+			ELSE false
+		END AS is_viewed,
         cx.id AS complexid,
         c.photo AS companyphoto,
         c.name AS companyname,
@@ -997,6 +1014,8 @@ func (r *AdvertRepo) GetFlatAdvertById(ctx context.Context, id int64) (*models.A
 		JOIN province AS p ON p.id=t.province_id
 	LEFT JOIN
 		favourite_advert AS fa ON fa.advert_id=a.id AND fa.user_id=$2
+	LEFT JOIN
+		statistic_view_advert AS sva ON sva.advert_id=a.id AND sva.user_id=$2
     LEFT JOIN
         complex AS cx ON b.complex_id = cx.id
     LEFT JOIN
@@ -1024,6 +1043,7 @@ func (r *AdvertRepo) GetFlatAdvertById(ctx context.Context, id int64) (*models.A
 	var floor, floorGeneral, roomCount int
 	var squareGenereal, squareResidential, ceilingHeight float64
 	var apartament sql.NullBool
+	var isViewed bool
 	var complexId, companyPhoto, companyName, complexName sql.NullString
 	var metro, houseName, street, town, province string
 
@@ -1052,6 +1072,7 @@ func (r *AdvertRepo) GetFlatAdvertById(ctx context.Context, id int64) (*models.A
 		&advertData.Material,
 		&advertData.DateCreation,
 		&advertData.IsLiked,
+		&isViewed,
 		&complexId,
 		&companyPhoto,
 		&companyName,
@@ -1059,6 +1080,12 @@ func (r *AdvertRepo) GetFlatAdvertById(ctx context.Context, id int64) (*models.A
 	); err != nil {
 		utils.LogError(r.logger, ctx.Value("requestId").(string), utils.RepositoryLayer, adverts.GetFlatAdvertByIdMethod, err)
 		return nil, err
+	}
+
+	if !isViewed && userId != 0 {
+		if err := r.CreateView(ctx, id, userId); err != nil {
+			return nil, err
+		}
 	}
 
 	advertData.AdvertType = "Flat"
@@ -2063,4 +2090,26 @@ func (r *AdvertRepo) SelectCountViews(ctx context.Context, id int64) (int64, err
 
 	// utils.LogSucces(r.logger, ctx.Value("requestId").(string), utils.RepositoryLayer, adverts.CreateAdvertMethod)
 	return countViews, nil
+}
+
+// CreateView creates a view in the database.
+func (r *AdvertRepo) CreateView(ctx context.Context, advertId int64, userId int64) error {
+	query := `SELECT advert_id, user_id FROM statistic_view_advert WHERE advert_id = $1 AND user_id = $2`
+
+	res := r.db.QueryRow(query, advertId, userId)
+
+	var adId, usId int64
+	if err := res.Scan(&adId, &usId); err == nil {
+		// utils.LogError(r.logger, ctx.Value("requestId").(string), utils.RepositoryLayer, adverts.CreateAdvertMethod, err)
+		return nil
+	}
+
+	insert := `INSERT INTO statistic_view_advert (advert_id, user_id) VALUES ($1, $2)`
+	if _, err := r.db.Exec(insert, advertId, userId); err != nil {
+		// utils.LogError(r.logger, ctx.Value("requestId").(string), utils.RepositoryLayer, adverts.CreateAdvertMethod, err)
+		return err
+	}
+
+	// utils.LogSucces(r.logger, ctx.Value("requestId").(string), utils.RepositoryLayer, adverts.CreateAdvertMethod)
+	return nil
 }
