@@ -14,6 +14,7 @@ import (
 	"math/rand"
 	"regexp"
 	"testing"
+	"time"
 )
 
 type AdvertRepoTestSuite struct {
@@ -1277,6 +1278,916 @@ func (suite *AdvertRepoTestSuite) setupMockCreateHouse(newHouse models.House,
 	}
 }
 
+func (suite *AdvertRepoTestSuite) TestCreateFlat() {
+	type args struct {
+		flat      models.Flat
+		errQuery1 error
+		expQuery1 bool
+	}
+	type want struct {
+		err error
+	}
+	tests := []struct {
+		name string
+		args args
+		want want
+	}{
+		{
+			name: "successful create flat",
+			args: args{
+				flat: models.Flat{ID: 124, BuildingID: 122, CeilingHeight: 124.214,
+					RoomCount: 2},
+				errQuery1: nil,
+				expQuery1: true,
+			},
+			want: want{
+				err: nil,
+			},
+		},
+		{
+			name: "fail create flate",
+			args: args{
+				flat: models.Flat{ID: 0, BuildingID: 122, CeilingHeight: 124.214,
+					RoomCount: 2},
+				errQuery1: errors.New("some error"),
+				expQuery1: true,
+			},
+			want: want{
+				err: errors.New("some error"),
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		suite.Run(tt.name, func() {
+			suite.mock.ExpectBegin()
+			tx, err := suite.db.Begin()
+			if err != nil {
+				suite.T().Fatal("Error beginning transaction:", err)
+			}
+			suite.setupMockCreateFlat(tt.args.flat,
+				tt.args.errQuery1, tt.args.expQuery1)
+			logger := zap.Must(zap.NewDevelopment())
+			rep := repo.NewRepository(suite.db, logger)
+			gotFlatId, gotErr := rep.CreateFlat(context.WithValue(context.Background(), "requestId", uuid.NewV4().String()),
+				tx, &tt.args.flat)
+			suite.Assert().Equal(tt.want.err, gotErr)
+			suite.Assert().Equal(tt.args.flat.ID, gotFlatId)
+			// suite.Assert().Equal(tt.want.wId, bId)
+			suite.Assert().NoError(suite.mock.ExpectationsWereMet())
+		})
+	}
+}
+
+func (suite *AdvertRepoTestSuite) setupMockCreateFlat(newFlat models.Flat,
+	errExec1 error, expExec1 bool) {
+	if expExec1 {
+		insert := `INSERT INTO flat (building_id, floor, ceiling_height, square_general, bedroom_count, square_residential, apartament) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id`
+
+		escapedQuery := regexp.QuoteMeta(insert)
+		rows := sqlmock.NewRows([]string{"id"})
+		rows = rows.AddRow(newFlat.ID)
+
+		suite.mock.ExpectQuery(escapedQuery).
+			WillReturnError(errExec1).WithArgs(
+			newFlat.BuildingID, newFlat.Floor, newFlat.CeilingHeight,
+			newFlat.SquareGeneral, newFlat.RoomCount, newFlat.SquareResidential, newFlat.Apartment).
+			WillReturnRows(rows)
+	}
+}
+
+func (suite *AdvertRepoTestSuite) TestSelectImages() {
+	type args struct {
+		advertId  int64
+		errQuery1 error
+		expQuery1 bool
+	}
+	type want struct {
+		err  error
+		resp []*models.ImageResp
+	}
+	tests := []struct {
+		name string
+		args args
+		want want
+	}{
+		{
+			name: "successful select images",
+			args: args{
+				advertId:  124,
+				errQuery1: nil,
+				expQuery1: true,
+			},
+			want: want{
+				err: nil,
+				resp: []*models.ImageResp{
+					{
+						ID:       1,
+						Photo:    "/path1",
+						Priority: 1,
+					},
+					{
+						ID:       2,
+						Photo:    "/path2",
+						Priority: 2,
+					},
+				},
+			},
+		},
+		{
+			name: "fail select images",
+			args: args{
+				advertId:  124,
+				errQuery1: errors.New("some error"),
+				expQuery1: true,
+			},
+			want: want{
+				err:  errors.New("some error"),
+				resp: nil,
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		suite.Run(tt.name, func() {
+			suite.mock.ExpectBegin()
+			_, err := suite.db.Begin()
+			if err != nil {
+				suite.T().Fatal("Error beginning transaction:", err)
+			}
+			suite.setupMockSelectImages(tt.args.advertId, tt.want.resp,
+				tt.args.errQuery1, tt.args.expQuery1)
+			logger := zap.Must(zap.NewDevelopment())
+			rep := repo.NewRepository(suite.db, logger)
+			gotImages, gotErr := rep.SelectImages(context.WithValue(context.Background(), "requestId", uuid.NewV4().String()),
+				tt.args.advertId)
+			suite.Assert().Equal(tt.want.resp, gotImages)
+			suite.Assert().Equal(tt.want.err, gotErr)
+			// suite.Assert().Equal(tt.want.wId, bId)
+			suite.Assert().NoError(suite.mock.ExpectationsWereMet())
+		})
+	}
+}
+
+func (suite *AdvertRepoTestSuite) setupMockSelectImages(advId int64, Imresp []*models.ImageResp,
+	errExec1 error, expExec1 bool) {
+	if expExec1 {
+		selectQuery := `SELECT id, photo, priority FROM image WHERE advert_id = $1 AND is_deleted = false`
+
+		escapedQuery := regexp.QuoteMeta(selectQuery)
+		rows := sqlmock.NewRows([]string{"id", "photo", "priority"})
+		if Imresp != nil {
+
+			rows = rows.AddRow(Imresp[0].ID, Imresp[0].Photo, Imresp[0].Priority)
+			rows = rows.AddRow(Imresp[1].ID, Imresp[1].Photo, Imresp[1].Priority)
+
+		}
+		suite.mock.ExpectQuery(escapedQuery).
+			WillReturnError(errExec1).WithArgs(advId).
+			WillReturnRows(rows)
+	}
+}
+
+func (suite *AdvertRepoTestSuite) TestSelectPriceChanges() {
+	type args struct {
+		advertId  int64
+		errQuery1 error
+		expQuery1 bool
+	}
+	type want struct {
+		err  error
+		resp []*models.PriceChangeData
+	}
+	tests := []struct {
+		name string
+		args args
+		want want
+	}{
+		{
+			name: "successful select price change",
+			args: args{
+				advertId:  124,
+				errQuery1: nil,
+				expQuery1: true,
+			},
+			want: want{
+				err: nil,
+				resp: []*models.PriceChangeData{
+					{
+						Price:        1224,
+						DateCreation: time.Now(),
+					},
+					{
+						Price:        12224,
+						DateCreation: time.Now(),
+					},
+				},
+			},
+		},
+		{
+			name: "fail select price change",
+			args: args{
+				advertId:  124,
+				errQuery1: errors.New("some error"),
+				expQuery1: true,
+			},
+			want: want{
+				err:  errors.New("some error"),
+				resp: nil,
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		suite.Run(tt.name, func() {
+			suite.mock.ExpectBegin()
+			_, err := suite.db.Begin()
+			if err != nil {
+				suite.T().Fatal("Error beginning transaction:", err)
+			}
+			suite.setupMockSelectPriceChanges(tt.args.advertId, tt.want.resp,
+				tt.args.errQuery1, tt.args.expQuery1)
+			logger := zap.Must(zap.NewDevelopment())
+			rep := repo.NewRepository(suite.db, logger)
+			gotImages, gotErr := rep.SelectPriceChanges(context.WithValue(context.Background(), "requestId", uuid.NewV4().String()),
+				tt.args.advertId)
+			suite.Assert().Equal(tt.want.resp, gotImages)
+			suite.Assert().Equal(tt.want.err, gotErr)
+			// suite.Assert().Equal(tt.want.wId, bId)
+			suite.Assert().NoError(suite.mock.ExpectationsWereMet())
+		})
+	}
+}
+
+func (suite *AdvertRepoTestSuite) setupMockSelectPriceChanges(advId int64, Imresp []*models.PriceChangeData,
+	errExec1 error, expExec1 bool) {
+	if expExec1 {
+		selectQuery := `SELECT price, created_at FROM price_change WHERE advert_id = $1 AND is_deleted = false`
+
+		escapedQuery := regexp.QuoteMeta(selectQuery)
+		rows := sqlmock.NewRows([]string{"price", "created_at"})
+		if Imresp != nil {
+			rows = rows.AddRow(Imresp[0].Price, Imresp[0].DateCreation)
+			rows = rows.AddRow(Imresp[1].Price, Imresp[1].DateCreation)
+		}
+		suite.mock.ExpectQuery(escapedQuery).
+			WillReturnError(errExec1).WithArgs(advId).
+			WillReturnRows(rows)
+	}
+}
+
+func (suite *AdvertRepoTestSuite) TestGetTypeAdvertById() {
+	type args struct {
+		advertId  int64
+		errQuery1 error
+		expQuery1 bool
+	}
+	type want struct {
+		err  error
+		resp models.AdvertTypeAdvert
+	}
+	tests := []struct {
+		name string
+		args args
+		want want
+	}{
+		{
+			name: "successful get type advert",
+			args: args{
+				advertId:  124,
+				errQuery1: nil,
+				expQuery1: true,
+			},
+			want: want{
+				err:  nil,
+				resp: models.AdvertTypeHouse,
+			},
+		},
+		{
+			name: "fail get type advert",
+			args: args{
+				advertId:  124,
+				errQuery1: errors.New("some error"),
+				expQuery1: true,
+			},
+			want: want{
+				err:  errors.New("some error"),
+				resp: "",
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		suite.Run(tt.name, func() {
+			suite.mock.ExpectBegin()
+			_, err := suite.db.Begin()
+			if err != nil {
+				suite.T().Fatal("Error beginning transaction:", err)
+			}
+			suite.setupMockGetTypeAdvertById(tt.args.advertId, tt.want.resp,
+				tt.args.errQuery1, tt.args.expQuery1)
+			logger := zap.Must(zap.NewDevelopment())
+			rep := repo.NewRepository(suite.db, logger)
+			gotType, gotErr := rep.GetTypeAdvertById(context.WithValue(context.Background(), "requestId", uuid.NewV4().String()),
+				tt.args.advertId)
+
+			if tt.want.resp == "" {
+				suite.Assert().Nil(gotType)
+			} else {
+				suite.Assert().Equal(&tt.want.resp, gotType)
+			}
+			suite.Assert().Equal(tt.want.err, gotErr)
+			// suite.Assert().Equal(tt.want.wId, bId)
+			suite.Assert().NoError(suite.mock.ExpectationsWereMet())
+		})
+	}
+}
+
+func (suite *AdvertRepoTestSuite) setupMockGetTypeAdvertById(advId int64, advType models.AdvertTypeAdvert,
+	errExec1 error, expExec1 bool) {
+	if expExec1 {
+		query := `SELECT                   CASE
+	WHEN ath.house_id IS NOT NULL THEN 'House'
+	WHEN atf.flat_id IS NOT NULL THEN 'Flat'
+	ELSE 'None'
+END AS type_advert FROM advert AS a LEFT JOIN advert_type_house AS ath ON a.id=ath.advert_id LEFT JOIN advert_type_flat AS atf ON a.id=atf.advert_id WHERE a.id=$1`
+
+		escapedQuery := regexp.QuoteMeta(query)
+		rows := sqlmock.NewRows([]string{"adv_type"})
+		rows = rows.AddRow(advType)
+		suite.mock.ExpectQuery(escapedQuery).
+			WillReturnError(errExec1).WithArgs(advId).
+			WillReturnRows(rows)
+	}
+}
+
+func (suite *AdvertRepoTestSuite) TestChangeTypeAdvert() {
+	type args struct {
+		typeAdvert models.AdvertTypeAdvert
+		expBool    []bool  // 15
+		expError   []error // 15
+
+		expBoolCheck  []bool  // 2
+		expErrorCheck []error // 2
+		buildId       int64
+		advertId      int64
+		houseId       int64
+		flatId        int64
+	}
+	type want struct {
+		err error
+	}
+	errTest := errors.New("some error")
+	tests := []struct {
+		name string
+		args args
+		want want
+	}{
+		{
+			name: "fail ChangeTypeAdvert read advertType",
+			args: args{
+				typeAdvert:    models.AdvertTypeFlat,
+				advertId:      124,
+				houseId:       122,
+				buildId:       555,
+				flatId:        1221,
+				expBool:       []bool{true, false, false, false, false, false, false, false, false, false, false, false, false, false, false},
+				expError:      []error{errTest, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil},
+				expBoolCheck:  []bool{false, false},
+				expErrorCheck: []error{nil, nil},
+			},
+			want: want{
+				err: errTest,
+			},
+		},
+		{
+			name: "fail ChangeTypeAdvert querySelectBuildingIdByFlat",
+			args: args{
+				typeAdvert:    models.AdvertTypeFlat,
+				advertId:      124,
+				houseId:       122,
+				buildId:       555,
+				flatId:        1221,
+				expBool:       []bool{true, true, false, false, false, false, false, false, false, false, false, false, false, false, false},
+				expError:      []error{nil, errTest, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil},
+				expBoolCheck:  []bool{false, false},
+				expErrorCheck: []error{nil, nil},
+			},
+			want: want{
+				err: errTest,
+			},
+		},
+
+		{
+			name: "fail ChangeTypeAdvert queryDeleteFlatById",
+			args: args{
+				typeAdvert:    models.AdvertTypeFlat,
+				advertId:      124,
+				houseId:       122,
+				buildId:       555,
+				flatId:        1221,
+				expBool:       []bool{true, true, false, false, false, false, false, false, false, true, false, false, false, false, false},
+				expError:      []error{nil, nil, nil, nil, nil, nil, nil, nil, nil, errTest, nil, nil, nil, nil, nil},
+				expBoolCheck:  []bool{false, false},
+				expErrorCheck: []error{nil, nil},
+			},
+			want: want{
+				err: errTest,
+			},
+		},
+		{
+			name: "fail ChangeTypeAdvert queryDeleteAdvertTypeFlat",
+			args: args{
+				typeAdvert: models.AdvertTypeFlat,
+				advertId:   124,
+				houseId:    122,
+				buildId:    555,
+				flatId:     1221,
+				expBool: []bool{true, true, false, false, false,
+					false, false, false, false, true,
+					false, true, false, false, false},
+
+				expError: []error{nil, nil, nil, nil, nil,
+					nil, nil, nil, nil, nil,
+					nil, errTest, nil, nil, nil},
+
+				expBoolCheck:  []bool{false, false},
+				expErrorCheck: []error{nil, nil},
+			},
+			want: want{
+				err: errTest,
+			},
+		},
+
+		{
+			name: "fail ChangeTypeAdvert queryInsertHouse",
+			args: args{
+				typeAdvert: models.AdvertTypeFlat,
+				advertId:   124,
+				houseId:    122,
+				buildId:    555,
+				flatId:     1221,
+				// query querySelectBuildingIdByFlat querySelectBuildingIdByHouse queryInsertFlat queryInsertHouse
+				// queryInsertTypeFlat queryInsertTypeHouse queryRestoreFlatById queryRestoreHouseById queryDeleteFlatById
+				// queryDeleteHouseById queryDeleteAdvertTypeFlat queryDeleteAdvertTypeHouse queryRestoreAdvertTypeFlat queryRestoreAdvertTypeHouse
+				expBool: []bool{true, true, false, false, true,
+					false, false, false, false, true,
+					false, true, false, false, false},
+
+				expError: []error{nil, nil, nil, nil, errTest,
+					nil, nil, nil, nil, nil,
+					nil, nil, nil, nil, nil},
+
+				expBoolCheck:  []bool{true, false},
+				expErrorCheck: []error{errTest, nil},
+			},
+			want: want{
+				err: errTest,
+			},
+		},
+
+		{
+			name: "fail ChangeTypeAdvert queryInsertTypeHouse",
+			args: args{
+				typeAdvert: models.AdvertTypeFlat,
+				advertId:   124,
+				houseId:    122,
+				buildId:    555,
+				flatId:     1221,
+				// query querySelectBuildingIdByFlat querySelectBuildingIdByHouse queryInsertFlat queryInsertHouse
+				// queryInsertTypeFlat queryInsertTypeHouse queryRestoreFlatById queryRestoreHouseById queryDeleteFlatById
+				// queryDeleteHouseById queryDeleteAdvertTypeFlat queryDeleteAdvertTypeHouse queryRestoreAdvertTypeFlat queryRestoreAdvertTypeHouse
+				expBool: []bool{true, true, false, false, true,
+					false, true, false, false, true,
+					false, true, false, false, false},
+
+				expError: []error{nil, nil, nil, nil, nil,
+					nil, errTest, nil, nil, nil,
+					nil, nil, nil, nil, nil},
+
+				expBoolCheck:  []bool{true, false},
+				expErrorCheck: []error{errTest, nil},
+			},
+			want: want{
+				err: errTest,
+			},
+		},
+		/*
+			{
+				name: "fail ChangeTypeAdvert queryRestoreHouseById",
+				args: args{
+					typeAdvert: models.AdvertTypeFlat,
+					advertId:   124,
+					houseId:    122,
+					buildId:    555,
+					flatId:     1221,
+					// query querySelectBuildingIdByFlat querySelectBuildingIdByHouse queryInsertFlat queryInsertHouse
+					// queryInsertTypeFlat queryInsertTypeHouse queryRestoreFlatById queryRestoreHouseById queryDeleteFlatById
+					// queryDeleteHouseById queryDeleteAdvertTypeFlat queryDeleteAdvertTypeHouse queryRestoreAdvertTypeFlat queryRestoreAdvertTypeHouse
+					expBool: []bool{true, true, false, false, false,
+						false, false, false, true, true,
+						false, true, false, false, false},
+
+					expError: []error{nil, nil, nil, nil, nil,
+						nil, nil, nil, errTest, nil,
+						nil, nil, nil, nil, nil},
+
+					expBoolCheck:  []bool{true, false},
+					expErrorCheck: []error{nil, nil},
+				},
+				want: want{
+					err: errTest,
+				},
+			},
+
+		*/
+	}
+
+	for _, tt := range tests {
+		suite.Run(tt.name, func() {
+			suite.mock.ExpectBegin()
+			tx, err := suite.db.Begin()
+			if err != nil {
+				suite.T().Fatal("Error beginning transaction:", err)
+			}
+			suite.setupMockChangeTypeAdvert(tt.args.typeAdvert, tt.args.advertId, tt.args.buildId, tt.args.flatId, tt.args.houseId,
+				tt.args.expBool, tt.args.expError, tt.args.expBoolCheck, tt.args.expErrorCheck)
+			logger := zap.Must(zap.NewDevelopment())
+			rep := repo.NewRepository(suite.db, logger)
+			gotErr := rep.ChangeTypeAdvert(context.WithValue(context.Background(), "requestId", uuid.NewV4().String()),
+				tx, tt.args.advertId)
+
+			suite.Assert().Equal(tt.want.err, gotErr)
+			// suite.Assert().Equal(tt.want.wId, bId)
+			suite.Assert().NoError(suite.mock.ExpectationsWereMet())
+		})
+	}
+}
+
+func (suite *AdvertRepoTestSuite) setupMockChangeTypeAdvert(advertType models.AdvertTypeAdvert,
+	advertId, buildingId, flatId, HouseId int64, whatExp []bool,
+	expError []error, whatExpCheck []bool, expErrorCheck []error) {
+	if whatExp[0] {
+		query := `SELECT 			CASE
+	WHEN ath.house_id IS NOT NULL THEN 'House'
+	WHEN atf.flat_id IS NOT NULL THEN 'Flat'
+	ELSE 'None'
+END AS type_advert FROM advert AS a LEFT JOIN advert_type_flat AS atf ON a.id=atf.advert_id LEFT JOIN advert_type_house AS ath ON a.id=ath.advert_id WHERE a.id = $1;`
+
+		escapedQuery := regexp.QuoteMeta(query)
+		rows := sqlmock.NewRows([]string{"id"})
+		rows = rows.AddRow(advertType)
+
+		suite.mock.ExpectQuery(escapedQuery).
+			WillReturnError(expError[0]).WithArgs(sqlmock.AnyArg()).
+			WillReturnRows(rows)
+	}
+
+	if whatExp[1] {
+		querySelectBuildingIdByFlat := `SELECT b.id AS buildingid, f.id AS flatid  FROM advert AS a JOIN advert_type_flat AS at ON at.advert_id=a.id JOIN flat AS f ON f.id=at.flat_id JOIN building AS b ON f.building_id=b.id WHERE a.id=$1`
+
+		escapedQuery := regexp.QuoteMeta(querySelectBuildingIdByFlat)
+		rows := sqlmock.NewRows([]string{"bid", "fid"})
+		rows = rows.AddRow(buildingId, flatId)
+
+		suite.mock.ExpectQuery(escapedQuery).
+			WillReturnError(expError[1]).WithArgs(sqlmock.AnyArg()).
+			WillReturnRows(rows)
+	}
+
+	if whatExp[9] {
+		queryDeleteFlatById := `UPDATE flat SET is_deleted=true WHERE id=$1;`
+
+		escapedQuery := regexp.QuoteMeta(queryDeleteFlatById)
+		// rows := sqlmock.NewRows([]string{"id"})
+		// rows = rows.AddRow(HouseId)
+
+		suite.mock.ExpectExec(escapedQuery).
+			WillReturnError(expError[9]).WithArgs(sqlmock.AnyArg()).
+			WillReturnResult(sqlmock.NewResult(1, 1))
+	}
+
+	if whatExp[11] {
+		queryDeleteAdvertTypeFlat := `UPDATE advert_type_flat SET is_deleted=true WHERE advert_id=$1 AND flat_id=$2;`
+
+		escapedQuery := regexp.QuoteMeta(queryDeleteAdvertTypeFlat)
+		// rows := sqlmock.NewRows([]string{"id"})
+		// rows = rows.AddRow(HouseId)
+
+		suite.mock.ExpectExec(escapedQuery).
+			WillReturnError(expError[11]).WithArgs(sqlmock.AnyArg(), sqlmock.AnyArg()).
+			WillReturnResult(sqlmock.NewResult(1, 1))
+	}
+
+	if whatExpCheck[0] {
+		query := `SELECT h.id FROM advert AS a JOIN advert_type_house AS at ON a.id=at.advert_id JOIN house AS h ON h.id=at.house_id WHERE a.id = $1;`
+
+		escapedQuery := regexp.QuoteMeta(query)
+		rows := sqlmock.NewRows([]string{"id"})
+		rows = rows.AddRow(HouseId)
+
+		suite.mock.ExpectQuery(escapedQuery).
+			WillReturnError(expErrorCheck[0]).WithArgs(sqlmock.AnyArg()).
+			WillReturnRows(rows)
+	}
+
+	if whatExp[4] {
+		queryInsertHouse := `INSERT INTO house (building_id, ceiling_height, square_area, square_house, bedroom_count, status_area_house, cottage, status_home_house)
+	VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id`
+		escapedQuery := regexp.QuoteMeta(queryInsertHouse)
+		rows := sqlmock.NewRows([]string{"id"})
+		rows = rows.AddRow(HouseId)
+
+		suite.mock.ExpectQuery(escapedQuery).
+			WillReturnError(expError[4]).WithArgs(sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(),
+			sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg()).
+			WillReturnRows(rows)
+	}
+
+	if whatExp[6] {
+		queryInsertTypeHouse := `INSERT INTO advert_type_house (advert_id, house_id) VALUES ($1, $2);`
+
+		escapedQuery := regexp.QuoteMeta(queryInsertTypeHouse)
+		// rows := sqlmock.NewRows([]string{"id"})
+		// rows = rows.AddRow(HouseId)
+
+		suite.mock.ExpectExec(escapedQuery).
+			WillReturnError(expError[6]).WithArgs(sqlmock.AnyArg(), sqlmock.AnyArg()).
+			WillReturnResult(sqlmock.NewResult(1, 1))
+	}
+
+	if whatExp[10] {
+		queryDeleteHouseById := `UPDATE house SET is_deleted=true WHERE id=$1;`
+
+		escapedQuery := regexp.QuoteMeta(queryDeleteHouseById)
+		// rows := sqlmock.NewRows([]string{"id"})
+		// rows = rows.AddRow(HouseId)
+
+		suite.mock.ExpectExec(escapedQuery).
+			WillReturnError(expError[10]).WithArgs(sqlmock.AnyArg()).
+			WillReturnResult(sqlmock.NewResult(1, 1))
+	}
+
+	if whatExp[14] {
+		queryRestoreAdvertTypeHouse := `UPDATE advert_type_house SET is_deleted=false WHERE advert_id=$1 AND house_id=$2;`
+
+		escapedQuery := regexp.QuoteMeta(queryRestoreAdvertTypeHouse)
+		// rows := sqlmock.NewRows([]string{"id"})
+		// rows = rows.AddRow(HouseId)
+
+		suite.mock.ExpectExec(escapedQuery).
+			WillReturnError(expError[14]).WithArgs(sqlmock.AnyArg(), sqlmock.AnyArg()).
+			WillReturnResult(sqlmock.NewResult(1, 1))
+	}
+
+	if whatExp[2] {
+		querySelectBuildingIdByHouse := `SELECT b.id AS buildingid, h.id AS houseid  FROM advert AS a JOIN advert_type_house AS at ON at.advert_id=a.id JOIN house AS h ON h.id=at.house_id JOIN building AS b ON h.building_id=b.id WHERE a.id=$1`
+
+		escapedQuery := regexp.QuoteMeta(querySelectBuildingIdByHouse)
+		rows := sqlmock.NewRows([]string{"bid", "hid"})
+		rows = rows.AddRow(buildingId, HouseId)
+
+		suite.mock.ExpectQuery(escapedQuery).
+			WillReturnError(expError[2]).WithArgs(sqlmock.AnyArg()).
+			WillReturnRows(rows)
+	}
+	if whatExp[8] {
+		escapedQuery := `UPDATE house SET is_deleted=false WHERE id=$1;`
+
+		escapedQuery = regexp.QuoteMeta(escapedQuery)
+		rows := sqlmock.NewRows([]string{"id"})
+		rows = rows.AddRow(HouseId)
+
+		suite.mock.ExpectQuery(escapedQuery).
+			WillReturnError(expError[8]).WithArgs(sqlmock.AnyArg()).
+			WillReturnRows(rows)
+	}
+
+	if whatExp[12] {
+		queryDeleteAdvertTypeHouse := `UPDATE advert_type_house SET is_deleted=true WHERE advert_id=$1 AND house_id=$2;`
+
+		escapedQuery := regexp.QuoteMeta(queryDeleteAdvertTypeHouse)
+		// rows := sqlmock.NewRows([]string{"id"})
+		// rows = rows.AddRow(HouseId)
+
+		suite.mock.ExpectExec(escapedQuery).
+			WillReturnError(expError[12]).WithArgs(sqlmock.AnyArg(), sqlmock.AnyArg()).
+			WillReturnResult(sqlmock.NewResult(1, 1))
+	}
+
+	if whatExpCheck[1] {
+		query := `SELECT f.id FROM advert AS a JOIN advert_type_flat AS at ON a.id=at.advert_id JOIN flat AS f ON f.id=at.flat_id WHERE a.id = $1`
+
+		escapedQuery := regexp.QuoteMeta(query)
+		rows := sqlmock.NewRows([]string{"id"})
+		rows = rows.AddRow(flatId)
+
+		suite.mock.ExpectQuery(escapedQuery).
+			WillReturnError(expErrorCheck[1]).WithArgs(sqlmock.AnyArg()).
+			WillReturnRows(rows)
+	}
+
+	if whatExp[3] {
+		queryInsertFlat := `INSERT INTO flat (building_id, floor, ceiling_height, square_general, bedroom_count, square_residential, apartament)
+	VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id`
+
+		escapedQuery := regexp.QuoteMeta(queryInsertFlat)
+		rows := sqlmock.NewRows([]string{"id"})
+		rows = rows.AddRow(flatId)
+
+		suite.mock.ExpectQuery(escapedQuery).
+			WillReturnError(expError[3]).WithArgs(sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(),
+			sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg()).
+			WillReturnRows(rows)
+	}
+
+	if whatExp[5] {
+		queryInsertTypeFlat := `INSERT INTO advert_type_flat (advert_id, flat_id) VALUES ($1, $2);`
+
+		escapedQuery := regexp.QuoteMeta(queryInsertTypeFlat)
+		// rows := sqlmock.NewRows([]string{"id"})
+		// rows = rows.AddRow(HouseId)
+
+		suite.mock.ExpectExec(escapedQuery).
+			WillReturnError(expError[5]).WithArgs(sqlmock.AnyArg(), sqlmock.AnyArg()).
+			WillReturnResult(sqlmock.NewResult(1, 1))
+	}
+
+	if whatExp[7] {
+		queryRestoreFlatById := `UPDATE flat SET is_deleted=false WHERE id=$1;`
+
+		escapedQuery := regexp.QuoteMeta(queryRestoreFlatById)
+		rows := sqlmock.NewRows([]string{"id"})
+		rows = rows.AddRow(flatId)
+
+		suite.mock.ExpectQuery(escapedQuery).
+			WillReturnError(expError[7]).WithArgs(sqlmock.AnyArg()).
+			WillReturnRows(rows)
+	}
+
+	if whatExp[13] {
+		queryRestoreAdvertTypeFlat := `UPDATE advert_type_flat SET is_deleted=false WHERE advert_id=$1 AND flat_id=$2;`
+
+		escapedQuery := regexp.QuoteMeta(queryRestoreAdvertTypeFlat)
+		// rows := sqlmock.NewRows([]string{"id"})
+		// rows = rows.AddRow(HouseId)
+
+		suite.mock.ExpectExec(escapedQuery).
+			WillReturnError(expError[13]).WithArgs(sqlmock.AnyArg(), sqlmock.AnyArg()).
+			WillReturnResult(sqlmock.NewResult(1, 1))
+	}
+
+}
+
+/*
+func (suite *AdvertRepoTestSuite) TestGetHouseAdvertById() {
+	type args struct {
+		advertId  int64
+		errQuery1 error
+		expQuery1 bool
+	}
+	type want struct {
+		err  error
+		resp *models.AdvertData
+	}
+	tests := []struct {
+		name string
+		args args
+		want want
+	}{
+		{
+			name: "successful get type advert",
+			args: args{
+				advertId:  124,
+				errQuery1: nil,
+				expQuery1: true,
+			},
+			want: want{
+				err: nil,
+				resp: &models.AdvertData{
+					ID:         123,
+					AdvertType: "house",
+					Title:      "title",
+				},
+			},
+		},
+		{
+			name: "fail get type advert",
+			args: args{
+				advertId:  124,
+				errQuery1: errors.New("some error"),
+				expQuery1: true,
+			},
+			want: want{
+				err:  errors.New("some error"),
+				resp: nil,
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		suite.Run(tt.name, func() {
+			suite.mock.ExpectBegin()
+			_, err := suite.db.Begin()
+			if err != nil {
+				suite.T().Fatal("Error beginning transaction:", err)
+			}
+			suite.setupMockGetHouseAdvertById(tt.args.advertId, *tt.want.resp,
+				tt.args.errQuery1, tt.args.expQuery1)
+			logger := zap.Must(zap.NewDevelopment())
+			rep := repo.NewRepository(suite.db, logger)
+			ctx := context.WithValue(context.Background(), "requestId", uuid.NewV4().String())
+			ctx = context.WithValue(ctx, middleware.CookieName, 11112)
+			gotAdv, gotErr := rep.GetHouseAdvertById(ctx, tt.args.advertId)
+
+			if tt.want.resp == nil {
+				suite.Assert().Nil(gotAdv)
+			} else {
+				suite.Assert().Equal(tt.want.resp, gotAdv)
+			}
+
+			suite.Assert().Equal(tt.want.err, gotErr)
+			suite.Assert().NoError(suite.mock.ExpectationsWereMet())
+		})
+	}
+}
+
+func (suite *AdvertRepoTestSuite) setupMockGetHouseAdvertById(advId int64, advertData models.AdvertData,
+	errExec1 error, expExec1 bool) {
+	if expExec1 {
+		query := `
+	SELECT
+        a.id,
+        a.type_placement,
+        a.title,
+        a.description,
+        pc.price,
+        a.phone,
+        a.is_agent,
+		ad.metro,
+		hn.name,
+		s.name,
+		t.name,
+		p.name,
+		ST_AsText(ad.address_point::geometry),
+        h.ceiling_height,
+        h.square_area,
+        h.square_house,
+        h.bedroom_count,
+        h.status_area_house,
+        h.cottage,
+        h.status_home_house,
+        b.floor,
+        b.year_creation,
+        COALESCE(b.material_building, 'Brick') as material,
+        a.created_at,
+		CASE
+			WHEN fa.advert_id IS NOT NULL AND fa.is_deleted=false THEN true
+			ELSE false
+		END AS is_liked,
+        cx.id AS complexid,
+        c.photo AS companyphoto,
+        c.name AS companyname,
+        cx.name AS complexname
+    FROM
+        advert AS a
+    JOIN
+        advert_type_house AS at ON a.id = at.advert_id
+    JOIN
+        house AS h ON h.id = at.house_id
+    JOIN
+        building AS b ON h.building_id = b.id
+		JOIN address AS ad ON b.address_id=ad.id
+		JOIN house_name AS hn ON hn.id=ad.house_name_id
+		JOIN street AS s ON s.id=hn.street_id
+		JOIN town AS t ON t.id=s.town_id
+		JOIN province AS p ON p.id=t.province_id
+	LEFT JOIN
+		favourite_advert AS fa ON fa.advert_id=a.id AND fa.user_id=$2
+    LEFT JOIN
+        complex AS cx ON b.complex_id = cx.id
+    LEFT JOIN
+        company AS c ON cx.company_id = c.id
+    JOIN
+        LATERAL (
+            SELECT *
+            FROM price_change AS pc
+            WHERE pc.advert_id = a.id
+            ORDER BY pc.created_at DESC
+            LIMIT 1
+        ) AS pc ON TRUE
+    WHERE
+        a.id = $1 AND a.is_deleted = FALSE;`
+
+		escapedQuery := regexp.QuoteMeta(query)
+		rows := sqlmock.NewRows([]string{"adv_type"})
+		rows = rows.AddRow(advType)
+		suite.mock.ExpectQuery(escapedQuery).
+			WillReturnError(errExec1).WithArgs(advId, 11112).
+			WillReturnRows(rows)
+	}
+}
+/*
 /*
 	func (suite *UserRepoTestSuite) TestCreatePriceChange() {
 		type args struct {
