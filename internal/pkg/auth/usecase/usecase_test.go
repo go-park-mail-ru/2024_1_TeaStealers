@@ -1,12 +1,13 @@
 package usecase_test
 
-/*import (
+import (
 	"2024_1_TeaStealers/internal/models"
 	auth_mock "2024_1_TeaStealers/internal/pkg/auth/mock"
 	"2024_1_TeaStealers/internal/pkg/auth/usecase"
 	"2024_1_TeaStealers/internal/pkg/utils"
 	"context"
 	"errors"
+	"math/rand"
 	"testing"
 
 	"github.com/golang/mock/gomock"
@@ -15,13 +16,14 @@ package usecase_test
 	"go.uber.org/zap"
 )
 
+/*
 func TestSignUp(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
 	mockRepo := auth_mock.NewMockAuthRepo(ctrl)
 	usecase := usecase.NewAuthUsecase(mockRepo, &zap.Logger{})
-	id := uuid.NewV4()
+	id := rand.Int63()
 	dat := &models.UserSignUpData{
 		Email:    "my@mail.ru",
 		Phone:    "+123456",
@@ -90,6 +92,7 @@ func TestSignUp(t *testing.T) {
 		})
 	}
 }
+*/
 
 func TestLoginUser(t *testing.T) {
 	ctrl := gomock.NewController(t)
@@ -102,7 +105,7 @@ func TestLoginUser(t *testing.T) {
 		Login:    "+12345",
 		Password: "pass",
 	}
-	id := uuid.NewV4()
+	id := rand.Int63()
 
 	wUser := &models.User{
 		ID:           id,
@@ -158,4 +161,4 @@ func TestLoginUser(t *testing.T) {
 			}
 		})
 	}
-}*/
+}

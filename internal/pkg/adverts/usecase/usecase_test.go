@@ -1,6 +1,20 @@
 package usecase_test
 
-/*
+import (
+	"2024_1_TeaStealers/internal/models"
+	trans_mock "2024_1_TeaStealers/internal/models/mock"
+	adverts_mock "2024_1_TeaStealers/internal/pkg/adverts/mock"
+	"2024_1_TeaStealers/internal/pkg/adverts/usecase"
+	"context"
+	"testing"
+	"time"
+
+	"github.com/golang/mock/gomock"
+	"github.com/satori/uuid"
+	"github.com/stretchr/testify/assert"
+	"go.uber.org/zap"
+)
+
 func TestGetAdvertById(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
@@ -10,7 +24,7 @@ func TestGetAdvertById(t *testing.T) {
 	usecase := usecase.NewAdvertUsecase(mockRepo, logger)
 
 	advData := &models.AdvertData{
-		ID:           uuid.NewV4(),
+		ID:           123,
 		AdvertType:   "House",
 		TypeSale:     "Sale",
 		Title:        "Beautiful House for Sale",
@@ -43,7 +57,7 @@ func TestGetAdvertById(t *testing.T) {
 	}
 
 	type args struct {
-		idi uuid.UUID
+		id int64
 	}
 	type want struct {
 		adv *models.AdvertData
@@ -57,7 +71,7 @@ func TestGetAdvertById(t *testing.T) {
 		{
 			name: "successful GetAdvertById",
 			args: args{
-				idi: advData.ID,
+				id: advData.ID,
 			},
 			want: want{
 				adv: advData,
@@ -71,7 +85,10 @@ func TestGetAdvertById(t *testing.T) {
 			mockRepo.EXPECT().GetTypeAdvertById(gomock.Any(), gomock.Any()).Return(&a, nil)
 			mockRepo.EXPECT().GetHouseAdvertById(gomock.Any(), gomock.Any()).Return(tt.want.adv, nil)
 			mockRepo.EXPECT().SelectImages(gomock.Any(), gomock.Any()).Return(nil, nil)
-			_, goterr := usecase.GetAdvertById(context.WithValue(context.Background(), "requestId", uuid.NewV4().String()), tt.args.idi)
+			mockRepo.EXPECT().SelectPriceChanges(gomock.Any(), gomock.Any()).Return(nil, nil)
+			mockRepo.EXPECT().SelectCountLikes(gomock.Any(), gomock.Any()).Return(int64(123), nil)
+			mockRepo.EXPECT().SelectCountViews(gomock.Any(), gomock.Any()).Return(int64(123), nil)
+			_, goterr := usecase.GetAdvertById(context.WithValue(context.Background(), "requestId", uuid.NewV4().String()), tt.args.id)
 
 			assert.Equal(t, tt.want.err, goterr)
 
@@ -88,7 +105,7 @@ func TestLUpdateAdvertById(t *testing.T) {
 	usecase := usecase.NewAdvertUsecase(mockRepo, logger)
 
 	advData := &models.AdvertData{
-		ID:           uuid.NewV4(),
+		ID:           123,
 		AdvertType:   "House",
 		TypeSale:     "Sale",
 		Title:        "Beautiful House for Sale",
@@ -121,7 +138,7 @@ func TestLUpdateAdvertById(t *testing.T) {
 	}
 
 	type args struct {
-		idi uuid.UUID
+		id int64
 	}
 	type want struct {
 		adv *models.AdvertData
@@ -135,7 +152,7 @@ func TestLUpdateAdvertById(t *testing.T) {
 		{
 			name: "successful GetAdvertById",
 			args: args{
-				idi: advData.ID,
+				id: advData.ID,
 			},
 			want: want{
 				adv: advData,
@@ -172,7 +189,7 @@ func TestDeleteAdvertById(t *testing.T) {
 	usecase := usecase.NewAdvertUsecase(mockRepo, logger)
 
 	advData := &models.AdvertData{
-		ID:           uuid.NewV4(),
+		ID:           123,
 		AdvertType:   "House",
 		TypeSale:     "Sale",
 		Title:        "Beautiful House for Sale",
@@ -205,7 +222,7 @@ func TestDeleteAdvertById(t *testing.T) {
 	}
 
 	type args struct {
-		idi uuid.UUID
+		idi int64
 	}
 	type want struct {
 		adv *models.AdvertData
@@ -240,7 +257,7 @@ func TestDeleteAdvertById(t *testing.T) {
 			mockTr.EXPECT().Commit().Return(nil)
 			mockTr.EXPECT().Rollback().Return(nil)
 
-			goterr := usecase.DeleteAdvertById(context.WithValue(context.Background(), "requestId", uuid.NewV4().String()), uuid.NewV4())
+			goterr := usecase.DeleteAdvertById(context.WithValue(context.Background(), "requestId", uuid.NewV4().String()), 123)
 			// assert.Equal(t, tt.want.adv, gotAdv)
 			assert.Equal(t, tt.want.err, goterr)
 			ctrl2.Finish()
@@ -260,7 +277,7 @@ func TestGetSquareAdvertsList(t *testing.T) {
 	ctx := context.WithValue(context.Background(), "requestId", uuid.NewV4().String())
 	// filter := AdvertFilter{ /* populate filter if needed */ /*}
 	mockResult := &models.AdvertSquareData{
-		ID:           uuid.NewV4(),
+		ID:           123,
 		TypeAdvert:   "House",
 		Photo:        "example.jpg",
 		TypeSale:     "Sale",
@@ -303,6 +320,7 @@ func TestGetRectangleAdvertsList(t *testing.T) {
 	// assert.Equal(t, adverts, result)
 }
 
+/*
 func TestGetExistBuildingsByAddress(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
@@ -325,6 +343,7 @@ func TestGetExistBuildingsByAddress(t *testing.T) {
 	assert.NoError(t, err)
 	// assert.Equal(t, adverts, result)
 }
+*/
 
 func TestGetRectangleAdvertsByUserId(t *testing.T) {
 	ctrl := gomock.NewController(t)
@@ -342,7 +361,7 @@ func TestGetRectangleAdvertsByUserId(t *testing.T) {
 	mockRepo.EXPECT().GetRectangleAdvertsByUserId(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return([]*models.AdvertRectangleData{}, nil)
 
 	// Call the method under test
-	_, err := usecase.GetRectangleAdvertsByUserId(ctx, 2, 3, uuid.NewV4())
+	_, err := usecase.GetRectangleAdvertsByUserId(ctx, 2, 3, 123)
 
 	// Assert the results
 	assert.NoError(t, err)
@@ -365,9 +384,9 @@ func TestGetRectangleAdvertsByComplexId(t *testing.T) {
 	mockRepo.EXPECT().GetRectangleAdvertsByComplexId(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return([]*models.AdvertRectangleData{}, nil)
 
 	// Call the method under test
-	_, err := usecase.GetRectangleAdvertsByComplexId(ctx, 2, 3, uuid.NewV4())
+	_, err := usecase.GetRectangleAdvertsByComplexId(ctx, 2, 3, 123)
 
 	// Assert the results
 	assert.NoError(t, err)
 	// assert.Equal(t, adverts, result)
-}*/
+}
