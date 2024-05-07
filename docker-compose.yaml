@@ -38,6 +38,9 @@ services:
     env_file:
       - ./.env
     container_name: ${GRPC_AUTH_CONTAINER_IP}
+    build:
+      context: .
+      dockerfile: ./build/auth.Dockerfile
     restart: always
     expose:
       - "${GRPC_AUTH_PORT}"
@@ -50,6 +53,9 @@ services:
     env_file:
       - ./.env
     container_name: ${GRPC_USER_CONTAINER_IP}
+    build:
+      context: .
+      dockerfile: ./build/user.Dockerfile
     restart: always
     expose:
       - "${GRPC_USER_PORT}"
@@ -62,6 +68,9 @@ services:
     env_file:
        - ./.env
     container_name: ${GRPC_ADVERT_CONTAINER_IP}
+    build:
+      context: .
+      dockerfile: ./build/advert.Dockerfile
     restart: always
     expose:
       - "${GRPC_ADVERT_PORT}"
