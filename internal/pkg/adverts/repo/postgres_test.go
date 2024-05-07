@@ -2039,6 +2039,47 @@ END AS type_advert FROM advert AS a LEFT JOIN advert_type_flat AS atf ON a.id=at
 
 }
 
+// 		prepare   func(f *fields, a *args, w *want) *httptest.ResponseRecorder
+/*
+type args struct {
+		typeAdvert models.AdvertTypeAdvert
+		expBool    []bool  // 15
+		expError   []error // 15
+
+		expBoolCheck  []bool  // 2
+		expErrorCheck []error // 2
+		buildId       int64
+		advertId      int64
+		houseId       int64
+		flatId        int64
+	}
+	type want struct {
+		err error
+	}
+	errTest := errors.New("some error")
+	tests := []struct {
+		name string
+		args args
+		want want
+	}{
+		{
+			name: "fail ChangeTypeAdvert read advertType",
+			args: args{
+				typeAdvert:    models.AdvertTypeFlat,
+				advertId:      124,
+				houseId:       122,
+				buildId:       555,
+				flatId:        1221,
+				expBool:       []bool{true, false, false, false, false, false, false, false, false, false, false, false, false, false, false},
+				expError:      []error{errTest, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil},
+				expBoolCheck:  []bool{false, false},
+				expErrorCheck: []error{nil, nil},
+			},
+			want: want{
+				err: errTest,
+			},
+		},
+*/
 /*
 func (suite *AdvertRepoTestSuite) TestGetHouseAdvertById() {
 	type args struct {
