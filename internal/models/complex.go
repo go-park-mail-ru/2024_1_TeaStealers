@@ -3,8 +3,6 @@ package models
 import (
 	"html"
 	"time"
-
-	"github.com/satori/uuid"
 )
 
 // ClassHouse represents the class of a house in a complex.
@@ -26,9 +24,9 @@ const (
 // Complex represents a complex entity.
 type Complex struct {
 	// ID is the unique identifier for the complex.
-	ID uuid.UUID `json:"id"`
+	ID int64 `json:"id"`
 	// CompanyID is the identifier of the company that owns the complex.
-	CompanyId uuid.UUID `json:"companyId"`
+	CompanyId int64 `json:"companyId"`
 	// Name is the name of the complex.
 	Name string `json:"name"`
 	// Address is the address of the complex.
@@ -70,7 +68,7 @@ func (compl *Complex) Sanitize() {
 // ComplexCreate represents a data for creation complex.
 type ComplexCreateData struct {
 	// CompanyID is the identifier of company for the complex.
-	CompanyId uuid.UUID `json:"companyId"`
+	CompanyId int64 `json:"companyId"`
 	// Name is the name of the complex.
 	Name string `json:"name"`
 	// Address is the address of the complex.
@@ -105,9 +103,9 @@ func (complCrDat *ComplexCreateData) Sanitize() {
 // ComplexData represents a complex information.
 type ComplexData struct {
 	// ID is the unique identifier for the complex.
-	ID uuid.UUID `json:"id"`
+	ID int64 `json:"id"`
 	// CompanyID is the identifier of the company that owns the complex.
-	CompanyId uuid.UUID `json:"companyId"`
+	CompanyId int64 `json:"companyId"`
 	// Name is the name of the complex.
 	Name string `json:"name"`
 	// Address is the address of the complex.

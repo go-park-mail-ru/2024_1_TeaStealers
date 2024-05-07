@@ -3,10 +3,12 @@ package usecase
 import (
 	"2024_1_TeaStealers/internal/models"
 	"2024_1_TeaStealers/internal/pkg/images"
+	"context"
 	"fmt"
 	"io"
 	"os"
 	"path/filepath"
+	"strconv"
 
 	"github.com/satori/uuid"
 	"go.uber.org/zap"
@@ -24,10 +26,10 @@ func NewImageUsecase(repo images.ImageRepo, logger *zap.Logger) *ImageUsecase {
 }
 
 // UploadImage upload image for advert
-func (u *ImageUsecase) UploadImage(file io.Reader, fileType string, advertUUID uuid.UUID) (*models.ImageResp, error) {
+func (u *ImageUsecase) UploadImage(ctx context.Context, file io.Reader, fileType string, advertID int64) (*models.ImageResp, error) {
 	newId := uuid.NewV4()
 	fileName := newId.String() + fileType
-	subDirectory := filepath.Join("adverts", advertUUID.String())
+	subDirectory := filepath.Join("adverts", strconv.FormatInt(advertID, 10))
 	directory := filepath.Join(os.Getenv("DOCKER_DIR"), subDirectory)
 	if err := os.MkdirAll(directory, 0755); err != nil {
 		return nil, err
@@ -46,12 +48,11 @@ func (u *ImageUsecase) UploadImage(file io.Reader, fileType string, advertUUID u
 		return nil, err
 	}
 	newImage := &models.Image{
-		ID:       newId,
-		AdvertID: advertUUID,
+		AdvertID: advertID,
 		Photo:    subDirectory + "/" + fileName,
 		Priority: 1,
 	}
-	image, err := u.repo.StoreImage(newImage)
+	image, err := u.repo.StoreImage(ctx, newImage)
 	if err != nil {
 		return nil, err
 	}
@@ -59,17 +60,18 @@ func (u *ImageUsecase) UploadImage(file io.Reader, fileType string, advertUUID u
 }
 
 // GetAdvertImages return list of images for advert
-func (u *ImageUsecase) GetAdvertImages(advertId uuid.UUID) ([]*models.ImageResp, error) {
-	imagesList, err := u.repo.SelectImages(advertId)
+func (u *ImageUsecase) GetAdvertImages(ctx context.Context, advertId int64) ([]*models.ImageResp, error) {
+	imagesList, err := u.repo.SelectImages(ctx, advertId)
 	if err != nil {
 		return nil, err
 	}
+
 	return imagesList, nil
 }
 
 // DeleteImage delete image bby id and return new list images
-func (u *ImageUsecase) DeleteImage(imageId uuid.UUID) ([]*models.ImageResp, error) {
-	imagesList, err := u.repo.DeleteImage(imageId)
+func (u *ImageUsecase) DeleteImage(ctx context.Context, imageId int64) ([]*models.ImageResp, error) {
+	imagesList, err := u.repo.DeleteImage(ctx, imageId)
 	if err != nil {
 		return nil, err
 	}

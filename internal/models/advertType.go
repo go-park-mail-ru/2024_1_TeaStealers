@@ -29,6 +29,26 @@ type AdvertType struct {
 	IsDeleted bool `json:"-"`
 }
 
+// AdvertType represents an advertisement type flat.
+type HouseTypeAdvert struct {
+	// HouseID of the advert type.
+	HouseID int64 `json:"houseId"`
+	// AdvertID of the advert type.
+	AdvertID int64 `json:"advertId"`
+	// IsDeleted is a flag indicating if the advert type is deleted.
+	IsDeleted bool `json:"-"`
+}
+
+// AdvertType represents an advertisement type flat.
+type FlatTypeAdvert struct {
+	// FlatID of the advert type.
+	FlatID int64 `json:"flatId"`
+	// AdvertID of the advert type.
+	AdvertID int64 `json:"advertId"`
+	// IsDeleted is a flag indicating if the advert type is deleted.
+	IsDeleted bool `json:"-"`
+}
+
 func (advType *AdvertType) Sanitize() {
 	advType.AdvertType = AdvertTypeAdvert(html.EscapeString(string(advType.AdvertType)))
 }

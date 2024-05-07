@@ -1,0 +1,5 @@
+CREATE TABLE IF NOT EXISTS house_name (
+    id BIGINT NOT NULL GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    street_id BIGINT NOT NULL REFERENCES street(id),
+    name TEXT CONSTRAINT name_length CHECK ( char_length(name) <= 40) NOT NULL
+);

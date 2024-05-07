@@ -55,7 +55,13 @@ func (h *AuthClientHandler) SignUp(w http.ResponseWriter, r *http.Request) {
 	}
 	data.Sanitize()
 
+<<<<<<< HEAD:internal/pkg/auth/delivery/http/http.go
 	TokenExp, err := h.client.SignUp(ctx, &genAuth.SignUpRequest{Email: data.Email, Phone: data.Phone, Password: data.Password})
+=======
+	data.Sanitize()
+
+	newUser, token, exp, err := h.uc.SignUp(ctx, &data)
+>>>>>>> dev:internal/pkg/auth/delivery/http.go
 	if err != nil {
 		utils.LogErrorResponse(h.logger, ctx.Value("requestId").(string), utils.DeliveryLayer, SignUpMethod, err, http.StatusConflict)
 		utils.WriteError(w, http.StatusConflict, err.Error())
@@ -162,7 +168,7 @@ func (h *AuthClientHandler) CheckAuth(w http.ResponseWriter, r *http.Request) {
 		utils.WriteError(w, http.StatusUnauthorized, "token not found")
 		return
 	}
-	uuidUser, ok := idUser.(uuid.UUID)
+	uuidUser, ok := idUser.(int64)
 	if !ok {
 		utils.LogErrorResponse(h.logger, ctx.Value("requestId").(string), utils.DeliveryLayer, CheckAuthMethod, errors.New("user id is not a string"), http.StatusInternalServerError)
 		utils.WriteError(w, http.StatusInternalServerError, "user id is not a string")

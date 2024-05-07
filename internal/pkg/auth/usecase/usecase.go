@@ -9,7 +9,6 @@ import (
 	"errors"
 	"time"
 
-	"github.com/satori/uuid"
 	"go.uber.org/zap"
 )
 
@@ -27,7 +26,6 @@ func NewAuthUsecase(repo auth.AuthRepo, logger *zap.Logger) *AuthUsecase {
 // SignUp handles the user registration process.
 func (u *AuthUsecase) SignUp(ctx context.Context, data *models.UserSignUpData) (*models.User, string, time.Time, error) {
 	newUser := &models.User{
-		ID:           uuid.NewV4(),
 		Email:        data.Email,
 		Phone:        data.Phone,
 		PasswordHash: utils.GenerateHashString(data.Password),
@@ -39,6 +37,7 @@ func (u *AuthUsecase) SignUp(ctx context.Context, data *models.UserSignUpData) (
 		// utils.LogError(u.logger, ctx.Value("requestId").(string), utils.UsecaseLayer, auth.SignUpMethod, err)
 		return nil, "", time.Now(), err
 	}
+	newUser.ID = userResponse.ID
 
 	token, exp, err := jwt.GenerateToken(newUser)
 	if err != nil {
@@ -72,7 +71,21 @@ func (u *AuthUsecase) Login(ctx context.Context, data *models.UserLoginData) (*m
 }
 
 // CheckAuth checking autorizing
+<<<<<<< HEAD
 func (u *AuthUsecase) CheckAuth(ctx context.Context, id uuid.UUID, jwtLevel int) error {
+=======
+func (u *AuthUsecase) CheckAuth(ctx context.Context, idUser int64) error {
+	if _, err := u.repo.GetUserLevelById(ctx, idUser); err != nil {
+		utils.LogError(u.logger, ctx.Value("requestId").(string), utils.UsecaseLayer, auth.CheckAuthMethod, err)
+		return errors.New("user not found")
+	}
+
+	utils.LogSucces(u.logger, ctx.Value("requestId").(string), utils.UsecaseLayer, auth.CheckAuthMethod)
+	return nil
+}
+
+func (u *AuthUsecase) GetUserLevelById(ctx context.Context, id int64, jwtLevel int) error {
+>>>>>>> dev
 	level, err := u.repo.GetUserLevelById(ctx, id)
 	if err != nil {
 		// utils.LogError(u.logger, ctx.Value("requestId").(string), utils.UsecaseLayer, auth.GetUserLevelByIdMethod, err)

@@ -11,7 +11,6 @@ import (
 	time "time"
 
 	gomock "github.com/golang/mock/gomock"
-	uuid "github.com/satori/uuid"
 )
 
 // MockAuthUsecase is a mock of AuthUsecase interface.
@@ -38,7 +37,7 @@ func (m *MockAuthUsecase) EXPECT() *MockAuthUsecaseMockRecorder {
 }
 
 // CheckAuth mocks base method.
-func (m *MockAuthUsecase) CheckAuth(arg0 context.Context, arg1 uuid.UUID) error {
+func (m *MockAuthUsecase) CheckAuth(arg0 context.Context, arg1 int64) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "CheckAuth", arg0, arg1)
 	ret0, _ := ret[0].(error)
@@ -52,7 +51,7 @@ func (mr *MockAuthUsecaseMockRecorder) CheckAuth(arg0, arg1 interface{}) *gomock
 }
 
 // GetUserLevelById mocks base method.
-func (m *MockAuthUsecase) GetUserLevelById(ctx context.Context, id uuid.UUID, level int) error {
+func (m *MockAuthUsecase) GetUserLevelById(ctx context.Context, id int64, level int) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetUserLevelById", ctx, id, level)
 	ret0, _ := ret[0].(error)
@@ -168,7 +167,7 @@ func (mr *MockAuthRepoMockRecorder) GetUserByLogin(ctx, login interface{}) *gomo
 }
 
 // GetUserLevelById mocks base method.
-func (m *MockAuthRepo) GetUserLevelById(ctx context.Context, id uuid.UUID) (int, error) {
+func (m *MockAuthRepo) GetUserLevelById(ctx context.Context, id int64) (int, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetUserLevelById", ctx, id)
 	ret0, _ := ret[0].(int)

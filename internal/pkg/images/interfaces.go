@@ -4,20 +4,20 @@ package images
 
 import (
 	"2024_1_TeaStealers/internal/models"
-	"github.com/satori/uuid"
+	"context"
 	"io"
 )
 
 // ImageUsecase represents the usecase interface for images for advert.
 type ImageUsecase interface {
-	UploadImage(io.Reader, string, uuid.UUID) (*models.ImageResp, error)
-	GetAdvertImages(uuid.UUID) ([]*models.ImageResp, error)
-	DeleteImage(uuid.UUID) ([]*models.ImageResp, error)
+	UploadImage(context.Context, io.Reader, string, int64) (*models.ImageResp, error)
+	GetAdvertImages(context.Context, int64) ([]*models.ImageResp, error)
+	DeleteImage(context.Context, int64) ([]*models.ImageResp, error)
 }
 
 // ImagesRepo represents the repository interface for images for advert.
 type ImageRepo interface {
-	StoreImage(*models.Image) (*models.ImageResp, error)
-	SelectImages(uuid.UUID) ([]*models.ImageResp, error)
-	DeleteImage(uuid.UUID) ([]*models.ImageResp, error)
+	StoreImage(context.Context, *models.Image) (*models.ImageResp, error)
+	SelectImages(context.Context, int64) ([]*models.ImageResp, error)
+	DeleteImage(context.Context, int64) ([]*models.ImageResp, error)
 }

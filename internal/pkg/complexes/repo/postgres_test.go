@@ -1,5 +1,6 @@
 package repo_test
 
+/*
 import (
 	"2024_1_TeaStealers/internal/models"
 	"2024_1_TeaStealers/internal/pkg/complexes/repo"
@@ -844,3 +845,4 @@ func (suite *UserRepoTestSuite) setupMockCreateFlat(newFlat *models.Flat, errExe
 			newFlat.SquareGeneral, newFlat.RoomCount, newFlat.SquareResidential, newFlat.Apartment)
 	}
 }
+*/

@@ -9,8 +9,6 @@ import (
 	"path/filepath"
 	"slices"
 	"strings"
-
-	"github.com/satori/uuid"
 )
 
 // UserHandlerPhoto handles HTTP requests for user.
@@ -24,14 +22,38 @@ func NewUserHandlerPhoto(uc users.UserUsecase) *UserHandlerPhoto {
 	return &UserHandlerPhoto{uc: uc}
 }
 
+<<<<<<< HEAD:internal/pkg/users/delivery/http/http_photo.go
 func (h *UserHandlerPhoto) UpdateUserPhoto(w http.ResponseWriter, r *http.Request) {
+=======
+func (h *UserHandler) GetCurUser(w http.ResponseWriter, r *http.Request) {
+	id := r.Context().Value(middleware.CookieName)
+	idInt64, ok := id.(int64)
+	if !ok {
+		utils.WriteError(w, http.StatusBadRequest, "incorrect id")
+		return
+	}
+	userInfo, err := h.uc.GetUser(r.Context(), idInt64)
+	if err != nil {
+		utils.WriteError(w, http.StatusBadRequest, "user is not exists")
+		return
+	}
+	userInfo.Sanitize()
+
+	if err := utils.WriteResponse(w, http.StatusOK, userInfo); err != nil {
+		utils.WriteError(w, http.StatusInternalServerError, "error write response")
+		return
+	}
+}
+
+func (h *UserHandler) UpdateUserPhoto(w http.ResponseWriter, r *http.Request) {
+>>>>>>> dev:internal/pkg/users/delivery/http.go
 	_, err := r.Cookie("csrftoken")
 	if err != nil {
 		utils.WriteError(w, http.StatusUnauthorized, "csrf cookie not found")
 		return
 	}
 	id := r.Context().Value(middleware.CookieName)
-	UUID, ok := id.(uuid.UUID)
+	idInt64, ok := id.(int64)
 	if !ok {
 		utils.WriteError(w, http.StatusBadRequest, "incorrect id")
 		return
@@ -55,7 +77,7 @@ func (h *UserHandlerPhoto) UpdateUserPhoto(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	fileName, err := h.uc.UpdateUserPhoto(r.Context(), file, fileType, UUID)
+	fileName, err := h.uc.UpdateUserPhoto(r.Context(), file, fileType, idInt64)
 	if err != nil {
 		utils.WriteError(w, http.StatusBadRequest, "failed upload file")
 		return
@@ -73,12 +95,12 @@ func (h *UserHandlerPhoto) DeleteUserPhoto(w http.ResponseWriter, r *http.Reques
 		return
 	}
 	id := r.Context().Value(middleware.CookieName)
-	UUID, ok := id.(uuid.UUID)
+	idInt64, ok := id.(int64)
 	if !ok {
 		utils.WriteError(w, http.StatusBadRequest, "incorrect id")
 		return
 	}
-	if err := h.uc.DeleteUserPhoto(r.Context(), UUID); err != nil {
+	if err := h.uc.DeleteUserPhoto(r.Context(), idInt64); err != nil {
 		utils.WriteError(w, http.StatusBadRequest, "error delete avatar")
 		return
 	}
@@ -94,7 +116,7 @@ func (h *UserHandlerPhoto) UpdateUserInfo(w http.ResponseWriter, r *http.Request
 		utils.WriteError(w, http.StatusUnauthorized, "csrf cookie not found")
 		return
 	}
-	id, ok := r.Context().Value(middleware.CookieName).(uuid.UUID)
+	id, ok := r.Context().Value(middleware.CookieName).(int64)
 	if !ok {
 		utils.WriteError(w, http.StatusBadRequest, "incorrect id")
 		return
@@ -118,3 +140,40 @@ func (h *UserHandlerPhoto) UpdateUserInfo(w http.ResponseWriter, r *http.Request
 		utils.WriteError(w, http.StatusInternalServerError, "error write response")
 	}
 }
+<<<<<<< HEAD:internal/pkg/users/delivery/http/http_photo.go
+=======
+
+func (h *UserHandler) UpdateUserPassword(w http.ResponseWriter, r *http.Request) {
+	_, err := r.Cookie("csrftoken")
+	if err != nil {
+		utils.WriteError(w, http.StatusUnauthorized, "csrf cookie not found")
+		return
+	}
+	id := r.Context().Value(middleware.CookieName)
+	idInt64, ok := id.(int64)
+	if !ok {
+		utils.WriteError(w, http.StatusBadRequest, "incorrect id")
+		return
+	}
+	data := &models.UserUpdatePassword{
+		ID: idInt64,
+	}
+
+	if err := utils.ReadRequestData(r, &data); err != nil {
+		utils.WriteError(w, http.StatusBadRequest, "incorrect data format")
+		return
+	}
+	data.Sanitize()
+
+	token, exp, err := h.uc.UpdateUserPassword(r.Context(), data)
+	if err != nil {
+		utils.WriteError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	http.SetCookie(w, jwt.TokenCookie(middleware.CookieName, token, exp))
+
+	if err := utils.WriteResponse(w, http.StatusOK, "success update password"); err != nil {
+		utils.WriteError(w, http.StatusInternalServerError, "error write response")
+	}
+}
+>>>>>>> dev:internal/pkg/users/delivery/http.go

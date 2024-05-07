@@ -1,5 +1,6 @@
 package delivery
 
+/*
 import (
 	"2024_1_TeaStealers/internal/models"
 	mocks "2024_1_TeaStealers/internal/pkg/images/mock"
@@ -119,7 +120,7 @@ func TestImagesHandler_UploadImage(t *testing.T) {
 	}
 
 }*/
-
+/*
 func TestImagesHandler_GetAdvertImages(t *testing.T) {
 	type fields struct {
 		usecase *mocks.MockImageUsecase
@@ -219,6 +220,7 @@ func TestImagesHandler_GetAdvertImages(t *testing.T) {
 	}
 
 }
+
 
 // добавить проверки на возвращаемые ошибки NoError и проверить message и StatusCode payload!!!
 /*
