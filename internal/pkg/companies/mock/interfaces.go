@@ -11,7 +11,6 @@ import (
 	reflect "reflect"
 
 	gomock "github.com/golang/mock/gomock"
-	uuid "github.com/satori/uuid"
 )
 
 // MockCompanyUsecase is a mock of CompanyUsecase interface.
@@ -53,7 +52,7 @@ func (mr *MockCompanyUsecaseMockRecorder) CreateCompany(ctx, data interface{}) *
 }
 
 // GetCompanyById mocks base method.
-func (m *MockCompanyUsecase) GetCompanyById(ctx context.Context, id uuid.UUID) (*models.CompanyData, error) {
+func (m *MockCompanyUsecase) GetCompanyById(ctx context.Context, id int64) (*models.CompanyData, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetCompanyById", ctx, id)
 	ret0, _ := ret[0].(*models.CompanyData)
@@ -68,7 +67,7 @@ func (mr *MockCompanyUsecaseMockRecorder) GetCompanyById(ctx, id interface{}) *g
 }
 
 // UpdateCompanyPhoto mocks base method.
-func (m *MockCompanyUsecase) UpdateCompanyPhoto(file io.Reader, fileType string, id uuid.UUID) (string, error) {
+func (m *MockCompanyUsecase) UpdateCompanyPhoto(file io.Reader, fileType string, id int64) (string, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "UpdateCompanyPhoto", file, fileType, id)
 	ret0, _ := ret[0].(string)
@@ -121,7 +120,7 @@ func (mr *MockCompanyRepoMockRecorder) CreateCompany(ctx, company interface{}) *
 }
 
 // GetCompanyById mocks base method.
-func (m *MockCompanyRepo) GetCompanyById(ctx context.Context, companyId uuid.UUID) (*models.CompanyData, error) {
+func (m *MockCompanyRepo) GetCompanyById(ctx context.Context, companyId int64) (*models.CompanyData, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetCompanyById", ctx, companyId)
 	ret0, _ := ret[0].(*models.CompanyData)
@@ -136,7 +135,7 @@ func (mr *MockCompanyRepoMockRecorder) GetCompanyById(ctx, companyId interface{}
 }
 
 // UpdateCompanyPhoto mocks base method.
-func (m *MockCompanyRepo) UpdateCompanyPhoto(id uuid.UUID, fileName string) (string, error) {
+func (m *MockCompanyRepo) UpdateCompanyPhoto(id int64, fileName string) (string, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "UpdateCompanyPhoto", id, fileName)
 	ret0, _ := ret[0].(string)
