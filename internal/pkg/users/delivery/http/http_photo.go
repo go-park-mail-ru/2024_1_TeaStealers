@@ -1,8 +1,7 @@
-package delivery
+package http
 
 import (
 	"2024_1_TeaStealers/internal/models"
-	"2024_1_TeaStealers/internal/pkg/jwt"
 	"2024_1_TeaStealers/internal/pkg/middleware"
 	"2024_1_TeaStealers/internal/pkg/users"
 	"2024_1_TeaStealers/internal/pkg/utils"
@@ -12,17 +11,20 @@ import (
 	"strings"
 )
 
-// UserHandler handles HTTP requests for user.
-type UserHandler struct {
+// UserHandlerPhoto handles HTTP requests for user.
+type UserHandlerPhoto struct {
 	// uc represents the usecase interface for user.
 	uc users.UserUsecase
 }
 
-// NewUserHandler creates a new instance of UserHandler.
-func NewUserHandler(uc users.UserUsecase) *UserHandler {
-	return &UserHandler{uc: uc}
+// NewUserHandlerPhoto creates a new instance of UserHandler.
+func NewUserHandlerPhoto(uc users.UserUsecase) *UserHandlerPhoto {
+	return &UserHandlerPhoto{uc: uc}
 }
 
+<<<<<<< HEAD:internal/pkg/users/delivery/http/http_photo.go
+func (h *UserHandlerPhoto) UpdateUserPhoto(w http.ResponseWriter, r *http.Request) {
+=======
 func (h *UserHandler) GetCurUser(w http.ResponseWriter, r *http.Request) {
 	id := r.Context().Value(middleware.CookieName)
 	idInt64, ok := id.(int64)
@@ -44,6 +46,7 @@ func (h *UserHandler) GetCurUser(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *UserHandler) UpdateUserPhoto(w http.ResponseWriter, r *http.Request) {
+>>>>>>> dev:internal/pkg/users/delivery/http.go
 	_, err := r.Cookie("csrftoken")
 	if err != nil {
 		utils.WriteError(w, http.StatusUnauthorized, "csrf cookie not found")
@@ -85,7 +88,7 @@ func (h *UserHandler) UpdateUserPhoto(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (h *UserHandler) DeleteUserPhoto(w http.ResponseWriter, r *http.Request) {
+func (h *UserHandlerPhoto) DeleteUserPhoto(w http.ResponseWriter, r *http.Request) {
 	_, err := r.Cookie("csrftoken")
 	if err != nil {
 		utils.WriteError(w, http.StatusUnauthorized, "csrf cookie not found")
@@ -107,7 +110,7 @@ func (h *UserHandler) DeleteUserPhoto(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (h *UserHandler) UpdateUserInfo(w http.ResponseWriter, r *http.Request) {
+func (h *UserHandlerPhoto) UpdateUserInfo(w http.ResponseWriter, r *http.Request) {
 	_, err := r.Cookie("csrftoken")
 	if err != nil {
 		utils.WriteError(w, http.StatusUnauthorized, "csrf cookie not found")
@@ -137,6 +140,8 @@ func (h *UserHandler) UpdateUserInfo(w http.ResponseWriter, r *http.Request) {
 		utils.WriteError(w, http.StatusInternalServerError, "error write response")
 	}
 }
+<<<<<<< HEAD:internal/pkg/users/delivery/http/http_photo.go
+=======
 
 func (h *UserHandler) UpdateUserPassword(w http.ResponseWriter, r *http.Request) {
 	_, err := r.Cookie("csrftoken")
@@ -171,3 +176,4 @@ func (h *UserHandler) UpdateUserPassword(w http.ResponseWriter, r *http.Request)
 		utils.WriteError(w, http.StatusInternalServerError, "error write response")
 	}
 }
+>>>>>>> dev:internal/pkg/users/delivery/http.go

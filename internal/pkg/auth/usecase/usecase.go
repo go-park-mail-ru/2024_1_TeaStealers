@@ -34,18 +34,18 @@ func (u *AuthUsecase) SignUp(ctx context.Context, data *models.UserSignUpData) (
 
 	userResponse, err := u.repo.CreateUser(ctx, newUser)
 	if err != nil {
-		utils.LogError(u.logger, ctx.Value("requestId").(string), utils.UsecaseLayer, auth.SignUpMethod, err)
+		// utils.LogError(u.logger, ctx.Value("requestId").(string), utils.UsecaseLayer, auth.SignUpMethod, err)
 		return nil, "", time.Now(), err
 	}
 	newUser.ID = userResponse.ID
 
 	token, exp, err := jwt.GenerateToken(newUser)
 	if err != nil {
-		utils.LogError(u.logger, ctx.Value("requestId").(string), utils.UsecaseLayer, auth.SignUpMethod, err)
+		// utils.LogError(u.logger, ctx.Value("requestId").(string), utils.UsecaseLayer, auth.SignUpMethod, err)
 		return nil, "", time.Now(), err
 	}
 
-	utils.LogSucces(u.logger, ctx.Value("requestId").(string), utils.UsecaseLayer, auth.SignUpMethod)
+	// utils.LogSucces(u.logger, ctx.Value("requestId").(string), utils.UsecaseLayer, auth.SignUpMethod)
 	return userResponse, token, exp, nil
 }
 
@@ -53,21 +53,27 @@ func (u *AuthUsecase) SignUp(ctx context.Context, data *models.UserSignUpData) (
 func (u *AuthUsecase) Login(ctx context.Context, data *models.UserLoginData) (*models.User, string, time.Time, error) {
 	user, err := u.repo.CheckUser(ctx, data.Login, utils.GenerateHashString(data.Password))
 	if err != nil {
-		utils.LogError(u.logger, ctx.Value("requestId").(string), utils.UsecaseLayer, auth.LoginMethod, err)
+		u.logger.Error(err.Error())
+		// utils.LogError(u.logger, ctx.Value("requestId").(string), utils.UsecaseLayer, auth.LoginMethod, err)
 		return nil, "", time.Now(), err
 	}
 
 	token, exp, err := jwt.GenerateToken(user)
 	if err != nil {
-		utils.LogError(u.logger, ctx.Value("requestId").(string), utils.UsecaseLayer, auth.LoginMethod, err)
+		u.logger.Error(err.Error())
+		// utils.LogError(u.logger, ctx.Value("requestId").(string), utils.UsecaseLayer, auth.LoginMethod, err)
 		return nil, "", time.Now(), err
 	}
 
-	utils.LogSucces(u.logger, ctx.Value("requestId").(string), utils.UsecaseLayer, auth.LoginMethod)
+	u.logger.Info("success login usecase")
+	// utils.LogSucces(u.logger, ctx.Value("requestId").(string), utils.UsecaseLayer, auth.LoginMethod)
 	return user, token, exp, nil
 }
 
 // CheckAuth checking autorizing
+<<<<<<< HEAD
+func (u *AuthUsecase) CheckAuth(ctx context.Context, id uuid.UUID, jwtLevel int) error {
+=======
 func (u *AuthUsecase) CheckAuth(ctx context.Context, idUser int64) error {
 	if _, err := u.repo.GetUserLevelById(ctx, idUser); err != nil {
 		utils.LogError(u.logger, ctx.Value("requestId").(string), utils.UsecaseLayer, auth.CheckAuthMethod, err)
@@ -79,16 +85,17 @@ func (u *AuthUsecase) CheckAuth(ctx context.Context, idUser int64) error {
 }
 
 func (u *AuthUsecase) GetUserLevelById(ctx context.Context, id int64, jwtLevel int) error {
+>>>>>>> dev
 	level, err := u.repo.GetUserLevelById(ctx, id)
 	if err != nil {
-		utils.LogError(u.logger, ctx.Value("requestId").(string), utils.UsecaseLayer, auth.GetUserLevelByIdMethod, err)
+		// utils.LogError(u.logger, ctx.Value("requestId").(string), utils.UsecaseLayer, auth.GetUserLevelByIdMethod, err)
 		return err
 	}
 	if jwtLevel != level {
-		utils.LogError(u.logger, ctx.Value("requestId").(string), utils.UsecaseLayer, auth.GetUserLevelByIdMethod, errors.New("jwt levels not equal"))
-		return errors.New("levels don't much")
+		// utils.LogError(u.logger, ctx.Value("requestId").(string), utils.UsecaseLayer, auth.GetUserLevelByIdMethod, errors.New("jwt levels not equal"))
+		return errors.New("levels don't match")
 	}
 
-	utils.LogSucces(u.logger, ctx.Value("requestId").(string), utils.UsecaseLayer, auth.GetUserLevelByIdMethod)
+	// utils.LogSucces(u.logger, ctx.Value("requestId").(string), utils.UsecaseLayer, auth.GetUserLevelByIdMethod)
 	return nil
 }

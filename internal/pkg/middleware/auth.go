@@ -1,13 +1,14 @@
 package middleware
 
 import (
-	"2024_1_TeaStealers/internal/pkg/auth"
+	genAuth "2024_1_TeaStealers/internal/pkg/auth/delivery/grpc/gen"
 	"2024_1_TeaStealers/internal/pkg/jwt"
 	"context"
+	"github.com/satori/uuid"
+	"google.golang.org/grpc"
 	"net/http"
 	"time"
 
-	"github.com/satori/uuid"
 	"go.uber.org/zap"
 )
 
@@ -15,16 +16,16 @@ import (
 const CookieName = "jwt-tean"
 
 type AuthMiddleware struct {
-	uc     auth.AuthUsecase
 	logger *zap.Logger
+	client genAuth.AuthClient
 }
 
-func NewAuthMiddleware(uc auth.AuthUsecase, logger *zap.Logger) *AuthMiddleware {
-	return &AuthMiddleware{uc: uc, logger: logger}
+func NewAuthMiddleware(grpcConn *grpc.ClientConn, logger *zap.Logger) *AuthMiddleware {
+	return &AuthMiddleware{client: genAuth.NewAuthClient(grpcConn), logger: logger}
 }
 
 // JwtMiddleware is a middleware function that handles JWT authentication.
-func (md *AuthMiddleware) JwtTMiddleware(next http.Handler) http.Handler {
+func (md *AuthMiddleware) JwtMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		cookie, err := r.Cookie(CookieName)
 		if err != nil {
@@ -44,6 +45,7 @@ func (md *AuthMiddleware) JwtTMiddleware(next http.Handler) http.Handler {
 			w.WriteHeader(http.StatusUnauthorized)
 			return
 		}
+
 		if timeExp.Before(time.Now()) {
 			w.WriteHeader(http.StatusUnauthorized)
 			return
@@ -55,7 +57,14 @@ func (md *AuthMiddleware) JwtTMiddleware(next http.Handler) http.Handler {
 			return
 		}
 
-		if err := md.uc.GetUserLevelById(context.WithValue(r.Context(), "requestId", uuid.NewV4().String()), id, level); err != nil {
+		ctx := context.WithValue(r.Context(), "requestId", uuid.NewV4().String())
+		resp, err := md.client.CheckAuth(ctx, &genAuth.CheckAuthRequest{Id: id.String(), Level: int64(level)})
+		if err != nil {
+			w.WriteHeader(http.StatusUnauthorized)
+			return
+		}
+
+		if !resp.Authorized {
 			w.WriteHeader(http.StatusUnauthorized)
 			return
 		}

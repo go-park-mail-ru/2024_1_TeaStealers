@@ -51,3 +51,6 @@ coverage:
 
 swagger:
 	swag init -g cmd/main/main.go
+
+proto_gen:
+	protoc -I proto proto/*.proto --go_out=./ --go-grpc_out=./

@@ -1,0 +1,44 @@
+syntax = "proto3";
+package auth;
+option go_package = "./internal/pkg/auth/delivery/grpc/gen/;gen";
+
+//protoc --go_out=./gen --go-grpc_out=./gen --go-grpc_opt=paths=source_relative --go_opt=paths=source_relative *.proto
+
+service Auth {
+  rpc SignUp(SignUpRequest) returns (SignUpInResponse) {}
+  rpc Login(SignInRequest) returns (SignUpInResponse) {}
+  rpc CheckAuth(CheckAuthRequest) returns (CheckAuthResponse) {}
+}
+
+message SignUpRequest {
+  string Email = 1;
+  string Phone = 2;
+  string Password = 3;
+}
+
+message SignInRequest {
+  string Email = 1;
+  string Password = 2;
+}
+
+message CheckAuthRequest {
+  string Id = 1;
+  int64 Level = 2;
+}
+
+message CheckAuthResponse {
+  bool Authorized = 1;
+}
+
+message SignUpInResponse {
+  string Token = 1;
+  string Exp = 2;
+}
+
+message ProfileInfoResponse {
+  string Id = 1;
+  string Email = 2;
+  string PasswordHash = 3;
+  int64 LevelUpdate = 4;
+}
+

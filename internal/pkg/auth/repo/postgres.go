@@ -2,8 +2,6 @@ package repo
 
 import (
 	"2024_1_TeaStealers/internal/models"
-	"2024_1_TeaStealers/internal/pkg/auth"
-	"2024_1_TeaStealers/internal/pkg/utils"
 	"context"
 	"database/sql"
 	"errors"
@@ -35,6 +33,27 @@ func (r *AuthRepo) BeginTx(ctx context.Context) (models.Transaction, error) {
 
 // CreateUser creates a new user in the database.
 func (r *AuthRepo) CreateUser(ctx context.Context, user *models.User) (*models.User, error) {
+<<<<<<< HEAD
+	insert := `INSERT INTO users (id, email, phone, passwordhash) VALUES ($1, $2, $3, $4)`
+	if _, err := r.db.ExecContext(ctx, insert, user.ID, user.Email, user.Phone, user.PasswordHash); err != nil {
+		r.logger.Error(err.Error())
+		// utils.LogError(r.logger, ctx.Value("requestId").(string), utils.UsecaseLayer, auth.CreateUserMethod, err)
+		return nil, err
+	}
+	query := `SELECT id, email, phone, passwordhash, levelupdate FROM users WHERE id = $1`
+
+	res := r.db.QueryRow(query, user.ID)
+
+	newUser := &models.User{}
+	if err := res.Scan(&newUser.ID, &newUser.Email, &newUser.Phone, &newUser.PasswordHash, &newUser.LevelUpdate); err != nil {
+		r.logger.Error(err.Error())
+		// utils.LogError(r.logger, ctx.Value("requestId").(string), utils.UsecaseLayer, auth.CreateUserMethod, err)
+		return nil, err
+	}
+
+	r.logger.Info("success createUser")
+	// utils.LogSucces(r.logger, ctx.Value("requestId").(string), utils.UsecaseLayer, auth.CreateUserMethod)
+=======
 	insert := `INSERT INTO user_data (email, phone, password_hash, first_name, surname, photo) VALUES ($1, $2, $3, '', '', '') RETURNING id`
 	var lastInsertID int64
 	if err := r.db.QueryRowContext(ctx, insert, user.Email, user.Phone, user.PasswordHash).Scan(&lastInsertID); err != nil {
@@ -54,6 +73,7 @@ func (r *AuthRepo) CreateUser(ctx context.Context, user *models.User) (*models.U
 	}
 
 	utils.LogSucces(r.logger, ctx.Value("requestId").(string), utils.RepositoryLayer, auth.CreateUserMethod)
+>>>>>>> dev
 	return newUser, nil
 }
 
@@ -65,11 +85,13 @@ func (r *AuthRepo) GetUserByLogin(ctx context.Context, login string) (*models.Us
 
 	user := &models.User{}
 	if err := res.Scan(&user.ID, &user.Email, &user.Phone, &user.PasswordHash, &user.LevelUpdate); err != nil {
-		utils.LogError(r.logger, ctx.Value("requestId").(string), utils.UsecaseLayer, auth.GetUserByLoginMethod, err)
+		r.logger.Error(err.Error())
+		// utils.LogError(r.logger, ctx.Value("requestId").(string), utils.UsecaseLayer, auth.GetUserByLoginMethod, err)
 		return nil, err
 	}
 
-	utils.LogSucces(r.logger, ctx.Value("requestId").(string), utils.UsecaseLayer, auth.GetUserByLoginMethod)
+	r.logger.Info("success getUserByLogin")
+	// utils.LogSucces(r.logger, ctx.Value("requestId").(string), utils.UsecaseLayer, auth.GetUserByLoginMethod)
 	return user, nil
 }
 
@@ -77,16 +99,19 @@ func (r *AuthRepo) GetUserByLogin(ctx context.Context, login string) (*models.Us
 func (r *AuthRepo) CheckUser(ctx context.Context, login string, passwordHash string) (*models.User, error) {
 	user, err := r.GetUserByLogin(ctx, login)
 	if err != nil {
-		utils.LogError(r.logger, ctx.Value("requestId").(string), utils.UsecaseLayer, auth.CheckUserMethod, err)
+		r.logger.Error(err.Error())
+		// utils.LogError(r.logger, ctx.Value("requestId").(string), utils.UsecaseLayer, auth.CheckUserMethod, err)
 		return nil, err
 	}
 
 	if user.PasswordHash != passwordHash {
-		utils.LogError(r.logger, ctx.Value("requestId").(string), utils.UsecaseLayer, auth.CheckUserMethod, errors.New("Password hash not equal"))
+		r.logger.Error(err.Error())
+		// utils.LogError(r.logger, ctx.Value("requestId").(string), utils.UsecaseLayer, auth.CheckUserMethod, errors.New("password hash not equal"))
 		return nil, errors.New("wrong password")
 	}
 
-	utils.LogSucces(r.logger, ctx.Value("requestId").(string), utils.UsecaseLayer, auth.CheckUserMethod)
+	r.logger.Info("success checkUser")
+	// utils.LogSucces(r.logger, ctx.Value("requestId").(string), utils.UsecaseLayer, auth.CheckUserMethod)
 	return user, nil
 }
 
@@ -97,10 +122,12 @@ func (r *AuthRepo) GetUserLevelById(ctx context.Context, id int64) (int, error) 
 
 	level := 0
 	if err := res.Scan(&level); err != nil {
-		utils.LogError(r.logger, ctx.Value("requestId").(string), utils.UsecaseLayer, auth.GetUserLevelByIdMethod, err)
+		r.logger.Error(err.Error())
+		// utils.LogError(r.logger, ctx.Value("requestId").(string), utils.UsecaseLayer, auth.GetUserLevelByIdMethod, err)
 		return 0, err
 	}
 
-	utils.LogSucces(r.logger, ctx.Value("requestId").(string), utils.UsecaseLayer, auth.GetUserLevelByIdMethod)
+	r.logger.Info("success getUserLevelById")
+	// utils.LogSucces(r.logger, ctx.Value("requestId").(string), utils.UsecaseLayer, auth.GetUserLevelByIdMethod)
 	return level, nil
 }
