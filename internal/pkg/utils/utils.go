@@ -98,17 +98,13 @@ func TruncSlash(methodName string, count int) (string, error) {
 		return "", fmt.Errorf("methodName contains %d slashes, but count is %d", slashes, count)
 	}
 
-	// Split the methodName string into a slice of strings using `/` as the separator
 	parts := strings.Split(methodName, `?`)
 
 	parts = strings.Split(parts[0], `/`)
 
-	// parts = parts[:len(parts)-count-1]
+	parts = parts[:len(parts)-count]
 
-	// Join the remaining elements of the slice back into a string using `/` as the separator
 	newMethodName := strings.Join(parts, `/`)
-	trSlash := `/`
-	newMethodName = newMethodName + trSlash
 	newMethodName = "https://" + newMethodName
 
 	return newMethodName, nil
@@ -116,6 +112,7 @@ func TruncSlash(methodName string, count int) (string, error) {
 
 func ReplaceURLPart(url string, position int, replacement string) (string, error) {
 	position = position - 1
+
 	if position < 0 {
 		return "", errors.New("position must be non-negative")
 	}
@@ -126,10 +123,8 @@ func ReplaceURLPart(url string, position int, replacement string) (string, error
 		return "", fmt.Errorf("URL contains %d parts, but position is %d", len(parts), position)
 	}
 
-	// Replace the part at the specified position
 	parts[position] = replacement
 
-	// Join the parts back into a string using `/` as the separator
 	newURL := strings.Join(parts, `/`)
 	newURL = "https://" + newURL
 
