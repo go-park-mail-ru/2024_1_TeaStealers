@@ -3,10 +3,9 @@ package grpc
 import (
 	"2024_1_TeaStealers/internal/models"
 	"2024_1_TeaStealers/internal/pkg/adverts"
-	"context"
-
 	"2024_1_TeaStealers/internal/pkg/adverts/delivery/grpc/gen"
 	genAdverts "2024_1_TeaStealers/internal/pkg/adverts/delivery/grpc/gen"
+	"context"
 
 	"github.com/satori/uuid"
 	"go.uber.org/zap"
@@ -109,7 +108,7 @@ func (h *AdvertsServerHandler) GetAdvertById(ctx context.Context, req *genAdvert
 	}
 
 	if advert.FlatProperties != nil {
-		flatProperties = &gen.FlatProperties{CeilingHeight: advert.FlatProperties.CeilingHeight, RoomCount: int32(advert.FlatProperties.RoomCount), FloorGeneral: int32(advert.FlatProperties.FloorGeneral), Apartment: advert.FlatProperties.Apartment, SquareGeneral: advert.FlatProperties.SquareGeneral, Floor: int32(advert.HouseProperties.Floor), SquareResidential: advert.FlatProperties.SquareResidential}
+		flatProperties = &gen.FlatProperties{CeilingHeight: advert.FlatProperties.CeilingHeight, RoomCount: int32(advert.FlatProperties.RoomCount), FloorGeneral: int32(advert.FlatProperties.FloorGeneral), Apartment: advert.FlatProperties.Apartment, SquareGeneral: advert.FlatProperties.SquareGeneral, Floor: int32(advert.FlatProperties.Floor), SquareResidential: advert.FlatProperties.SquareResidential}
 	}
 
 	if advert.ComplexProperties != nil {
