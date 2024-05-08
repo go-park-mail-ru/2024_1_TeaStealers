@@ -5,7 +5,7 @@ WORKDIR /github.com/go-park-mail-ru/2024_1_TeaStealers/
 
 RUN go mod download
 RUN go clean --modcache
-RUN CGO_ENABLED=0 GOOS=linux go build -mod=readonly -o ./.bin ./cmd/auth/main.go
+RUN CGO_ENABLED=0 GOOS=linux go build -mod=readonly -o ./.bin ./cmd/adverts/main.go
 
 
 FROM scratch AS runner
