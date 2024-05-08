@@ -100,7 +100,7 @@ func main() {
 	defer grcpConnUsers.Close()
 
 	grcpConnAdverts, err := grpc.Dial(
-		fmt.Sprintf("%s:%d", cfg.GRPC.AdvertsContainerIP, cfg.GRPC.AdvertPort),
+		fmt.Sprintf("%s:%d", cfg.GRPC.AdvertContainerIP, cfg.GRPC.AdvertPort),
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
 	)
 	if err != nil {
