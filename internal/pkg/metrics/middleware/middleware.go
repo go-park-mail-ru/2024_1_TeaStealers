@@ -75,14 +75,15 @@ func (m *GrpcMiddleware) ServerMetricsInterceptor(ctx context.Context,
 	return h, err
 }
 
-func (m *GrpcMiddleware) ServerMetricsMiddleware(next http.Handler, urlTruncCount int) http.Handler {
+func (m *GrpcMiddleware) ServerMetricsMiddleware(next http.Handler, urlTruncCount int, replacePos int, altName string) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
 		start := time.Now()
 		next.ServeHTTP(w, r)
 		tm := time.Since(start)
-		methodName, err := utils.TruncSlash(r.URL.String(), urlTruncCount)
-		if err == nil {
+		methodName, err1 := utils.TruncSlash(r.URL.String(), urlTruncCount)
+		methodName, err2 := utils.ReplaceURLPart(methodName, replacePos, altName)
+		if err1 == nil && err2 == nil {
 			m.IncreaseHits(methodName, "")
 			m.AddDurationToHistogram(methodName, "", tm)
 		}

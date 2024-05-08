@@ -13,5 +13,5 @@ type MetricsHTTP interface {
 		interface{},
 		*grpc.UnaryServerInfo,
 		grpc.UnaryHandler) (interface{}, error)
-	ServerMetricsMiddleware(next http.Handler, urlTruncCount int) http.Handler
+	ServerMetricsMiddleware(next http.Handler, urlTruncCount int, replacePos int, altName string) http.Handler
 }
