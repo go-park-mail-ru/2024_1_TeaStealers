@@ -2,6 +2,8 @@ package repo
 
 import (
 	"2024_1_TeaStealers/internal/models"
+	"2024_1_TeaStealers/internal/pkg/auth"
+	"2024_1_TeaStealers/internal/pkg/utils"
 	"context"
 	"database/sql"
 	"errors"
@@ -33,29 +35,10 @@ func (r *AuthRepo) BeginTx(ctx context.Context) (models.Transaction, error) {
 
 // CreateUser creates a new user in the database.
 func (r *AuthRepo) CreateUser(ctx context.Context, user *models.User) (*models.User, error) {
-<<<<<<< HEAD
-	insert := `INSERT INTO users (id, email, phone, passwordhash) VALUES ($1, $2, $3, $4)`
-	if _, err := r.db.ExecContext(ctx, insert, user.ID, user.Email, user.Phone, user.PasswordHash); err != nil {
-		r.logger.Error(err.Error())
-		// utils.LogError(r.logger, ctx.Value("requestId").(string), utils.UsecaseLayer, auth.CreateUserMethod, err)
-		return nil, err
-	}
-	query := `SELECT id, email, phone, passwordhash, levelupdate FROM users WHERE id = $1`
 
-	res := r.db.QueryRow(query, user.ID)
-
-	newUser := &models.User{}
-	if err := res.Scan(&newUser.ID, &newUser.Email, &newUser.Phone, &newUser.PasswordHash, &newUser.LevelUpdate); err != nil {
-		r.logger.Error(err.Error())
-		// utils.LogError(r.logger, ctx.Value("requestId").(string), utils.UsecaseLayer, auth.CreateUserMethod, err)
-		return nil, err
-	}
-
-	r.logger.Info("success createUser")
-	// utils.LogSucces(r.logger, ctx.Value("requestId").(string), utils.UsecaseLayer, auth.CreateUserMethod)
-=======
 	insert := `INSERT INTO user_data (email, phone, password_hash, first_name, surname, photo) VALUES ($1, $2, $3, '', '', '') RETURNING id`
 	var lastInsertID int64
+
 	if err := r.db.QueryRowContext(ctx, insert, user.Email, user.Phone, user.PasswordHash).Scan(&lastInsertID); err != nil {
 		utils.LogError(r.logger, ctx.Value("requestId").(string), utils.RepositoryLayer, auth.CreateUserMethod, err)
 		return nil, err
@@ -73,7 +56,6 @@ func (r *AuthRepo) CreateUser(ctx context.Context, user *models.User) (*models.U
 	}
 
 	utils.LogSucces(r.logger, ctx.Value("requestId").(string), utils.RepositoryLayer, auth.CreateUserMethod)
->>>>>>> dev
 	return newUser, nil
 }
 
@@ -105,7 +87,7 @@ func (r *AuthRepo) CheckUser(ctx context.Context, login string, passwordHash str
 	}
 
 	if user.PasswordHash != passwordHash {
-		r.logger.Error(err.Error())
+		//r.logger.Error(err.Error())
 		// utils.LogError(r.logger, ctx.Value("requestId").(string), utils.UsecaseLayer, auth.CheckUserMethod, errors.New("password hash not equal"))
 		return nil, errors.New("wrong password")
 	}

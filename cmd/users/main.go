@@ -5,20 +5,24 @@ import (
 	genUsers "2024_1_TeaStealers/internal/pkg/users/delivery/grpc/gen"
 	UsersR "2024_1_TeaStealers/internal/pkg/users/repo"
 	UsersUc "2024_1_TeaStealers/internal/pkg/users/usecase"
+	"net/http"
+
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"go.uber.org/zap"
-	"net/http"
 
 	"database/sql"
 	"fmt"
-	"github.com/joho/godotenv"
 	"log"
 	"net"
 	"os"
 	"os/signal"
 	"syscall"
 
+	"github.com/joho/godotenv"
+
 	grpcUsers "2024_1_TeaStealers/internal/pkg/users/delivery/grpc"
+
+	_ "github.com/lib/pq"
 
 	"google.golang.org/grpc"
 )

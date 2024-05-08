@@ -11,7 +11,7 @@ service Users {
 }
 
 message GetUserRequest {
-  string Id = 1;
+  int64 Id = 1;
 }
 
 message GetUserResponse {
@@ -24,7 +24,7 @@ message GetUserResponse {
 }
 
 message UpdateUserInfoRequest {
-  string Id = 1;
+  int64 Id = 1;
   string FirstName = 2;
   string Surname = 3;
   string DateBirthday = 4;
@@ -37,7 +37,7 @@ message UpdateUserInfoResponse {
 }
 
 message UpdatePasswordRequest {
-  string Id = 1;
+  int64 Id = 1;
   string OldPassword = 2;
   string NewPassword = 3;
 }

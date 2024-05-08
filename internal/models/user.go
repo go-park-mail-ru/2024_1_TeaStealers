@@ -46,8 +46,6 @@ type UserUpdateData struct {
 	FirstName string `json:"firstName"`
 	// SecondName is the second name of user.
 	SecondName string `json:"secondName"`
-	// DateBirthday is the date birthday of user.
-	DateBirthday time.Time `json:"dateBirthday"`
 	// Phone is the phone of user.
 	Phone string `json:"phone"`
 	// Email is the email of user.

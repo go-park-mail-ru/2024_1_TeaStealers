@@ -6,6 +6,7 @@ import (
 	genAuth "2024_1_TeaStealers/internal/pkg/auth/delivery/grpc/gen"
 	"context"
 	"errors"
+
 	"github.com/satori/uuid"
 	"go.uber.org/zap"
 )
@@ -41,14 +42,19 @@ func NewServerAuthHandler(uc auth.AuthUsecase, logger *zap.Logger) *AuthServerHa
 // @Failure 500 {string} string "Internal server error"
 // @Router /auth/signup [post]
 func (h *AuthServerHandler) SignUp(ctx context.Context, req *genAuth.SignUpRequest) (*genAuth.SignUpInResponse, error) {
+	ctx = context.WithValue(ctx, "requestId", uuid.NewV4().String())
 	data := models.UserSignUpData{Email: req.Email, Phone: req.Phone, Password: req.Password}
 	data.Sanitize()
+
 	newUser, token, exp, err := h.uc.SignUp(ctx, &data)
+
 	if err != nil {
+
 		h.logger.Error(err.Error())
 		// utils.LogErrorResponse(h.logger, ctx.Value("requestId").(string), utils.DeliveryLayer, SignUpMethod, err, http.StatusBadRequest)
 		return nil, errors.New("error signup")
 	}
+
 	newUser.Sanitize()
 
 	layout := "2006-01-02 15:04:05"
@@ -71,6 +77,7 @@ func (h *AuthServerHandler) SignUp(ctx context.Context, req *genAuth.SignUpReque
 // @Failure 500 {string} string "Internal server error"
 // @Router /auth/login [post]
 func (h *AuthServerHandler) Login(ctx context.Context, req *genAuth.SignInRequest) (*genAuth.SignUpInResponse, error) {
+	ctx = context.WithValue(ctx, "requestId", uuid.NewV4().String())
 	data := models.UserLoginData{Login: req.Email, Password: req.Password}
 	data.Sanitize()
 	_, token, exp, err := h.uc.Login(ctx, &data)
@@ -90,14 +97,11 @@ func (h *AuthServerHandler) Login(ctx context.Context, req *genAuth.SignInReques
 }
 
 func (h *AuthServerHandler) CheckAuth(ctx context.Context, req *genAuth.CheckAuthRequest) (*genAuth.CheckAuthResponse, error) {
+	ctx = context.WithValue(ctx, "requestId", uuid.NewV4().String())
 
-	uuidUser, err := uuid.FromString(req.Id)
-	if err != nil {
-		h.logger.Error(err.Error())
-		// utils.LogErrorResponse(h.logger, ctx.Value("requestId").(string), utils.DeliveryLayer, CheckAuthMethod, errors.New("user id is incorrect"), http.StatusUnauthorized)
-		return nil, errors.New("incorrect user id")
-	}
-	err = h.uc.CheckAuth(ctx, uuidUser, int(req.Level))
+	userId := req.Id
+
+	err := h.uc.CheckAuth(ctx, userId, int(req.Level))
 	if err != nil {
 		h.logger.Error(err.Error())
 		// utils.LogErrorResponse(h.logger, ctx.Value("requestId").(string), utils.DeliveryLayer, CheckAuthMethod, err, http.StatusUnauthorized)

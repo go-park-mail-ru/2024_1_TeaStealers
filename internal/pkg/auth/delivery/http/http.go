@@ -8,9 +8,10 @@ import (
 	"2024_1_TeaStealers/internal/pkg/utils"
 	"context"
 	"errors"
+	"net/http"
+
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
-	"net/http"
 
 	"github.com/satori/uuid"
 )
@@ -55,13 +56,7 @@ func (h *AuthClientHandler) SignUp(w http.ResponseWriter, r *http.Request) {
 	}
 	data.Sanitize()
 
-<<<<<<< HEAD:internal/pkg/auth/delivery/http/http.go
 	TokenExp, err := h.client.SignUp(ctx, &genAuth.SignUpRequest{Email: data.Email, Phone: data.Phone, Password: data.Password})
-=======
-	data.Sanitize()
-
-	newUser, token, exp, err := h.uc.SignUp(ctx, &data)
->>>>>>> dev:internal/pkg/auth/delivery/http.go
 	if err != nil {
 		utils.LogErrorResponse(h.logger, ctx.Value("requestId").(string), utils.DeliveryLayer, SignUpMethod, err, http.StatusConflict)
 		utils.WriteError(w, http.StatusConflict, err.Error())

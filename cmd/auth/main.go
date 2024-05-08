@@ -4,19 +4,21 @@ import (
 	genAuth "2024_1_TeaStealers/internal/pkg/auth/delivery/grpc/gen"
 	authR "2024_1_TeaStealers/internal/pkg/auth/repo"
 	authUc "2024_1_TeaStealers/internal/pkg/auth/usecase"
-	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"net/http"
+
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 
 	"database/sql"
 	"fmt"
-	"github.com/joho/godotenv"
-	_ "github.com/lib/pq"
-	"go.uber.org/zap"
 	"log"
 	"net"
 	"os"
 	"os/signal"
 	"syscall"
+
+	"github.com/joho/godotenv"
+	_ "github.com/lib/pq"
+	"go.uber.org/zap"
 
 	grpcAuth "2024_1_TeaStealers/internal/pkg/auth/delivery/grpc"
 	metricsMw "2024_1_TeaStealers/internal/pkg/metrics/middleware"

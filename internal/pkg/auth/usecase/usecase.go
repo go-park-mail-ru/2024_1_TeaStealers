@@ -33,6 +33,7 @@ func (u *AuthUsecase) SignUp(ctx context.Context, data *models.UserSignUpData) (
 	}
 
 	userResponse, err := u.repo.CreateUser(ctx, newUser)
+
 	if err != nil {
 		// utils.LogError(u.logger, ctx.Value("requestId").(string), utils.UsecaseLayer, auth.SignUpMethod, err)
 		return nil, "", time.Now(), err
@@ -71,21 +72,7 @@ func (u *AuthUsecase) Login(ctx context.Context, data *models.UserLoginData) (*m
 }
 
 // CheckAuth checking autorizing
-<<<<<<< HEAD
-func (u *AuthUsecase) CheckAuth(ctx context.Context, id uuid.UUID, jwtLevel int) error {
-=======
-func (u *AuthUsecase) CheckAuth(ctx context.Context, idUser int64) error {
-	if _, err := u.repo.GetUserLevelById(ctx, idUser); err != nil {
-		utils.LogError(u.logger, ctx.Value("requestId").(string), utils.UsecaseLayer, auth.CheckAuthMethod, err)
-		return errors.New("user not found")
-	}
-
-	utils.LogSucces(u.logger, ctx.Value("requestId").(string), utils.UsecaseLayer, auth.CheckAuthMethod)
-	return nil
-}
-
-func (u *AuthUsecase) GetUserLevelById(ctx context.Context, id int64, jwtLevel int) error {
->>>>>>> dev
+func (u *AuthUsecase) CheckAuth(ctx context.Context, id int64, jwtLevel int) error {
 	level, err := u.repo.GetUserLevelById(ctx, id)
 	if err != nil {
 		// utils.LogError(u.logger, ctx.Value("requestId").(string), utils.UsecaseLayer, auth.GetUserLevelByIdMethod, err)

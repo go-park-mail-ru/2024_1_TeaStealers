@@ -22,7 +22,7 @@ message SignInRequest {
 }
 
 message CheckAuthRequest {
-  string Id = 1;
+  int64 Id = 1;
   int64 Level = 2;
 }
 
@@ -36,7 +36,7 @@ message SignUpInResponse {
 }
 
 message ProfileInfoResponse {
-  string Id = 1;
+  int64 Id = 1;
   string Email = 2;
   string PasswordHash = 3;
   int64 LevelUpdate = 4;

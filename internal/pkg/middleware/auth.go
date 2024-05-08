@@ -4,10 +4,11 @@ import (
 	genAuth "2024_1_TeaStealers/internal/pkg/auth/delivery/grpc/gen"
 	"2024_1_TeaStealers/internal/pkg/jwt"
 	"context"
-	"github.com/satori/uuid"
-	"google.golang.org/grpc"
 	"net/http"
 	"time"
+
+	"github.com/satori/uuid"
+	"google.golang.org/grpc"
 
 	"go.uber.org/zap"
 )
@@ -58,7 +59,7 @@ func (md *AuthMiddleware) JwtMiddleware(next http.Handler) http.Handler {
 		}
 
 		ctx := context.WithValue(r.Context(), "requestId", uuid.NewV4().String())
-		resp, err := md.client.CheckAuth(ctx, &genAuth.CheckAuthRequest{Id: id.String(), Level: int64(level)})
+		resp, err := md.client.CheckAuth(ctx, &genAuth.CheckAuthRequest{Id: id, Level: int64(level)})
 		if err != nil {
 			w.WriteHeader(http.StatusUnauthorized)
 			return

@@ -51,15 +51,15 @@ func (r *UserRepo) DeleteUserPhoto(ctx context.Context, id int64) error {
 }
 
 func (r *UserRepo) UpdateUserInfo(ctx context.Context, id int64, data *models.UserUpdateData) (*models.User, error) {
-	query := `UPDATE user_data SET first_name = $1, surname = $2, birthdate = $3, phone = $4, email = $5 WHERE id = $6`
+	query := `UPDATE user_data SET first_name = $1, surname = $2, phone = $3, email = $4 WHERE id = $5`
 
-	if _, err := r.db.Exec(query, data.FirstName, data.SecondName, data.DateBirthday, data.Phone, data.Email, id); err != nil {
+	if _, err := r.db.Exec(query, data.FirstName, data.SecondName, data.Phone, data.Email, id); err != nil {
 		return nil, err
 	}
 	user := &models.User{}
-	querySelect := `SELECT id, first_name, surname, birthdate, phone, email FROM user_data WHERE id = $1`
+	querySelect := `SELECT id, first_name, surname, phone, email FROM user_data WHERE id = $1`
 	res := r.db.QueryRow(querySelect, id)
-	if err := res.Scan(&user.ID, &user.FirstName, &user.SecondName, &user.DateBirthday, &user.Phone, &user.Email); err != nil {
+	if err := res.Scan(&user.ID, &user.FirstName, &user.SecondName, &user.Phone, &user.Email); err != nil {
 		return nil, err
 	}
 

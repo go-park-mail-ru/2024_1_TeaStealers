@@ -4,7 +4,6 @@ import (
 	"2024_1_TeaStealers/internal/models"
 	"2024_1_TeaStealers/internal/pkg/users"
 	genUsers "2024_1_TeaStealers/internal/pkg/users/delivery/grpc/gen"
-	"2024_1_TeaStealers/internal/pkg/utils"
 	"context"
 	"errors"
 
@@ -24,11 +23,9 @@ func NewUserServerHandler(uc users.UserUsecase) *UserServerHandler {
 }
 
 func (h *UserServerHandler) GetCurUser(ctx context.Context, req *genUsers.GetUserRequest) (*genUsers.GetUserResponse, error) {
-	// id := ctx.Value(middleware.CookieName)
-	userId, err := uuid.FromString(req.Id)
-	if err != nil {
-		return nil, errors.New("incorrect id")
-	}
+	ctx = context.WithValue(ctx, "requestId", uuid.NewV4().String())
+
+	userId := req.Id
 
 	userInfo, err := h.uc.GetUser(ctx, userId)
 	if err != nil {
@@ -42,17 +39,11 @@ func (h *UserServerHandler) GetCurUser(ctx context.Context, req *genUsers.GetUse
 }
 
 func (h *UserServerHandler) UpdateUserInfo(ctx context.Context, req *genUsers.UpdateUserInfoRequest) (*genUsers.UpdateUserInfoResponse, error) {
+	ctx = context.WithValue(ctx, "requestId", uuid.NewV4().String())
 
-	userId, err := uuid.FromString(req.Id)
-	if err != nil {
-		return nil, errors.New("incorrect id")
-	}
+	userId := req.Id
 
-	dateBirth, err := utils.StringToTime(req.DateBirthday, req.DateBirthday)
-	if err != nil {
-		return nil, errors.New("error parse time")
-	}
-	data := &models.UserUpdateData{FirstName: req.FirstName, SecondName: req.Surname, DateBirthday: dateBirth, Phone: req.Phone, Email: req.Email}
+	data := &models.UserUpdateData{FirstName: req.FirstName, SecondName: req.Surname, Phone: req.Phone, Email: req.Email}
 	data.Sanitize()
 
 	user, err := h.uc.UpdateUserInfo(ctx, userId, data)
@@ -65,10 +56,10 @@ func (h *UserServerHandler) UpdateUserInfo(ctx context.Context, req *genUsers.Up
 }
 
 func (h *UserServerHandler) UpdateUserPassword(ctx context.Context, req *genUsers.UpdatePasswordRequest) (*genUsers.UpdatePasswordResponse, error) {
-	userId, err := uuid.FromString(req.Id)
-	if err != nil {
-		return nil, errors.New("incorrect id")
-	}
+	ctx = context.WithValue(ctx, "requestId", uuid.NewV4().String())
+
+	userId := req.Id
+
 	data := &models.UserUpdatePassword{
 		ID:          userId,
 		OldPassword: req.OldPassword,

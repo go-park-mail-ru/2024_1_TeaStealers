@@ -90,11 +90,10 @@ func TestUpdateUserInfo(t *testing.T) {
 			args: args{
 				userUUID: id,
 				data: &models.UserUpdateData{
-					FirstName:    "newname1",
-					SecondName:   "newname2",
-					DateBirthday: time.Now(),
-					Phone:        "+712345678",
-					Email:        "new@mail.ru",
+					FirstName:  "newname1",
+					SecondName: "newname2",
+					Phone:      "+712345678",
+					Email:      "new@mail.ru",
 				},
 			},
 			want: want{
@@ -117,11 +116,10 @@ func TestUpdateUserInfo(t *testing.T) {
 			args: args{
 				userUUID: id,
 				data: &models.UserUpdateData{
-					FirstName:    "newname1",
-					SecondName:   "newname2",
-					DateBirthday: time.Now(),
-					Phone:        "",
-					Email:        "new@mail.ru",
+					FirstName:  "newname1",
+					SecondName: "newname2",
+					Phone:      "",
+					Email:      "new@mail.ru",
 				},
 			},
 			want: want{
@@ -134,11 +132,10 @@ func TestUpdateUserInfo(t *testing.T) {
 			args: args{
 				userUUID: id,
 				data: &models.UserUpdateData{
-					FirstName:    "newname1",
-					SecondName:   "newname2",
-					DateBirthday: time.Now(),
-					Phone:        "+712345678",
-					Email:        "",
+					FirstName:  "newname1",
+					SecondName: "newname2",
+					Phone:      "+712345678",
+					Email:      "",
 				},
 			},
 			want: want{
