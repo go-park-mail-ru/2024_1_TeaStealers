@@ -2,9 +2,11 @@ package middleware
 
 import (
 	"2024_1_TeaStealers/internal/pkg/metrics"
+	"2024_1_TeaStealers/internal/pkg/utils"
 	"context"
 	"github.com/prometheus/client_golang/prometheus"
 	"google.golang.org/grpc"
+	"net/http"
 	"time"
 )
 
@@ -71,4 +73,18 @@ func (m *GrpcMiddleware) ServerMetricsInterceptor(ctx context.Context,
 	m.IncreaseHits(info.FullMethod, "")
 	m.AddDurationToHistogram(info.FullMethod, "", tm)
 	return h, err
+}
+
+func (m *GrpcMiddleware) ServerMetricsMiddleware(next http.Handler, urlTruncCount int) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+
+		start := time.Now()
+		next.ServeHTTP(w, r)
+		tm := time.Since(start)
+		methodName, err := utils.TruncSlash(r.URL.String(), urlTruncCount)
+		if err == nil {
+			m.IncreaseHits(methodName, "")
+			m.AddDurationToHistogram(methodName, "", tm)
+		}
+	})
 }
