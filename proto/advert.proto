@@ -1,0 +1,122 @@
+syntax = "proto3";
+package adverts;
+option go_package = "./internal/pkg/adverts/delivery/grpc/gen/;gen";
+
+//protoc --go_out=./gen --go-grpc_out=./gen --go-grpc_opt=paths=source_relative --go_opt=paths=source_relative *.proto
+
+service Adverts {
+  rpc GetAdvertById(GetAdvertByIdRequest) returns (GetAdvertByIdResponse) {}
+  //rpc UpdateAdvertById(UpdateAdvertByIdRequest) returns (UpdateAdvertByIdResponse) {}
+  //rpc DeleteAdvertById(DeleteAdvertByIdRequest) returns (DeleteAdvertByIdResponse) {}
+  //rpc LikeAdvert(LikeAdvertRequest) returns (LikeAdvertResponse) {}
+  //rpc DislikeAdvert(DislikeAdvertRequest) returns (DislikeAdvertResponse) {}
+  //rpc CreateHouseAdvert(CreateHouseAdvertRequest) returns (CreateHouseAdvertResponse) {}
+  //rpc GetExistBuildingByAddress(GetExistBuildingByAddressRequest) returns (GetExistBuildingByAddressResponse) {}
+  //rpc CreateFlatAdvert(CreateFlatAdvertRequest) returns (CreateFlatAdvertResponse) {}
+  //rpc GetSquareAdvertsList(GetSquareAdvertsListRequest) returns (GetSquareAdvertsListResponse) {}
+  //rpc GetRectangeAdvertsList(GetRectangeAdvertsListRequest) returns (GetRectangeAdvertsListResponse) {}
+  //rpc UploadImage(UploadImageRequest) returns (UploadImageResponse) {}
+  //rpc GetAdvertImages(GetAdvertImagesRequest) returns (GetAdvertImagesResponse) {}
+  //rpc DeleteImage(DeleteImageRequest) returns (DeleteImageResponse) {}
+  //rpc GetUserAdverts(GetUserAdvertsRequest) returns (GetUserAdvertsResponse) {}
+  //rpc GetLikedUserAdverts(GetLikedUserAdvertsRequest) returns (GetLikedUserAdvertsResponse) {}
+  //rpc GetComplexAdverts(GetComplexAdvertsRequest) returns (GetComplexAdvertsResponse) {}
+}
+
+message GetAdvertByIdRequest {
+  int64 Id = 1;
+}
+
+enum StatusAreaHouse {
+  STATUS_AREA_IHC = 0;
+  STATUS_AREA_DNP = 1;
+  STATUS_AREA_G = 2;
+  STATUS_AREA_F = 3;
+  STATUS_AREA_PSP = 4;
+}
+
+enum StatusHomeHouse {
+  STATUS_HOME_LIVE = 0;
+  STATUS_HOME_REPAIR_NEED = 1;
+  STATUS_HOME_COMPLETE_NEED = 2;
+  STATUS_HOME_RENOVATION = 3;
+}
+
+message ImageResp {
+  int64 Id = 1;
+  string Photo = 2;
+  int32 Priority = 3;
+}
+
+message PriceChangeData {
+  int64 Price = 1;
+  string DateCreation = 2;
+}
+
+
+message ComplexAdvertProperties {
+  string ComplexId = 1;
+  string NameComplex = 2;
+  string PhotoCompany = 3;
+  string NameCompany = 4;
+}
+
+message FlatProperties {
+  int32 Floor = 1;
+  int32 FloorGeneral = 2;
+  double CeilingHeight = 3;
+  int32 RoomCount = 4;
+  double SquareGeneral = 5;
+  double SquareResidential = 6;
+  bool Apartment = 7;
+}
+
+message HouseProperties {
+  double CeilingHeight = 1;
+  double SquareArea = 2;
+  double SquareHouse = 3;
+  int32 BedroomCount = 4;
+  StatusAreaHouse StatusArea = 5;
+  bool Cottage = 6;
+  StatusHomeHouse StatusHome = 7;
+  int32 Floor = 8;
+}
+
+enum MaterialBuilding {
+    MATERIAL_BRICK = 0;
+    MATERIAL_MONOLITHIC = 1;
+    MATERIAL_WOOD = 2;
+    MATERIAL_PANEL = 3;
+    MATERIAL_STALINSKY = 4;
+    MATERIAL_BLOCK = 5;
+    MATERIAL_MONOLITHIC_BLOCK = 6;
+    MATERIAL_FRAME = 7;
+    MATERIAL_AERATED_CONCRETE_BLOCK = 8;
+    MATERIAL_GAS_SILICATE_BLOCK = 9;
+    MATERIAL_FOAM_CONCRETE_BLOCK = 10;
+}
+
+message GetAdvertByIdResponse {
+  int64 Id = 1;
+  string AdvertType = 2;
+  string TypeSale = 3;
+  string Title = 4;
+  string Description = 5;
+  int64 CountViews = 6;
+  int64 CountLikes = 7;
+  int64 Price = 8;
+  string Phone = 9;
+  bool IsLiked = 10;
+  bool IsAgent = 11;
+  string Metro = 12;
+  string Address = 13;
+  string AddressPoint = 14;
+  repeated PriceChangeData PriceHistory = 15;
+  repeated ImageResp Images = 16;
+  HouseProperties HouseProperties = 17;
+  FlatProperties FlatProperties = 18;
+  int32 YearCreation = 19;
+  MaterialBuilding Material = 20;
+  ComplexAdvertProperties ComplexProperties = 21;
+  string DateCreation = 22;
+}

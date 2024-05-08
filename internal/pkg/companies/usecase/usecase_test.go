@@ -7,6 +7,7 @@ import (
 	"2024_1_TeaStealers/internal/pkg/utils"
 	"context"
 	"errors"
+	"math/rand"
 	"testing"
 	"time"
 
@@ -21,9 +22,9 @@ func TestGetUser(t *testing.T) {
 
 	mockRepo := users_mock.NewMockUserRepo(ctrl)
 	usecase := usecase.NewUserUsecase(mockRepo)
-	id := uuid.NewV4()
+	id := rand.Int63()
 	type args struct {
-		userUUID uuid.UUID
+		userUUID int64
 	}
 	type want struct {
 		user *models.User
@@ -70,9 +71,9 @@ func TestUpdateUserInfo(t *testing.T) {
 
 	mockRepo := users_mock.NewMockUserRepo(ctrl)
 	usecase := usecase.NewUserUsecase(mockRepo)
-	id := uuid.NewV4()
+	id := rand.Int63()
 	type args struct {
-		userUUID uuid.UUID
+		userUUID int64
 		data     *models.UserUpdateData
 	}
 	type want struct {
@@ -89,11 +90,10 @@ func TestUpdateUserInfo(t *testing.T) {
 			args: args{
 				userUUID: id,
 				data: &models.UserUpdateData{
-					FirstName:    "newname1",
-					SecondName:   "newname2",
-					DateBirthday: time.Now(),
-					Phone:        "+712345678",
-					Email:        "new@mail.ru",
+					FirstName:  "newname1",
+					SecondName: "newname2",
+					Phone:      "+712345678",
+					Email:      "new@mail.ru",
 				},
 			},
 			want: want{
@@ -116,11 +116,10 @@ func TestUpdateUserInfo(t *testing.T) {
 			args: args{
 				userUUID: id,
 				data: &models.UserUpdateData{
-					FirstName:    "newname1",
-					SecondName:   "newname2",
-					DateBirthday: time.Now(),
-					Phone:        "",
-					Email:        "new@mail.ru",
+					FirstName:  "newname1",
+					SecondName: "newname2",
+					Phone:      "",
+					Email:      "new@mail.ru",
 				},
 			},
 			want: want{
@@ -133,11 +132,10 @@ func TestUpdateUserInfo(t *testing.T) {
 			args: args{
 				userUUID: id,
 				data: &models.UserUpdateData{
-					FirstName:    "newname1",
-					SecondName:   "newname2",
-					DateBirthday: time.Now(),
-					Phone:        "+712345678",
-					Email:        "",
+					FirstName:  "newname1",
+					SecondName: "newname2",
+					Phone:      "+712345678",
+					Email:      "",
 				},
 			},
 			want: want{
@@ -164,7 +162,7 @@ func TestUpdateUserPassword(t *testing.T) {
 
 	mockRepo := users_mock.NewMockUserRepo(ctrl)
 	usecase := usecase.NewUserUsecase(mockRepo)
-	id := uuid.NewV4()
+	id := rand.Int63()
 	type args struct {
 		update            *models.UserUpdatePassword
 		errCheckPassword  error

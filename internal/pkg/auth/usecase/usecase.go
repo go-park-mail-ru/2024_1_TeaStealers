@@ -9,7 +9,6 @@ import (
 	"errors"
 	"time"
 
-	"github.com/satori/uuid"
 	"go.uber.org/zap"
 )
 
@@ -27,7 +26,6 @@ func NewAuthUsecase(repo auth.AuthRepo, logger *zap.Logger) *AuthUsecase {
 // SignUp handles the user registration process.
 func (u *AuthUsecase) SignUp(ctx context.Context, data *models.UserSignUpData) (*models.User, string, time.Time, error) {
 	newUser := &models.User{
-		ID:           uuid.NewV4(),
 		Email:        data.Email,
 		Phone:        data.Phone,
 		PasswordHash: utils.GenerateHashString(data.Password),
@@ -35,18 +33,20 @@ func (u *AuthUsecase) SignUp(ctx context.Context, data *models.UserSignUpData) (
 	}
 
 	userResponse, err := u.repo.CreateUser(ctx, newUser)
+
 	if err != nil {
-		utils.LogError(u.logger, ctx.Value("requestId").(string), utils.UsecaseLayer, auth.SignUpMethod, err)
+		// utils.LogError(u.logger, ctx.Value("requestId").(string), utils.UsecaseLayer, auth.SignUpMethod, err)
 		return nil, "", time.Now(), err
 	}
+	newUser.ID = userResponse.ID
 
 	token, exp, err := jwt.GenerateToken(newUser)
 	if err != nil {
-		utils.LogError(u.logger, ctx.Value("requestId").(string), utils.UsecaseLayer, auth.SignUpMethod, err)
+		// utils.LogError(u.logger, ctx.Value("requestId").(string), utils.UsecaseLayer, auth.SignUpMethod, err)
 		return nil, "", time.Now(), err
 	}
 
-	utils.LogSucces(u.logger, ctx.Value("requestId").(string), utils.UsecaseLayer, auth.SignUpMethod)
+	// utils.LogSucces(u.logger, ctx.Value("requestId").(string), utils.UsecaseLayer, auth.SignUpMethod)
 	return userResponse, token, exp, nil
 }
 
@@ -54,42 +54,35 @@ func (u *AuthUsecase) SignUp(ctx context.Context, data *models.UserSignUpData) (
 func (u *AuthUsecase) Login(ctx context.Context, data *models.UserLoginData) (*models.User, string, time.Time, error) {
 	user, err := u.repo.CheckUser(ctx, data.Login, utils.GenerateHashString(data.Password))
 	if err != nil {
-		utils.LogError(u.logger, ctx.Value("requestId").(string), utils.UsecaseLayer, auth.LoginMethod, err)
+		u.logger.Error(err.Error())
+		// utils.LogError(u.logger, ctx.Value("requestId").(string), utils.UsecaseLayer, auth.LoginMethod, err)
 		return nil, "", time.Now(), err
 	}
 
 	token, exp, err := jwt.GenerateToken(user)
 	if err != nil {
-		utils.LogError(u.logger, ctx.Value("requestId").(string), utils.UsecaseLayer, auth.LoginMethod, err)
+		u.logger.Error(err.Error())
+		// utils.LogError(u.logger, ctx.Value("requestId").(string), utils.UsecaseLayer, auth.LoginMethod, err)
 		return nil, "", time.Now(), err
 	}
 
-	utils.LogSucces(u.logger, ctx.Value("requestId").(string), utils.UsecaseLayer, auth.LoginMethod)
+	u.logger.Info("success login usecase")
+	// utils.LogSucces(u.logger, ctx.Value("requestId").(string), utils.UsecaseLayer, auth.LoginMethod)
 	return user, token, exp, nil
 }
 
 // CheckAuth checking autorizing
-func (u *AuthUsecase) CheckAuth(ctx context.Context, idUser uuid.UUID) error {
-	if _, err := u.repo.GetUserLevelById(ctx, idUser); err != nil {
-		utils.LogError(u.logger, ctx.Value("requestId").(string), utils.UsecaseLayer, auth.CheckAuthMethod, err)
-		return errors.New("user not found")
-	}
-
-	utils.LogSucces(u.logger, ctx.Value("requestId").(string), utils.UsecaseLayer, auth.CheckAuthMethod)
-	return nil
-}
-
-func (u *AuthUsecase) GetUserLevelById(ctx context.Context, id uuid.UUID, jwtLevel int) error {
+func (u *AuthUsecase) CheckAuth(ctx context.Context, id int64, jwtLevel int) error {
 	level, err := u.repo.GetUserLevelById(ctx, id)
 	if err != nil {
-		utils.LogError(u.logger, ctx.Value("requestId").(string), utils.UsecaseLayer, auth.GetUserLevelByIdMethod, err)
+		// utils.LogError(u.logger, ctx.Value("requestId").(string), utils.UsecaseLayer, auth.GetUserLevelByIdMethod, err)
 		return err
 	}
 	if jwtLevel != level {
-		utils.LogError(u.logger, ctx.Value("requestId").(string), utils.UsecaseLayer, auth.GetUserLevelByIdMethod, errors.New("jwt levels not equal"))
-		return errors.New("levels don't much")
+		// utils.LogError(u.logger, ctx.Value("requestId").(string), utils.UsecaseLayer, auth.GetUserLevelByIdMethod, errors.New("jwt levels not equal"))
+		return errors.New("levels don't match")
 	}
 
-	utils.LogSucces(u.logger, ctx.Value("requestId").(string), utils.UsecaseLayer, auth.GetUserLevelByIdMethod)
+	// utils.LogSucces(u.logger, ctx.Value("requestId").(string), utils.UsecaseLayer, auth.GetUserLevelByIdMethod)
 	return nil
 }

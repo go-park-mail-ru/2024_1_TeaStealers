@@ -26,7 +26,7 @@ func NewUserUsecase(repo users.UserRepo) *UserUsecase {
 }
 
 // GetUser ...
-func (u *UserUsecase) GetUser(ctx context.Context, id uuid.UUID) (*models.User, error) {
+func (u *UserUsecase) GetUser(ctx context.Context, id int64) (*models.User, error) {
 	user, err := u.repo.GetUserById(ctx, id)
 	if err != nil {
 		return nil, err
@@ -34,7 +34,7 @@ func (u *UserUsecase) GetUser(ctx context.Context, id uuid.UUID) (*models.User, 
 	return user, nil
 }
 
-func (u *UserUsecase) UpdateUserPhoto(ctx context.Context, file io.Reader, fileType string, id uuid.UUID) (string, error) {
+func (u *UserUsecase) UpdateUserPhoto(ctx context.Context, file io.Reader, fileType string, id int64) (string, error) {
 	newId := uuid.NewV4()
 	newFileName := newId.String() + fileType
 	subDirectory := "avatars"
@@ -58,14 +58,14 @@ func (u *UserUsecase) UpdateUserPhoto(ctx context.Context, file io.Reader, fileT
 	return fileName, nil
 }
 
-func (u *UserUsecase) DeleteUserPhoto(ctx context.Context, id uuid.UUID) error {
+func (u *UserUsecase) DeleteUserPhoto(ctx context.Context, id int64) error {
 	if err := u.repo.DeleteUserPhoto(ctx, id); err != nil {
 		return err
 	}
 	return nil
 }
 
-func (u *UserUsecase) UpdateUserInfo(ctx context.Context, id uuid.UUID, data *models.UserUpdateData) (*models.User, error) {
+func (u *UserUsecase) UpdateUserInfo(ctx context.Context, id int64, data *models.UserUpdateData) (*models.User, error) {
 	if data.Phone == "" {
 		return nil, errors.New("phone cannot be empty")
 	}

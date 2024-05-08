@@ -4,12 +4,12 @@ import (
 	"2024_1_TeaStealers/internal/models"
 	"errors"
 	"fmt"
+	"log"
 	"net/http"
 	"os"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
-	"github.com/satori/uuid"
 )
 
 // GenerateToken returns a new JWT token for the given user.
@@ -38,25 +38,22 @@ func ParseToken(token string) (*jwt.Token, error) {
 }
 
 // ParseClaims parses the user ID from the JWT token claims.
-func ParseClaims(claims *jwt.Token) (uuid.UUID, int, error) {
+func ParseClaims(claims *jwt.Token) (int64, int, error) {
 	payloadMap, ok := claims.Claims.(jwt.MapClaims)
 	if !ok {
-		return uuid.Nil, 0, errors.New("invalid claims")
+		return 0, 0, errors.New("invalid claims")
 	}
-	idStr, ok := payloadMap["id"].(string)
+	log.Println(payloadMap)
+	id, ok := payloadMap["id"].(float64)
 	if !ok {
-		return uuid.Nil, 0, errors.New("incorrect id")
-	}
-	id, err := uuid.FromString(idStr)
-	if err != nil {
-		return uuid.Nil, 0, errors.New("incorrect id")
+		return 0, 0, errors.New("incorrect id")
 	}
 	levelStr, ok := payloadMap["level"].(float64)
 	if !ok {
-		return uuid.Nil, 0, errors.New("incorrect level")
+		return 0, 0, errors.New("incorrect level")
 	}
 
-	return id, int(levelStr), nil
+	return int64(id), int(levelStr), nil
 }
 
 // TokenCookie creates a new cookie for storing the authentication token.

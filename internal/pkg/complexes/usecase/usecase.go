@@ -26,7 +26,6 @@ func NewComplexUsecase(repo complexes.ComplexRepo, logger *zap.Logger) *ComplexU
 // CreateComplex handles the complex registration process.
 func (u *ComplexUsecase) CreateComplex(ctx context.Context, data *models.ComplexCreateData) (*models.Complex, error) {
 	newComplex := &models.Complex{
-		ID:                     uuid.NewV4(),
 		CompanyId:              data.CompanyId,
 		Name:                   data.Name,
 		Description:            data.Description,
@@ -52,12 +51,10 @@ func (u *ComplexUsecase) CreateComplex(ctx context.Context, data *models.Complex
 // CreateBuilding handles the building registration process.
 func (u *ComplexUsecase) CreateBuilding(ctx context.Context, data *models.BuildingCreateData) (*models.Building, error) {
 	newBuilding := &models.Building{
-		ID:           uuid.NewV4(),
 		ComplexID:    data.ComplexID,
 		Floor:        data.Floor,
 		Material:     data.Material,
-		Address:      data.Address,
-		AddressPoint: data.AddressPoint,
+		AddressID:    data.AddressID,
 		YearCreation: data.YearCreation,
 	}
 
@@ -69,7 +66,7 @@ func (u *ComplexUsecase) CreateBuilding(ctx context.Context, data *models.Buildi
 	return building, nil
 }
 
-func (u *ComplexUsecase) UpdateComplexPhoto(file io.Reader, fileType string, id uuid.UUID) (string, error) {
+func (u *ComplexUsecase) UpdateComplexPhoto(file io.Reader, fileType string, id int64) (string, error) {
 	newId := uuid.NewV4()
 	newFileName := newId.String() + fileType
 	subDirectory := "complexes"
@@ -94,7 +91,7 @@ func (u *ComplexUsecase) UpdateComplexPhoto(file io.Reader, fileType string, id 
 }
 
 // GetComplexById handles the getting complex advert process.
-func (u *ComplexUsecase) GetComplexById(ctx context.Context, id uuid.UUID) (foundComplexData *models.ComplexData, err error) {
+func (u *ComplexUsecase) GetComplexById(ctx context.Context, id int64) (foundComplexData *models.ComplexData, err error) {
 
 	if foundComplexData, err = u.repo.GetComplexById(ctx, id); err != nil {
 		return nil, err
@@ -113,15 +110,13 @@ func (u *ComplexUsecase) CreateFlatAdvert(ctx context.Context, data *models.Comp
 		if err := tx.Rollback(); err != nil {
 		}
 	}()
-	newAdvertType := &models.AdvertType{
-		ID:         uuid.NewV4(),
-		AdvertType: data.AdvertTypePlacement,
-	}
+
+	buildingId := data.BuildingID
+
+	var id int64
 
 	newAdvert := &models.Advert{
-		ID:             uuid.NewV4(),
 		UserID:         data.UserID,
-		AdvertTypeID:   newAdvertType.ID,
 		AdvertTypeSale: data.AdvertTypeSale,
 		Title:          data.Title,
 		Description:    data.Description,
@@ -130,12 +125,14 @@ func (u *ComplexUsecase) CreateFlatAdvert(ctx context.Context, data *models.Comp
 		Priority:       1, // Разобраться в будущем, как это менять за деньги(money)
 	}
 
-	buildingId := data.BuildingID
+	id, err = u.repo.CreateAdvert(ctx, tx, newAdvert)
+	if err != nil {
+		return nil, err
+	}
+	newAdvert.ID = id
 
 	newFlat := &models.Flat{
-		ID:                uuid.NewV4(),
 		BuildingID:        buildingId,
-		AdvertTypeID:      newAdvertType.ID,
 		RoomCount:         data.RoomCount,
 		Floor:             data.Floor,
 		CeilingHeight:     data.CeilingHeight,
@@ -144,22 +141,22 @@ func (u *ComplexUsecase) CreateFlatAdvert(ctx context.Context, data *models.Comp
 		Apartment:         data.Apartment,
 	}
 
+	if id, err = u.repo.CreateFlat(ctx, tx, newFlat); err != nil {
+		return nil, err
+	}
+
+	newAdvertType := &models.FlatTypeAdvert{
+		AdvertID: newAdvert.ID,
+		FlatID:   id,
+	}
+
+	if err := u.repo.CreateAdvertTypeFlat(ctx, tx, newAdvertType); err != nil {
+		return nil, err
+	}
+
 	newPriceChange := &models.PriceChange{
-		ID:       uuid.NewV4(),
 		AdvertID: newAdvert.ID,
 		Price:    data.Price,
-	}
-
-	if err := u.repo.CreateAdvertType(ctx, tx, newAdvertType); err != nil {
-		return nil, err
-	}
-
-	if err := u.repo.CreateFlat(ctx, tx, newFlat); err != nil {
-		return nil, err
-	}
-
-	if err := u.repo.CreateAdvert(ctx, tx, newAdvert); err != nil {
-		return nil, err
 	}
 
 	if err := u.repo.CreatePriceChange(ctx, tx, newPriceChange); err != nil {
@@ -180,20 +177,17 @@ func (u *ComplexUsecase) CreateHouseAdvert(ctx context.Context, data *models.Com
 	if err != nil {
 		return nil, err
 	}
-
 	defer func() {
 		if err := tx.Rollback(); err != nil {
 		}
 	}()
-	newAdvertType := &models.AdvertType{
-		ID:         uuid.NewV4(),
-		AdvertType: data.AdvertTypePlacement,
-	}
+
+	buildingId := data.BuildingID
+
+	var id int64
 
 	newAdvert := &models.Advert{
-		ID:             uuid.NewV4(),
 		UserID:         data.UserID,
-		AdvertTypeID:   newAdvertType.ID,
 		AdvertTypeSale: data.AdvertTypeSale,
 		Title:          data.Title,
 		Description:    data.Description,
@@ -202,12 +196,14 @@ func (u *ComplexUsecase) CreateHouseAdvert(ctx context.Context, data *models.Com
 		Priority:       1, // Разобраться в будущем, как это менять за деньги(money)
 	}
 
-	buildingId := data.BuildingID
+	id, err = u.repo.CreateAdvert(ctx, tx, newAdvert)
+	if err != nil {
+		return nil, err
+	}
+	newAdvert.ID = id
 
 	newHouse := &models.House{
-		ID:            uuid.NewV4(),
 		BuildingID:    buildingId,
-		AdvertTypeID:  newAdvertType.ID,
 		CeilingHeight: data.CeilingHeight,
 		SquareArea:    data.SquareArea,
 		SquareHouse:   data.SquareHouse,
@@ -217,22 +213,22 @@ func (u *ComplexUsecase) CreateHouseAdvert(ctx context.Context, data *models.Com
 		StatusHome:    data.StatusHome,
 	}
 
+	if id, err = u.repo.CreateHouse(ctx, tx, newHouse); err != nil {
+		return nil, err
+	}
+
+	newAdvertType := &models.HouseTypeAdvert{
+		AdvertID: newAdvert.ID,
+		HouseID:  id,
+	}
+
+	if err := u.repo.CreateAdvertTypeHouse(ctx, tx, newAdvertType); err != nil {
+		return nil, err
+	}
+
 	newPriceChange := &models.PriceChange{
-		ID:       uuid.NewV4(),
 		AdvertID: newAdvert.ID,
 		Price:    data.Price,
-	}
-
-	if err := u.repo.CreateAdvertType(ctx, tx, newAdvertType); err != nil {
-		return nil, err
-	}
-
-	if err := u.repo.CreateHouse(ctx, tx, newHouse); err != nil {
-		return nil, err
-	}
-
-	if err := u.repo.CreateAdvert(ctx, tx, newAdvert); err != nil {
-		return nil, err
 	}
 
 	if err := u.repo.CreatePriceChange(ctx, tx, newPriceChange); err != nil {

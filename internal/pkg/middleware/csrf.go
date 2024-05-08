@@ -2,12 +2,13 @@ package middleware
 
 import (
 	"context"
-	"github.com/satori/uuid"
 	"net/http"
+
+	"github.com/satori/uuid"
 )
 
 // CookieNameCsrf represents the name of the csrf cookie.
-const CookieNameCsrf = "csrf-tean"
+const CookieNameCsrf = "csrftoken"
 
 type CsrfMiddleware struct{}
 
@@ -21,6 +22,7 @@ func (h *CsrfMiddleware) SetCSRFToken(next http.Handler) http.Handler {
 		token := uuid.NewV4().String()
 		http.SetCookie(w, &http.Cookie{
 			Name:     CookieNameCsrf,
+			Path:     "/",
 			Value:    token,
 			HttpOnly: true,
 			SameSite: http.SameSiteStrictMode,

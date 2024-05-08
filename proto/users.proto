@@ -1,0 +1,49 @@
+syntax = "proto3";
+package users;
+option go_package = "./internal/pkg/users/delivery/grpc/gen/;gen";
+
+//protoc --go_out=./gen --go-grpc_out=./gen --go-grpc_opt=paths=source_relative --go_opt=paths=source_relative *.proto
+
+service Users {
+  rpc GetCurUser(GetUserRequest) returns (GetUserResponse) {}
+  rpc UpdateUserInfo(UpdateUserInfoRequest) returns (UpdateUserInfoResponse) {}
+  rpc UpdateUserPassword(UpdatePasswordRequest) returns (UpdatePasswordResponse) {}
+}
+
+message GetUserRequest {
+  int64 Id = 1;
+}
+
+message GetUserResponse {
+  string FirstName = 2;
+  string Surname = 3;
+  string DateBirthday = 4;
+  string Phone = 5;
+  string Email = 6;
+  string Photo = 7;
+}
+
+message UpdateUserInfoRequest {
+  int64 Id = 1;
+  string FirstName = 2;
+  string Surname = 3;
+  string DateBirthday = 4;
+  string Phone = 5;
+  string Email = 6;
+}
+
+message UpdateUserInfoResponse {
+  bool Updated = 1;
+}
+
+message UpdatePasswordRequest {
+  int64 Id = 1;
+  string OldPassword = 2;
+  string NewPassword = 3;
+}
+
+message UpdatePasswordResponse {
+  bool Updated = 1;
+  string Token= 2;
+  string Exp= 3;
+}

@@ -1,14 +1,15 @@
 package utils
 
 import (
-	"2024_1_TeaStealers/internal/pkg/middleware"
 	"crypto/sha1"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
+	"fmt"
 	"io"
 	"net/http"
-
-	"github.com/satori/uuid"
+	"strings"
+	"time"
 )
 
 // WriteError prints error in json
@@ -68,11 +69,45 @@ func GenerateHashString(s string) string {
 	return hex.EncodeToString(h.Sum(nil))
 }
 
-func GetIdUserByRequest(r *http.Request) uuid.UUID {
-	id := r.Context().Value(middleware.CookieName)
-	UUID, ok := id.(uuid.UUID)
-	if !ok {
-		return uuid.Nil
+/*
+	func GetIdUserByRequest(r *http.Request) uuid.UUID {
+		id := r.Context().Value(middleware.CookieName)
+		UUID, ok := id.(uuid.UUID)
+		if !ok {
+			return uuid.Nil
+		}
+		return UUID
 	}
-	return UUID
+*/
+func StringToTime(layout, value string) (time.Time, error) {
+	t, err := time.Parse(layout, value)
+	if err != nil {
+		return time.Time{}, err
+	}
+	return t, nil
+}
+
+func TruncSlash(methodName string, count int) (string, error) {
+	if count < 0 {
+		return "", errors.New("count must be non-negative")
+	}
+
+	slashes := strings.Count(methodName, `/`)
+	if slashes < count {
+		return "", fmt.Errorf("methodName contains %d slashes, but count is %d", slashes, count)
+	}
+
+	// Split the methodName string into a slice of strings using `/` as the separator
+	parts := strings.Split(methodName, `?`)
+
+	parts = strings.Split(parts[0], `/`)
+
+	// parts = parts[:len(parts)-count-1]
+
+	// Join the remaining elements of the slice back into a string using `/` as the separator
+	newMethodName := strings.Join(parts, `/`)
+	trSlash := `/`
+	newMethodName = newMethodName + trSlash
+
+	return newMethodName, nil
 }

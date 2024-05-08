@@ -7,10 +7,10 @@ import (
 	"net/http"
 	"path/filepath"
 	"slices"
+	"strconv"
 	"strings"
 
 	"github.com/gorilla/mux"
-	"github.com/satori/uuid"
 	"go.uber.org/zap"
 )
 
@@ -65,7 +65,7 @@ func (h *CompanyHandler) UpdateCompanyPhoto(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	companyId, err := uuid.FromString(id)
+	companyId, err := strconv.ParseInt(id, 10, 64)
 	if err != nil {
 		utils.WriteError(w, http.StatusBadRequest, "invalid id parameter")
 		return
@@ -109,7 +109,7 @@ func (h *CompanyHandler) GetCompanyById(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	companyId, err := uuid.FromString(id)
+	companyId, err := strconv.ParseInt(id, 10, 64)
 	if err != nil {
 		utils.WriteError(w, http.StatusBadRequest, "invalid id parameter")
 		return

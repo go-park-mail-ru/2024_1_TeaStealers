@@ -4,8 +4,6 @@ package adverts
 import (
 	"2024_1_TeaStealers/internal/models"
 	"context"
-
-	"github.com/satori/uuid"
 )
 
 const (
@@ -47,38 +45,53 @@ const (
 type AdvertUsecase interface {
 	CreateFlatAdvert(context.Context, *models.AdvertFlatCreateData) (*models.Advert, error)
 	CreateHouseAdvert(context.Context, *models.AdvertHouseCreateData) (*models.Advert, error)
-	GetAdvertById(ctx context.Context, id uuid.UUID) (foundAdvert *models.AdvertData, err error)
+	GetAdvertById(ctx context.Context, id int64) (foundAdvert *models.AdvertData, err error)
 	GetSquareAdvertsList(ctx context.Context, pageSize, offset int) (foundAdverts []*models.AdvertSquareData, err error)
 	GetRectangleAdvertsList(ctx context.Context, advertFilter models.AdvertFilter) (foundAdverts *models.AdvertDataPage, err error)
-	GetRectangleAdvertsByUserId(ctx context.Context, pageSize, offset int, userId uuid.UUID) (foundAdverts []*models.AdvertRectangleData, err error)
+	GetRectangleAdvertsByUserId(ctx context.Context, pageSize, offset int, userId int64) (foundAdverts []*models.AdvertRectangleData, err error)
 	UpdateAdvertById(ctx context.Context, advertUpdateData *models.AdvertUpdateData) (err error)
-	DeleteAdvertById(ctx context.Context, advertId uuid.UUID) (err error)
-	GetRectangleAdvertsByComplexId(ctx context.Context, pageSize, offset int, comlexId uuid.UUID) (foundAdverts []*models.AdvertRectangleData, err error)
-	GetExistBuildingsByAddress(ctx context.Context, address string, pageSize int) (foundBuildings []*models.BuildingData, err error)
+	DeleteAdvertById(ctx context.Context, advertId int64) (err error)
+	GetRectangleAdvertsByComplexId(ctx context.Context, pageSize, offset int, comlexId int64) (foundAdverts []*models.AdvertRectangleData, err error)
+	GetExistBuildingByAddress(ctx context.Context, address *models.AddressData) (foundBuilding *models.BuildingData, err error)
+	LikeAdvert(ctx context.Context, advertId int64, userId int64) error
+	DislikeAdvert(ctx context.Context, advertId int64, userId int64) error
+	GetRectangleAdvertsLikedByUserId(ctx context.Context, pageSize, offset int, userId int64) (foundAdverts []*models.AdvertRectangleData, err error)
 }
 
 // AdvertRepo represents the repository interface for adverts.
 type AdvertRepo interface {
 	BeginTx(ctx context.Context) (models.Transaction, error)
-	CreateAdvertType(ctx context.Context, tx models.Transaction, newAdvertType *models.AdvertType) error
-	CreateAdvert(ctx context.Context, tx models.Transaction, newAdvert *models.Advert) error
+	CreateAdvertTypeHouse(ctx context.Context, tx models.Transaction, newAdvertType *models.HouseTypeAdvert) error
+	CreateAdvertTypeFlat(ctx context.Context, tx models.Transaction, newAdvertType *models.FlatTypeAdvert) error
+	CreateAdvert(ctx context.Context, tx models.Transaction, newAdvert *models.Advert) (int64, error)
 	CreatePriceChange(ctx context.Context, tx models.Transaction, newPriceChange *models.PriceChange) error
-	CreateBuilding(ctx context.Context, tx models.Transaction, newBuilding *models.Building) error
-	CreateHouse(ctx context.Context, tx models.Transaction, newHouse *models.House) error
-	CreateFlat(ctx context.Context, tx models.Transaction, newFlat *models.Flat) error
-	CheckExistsBuilding(ctx context.Context, adress string) (*models.Building, error)
-	GetHouseAdvertById(ctx context.Context, id uuid.UUID) (*models.AdvertData, error)
-	GetFlatAdvertById(ctx context.Context, id uuid.UUID) (*models.AdvertData, error)
-	GetTypeAdvertById(ctx context.Context, id uuid.UUID) (*models.AdvertTypeAdvert, error)
+	CreateBuilding(ctx context.Context, tx models.Transaction, newBuilding *models.Building) (int64, error)
+	CreateHouse(ctx context.Context, tx models.Transaction, newHouse *models.House) (int64, error)
+	CreateFlat(ctx context.Context, tx models.Transaction, newFlat *models.Flat) (int64, error)
+	CheckExistsBuilding(ctx context.Context, adress *models.AddressData) (*models.Building, error)
+	GetHouseAdvertById(ctx context.Context, id int64) (*models.AdvertData, error)
+	GetFlatAdvertById(ctx context.Context, id int64) (*models.AdvertData, error)
+	GetTypeAdvertById(ctx context.Context, id int64) (*models.AdvertTypeAdvert, error)
 	GetSquareAdverts(ctx context.Context, pageSize, offset int) ([]*models.AdvertSquareData, error)
 	GetRectangleAdverts(ctx context.Context, advertFilter models.AdvertFilter) (*models.AdvertDataPage, error)
-	GetRectangleAdvertsByUserId(ctx context.Context, pageSize, offset int, userId uuid.UUID) ([]*models.AdvertRectangleData, error)
+	GetRectangleAdvertsByUserId(ctx context.Context, pageSize, offset int, userId int64) ([]*models.AdvertRectangleData, error)
 	UpdateFlatAdvertById(ctx context.Context, tx models.Transaction, advertUpdateData *models.AdvertUpdateData) error
 	UpdateHouseAdvertById(ctx context.Context, tx models.Transaction, advertUpdateData *models.AdvertUpdateData) error
-	ChangeTypeAdvert(ctx context.Context, tx models.Transaction, advertId uuid.UUID) error
-	DeleteHouseAdvertById(ctx context.Context, tx models.Transaction, advertId uuid.UUID) error
-	DeleteFlatAdvertById(ctx context.Context, tx models.Transaction, advertId uuid.UUID) error
-	GetRectangleAdvertsByComplexId(ctx context.Context, pageSize, offset int, complexId uuid.UUID) ([]*models.AdvertRectangleData, error)
-	CheckExistsBuildings(ctx context.Context, pageSize int, adress string) ([]*models.BuildingData, error)
-	SelectImages(ctx context.Context, advertId uuid.UUID) ([]*models.ImageResp, error)
+	ChangeTypeAdvert(ctx context.Context, tx models.Transaction, advertId int64) error
+	DeleteHouseAdvertById(ctx context.Context, tx models.Transaction, advertId int64) error
+	DeleteFlatAdvertById(ctx context.Context, tx models.Transaction, advertId int64) error
+	GetRectangleAdvertsByComplexId(ctx context.Context, pageSize, offset int, complexId int64) ([]*models.AdvertRectangleData, error)
+	CheckExistsBuildingData(ctx context.Context, adress *models.AddressData) (*models.BuildingData, error)
+	SelectImages(ctx context.Context, advertId int64) ([]*models.ImageResp, error)
+	SelectPriceChanges(ctx context.Context, advertId int64) ([]*models.PriceChangeData, error)
+	CreateAddress(ctx context.Context, tx models.Transaction, idHouse int64, metro string, address_point string) (int64, error)
+	CreateHouseAddress(ctx context.Context, tx models.Transaction, idStreet int64, name string) (int64, error)
+	CreateStreet(ctx context.Context, tx models.Transaction, idTown int64, name string) (int64, error)
+	CreateTown(ctx context.Context, tx models.Transaction, idProvince int64, name string) (int64, error)
+	CreateProvince(ctx context.Context, tx models.Transaction, name string) (int64, error)
+	LikeAdvert(ctx context.Context, advertId int64, userId int64) error
+	DislikeAdvert(ctx context.Context, advertId int64, userId int64) error
+	GetRectangleAdvertsLikedByUserId(ctx context.Context, pageSize, offset int, userId int64) ([]*models.AdvertRectangleData, error)
+	SelectCountLikes(ctx context.Context, id int64) (int64, error)
+	SelectCountViews(ctx context.Context, id int64) (int64, error)
 }

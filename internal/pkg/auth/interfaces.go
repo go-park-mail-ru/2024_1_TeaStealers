@@ -5,8 +5,6 @@ import (
 	"2024_1_TeaStealers/internal/models"
 	"context"
 	"time"
-
-	"github.com/satori/uuid"
 )
 
 const (
@@ -17,14 +15,14 @@ const (
 	CreateUserMethod       = "CreateUser"
 	CheckUserMethod        = "CheckUser"
 	GetUserByLoginMethod   = "GetUserByLogin"
+	BeginTxMethod          = "BeginTx"
 )
 
 // AuthUsecase represents the usecase interface for authentication.
 type AuthUsecase interface {
 	SignUp(context.Context, *models.UserSignUpData) (*models.User, string, time.Time, error)
 	Login(context.Context, *models.UserLoginData) (*models.User, string, time.Time, error)
-	CheckAuth(context.Context, uuid.UUID) error
-	GetUserLevelById(ctx context.Context, id uuid.UUID, level int) error
+	CheckAuth(ctx context.Context, id int64, jwtLevel int) error
 }
 
 // AuthRepo represents the repository interface for authentication.
@@ -32,5 +30,5 @@ type AuthRepo interface {
 	CreateUser(ctx context.Context, newUser *models.User) (*models.User, error)
 	CheckUser(ctx context.Context, login string, passwordHash string) (*models.User, error)
 	GetUserByLogin(ctx context.Context, login string) (*models.User, error)
-	GetUserLevelById(ctx context.Context, id uuid.UUID) (int, error)
+	GetUserLevelById(ctx context.Context, id int64) (int, error)
 }

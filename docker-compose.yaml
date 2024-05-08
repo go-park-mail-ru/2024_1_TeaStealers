@@ -15,6 +15,9 @@ services:
       - ./.env
     ports:
       - ${DB_PORT}:5432
+    networks:
+      - tean-network
+
   main:
     depends_on:
       - db
@@ -28,7 +31,60 @@ services:
       - ./.env
     volumes:
       - "${BASE_DIR}:/docker-cian/images"
+    networks:
+      - tean-network
+
+  tean-auth:
+    env_file:
+      - ./.env
+    container_name: ${GRPC_AUTH_CONTAINER_IP}
+    build:
+      context: .
+      dockerfile: ./build/auth.Dockerfile
+    restart: always
+    expose:
+      - "${GRPC_AUTH_PORT}"
+    depends_on:
+      - db
+    networks:
+      - tean-network
+
+  tean-user:
+    env_file:
+      - ./.env
+    container_name: ${GRPC_USER_CONTAINER_IP}
+    build:
+      context: .
+      dockerfile: ./build/user.Dockerfile
+    restart: always
+    expose:
+      - "${GRPC_USER_PORT}"
+    depends_on:
+      - db
+    networks:
+      - tean-network
+
+  tean-advert:
+    env_file:
+       - ./.env
+    container_name: ${GRPC_ADVERT_CONTAINER_IP}
+    build:
+      context: .
+      dockerfile: ./build/advert.Dockerfile
+    restart: always
+    expose:
+      - "${GRPC_ADVERT_PORT}"
+    depends_on:
+      - db
+    networks:
+      - tean-network
+
 
 volumes:
   postgresdb-data:
     driver: local
+
+networks:
+  tean-network:
+    name: tean-network
+    driver: bridge

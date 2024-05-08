@@ -2,18 +2,14 @@ package models
 
 import (
 	"time"
-
-	"github.com/satori/uuid"
 )
 
 // Flat represents a flat entity.
 type Flat struct {
 	// ID is the unique identifier for the flat.
-	ID uuid.UUID `json:"id"`
+	ID int64 `json:"id"`
 	// BuildingID is the identifier of the building to which the flat belongs.
-	BuildingID uuid.UUID `json:"buildingId"`
-	// AdvertTypeID is the identifier of the advert type of the flat.
-	AdvertTypeID uuid.UUID `json:"advertTypeId"`
+	BuildingID int64 `json:"buildingId"`
 	// Floor is the floor of the flat.
 	Floor int `json:"floor"`
 	// CeilingHeight is the ceiling height of the flat.
