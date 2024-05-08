@@ -9,6 +9,7 @@ import (
 	"2024_1_TeaStealers/internal/pkg/utils"
 	"context"
 	"errors"
+	"log"
 	"net/http"
 	"strconv"
 
@@ -232,6 +233,7 @@ func (h *AdvertsClientHandler) GetAdvertById(w http.ResponseWriter, r *http.Requ
 	}
 
 	if advertDataResponse.FlatProperties != nil {
+		log.Println(advertDataResponse.FlatProperties)
 		flatProperties = &models.FlatProperties{CeilingHeight: advertDataResponse.FlatProperties.CeilingHeight, RoomCount: int(advertDataResponse.FlatProperties.RoomCount), FloorGeneral: int(advertDataResponse.FlatProperties.FloorGeneral), Apartment: advertDataResponse.FlatProperties.Apartment, SquareGeneral: advertDataResponse.FlatProperties.SquareGeneral, Floor: int(advertDataResponse.FlatProperties.Floor), SquareResidential: advertDataResponse.FlatProperties.SquareResidential}
 	}
 
