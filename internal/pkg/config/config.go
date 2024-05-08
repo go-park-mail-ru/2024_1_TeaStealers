@@ -1,11 +1,12 @@
 package config
 
 import (
-	"github.com/ilyakaznacheev/cleanenv"
-	_ "github.com/joho/godotenv/autoload" // Load enviroment from .env
 	"log"
 	"os"
 	"time"
+
+	"github.com/ilyakaznacheev/cleanenv"
+	_ "github.com/joho/godotenv/autoload" // Load enviroment from .env
 )
 
 type Config struct {
@@ -31,11 +32,13 @@ type Database struct {
 }
 
 type GRPC struct {
-	AuthPort int `env:"GRPC_AUTH_PORT" env-default:"8081"`
-	UserPort int `env:"GRPC_USER_PORT" env-default:"8082"`
+	AuthPort   int `env:"GRPC_AUTH_PORT" env-default:"8081"`
+	UserPort   int `env:"GRPC_USER_PORT" env-default:"8082"`
+	AdvertPort int `env:"GRPC_ADVERT_PORT" env-default:"8083"`
 
-	AuthContainerIP  string `env:"GRPC_AUTH_CONTAINER_IP" env-default:"localhost"`
-	UsersContainerIP string `env:"GRPC_USER_CONTAINER_IP" env-default:"localhost"`
+	AuthContainerIP    string `env:"GRPC_AUTH_CONTAINER_IP" env-default:"localhost"`
+	UsersContainerIP   string `env:"GRPC_USER_CONTAINER_IP" env-default:"localhost"`
+	AdvertsContainerIP string `env:"GRPC_ADVERT_CONTAINER_IP" env-default:"localhost"`
 }
 
 func MustLoad() *Config {

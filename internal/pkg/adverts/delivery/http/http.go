@@ -3,6 +3,8 @@ package delivery
 import (
 	"2024_1_TeaStealers/internal/models"
 	"2024_1_TeaStealers/internal/pkg/adverts"
+	"2024_1_TeaStealers/internal/pkg/adverts/delivery/grpc/gen"
+	genAdverts "2024_1_TeaStealers/internal/pkg/adverts/delivery/grpc/gen"
 	"2024_1_TeaStealers/internal/pkg/middleware"
 	"2024_1_TeaStealers/internal/pkg/utils"
 	"context"
@@ -13,6 +15,7 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/satori/uuid"
 	"go.uber.org/zap"
+	"google.golang.org/grpc"
 )
 
 const (
@@ -29,18 +32,19 @@ const (
 )
 
 // AdvertHandler handles HTTP requests for advert changes.
-type AdvertHandler struct {
+type AdvertsClientHandler struct {
 	// uc represents the usecase interface for advert changes.
+	client genAdverts.AdvertsClient
 	uc     adverts.AdvertUsecase
 	logger *zap.Logger
 }
 
 // NewAdvertHandler creates a new instance of AdvertHandler.
-func NewAdvertHandler(uc adverts.AdvertUsecase, logger *zap.Logger) *AdvertHandler {
-	return &AdvertHandler{uc: uc, logger: logger}
+func NewAdvertsClientHandler(grpcConn *grpc.ClientConn, uc adverts.AdvertUsecase, logger *zap.Logger) *AdvertsClientHandler {
+	return &AdvertsClientHandler{client: genAdverts.NewAdvertsClient(grpcConn), uc: uc, logger: logger}
 }
 
-func (h *AdvertHandler) CreateFlatAdvert(w http.ResponseWriter, r *http.Request) {
+func (h *AdvertsClientHandler) CreateFlatAdvert(w http.ResponseWriter, r *http.Request) {
 	_, err := r.Cookie("csrftoken")
 	if err != nil {
 		utils.WriteError(w, http.StatusUnauthorized, "csrf cookie not found")
@@ -80,7 +84,7 @@ func (h *AdvertHandler) CreateFlatAdvert(w http.ResponseWriter, r *http.Request)
 	}
 }
 
-func (h *AdvertHandler) CreateHouseAdvert(w http.ResponseWriter, r *http.Request) {
+func (h *AdvertsClientHandler) CreateHouseAdvert(w http.ResponseWriter, r *http.Request) {
 	_, err := r.Cookie("csrftoken")
 	if err != nil {
 		utils.WriteError(w, http.StatusUnauthorized, "csrf cookie not found")
@@ -123,7 +127,7 @@ func (h *AdvertHandler) CreateHouseAdvert(w http.ResponseWriter, r *http.Request
 }
 
 // GetAdvertById handles the request for getting advert by id
-func (h *AdvertHandler) GetAdvertById(w http.ResponseWriter, r *http.Request) {
+func (h *AdvertsClientHandler) GetAdvertById(w http.ResponseWriter, r *http.Request) {
 	ctx := context.WithValue(r.Context(), "requestId", uuid.NewV4().String())
 
 	vars := mux.Vars(r)
@@ -140,15 +144,112 @@ func (h *AdvertHandler) GetAdvertById(w http.ResponseWriter, r *http.Request) {
 		utils.WriteError(w, http.StatusBadRequest, "invalid id parameter")
 		return
 	}
-	advertData, err := h.uc.GetAdvertById(ctx, advertId)
 
+	advertDataResponse, err := h.client.GetAdvertById(ctx, &genAdverts.GetAdvertByIdRequest{Id: advertId})
 	if err != nil {
-		utils.LogErrorResponse(h.logger, ctx.Value("requestId").(string), utils.DeliveryLayer, GetAdvertByIdMethod, err, http.StatusBadRequest)
-		utils.WriteError(w, http.StatusBadRequest, err.Error())
+		utils.LogErrorResponse(h.logger, ctx.Value("requestId").(string), utils.DeliveryLayer, GetAdvertByIdMethod, err, http.StatusConflict)
+		utils.WriteError(w, http.StatusConflict, err.Error())
 		return
 	}
 
-	if err = utils.WriteResponse(w, http.StatusOK, advertData); err != nil {
+	var priceHistory []*models.PriceChangeData
+	for _, pcd := range advertDataResponse.PriceHistory {
+		date := pcd.DateCreation[:19]
+		dateTime, err := utils.StringToTime("2006-01-02 15:04:05", date)
+		if err != nil {
+			// utils.LogErrorResponse(h.logger, ctx.Value("requestId").(string), utils.DeliveryLayer, LoginMethod, err, http.StatusInternalServerError)
+			utils.WriteError(w, http.StatusInternalServerError, err.Error())
+			return
+		}
+
+		priceHistory = append(priceHistory, &models.PriceChangeData{Price: pcd.Price, DateCreation: dateTime})
+	}
+
+	var images []*models.ImageResp
+	for _, img := range advertDataResponse.Images {
+		images = append(images, &models.ImageResp{ID: img.Id, Photo: img.Photo, Priority: int(img.Priority)})
+	}
+
+	var material models.MaterialBuilding
+
+	switch advertDataResponse.Material {
+	case gen.MaterialBuilding_MATERIAL_BRICK:
+		material = models.MaterialBrick
+	case gen.MaterialBuilding_MATERIAL_MONOLITHIC:
+		material = models.MaterialMonolithic
+	case gen.MaterialBuilding_MATERIAL_WOOD:
+		material = models.MaterialWood
+	case gen.MaterialBuilding_MATERIAL_PANEL:
+		material = models.MaterialPanel
+	case gen.MaterialBuilding_MATERIAL_STALINSKY:
+		material = models.MaterialStalinsky
+	case gen.MaterialBuilding_MATERIAL_BLOCK:
+		material = models.MaterialBlock
+	case gen.MaterialBuilding_MATERIAL_MONOLITHIC_BLOCK:
+		material = models.MaterialMonolithicBlock
+	case gen.MaterialBuilding_MATERIAL_FRAME:
+		material = models.MaterialFrame
+	case gen.MaterialBuilding_MATERIAL_AERATED_CONCRETE_BLOCK:
+		material = models.MaterialAeratedConcreteBlock
+	case gen.MaterialBuilding_MATERIAL_GAS_SILICATE_BLOCK:
+		material = models.MaterialGasSilicateBlock
+	case gen.MaterialBuilding_MATERIAL_FOAM_CONCRETE_BLOCK:
+		material = models.MaterialFoamConcreteBlock
+	}
+
+	var statusArea models.StatusAreaHouse
+	var statusHome models.StatusHomeHouse
+	var houseProperties *models.HouseProperties = nil
+	var flatProperties *models.FlatProperties = nil
+	var complexProperties *models.ComplexAdvertProperties = nil
+
+	if advertDataResponse.HouseProperties != nil {
+		switch advertDataResponse.HouseProperties.StatusArea {
+		case gen.StatusAreaHouse_STATUS_AREA_IHC:
+			statusArea = "IHC"
+		case gen.StatusAreaHouse_STATUS_AREA_DNP:
+			statusArea = "DNP"
+		case gen.StatusAreaHouse_STATUS_AREA_G:
+			statusArea = "G"
+		case gen.StatusAreaHouse_STATUS_AREA_F:
+			statusArea = "F"
+		case gen.StatusAreaHouse_STATUS_AREA_PSP:
+			statusArea = "PSP"
+		}
+
+		switch advertDataResponse.HouseProperties.StatusHome {
+		case gen.StatusHomeHouse_STATUS_HOME_LIVE:
+			statusHome = "Live"
+		case gen.StatusHomeHouse_STATUS_HOME_REPAIR_NEED:
+			statusHome = "RepairNeed"
+		case gen.StatusHomeHouse_STATUS_HOME_COMPLETE_NEED:
+			statusHome = "CompleteNeed"
+		case gen.StatusHomeHouse_STATUS_HOME_RENOVATION:
+			statusHome = "Renovation"
+		}
+
+		houseProperties = &models.HouseProperties{CeilingHeight: advertDataResponse.HouseProperties.CeilingHeight, SquareArea: advertDataResponse.HouseProperties.SquareArea, SquareHouse: advertDataResponse.HouseProperties.SquareHouse, BedroomCount: int(advertDataResponse.HouseProperties.BedroomCount), StatusArea: statusArea, Cottage: advertDataResponse.HouseProperties.Cottage, StatusHome: statusHome, Floor: int(advertDataResponse.HouseProperties.Floor)}
+	}
+
+	if advertDataResponse.FlatProperties != nil {
+		flatProperties = &models.FlatProperties{CeilingHeight: advertDataResponse.FlatProperties.CeilingHeight, RoomCount: int(advertDataResponse.FlatProperties.RoomCount), FloorGeneral: int(advertDataResponse.FlatProperties.FloorGeneral), Apartment: advertDataResponse.FlatProperties.Apartment, SquareGeneral: advertDataResponse.FlatProperties.SquareGeneral, Floor: int(advertDataResponse.HouseProperties.Floor), SquareResidential: advertDataResponse.FlatProperties.SquareResidential}
+	}
+
+	if advertDataResponse.ComplexProperties != nil {
+		complexProperties = &models.ComplexAdvertProperties{ComplexId: advertDataResponse.ComplexProperties.ComplexId, NameComplex: advertDataResponse.ComplexProperties.NameComplex, PhotoCompany: advertDataResponse.ComplexProperties.PhotoCompany, NameCompany: advertDataResponse.ComplexProperties.NameCompany}
+	}
+
+	date := advertDataResponse.DateCreation[:19]
+	dateTime, err := utils.StringToTime("2006-01-02 15:04:05", date)
+	if err != nil {
+		// utils.LogErrorResponse(h.logger, ctx.Value("requestId").(string), utils.DeliveryLayer, LoginMethod, err, http.StatusInternalServerError)
+		utils.WriteError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	advert := &models.AdvertData{ID: advertDataResponse.Id, AdvertType: advertDataResponse.AdvertType, TypeSale: advertDataResponse.TypeSale, Title: advertDataResponse.Title, Description: advertDataResponse.Description, CountViews: advertDataResponse.CountViews, CountLikes: advertDataResponse.CountLikes, Price: advertDataResponse.Price, Phone: advertDataResponse.Phone, IsLiked: advertDataResponse.IsLiked, IsAgent: advertDataResponse.IsAgent, Metro: advertDataResponse.Metro, Address: advertDataResponse.Address, AddressPoint: advertDataResponse.AddressPoint, YearCreation: int(advertDataResponse.YearCreation), PriceChange: priceHistory, Images: images, FlatProperties: flatProperties, HouseProperties: houseProperties, Material: material, ComplexProperties: complexProperties, DateCreation: dateTime}
+
+	if err = utils.WriteResponse(w, http.StatusOK, advert); err != nil {
 		utils.LogErrorResponse(h.logger, ctx.Value("requestId").(string), utils.DeliveryLayer, GetAdvertByIdMethod, err, http.StatusInternalServerError)
 		utils.WriteError(w, http.StatusInternalServerError, err.Error())
 	} else {
@@ -157,7 +258,7 @@ func (h *AdvertHandler) GetAdvertById(w http.ResponseWriter, r *http.Request) {
 }
 
 // UpdateAdvertById handles the request for update advert by id
-func (h *AdvertHandler) UpdateAdvertById(w http.ResponseWriter, r *http.Request) {
+func (h *AdvertsClientHandler) UpdateAdvertById(w http.ResponseWriter, r *http.Request) {
 	_, err := r.Cookie("csrftoken")
 	if err != nil {
 		utils.WriteError(w, http.StatusUnauthorized, "csrf cookie not found")
@@ -207,7 +308,7 @@ func (h *AdvertHandler) UpdateAdvertById(w http.ResponseWriter, r *http.Request)
 }
 
 // DeleteAdvertById handles the request for deleting advert by id
-func (h *AdvertHandler) DeleteAdvertById(w http.ResponseWriter, r *http.Request) {
+func (h *AdvertsClientHandler) DeleteAdvertById(w http.ResponseWriter, r *http.Request) {
 	_, err := r.Cookie("csrftoken")
 	if err != nil {
 		utils.WriteError(w, http.StatusUnauthorized, "csrf cookie not found")
@@ -247,7 +348,7 @@ func (h *AdvertHandler) DeleteAdvertById(w http.ResponseWriter, r *http.Request)
 }
 
 // GetSquareAdvertsList handles the request for retrieving a square adverts.
-func (h *AdvertHandler) GetSquareAdvertsList(w http.ResponseWriter, r *http.Request) {
+func (h *AdvertsClientHandler) GetSquareAdvertsList(w http.ResponseWriter, r *http.Request) {
 	ctx := context.WithValue(r.Context(), "requestId", uuid.NewV4().String())
 
 	pageStr := r.URL.Query().Get("page")
@@ -283,7 +384,7 @@ func (h *AdvertHandler) GetSquareAdvertsList(w http.ResponseWriter, r *http.Requ
 }
 
 // GetExistBuildingsByAddress handles the request for retrieving an existing buildings by address.
-func (h *AdvertHandler) GetExistBuildingByAddress(w http.ResponseWriter, r *http.Request) {
+func (h *AdvertsClientHandler) GetExistBuildingByAddress(w http.ResponseWriter, r *http.Request) {
 	ctx := context.WithValue(r.Context(), "requestId", uuid.NewV4().String())
 
 	data := models.AddressData{}
@@ -310,7 +411,7 @@ func (h *AdvertHandler) GetExistBuildingByAddress(w http.ResponseWriter, r *http
 }
 
 // GetRectangeAdvertsList handles the request for retrieving a rectangle adverts with search.
-func (h *AdvertHandler) GetRectangeAdvertsList(w http.ResponseWriter, r *http.Request) {
+func (h *AdvertsClientHandler) GetRectangeAdvertsList(w http.ResponseWriter, r *http.Request) {
 	ctx := context.WithValue(r.Context(), "requestId", uuid.NewV4().String())
 
 	pageStr := r.URL.Query().Get("page")
@@ -380,7 +481,7 @@ func (h *AdvertHandler) GetRectangeAdvertsList(w http.ResponseWriter, r *http.Re
 	}
 }
 
-func (h *AdvertHandler) GetUserAdverts(w http.ResponseWriter, r *http.Request) {
+func (h *AdvertsClientHandler) GetUserAdverts(w http.ResponseWriter, r *http.Request) {
 	ctx := context.WithValue(r.Context(), "requestId", uuid.NewV4().String())
 
 	id := ctx.Value(middleware.CookieName)
@@ -423,7 +524,7 @@ func (h *AdvertHandler) GetUserAdverts(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (h *AdvertHandler) GetComplexAdverts(w http.ResponseWriter, r *http.Request) {
+func (h *AdvertsClientHandler) GetComplexAdverts(w http.ResponseWriter, r *http.Request) {
 	ctx := context.WithValue(r.Context(), "requestId", uuid.NewV4().String())
 
 	pageStr := r.URL.Query().Get("page")
@@ -473,7 +574,7 @@ func (h *AdvertHandler) GetComplexAdverts(w http.ResponseWriter, r *http.Request
 	}
 }
 
-func (h *AdvertHandler) LikeAdvert(w http.ResponseWriter, r *http.Request) {
+func (h *AdvertsClientHandler) LikeAdvert(w http.ResponseWriter, r *http.Request) {
 	_, err := r.Cookie("csrftoken")
 	if err != nil {
 		utils.WriteError(w, http.StatusUnauthorized, "csrf cookie not found")
@@ -519,7 +620,7 @@ func (h *AdvertHandler) LikeAdvert(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (h *AdvertHandler) DislikeAdvert(w http.ResponseWriter, r *http.Request) {
+func (h *AdvertsClientHandler) DislikeAdvert(w http.ResponseWriter, r *http.Request) {
 	_, err := r.Cookie("csrftoken")
 	if err != nil {
 		utils.WriteError(w, http.StatusUnauthorized, "csrf cookie not found")
@@ -565,7 +666,7 @@ func (h *AdvertHandler) DislikeAdvert(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (h *AdvertHandler) GetLikedUserAdverts(w http.ResponseWriter, r *http.Request) {
+func (h *AdvertsClientHandler) GetLikedUserAdverts(w http.ResponseWriter, r *http.Request) {
 	ctx := context.WithValue(r.Context(), "requestId", uuid.NewV4().String())
 
 	id := ctx.Value(middleware.CookieName)

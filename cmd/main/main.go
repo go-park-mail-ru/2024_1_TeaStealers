@@ -1,7 +1,7 @@
 package main
 
 import (
-	advertsH "2024_1_TeaStealers/internal/pkg/adverts/delivery"
+	advertsH "2024_1_TeaStealers/internal/pkg/adverts/delivery/http"
 	advertsR "2024_1_TeaStealers/internal/pkg/adverts/repo"
 	advertsUc "2024_1_TeaStealers/internal/pkg/adverts/usecase"
 	authH "2024_1_TeaStealers/internal/pkg/auth/delivery/http"
@@ -99,6 +99,16 @@ func main() {
 	}
 	defer grcpConnUsers.Close()
 
+	grcpConnAdverts, err := grpc.Dial(
+		fmt.Sprintf("%s:%d", cfg.GRPC.AdvertsContainerIP, cfg.GRPC.AdvertPort),
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
+	)
+	if err != nil {
+		log.Println("cant connect to grpc")
+		return
+	}
+	defer grcpConnAdverts.Close()
+
 	authHandler := authH.NewClientAuthHandler(grcpConnAuth, logger)
 	jwtMd := middleware.NewAuthMiddleware(grcpConnAuth, logger)
 	csrfMd := middleware.NewCsrfMiddleware()
@@ -119,7 +129,7 @@ func main() {
 
 	advertRepo := advertsR.NewRepository(db, logger)
 	advertUsecase := advertsUc.NewAdvertUsecase(advertRepo, logger)
-	advertHandler := advertsH.NewAdvertHandler(advertUsecase, logger)
+	advertHandler := advertsH.NewAdvertsClientHandler(grcpConnAdverts, advertUsecase, logger)
 
 	imageRepo := imageR.NewRepository(db, logger)
 	imageUsecase := imageUc.NewImageUsecase(imageRepo, logger)
