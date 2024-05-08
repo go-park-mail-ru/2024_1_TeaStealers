@@ -78,7 +78,6 @@ func (h *AdvertsServerHandler) GetAdvertById(ctx context.Context, req *genAdvert
 	var houseProperties *gen.HouseProperties = nil
 	var flatProperties *gen.FlatProperties = nil
 	var complexProperties *gen.ComplexAdvertProperties = nil
-
 	if advert.HouseProperties != nil {
 		switch advert.HouseProperties.StatusArea {
 		case "IHC":
