@@ -83,3 +83,8 @@ services:
 volumes:
   postgresdb-data:
     driver: local
+
+networks:
+  tean-network:
+    name: tean-network
+    driver: bridge
