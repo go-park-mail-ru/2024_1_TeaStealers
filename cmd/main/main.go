@@ -15,6 +15,7 @@ import (
 	imageH "2024_1_TeaStealers/internal/pkg/images/delivery/http"
 	imageR "2024_1_TeaStealers/internal/pkg/images/repo"
 	imageUc "2024_1_TeaStealers/internal/pkg/images/usecase"
+	metricsMw "2024_1_TeaStealers/internal/pkg/metrics/middleware"
 	"2024_1_TeaStealers/internal/pkg/middleware"
 	statsH "2024_1_TeaStealers/internal/pkg/questionnaire/delivery"
 	statsR "2024_1_TeaStealers/internal/pkg/questionnaire/repo"
@@ -74,7 +75,8 @@ func main() {
 	}
 
 	http.Handle("/metrics", promhttp.Handler())
-
+	metricsMd := metricsMw.Create()
+	metricsMd.ServerMetricsMiddleware()
 	r := mux.NewRouter().PathPrefix("/api").Subrouter()
 	r.Use(middleware.CORSMiddleware)
 	r.HandleFunc("/ping", pingPongHandler).Methods(http.MethodGet)

@@ -89,8 +89,9 @@ func StringToTime(layout, value string) (time.Time, error) {
 
 func TruncSlash(methodName string, count int) (string, error) {
 	if count < 0 {
-		return "", errors.New("count must be non-negative")
+		return methodName, nil
 	}
+	methodName = strings.TrimPrefix(methodName, "https://")
 
 	slashes := strings.Count(methodName, `/`)
 	if slashes < count {
@@ -108,6 +109,29 @@ func TruncSlash(methodName string, count int) (string, error) {
 	newMethodName := strings.Join(parts, `/`)
 	trSlash := `/`
 	newMethodName = newMethodName + trSlash
+	newMethodName = "https://" + newMethodName
 
 	return newMethodName, nil
+}
+
+func ReplaceURLPart(url string, position int, replacement string) (string, error) {
+	position = position - 1
+	if position < 0 {
+		return "", errors.New("position must be non-negative")
+	}
+	url = strings.TrimPrefix(url, "https://")
+	parts := strings.Split(url, `/`)
+
+	if len(parts) <= position {
+		return "", fmt.Errorf("URL contains %d parts, but position is %d", len(parts), position)
+	}
+
+	// Replace the part at the specified position
+	parts[position] = replacement
+
+	// Join the parts back into a string using `/` as the separator
+	newURL := strings.Join(parts, `/`)
+	newURL = "https://" + newURL
+
+	return newURL, nil
 }

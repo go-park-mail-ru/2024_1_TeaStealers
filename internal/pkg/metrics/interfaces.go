@@ -3,6 +3,7 @@ package metrics
 import (
 	"context"
 	"google.golang.org/grpc"
+	"net/http"
 )
 
 type MetricsHTTP interface {
@@ -12,4 +13,5 @@ type MetricsHTTP interface {
 		interface{},
 		*grpc.UnaryServerInfo,
 		grpc.UnaryHandler) (interface{}, error)
+	ServerMetricsMiddleware(next http.Handler, urlTruncCount int) http.Handler
 }
