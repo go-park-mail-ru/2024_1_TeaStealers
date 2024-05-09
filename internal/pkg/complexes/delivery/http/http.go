@@ -2,7 +2,7 @@ package delivery
 
 import (
 	"2024_1_TeaStealers/internal/models"
-	"2024_1_TeaStealers/internal/pkg/complexes"
+	complex "2024_1_TeaStealers/internal/pkg/complexes"
 	"2024_1_TeaStealers/internal/pkg/utils"
 	"log"
 	"net/http"
@@ -18,12 +18,12 @@ import (
 // ComplexHandler handles HTTP requests for complex changes.
 type ComplexHandler struct {
 	// uc represents the usecase interface for complex changes.
-	uc     complexes.ComplexUsecase
+	uc     complex.ComplexUsecase
 	logger *zap.Logger
 }
 
 // NewComplexHandler creates a new instance of ComplexHandler.
-func NewComplexHandler(uc complexes.ComplexUsecase, logger *zap.Logger) *ComplexHandler {
+func NewComplexHandler(uc complex.ComplexUsecase, logger *zap.Logger) *ComplexHandler {
 	return &ComplexHandler{uc: uc, logger: logger}
 }
 
@@ -50,33 +50,6 @@ func (h *ComplexHandler) CreateComplex(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err = utils.WriteResponse(w, http.StatusCreated, newComplex); err != nil {
-		utils.WriteError(w, http.StatusInternalServerError, err.Error())
-	}
-}
-
-func (h *ComplexHandler) CreateBuilding(w http.ResponseWriter, r *http.Request) {
-	_, err := r.Cookie("csrftoken")
-	if err != nil {
-		utils.WriteError(w, http.StatusUnauthorized, "csrf cookie not found")
-		return
-	}
-	data := models.BuildingCreateData{}
-
-	if err := utils.ReadRequestData(r, &data); err != nil {
-		utils.WriteError(w, http.StatusBadRequest, "incorrect data format")
-		return
-	}
-	data.Sanitize()
-
-	newBuilding, err := h.uc.CreateBuilding(r.Context(), &data)
-	if err != nil {
-		log.Println(err)
-		utils.WriteError(w, http.StatusBadRequest, "data already is used")
-		return
-	}
-	newBuilding.Sanitize()
-
-	if err = utils.WriteResponse(w, http.StatusCreated, newBuilding); err != nil {
 		utils.WriteError(w, http.StatusInternalServerError, err.Error())
 	}
 }
@@ -156,13 +129,13 @@ func (h *ComplexHandler) GetComplexById(w http.ResponseWriter, r *http.Request) 
 	}
 }
 
-func (h *ComplexHandler) CreateHouseAdvert(w http.ResponseWriter, r *http.Request) {
+func (h *ComplexHandler) CreateCompany(w http.ResponseWriter, r *http.Request) {
 	_, err := r.Cookie("csrftoken")
 	if err != nil {
 		utils.WriteError(w, http.StatusUnauthorized, "csrf cookie not found")
 		return
 	}
-	data := models.ComplexAdvertHouseCreateData{}
+	data := models.CompanyCreateData{}
 
 	if err := utils.ReadRequestData(r, &data); err != nil {
 		utils.WriteError(w, http.StatusBadRequest, "incorrect data format")
@@ -170,39 +143,89 @@ func (h *ComplexHandler) CreateHouseAdvert(w http.ResponseWriter, r *http.Reques
 	}
 	data.Sanitize()
 
-	newAdvert, err := h.uc.CreateHouseAdvert(r.Context(), &data)
+	newCompany, err := h.uc.CreateCompany(r.Context(), &data)
 	if err != nil {
-		utils.WriteError(w, http.StatusBadRequest, err.Error())
+		utils.WriteError(w, http.StatusBadRequest, "data already is used")
 		return
 	}
-	newAdvert.Sanitize()
+	newCompany.Sanitize()
 
-	if err = utils.WriteResponse(w, http.StatusCreated, newAdvert); err != nil {
+	if err = utils.WriteResponse(w, http.StatusCreated, newCompany); err != nil {
 		utils.WriteError(w, http.StatusInternalServerError, err.Error())
 	}
 }
 
-func (h *ComplexHandler) CreateFlatAdvert(w http.ResponseWriter, r *http.Request) {
+func (h *ComplexHandler) UpdateCompanyPhoto(w http.ResponseWriter, r *http.Request) {
 	_, err := r.Cookie("csrftoken")
 	if err != nil {
 		utils.WriteError(w, http.StatusUnauthorized, "csrf cookie not found")
 		return
 	}
-	data := models.ComplexAdvertFlatCreateData{}
-
-	if err := utils.ReadRequestData(r, &data); err != nil {
-		utils.WriteError(w, http.StatusBadRequest, "incorrect data format")
+	vars := mux.Vars(r)
+	id := vars["id"]
+	if id == "" {
+		utils.WriteError(w, http.StatusBadRequest, "id parameter is required")
 		return
 	}
-	data.Sanitize()
-	newAdvert, err := h.uc.CreateFlatAdvert(r.Context(), &data)
+
+	companyId, err := strconv.ParseInt(id, 10, 64)
+	if err != nil {
+		utils.WriteError(w, http.StatusBadRequest, "invalid id parameter")
+		return
+	}
+	if err := r.ParseMultipartForm(5 << 20); err != nil {
+		utils.WriteError(w, http.StatusBadRequest, "max size file 5 mb")
+		return
+	}
+
+	file, head, err := r.FormFile("file")
+	if err != nil {
+		utils.WriteError(w, http.StatusBadRequest, "bad data request")
+		return
+	}
+	defer file.Close()
+
+	allowedExtensions := []string{".jpg", ".jpeg", ".png"}
+	fileType := strings.ToLower(filepath.Ext(head.Filename))
+	if !slices.Contains(allowedExtensions, fileType) {
+		utils.WriteError(w, http.StatusBadRequest, "jpg, jpeg, png only")
+		return
+	}
+
+	fileName, err := h.uc.UpdateCompanyPhoto(file, fileType, companyId)
+	if err != nil {
+		utils.WriteError(w, http.StatusBadRequest, "failed upload file")
+		return
+	}
+	if err := utils.WriteResponse(w, http.StatusOK, fileName); err != nil {
+		utils.WriteError(w, http.StatusInternalServerError, "error write response")
+		return
+	}
+}
+
+// GetCompanyById handles the request for getting company by id
+func (h *ComplexHandler) GetCompanyById(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	id := vars["id"]
+	if id == "" {
+		utils.WriteError(w, http.StatusBadRequest, "id parameter is required")
+		return
+	}
+
+	companyId, err := strconv.ParseInt(id, 10, 64)
+	if err != nil {
+		utils.WriteError(w, http.StatusBadRequest, "invalid id parameter")
+		return
+	}
+
+	companyData, err := h.uc.GetCompanyById(r.Context(), companyId)
 	if err != nil {
 		utils.WriteError(w, http.StatusBadRequest, err.Error())
 		return
 	}
-	newAdvert.Sanitize()
+	companyData.Sanitize()
 
-	if err = utils.WriteResponse(w, http.StatusCreated, newAdvert); err != nil {
+	if err = utils.WriteResponse(w, http.StatusOK, companyData); err != nil {
 		utils.WriteError(w, http.StatusInternalServerError, err.Error())
 	}
 }

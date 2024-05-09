@@ -180,3 +180,42 @@ func (h *AuthClientHandler) CheckAuth(w http.ResponseWriter, r *http.Request) {
 	}
 
 }
+
+func (h *AuthClientHandler) UpdateUserPassword(w http.ResponseWriter, r *http.Request) {
+	uId, ok := r.Context().Value(middleware.CookieName).(int64)
+
+	if !ok {
+		utils.WriteError(w, http.StatusBadRequest, "incorrect id")
+		return
+	}
+
+	data := &models.UserUpdatePassword{
+		ID: uId,
+	}
+
+	if err := utils.ReadRequestData(r, &data); err != nil {
+		utils.WriteError(w, http.StatusBadRequest, "incorrect data format")
+		return
+	}
+	data.Sanitize()
+
+	resp, err := h.client.UpdateUserPassword(r.Context(), &genAuth.UpdatePasswordRequest{Id: uId,
+		OldPassword: data.OldPassword, NewPassword: data.NewPassword})
+	if err != nil {
+		utils.WriteError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	exp := resp.Exp[:19]
+	expTime, err := utils.StringToTime("2006-01-02 15:04:05", exp)
+	if err != nil {
+		// utils.LogErrorResponse(h.logger, ctx.Value("requestId").(string), utils.DeliveryLayer, LoginMethod, err, http.StatusInternalServerError)
+		utils.WriteError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	http.SetCookie(w, jwt.TokenCookie(middleware.CookieName, resp.Token, expTime))
+	if err = utils.WriteResponse(w, http.StatusOK, "success update password"); err != nil {
+		utils.WriteError(w, http.StatusInternalServerError, "error write response")
+	}
+}

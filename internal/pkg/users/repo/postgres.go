@@ -4,7 +4,6 @@ import (
 	"2024_1_TeaStealers/internal/models"
 	"context"
 	"database/sql"
-	"errors"
 )
 
 // UserRepo represents a repository for user.
@@ -64,31 +63,4 @@ func (r *UserRepo) UpdateUserInfo(ctx context.Context, id int64, data *models.Us
 	}
 
 	return user, nil
-}
-
-func (r *UserRepo) UpdateUserPassword(ctx context.Context, id int64, newPasswordHash string) (int, error) {
-	query := `UPDATE user_data SET password_hash=$1, level_update = level_update+1 WHERE id = $2`
-	if _, err := r.db.Exec(query, newPasswordHash, id); err != nil {
-		return 0, err
-	}
-	querySelect := `SELECT level_update FROM user_data WHERE id = $1`
-	level := 0
-	res := r.db.QueryRow(querySelect, id)
-	if err := res.Scan(&level); err != nil {
-		return 0, err
-	}
-	return level, nil
-}
-
-func (r *UserRepo) CheckUserPassword(ctx context.Context, id int64, passwordHash string) error {
-	passwordHashCur := ""
-	querySelect := `SELECT password_hash FROM user_data WHERE id = $1`
-	res := r.db.QueryRow(querySelect, id)
-	if err := res.Scan(&passwordHashCur); err != nil {
-		return err
-	}
-	if passwordHashCur != passwordHash {
-		return errors.New("passwords don't match")
-	}
-	return nil
 }

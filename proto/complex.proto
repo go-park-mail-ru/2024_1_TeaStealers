@@ -1,0 +1,52 @@
+syntax = "proto3";
+package complex;
+option go_package = "./internal/pkg/complexes/delivery/grpc/gen/;gen";
+
+//protoc --go_out=./gen --go-grpc_out=./gen --go-grpc_opt=paths=source_relative --go_opt=paths=source_relative *.proto
+
+service Complex {
+  rpc CreateCompany(CreateCompanyRequest) returns (CreateCompanyResponse) {}
+  rpc GetCompanyById(GetCompanyByIdRequest) returns (GetCompanyByIdResponse) {}
+  rpc UpdateCompanyPhoto(UpdateCompanyPhotoRequest) returns (UpdateCompanyPhotoResponse) {}
+}
+
+message CreateCompanyRequest {
+  string Name = 1;
+  int32 YearFounded = 2;
+  string Phone = 3;
+  string Description = 4;
+}
+
+message CreateCompanyResponse {
+  int64 Id = 1;
+  string Name = 2;
+  string Photo = 3;
+  int32 YearFounded = 4;
+  string Phone = 5;
+  string Description = 6;
+  string DateCreation = 7;
+  string IsDeleted = 8;
+}
+
+message GetCompanyByIdRequest {
+    int64 Id = 1;
+}
+
+message GetCompanyByIdResponse {
+  int64 Id = 1;
+  string Name = 2;
+  string Photo = 3;
+  int32 YearFounded = 4;
+  string Phone = 5;
+  string Description = 6;
+}
+
+message UpdateCompanyPhotoRequest {
+    bytes File = 1;
+    string FileType = 2;
+    int64 CompanyId = 3;
+}
+
+message UpdateCompanyPhotoResponse {
+    string Filename = 1;
+}

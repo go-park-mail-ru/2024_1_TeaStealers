@@ -5,10 +5,7 @@ import (
 	advertsR "2024_1_TeaStealers/internal/pkg/adverts/repo"
 	advertsUc "2024_1_TeaStealers/internal/pkg/adverts/usecase"
 	authH "2024_1_TeaStealers/internal/pkg/auth/delivery/http"
-	companyH "2024_1_TeaStealers/internal/pkg/companies/delivery"
-	companyR "2024_1_TeaStealers/internal/pkg/companies/repo"
-	companyUc "2024_1_TeaStealers/internal/pkg/companies/usecase"
-	complexH "2024_1_TeaStealers/internal/pkg/complexes/delivery"
+	complexH "2024_1_TeaStealers/internal/pkg/complexes/delivery/http"
 	complexR "2024_1_TeaStealers/internal/pkg/complexes/repo"
 	complexUc "2024_1_TeaStealers/internal/pkg/complexes/usecase"
 	"2024_1_TeaStealers/internal/pkg/config"
@@ -179,18 +176,9 @@ func main() {
 	user.Handle("/avatar", jwtMd.JwtMiddleware(http.HandlerFunc(userHandlerPhoto.UpdateUserPhoto))).Methods(http.MethodPost, http.MethodOptions)
 	user.Handle("/avatar", jwtMd.JwtMiddleware(http.HandlerFunc(userHandlerPhoto.DeleteUserPhoto))).Methods(http.MethodDelete, http.MethodOptions)
 	user.Handle("/info", jwtMd.JwtMiddleware(http.HandlerFunc(userHandler.UpdateUserInfo))).Methods(http.MethodPost, http.MethodOptions)
-	user.Handle("/password", jwtMd.JwtMiddleware(http.HandlerFunc(userHandler.UpdateUserPassword))).Methods(http.MethodPost, http.MethodOptions)
+	user.Handle("/password", jwtMd.JwtMiddleware(http.HandlerFunc(authHandler.UpdateUserPassword))).Methods(http.MethodPost, http.MethodOptions)
 	user.Handle("/myadverts", jwtMd.JwtMiddleware(http.HandlerFunc(advertHandler.GetUserAdverts))).Methods(http.MethodGet, http.MethodOptions)
 	user.Handle("/likedadverts", jwtMd.JwtMiddleware(http.HandlerFunc(advertHandler.GetLikedUserAdverts))).Methods(http.MethodGet, http.MethodOptions)
-
-	companyRepo := companyR.NewRepository(db, logger)
-	companyUsecase := companyUc.NewCompanyUsecase(companyRepo, logger)
-	companyHandler := companyH.NewCompanyHandler(companyUsecase, logger)
-
-	company := r.PathPrefix("/companies").Subrouter()
-	company.HandleFunc("/", companyHandler.CreateCompany).Methods(http.MethodPost, http.MethodOptions)
-	company.HandleFunc("/{id}", companyHandler.GetCompanyById).Methods(http.MethodGet, http.MethodOptions)
-	company.HandleFunc("/images/{id}", companyHandler.UpdateCompanyPhoto).Methods(http.MethodPost, http.MethodOptions)
 
 	complexRepo := complexR.NewRepository(db, logger)
 	complexUsecase := complexUc.NewComplexUsecase(complexRepo, logger)
@@ -200,10 +188,13 @@ func main() {
 	complexRoute.HandleFunc("/", complexHandler.CreateComplex).Methods(http.MethodPost, http.MethodOptions)
 	complexRoute.HandleFunc("/{id}", complexHandler.GetComplexById).Methods(http.MethodGet, http.MethodOptions)
 	complexRoute.HandleFunc("/{id}/rectanglelist/", advertHandler.GetComplexAdverts).Methods(http.MethodGet, http.MethodOptions)
-	complexRoute.HandleFunc("/houses", complexHandler.CreateHouseAdvert).Methods(http.MethodPost, http.MethodOptions)
-	complexRoute.HandleFunc("/flats", complexHandler.CreateFlatAdvert).Methods(http.MethodPost, http.MethodOptions)
-	complexRoute.HandleFunc("/buildings", complexHandler.CreateBuilding).Methods(http.MethodPost, http.MethodOptions)
 	complexRoute.HandleFunc("/images/{id}", complexHandler.UpdateComplexPhoto).Methods(http.MethodPost, http.MethodOptions)
+
+	company := r.PathPrefix("/companies").Subrouter()
+	company.HandleFunc("/", complexHandler.CreateCompany).Methods(http.MethodPost, http.MethodOptions)
+	company.HandleFunc("/{id}", complexHandler.GetCompanyById).Methods(http.MethodGet, http.MethodOptions)
+	company.HandleFunc("/images/{id}", complexHandler.UpdateCompanyPhoto).Methods(http.MethodPost, http.MethodOptions)
+
 	srv := &http.Server{
 		Addr:              ":8080",
 		Handler:           r,

@@ -8,6 +8,7 @@ service Auth {
   rpc SignUp(SignUpRequest) returns (SignUpInResponse) {}
   rpc Login(SignInRequest) returns (SignUpInResponse) {}
   rpc CheckAuth(CheckAuthRequest) returns (CheckAuthResponse) {}
+  rpc UpdateUserPassword(UpdatePasswordRequest) returns (UpdatePasswordResponse) {}
 }
 
 message SignUpRequest {
@@ -42,3 +43,14 @@ message ProfileInfoResponse {
   int64 LevelUpdate = 4;
 }
 
+message UpdatePasswordRequest {
+  int64 Id = 1;
+  string OldPassword = 2;
+  string NewPassword = 3;
+}
+
+message UpdatePasswordResponse {
+  bool Updated = 1;
+  string Token= 2;
+  string Exp= 3;
+}

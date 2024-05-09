@@ -86,3 +86,27 @@ func (u *AuthUsecase) CheckAuth(ctx context.Context, id int64, jwtLevel int) err
 	// utils.LogSucces(u.logger, ctx.Value("requestId").(string), utils.UsecaseLayer, auth.GetUserLevelByIdMethod)
 	return nil
 }
+
+func (u *AuthUsecase) UpdateUserPassword(ctx context.Context, data *models.UserUpdatePassword) (string, time.Time, error) {
+	oldPasswordHash := utils.GenerateHashString(data.OldPassword)
+	newPasswordHash := utils.GenerateHashString(data.NewPassword)
+	if oldPasswordHash == newPasswordHash {
+		return "", time.Now(), errors.New("passwords must not match")
+	}
+	if err := u.repo.CheckUserPassword(ctx, data.ID, oldPasswordHash); err != nil {
+		return "", time.Now(), errors.New("invalid old password")
+	}
+	level, err := u.repo.UpdateUserPassword(ctx, data.ID, newPasswordHash)
+	if err != nil {
+		return "", time.Now(), errors.New("incorrect id or passwordhash")
+	}
+	user := &models.User{
+		ID:          data.ID,
+		LevelUpdate: level,
+	}
+	token, exp, err := jwt.GenerateToken(user)
+	if err != nil {
+		return "", time.Now(), errors.New("unable to generate token")
+	}
+	return token, exp, nil
+}

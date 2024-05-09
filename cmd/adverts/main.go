@@ -4,8 +4,9 @@ import (
 	genAdverts "2024_1_TeaStealers/internal/pkg/adverts/delivery/grpc/gen"
 	advertsR "2024_1_TeaStealers/internal/pkg/adverts/repo"
 	advertsUc "2024_1_TeaStealers/internal/pkg/adverts/usecase"
-	"github.com/gorilla/mux"
 	"net/http"
+
+	"github.com/gorilla/mux"
 
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 
