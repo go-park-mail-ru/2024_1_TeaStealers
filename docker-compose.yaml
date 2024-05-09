@@ -78,6 +78,36 @@ services:
       - db
     networks:
       - tean-network
+  
+  tean-question:
+    env_file:
+       - ./.env
+    container_name: ${GRPC_QUESTION_CONTAINER_IP}
+    build:
+      context: .
+      dockerfile: ./build/question.Dockerfile
+    restart: always
+    expose:
+      - "${GRPC_QUESTION_PORT}"
+    depends_on:
+      - db
+    networks:
+      - tean-network
+  
+  tean-complex:
+    env_file:
+       - ./.env
+    container_name: ${GRPC_COMPLEX_CONTAINER_IP}
+    build:
+      context: .
+      dockerfile: ./build/complex.Dockerfile
+    restart: always
+    expose:
+      - "${GRPC_COMPLEX_PORT}"
+    depends_on:
+      - db
+    networks:
+      - tean-network
 
   prometheus:
     image: prom/prometheus:latest

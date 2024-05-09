@@ -90,6 +90,24 @@ func main() {
 	}
 	defer grcpConnAuth.Close()
 
+	grcpConnQuestion, err := grpc.Dial(
+		fmt.Sprintf("%s:%d", cfg.GRPC.QuestionContainerIP, cfg.GRPC.QuestionPort),
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
+	)
+	if err != nil {
+		log.Fatalf("cant connect to grpc")
+	}
+	defer grcpConnQuestion.Close()
+
+	grcpConnComplex, err := grpc.Dial(
+		fmt.Sprintf("%s:%d", cfg.GRPC.ComplexContainerIP, cfg.GRPC.ComplexPort),
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
+	)
+	if err != nil {
+		log.Fatalf("cant connect to grpc")
+	}
+	defer grcpConnComplex.Close()
+
 	grcpConnUsers, err := grpc.Dial(
 		fmt.Sprintf("%s:%d", cfg.GRPC.UsersContainerIP, cfg.GRPC.UserPort),
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
