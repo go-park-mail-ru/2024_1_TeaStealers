@@ -73,7 +73,7 @@ func main() {
 	//http.Handle("/metrics", promhttp.Handler())
 
 	r := mux.NewRouter().PathPrefix("/api").Subrouter()
-	r.Use(middleware.CORSMiddleware)
+	r.Use(middleware.CORSMiddleware, middleware.AccessLogMiddleware)
 	r.HandleFunc("/ping", pingPongHandler).Methods(http.MethodGet)
 	r.PathPrefix("/docs/").Handler(httpSwagger.WrapHandler)
 	r.PathPrefix("/metrics").Handler(promhttp.Handler())

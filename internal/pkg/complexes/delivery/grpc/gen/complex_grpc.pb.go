@@ -22,6 +22,9 @@ const (
 	Complex_CreateCompany_FullMethodName      = "/complex.Complex/CreateCompany"
 	Complex_GetCompanyById_FullMethodName     = "/complex.Complex/GetCompanyById"
 	Complex_UpdateCompanyPhoto_FullMethodName = "/complex.Complex/UpdateCompanyPhoto"
+	Complex_CreateComplex_FullMethodName      = "/complex.Complex/CreateComplex"
+	Complex_GetComplexById_FullMethodName     = "/complex.Complex/GetComplexById"
+	Complex_UpdateComplexPhoto_FullMethodName = "/complex.Complex/UpdateComplexPhoto"
 )
 
 // ComplexClient is the client API for Complex service.
@@ -31,6 +34,9 @@ type ComplexClient interface {
 	CreateCompany(ctx context.Context, in *CreateCompanyRequest, opts ...grpc.CallOption) (*CreateCompanyResponse, error)
 	GetCompanyById(ctx context.Context, in *GetCompanyByIdRequest, opts ...grpc.CallOption) (*GetCompanyByIdResponse, error)
 	UpdateCompanyPhoto(ctx context.Context, in *UpdateCompanyPhotoRequest, opts ...grpc.CallOption) (*UpdateCompanyPhotoResponse, error)
+	CreateComplex(ctx context.Context, in *CreateComplexRequest, opts ...grpc.CallOption) (*CreateComplexResponse, error)
+	GetComplexById(ctx context.Context, in *GetComplexByIdRequest, opts ...grpc.CallOption) (*GetComplexByIdResponse, error)
+	UpdateComplexPhoto(ctx context.Context, in *UpdateComplexPhotoRequest, opts ...grpc.CallOption) (*UpdateComplexPhotoResponse, error)
 }
 
 type complexClient struct {
@@ -68,6 +74,33 @@ func (c *complexClient) UpdateCompanyPhoto(ctx context.Context, in *UpdateCompan
 	return out, nil
 }
 
+func (c *complexClient) CreateComplex(ctx context.Context, in *CreateComplexRequest, opts ...grpc.CallOption) (*CreateComplexResponse, error) {
+	out := new(CreateComplexResponse)
+	err := c.cc.Invoke(ctx, Complex_CreateComplex_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *complexClient) GetComplexById(ctx context.Context, in *GetComplexByIdRequest, opts ...grpc.CallOption) (*GetComplexByIdResponse, error) {
+	out := new(GetComplexByIdResponse)
+	err := c.cc.Invoke(ctx, Complex_GetComplexById_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *complexClient) UpdateComplexPhoto(ctx context.Context, in *UpdateComplexPhotoRequest, opts ...grpc.CallOption) (*UpdateComplexPhotoResponse, error) {
+	out := new(UpdateComplexPhotoResponse)
+	err := c.cc.Invoke(ctx, Complex_UpdateComplexPhoto_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // ComplexServer is the server API for Complex service.
 // All implementations must embed UnimplementedComplexServer
 // for forward compatibility
@@ -75,6 +108,9 @@ type ComplexServer interface {
 	CreateCompany(context.Context, *CreateCompanyRequest) (*CreateCompanyResponse, error)
 	GetCompanyById(context.Context, *GetCompanyByIdRequest) (*GetCompanyByIdResponse, error)
 	UpdateCompanyPhoto(context.Context, *UpdateCompanyPhotoRequest) (*UpdateCompanyPhotoResponse, error)
+	CreateComplex(context.Context, *CreateComplexRequest) (*CreateComplexResponse, error)
+	GetComplexById(context.Context, *GetComplexByIdRequest) (*GetComplexByIdResponse, error)
+	UpdateComplexPhoto(context.Context, *UpdateComplexPhotoRequest) (*UpdateComplexPhotoResponse, error)
 	mustEmbedUnimplementedComplexServer()
 }
 
@@ -90,6 +126,15 @@ func (UnimplementedComplexServer) GetCompanyById(context.Context, *GetCompanyByI
 }
 func (UnimplementedComplexServer) UpdateCompanyPhoto(context.Context, *UpdateCompanyPhotoRequest) (*UpdateCompanyPhotoResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UpdateCompanyPhoto not implemented")
+}
+func (UnimplementedComplexServer) CreateComplex(context.Context, *CreateComplexRequest) (*CreateComplexResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CreateComplex not implemented")
+}
+func (UnimplementedComplexServer) GetComplexById(context.Context, *GetComplexByIdRequest) (*GetComplexByIdResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetComplexById not implemented")
+}
+func (UnimplementedComplexServer) UpdateComplexPhoto(context.Context, *UpdateComplexPhotoRequest) (*UpdateComplexPhotoResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UpdateComplexPhoto not implemented")
 }
 func (UnimplementedComplexServer) mustEmbedUnimplementedComplexServer() {}
 
@@ -158,6 +203,60 @@ func _Complex_UpdateCompanyPhoto_Handler(srv interface{}, ctx context.Context, d
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Complex_CreateComplex_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CreateComplexRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ComplexServer).CreateComplex(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Complex_CreateComplex_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ComplexServer).CreateComplex(ctx, req.(*CreateComplexRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Complex_GetComplexById_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetComplexByIdRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ComplexServer).GetComplexById(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Complex_GetComplexById_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ComplexServer).GetComplexById(ctx, req.(*GetComplexByIdRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Complex_UpdateComplexPhoto_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpdateComplexPhotoRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ComplexServer).UpdateComplexPhoto(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Complex_UpdateComplexPhoto_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ComplexServer).UpdateComplexPhoto(ctx, req.(*UpdateComplexPhotoRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // Complex_ServiceDesc is the grpc.ServiceDesc for Complex service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -176,6 +275,18 @@ var Complex_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "UpdateCompanyPhoto",
 			Handler:    _Complex_UpdateCompanyPhoto_Handler,
+		},
+		{
+			MethodName: "CreateComplex",
+			Handler:    _Complex_CreateComplex_Handler,
+		},
+		{
+			MethodName: "GetComplexById",
+			Handler:    _Complex_GetComplexById_Handler,
+		},
+		{
+			MethodName: "UpdateComplexPhoto",
+			Handler:    _Complex_UpdateComplexPhoto_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

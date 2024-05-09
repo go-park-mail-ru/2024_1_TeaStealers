@@ -7,14 +7,12 @@ import (
 	genAdverts "2024_1_TeaStealers/internal/pkg/adverts/delivery/grpc/gen"
 	"2024_1_TeaStealers/internal/pkg/middleware"
 	"2024_1_TeaStealers/internal/pkg/utils"
-	"context"
 	"errors"
 	"log"
 	"net/http"
 	"strconv"
 
 	"github.com/gorilla/mux"
-	"github.com/satori/uuid"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
 )
@@ -51,11 +49,10 @@ func (h *AdvertsClientHandler) CreateFlatAdvert(w http.ResponseWriter, r *http.R
 		utils.WriteError(w, http.StatusUnauthorized, "csrf cookie not found")
 		return
 	}
-	ctx := context.WithValue(r.Context(), "requestId", uuid.NewV4().String())
 
-	id, ok := ctx.Value(middleware.CookieName).(int64)
+	id, ok := r.Context().Value(middleware.CookieName).(int64)
 	if !ok {
-		utils.LogErrorResponse(h.logger, ctx.Value("requestId").(string), utils.DeliveryLayer, CreateFlatAdvertMethod, errors.New("error with cookie"), http.StatusBadRequest)
+		utils.LogErrorResponse(h.logger, r.Context().Value("requestId").(string), utils.DeliveryLayer, CreateFlatAdvertMethod, errors.New("error with cookie"), http.StatusBadRequest)
 		utils.WriteError(w, http.StatusBadRequest, "incorrect id")
 		return
 	}
@@ -63,25 +60,25 @@ func (h *AdvertsClientHandler) CreateFlatAdvert(w http.ResponseWriter, r *http.R
 	data := models.AdvertFlatCreateData{UserID: id}
 
 	if err := utils.ReadRequestData(r, &data); err != nil {
-		utils.LogErrorResponse(h.logger, ctx.Value("requestId").(string), CreateFlatAdvertMethod, utils.DeliveryLayer, err, http.StatusBadRequest)
+		utils.LogErrorResponse(h.logger, r.Context().Value("requestId").(string), CreateFlatAdvertMethod, utils.DeliveryLayer, err, http.StatusBadRequest)
 		utils.WriteError(w, http.StatusBadRequest, "incorrect data format")
 		return
 	}
 
-	newAdvert, err := h.uc.CreateFlatAdvert(ctx, &data)
+	newAdvert, err := h.uc.CreateFlatAdvert(r.Context(), &data)
 	newAdvert.Sanitize()
 
 	if err != nil {
-		utils.LogErrorResponse(h.logger, ctx.Value("requestId").(string), CreateFlatAdvertMethod, utils.DeliveryLayer, err, http.StatusBadRequest)
+		utils.LogErrorResponse(h.logger, r.Context().Value("requestId").(string), CreateFlatAdvertMethod, utils.DeliveryLayer, err, http.StatusBadRequest)
 		utils.WriteError(w, http.StatusBadRequest, err.Error())
 		return
 	}
 
 	if err = utils.WriteResponse(w, http.StatusCreated, newAdvert); err != nil {
-		utils.LogErrorResponse(h.logger, ctx.Value("requestId").(string), CreateFlatAdvertMethod, utils.DeliveryLayer, err, http.StatusInternalServerError)
+		utils.LogErrorResponse(h.logger, r.Context().Value("requestId").(string), CreateFlatAdvertMethod, utils.DeliveryLayer, err, http.StatusInternalServerError)
 		utils.WriteError(w, http.StatusInternalServerError, err.Error())
 	} else {
-		utils.LogSuccesResponse(h.logger, ctx.Value("requestId").(string), utils.DeliveryLayer, CreateFlatAdvertMethod)
+		utils.LogSuccesResponse(h.logger, r.Context().Value("requestId").(string), utils.DeliveryLayer, CreateFlatAdvertMethod)
 	}
 }
 
@@ -92,12 +89,10 @@ func (h *AdvertsClientHandler) CreateHouseAdvert(w http.ResponseWriter, r *http.
 		return
 	}
 
-	ctx := context.WithValue(r.Context(), "requestId", uuid.NewV4().String())
-
-	id, ok := ctx.Value(middleware.CookieName).(int64)
+	id, ok := r.Context().Value(middleware.CookieName).(int64)
 
 	if !ok {
-		utils.LogErrorResponse(h.logger, ctx.Value("requestId").(string), utils.DeliveryLayer, CreateHouseAdvertMethod, errors.New("error with cookie"), http.StatusBadRequest)
+		utils.LogErrorResponse(h.logger, r.Context().Value("requestId").(string), utils.DeliveryLayer, CreateHouseAdvertMethod, errors.New("error with cookie"), http.StatusBadRequest)
 		utils.WriteError(w, http.StatusBadRequest, "incorrect id")
 		return
 	}
@@ -105,50 +100,48 @@ func (h *AdvertsClientHandler) CreateHouseAdvert(w http.ResponseWriter, r *http.
 	data := models.AdvertHouseCreateData{UserID: id}
 
 	if err := utils.ReadRequestData(r, &data); err != nil {
-		utils.LogErrorResponse(h.logger, ctx.Value("requestId").(string), utils.DeliveryLayer, CreateHouseAdvertMethod, err, http.StatusBadRequest)
+		utils.LogErrorResponse(h.logger, r.Context().Value("requestId").(string), utils.DeliveryLayer, CreateHouseAdvertMethod, err, http.StatusBadRequest)
 		utils.WriteError(w, http.StatusBadRequest, "incorrect data format")
 		return
 	}
 
-	newAdvert, err := h.uc.CreateHouseAdvert(ctx, &data)
+	newAdvert, err := h.uc.CreateHouseAdvert(r.Context(), &data)
 	newAdvert.Sanitize()
 
 	if err != nil {
-		utils.LogErrorResponse(h.logger, ctx.Value("requestId").(string), utils.DeliveryLayer, CreateHouseAdvertMethod, err, http.StatusBadRequest)
+		utils.LogErrorResponse(h.logger, r.Context().Value("requestId").(string), utils.DeliveryLayer, CreateHouseAdvertMethod, err, http.StatusBadRequest)
 		utils.WriteError(w, http.StatusBadRequest, err.Error())
 		return
 	}
 
 	if err = utils.WriteResponse(w, http.StatusCreated, newAdvert); err != nil {
-		utils.LogErrorResponse(h.logger, ctx.Value("requestId").(string), utils.DeliveryLayer, CreateHouseAdvertMethod, err, http.StatusInternalServerError)
+		utils.LogErrorResponse(h.logger, r.Context().Value("requestId").(string), utils.DeliveryLayer, CreateHouseAdvertMethod, err, http.StatusInternalServerError)
 		utils.WriteError(w, http.StatusInternalServerError, err.Error())
 	} else {
-		utils.LogSuccesResponse(h.logger, ctx.Value("requestId").(string), utils.DeliveryLayer, CreateHouseAdvertMethod)
+		utils.LogSuccesResponse(h.logger, r.Context().Value("requestId").(string), utils.DeliveryLayer, CreateHouseAdvertMethod)
 	}
 }
 
 // GetAdvertById handles the request for getting advert by id
 func (h *AdvertsClientHandler) GetAdvertById(w http.ResponseWriter, r *http.Request) {
-	ctx := context.WithValue(r.Context(), "requestId", uuid.NewV4().String())
-
 	vars := mux.Vars(r)
 	id := vars["id"]
 	if id == "" {
-		utils.LogErrorResponse(h.logger, ctx.Value("requestId").(string), utils.DeliveryLayer, GetAdvertByIdMethod, errors.New("error with id advert"), http.StatusBadRequest)
+		utils.LogErrorResponse(h.logger, r.Context().Value("requestId").(string), utils.DeliveryLayer, GetAdvertByIdMethod, errors.New("error with id advert"), http.StatusBadRequest)
 		utils.WriteError(w, http.StatusBadRequest, "id parameter is required")
 		return
 	}
 
 	advertId, err := strconv.ParseInt(id, 10, 64)
 	if err != nil {
-		utils.LogErrorResponse(h.logger, ctx.Value("requestId").(string), utils.DeliveryLayer, GetAdvertByIdMethod, err, http.StatusBadRequest)
+		utils.LogErrorResponse(h.logger, r.Context().Value("requestId").(string), utils.DeliveryLayer, GetAdvertByIdMethod, err, http.StatusBadRequest)
 		utils.WriteError(w, http.StatusBadRequest, "invalid id parameter")
 		return
 	}
 
-	advertDataResponse, err := h.client.GetAdvertById(ctx, &genAdverts.GetAdvertByIdRequest{Id: advertId})
+	advertDataResponse, err := h.client.GetAdvertById(r.Context(), &genAdverts.GetAdvertByIdRequest{Id: advertId})
 	if err != nil {
-		utils.LogErrorResponse(h.logger, ctx.Value("requestId").(string), utils.DeliveryLayer, GetAdvertByIdMethod, err, http.StatusConflict)
+		utils.LogErrorResponse(h.logger, r.Context().Value("requestId").(string), utils.DeliveryLayer, GetAdvertByIdMethod, err, http.StatusConflict)
 		utils.WriteError(w, http.StatusConflict, err.Error())
 		return
 	}
@@ -252,10 +245,10 @@ func (h *AdvertsClientHandler) GetAdvertById(w http.ResponseWriter, r *http.Requ
 	advert := &models.AdvertData{ID: advertDataResponse.Id, AdvertType: advertDataResponse.AdvertType, TypeSale: advertDataResponse.TypeSale, Title: advertDataResponse.Title, Description: advertDataResponse.Description, CountViews: advertDataResponse.CountViews, CountLikes: advertDataResponse.CountLikes, Price: advertDataResponse.Price, Phone: advertDataResponse.Phone, IsLiked: advertDataResponse.IsLiked, IsAgent: advertDataResponse.IsAgent, Metro: advertDataResponse.Metro, Address: advertDataResponse.Address, AddressPoint: advertDataResponse.AddressPoint, YearCreation: int(advertDataResponse.YearCreation), PriceChange: priceHistory, Images: images, FlatProperties: flatProperties, HouseProperties: houseProperties, Material: material, ComplexProperties: complexProperties, DateCreation: dateTime}
 
 	if err = utils.WriteResponse(w, http.StatusOK, advert); err != nil {
-		utils.LogErrorResponse(h.logger, ctx.Value("requestId").(string), utils.DeliveryLayer, GetAdvertByIdMethod, err, http.StatusInternalServerError)
+		utils.LogErrorResponse(h.logger, r.Context().Value("requestId").(string), utils.DeliveryLayer, GetAdvertByIdMethod, err, http.StatusInternalServerError)
 		utils.WriteError(w, http.StatusInternalServerError, err.Error())
 	} else {
-		utils.LogSuccesResponse(h.logger, ctx.Value("requestId").(string), utils.DeliveryLayer, GetAdvertByIdMethod)
+		utils.LogSuccesResponse(h.logger, r.Context().Value("requestId").(string), utils.DeliveryLayer, GetAdvertByIdMethod)
 	}
 }
 
@@ -266,19 +259,18 @@ func (h *AdvertsClientHandler) UpdateAdvertById(w http.ResponseWriter, r *http.R
 		utils.WriteError(w, http.StatusUnauthorized, "csrf cookie not found")
 		return
 	}
-	ctx := context.WithValue(r.Context(), "requestId", uuid.NewV4().String())
 
 	vars := mux.Vars(r)
 	id := vars["id"]
 	if id == "" {
-		utils.LogErrorResponse(h.logger, ctx.Value("requestId").(string), utils.DeliveryLayer, UpdateAdvertByIdMethod, errors.New("error with id advert"), http.StatusBadRequest)
+		utils.LogErrorResponse(h.logger, r.Context().Value("requestId").(string), utils.DeliveryLayer, UpdateAdvertByIdMethod, errors.New("error with id advert"), http.StatusBadRequest)
 		utils.WriteError(w, http.StatusBadRequest, "id parameter is required")
 		return
 	}
 
 	advertId, err := strconv.ParseInt(id, 10, 64)
 	if err != nil {
-		utils.LogErrorResponse(h.logger, ctx.Value("requestId").(string), utils.DeliveryLayer, UpdateAdvertByIdMethod, err, http.StatusBadRequest)
+		utils.LogErrorResponse(h.logger, r.Context().Value("requestId").(string), utils.DeliveryLayer, UpdateAdvertByIdMethod, err, http.StatusBadRequest)
 		utils.WriteError(w, http.StatusBadRequest, "invalid id parameter")
 		return
 	}
@@ -286,7 +278,7 @@ func (h *AdvertsClientHandler) UpdateAdvertById(w http.ResponseWriter, r *http.R
 	data := models.AdvertUpdateData{}
 
 	if err := utils.ReadRequestData(r, &data); err != nil {
-		utils.LogErrorResponse(h.logger, ctx.Value("requestId").(string), utils.DeliveryLayer, UpdateAdvertByIdMethod, err, http.StatusBadRequest)
+		utils.LogErrorResponse(h.logger, r.Context().Value("requestId").(string), utils.DeliveryLayer, UpdateAdvertByIdMethod, err, http.StatusBadRequest)
 		utils.WriteError(w, http.StatusBadRequest, "incorrect data format")
 		return
 	}
@@ -294,18 +286,18 @@ func (h *AdvertsClientHandler) UpdateAdvertById(w http.ResponseWriter, r *http.R
 
 	data.ID = advertId
 
-	err = h.uc.UpdateAdvertById(ctx, &data)
+	err = h.uc.UpdateAdvertById(r.Context(), &data)
 	if err != nil {
-		utils.LogErrorResponse(h.logger, ctx.Value("requestId").(string), utils.DeliveryLayer, UpdateAdvertByIdMethod, err, http.StatusBadRequest)
+		utils.LogErrorResponse(h.logger, r.Context().Value("requestId").(string), utils.DeliveryLayer, UpdateAdvertByIdMethod, err, http.StatusBadRequest)
 		utils.WriteError(w, http.StatusBadRequest, err.Error())
 		return
 	}
 
 	if err = utils.WriteResponse(w, http.StatusOK, "advert successfully updated"); err != nil {
-		utils.LogErrorResponse(h.logger, ctx.Value("requestId").(string), utils.DeliveryLayer, UpdateAdvertByIdMethod, err, http.StatusInternalServerError)
+		utils.LogErrorResponse(h.logger, r.Context().Value("requestId").(string), utils.DeliveryLayer, UpdateAdvertByIdMethod, err, http.StatusInternalServerError)
 		utils.WriteError(w, http.StatusInternalServerError, err.Error())
 	} else {
-		utils.LogSuccesResponse(h.logger, ctx.Value("requestId").(string), utils.DeliveryLayer, UpdateAdvertByIdMethod)
+		utils.LogSuccesResponse(h.logger, r.Context().Value("requestId").(string), utils.DeliveryLayer, UpdateAdvertByIdMethod)
 	}
 }
 
@@ -317,42 +309,38 @@ func (h *AdvertsClientHandler) DeleteAdvertById(w http.ResponseWriter, r *http.R
 		return
 	}
 
-	ctx := context.WithValue(r.Context(), "requestId", uuid.NewV4().String())
-
 	vars := mux.Vars(r)
 	id := vars["id"]
 	if id == "" {
-		utils.LogErrorResponse(h.logger, ctx.Value("requestId").(string), utils.DeliveryLayer, DeleteAdvertByIdMethod, errors.New("error with id advert"), http.StatusBadRequest)
+		utils.LogErrorResponse(h.logger, r.Context().Value("requestId").(string), utils.DeliveryLayer, DeleteAdvertByIdMethod, errors.New("error with id advert"), http.StatusBadRequest)
 		utils.WriteError(w, http.StatusBadRequest, "id parameter is required")
 		return
 	}
 
 	advertId, err := strconv.ParseInt(id, 10, 64)
 	if err != nil {
-		utils.LogErrorResponse(h.logger, ctx.Value("requestId").(string), utils.DeliveryLayer, DeleteAdvertByIdMethod, err, http.StatusBadRequest)
+		utils.LogErrorResponse(h.logger, r.Context().Value("requestId").(string), utils.DeliveryLayer, DeleteAdvertByIdMethod, err, http.StatusBadRequest)
 		utils.WriteError(w, http.StatusBadRequest, "invalid id parameter")
 		return
 	}
 
-	err = h.uc.DeleteAdvertById(ctx, advertId)
+	err = h.uc.DeleteAdvertById(r.Context(), advertId)
 	if err != nil {
-		utils.LogErrorResponse(h.logger, ctx.Value("requestId").(string), utils.DeliveryLayer, DeleteAdvertByIdMethod, err, http.StatusBadRequest)
+		utils.LogErrorResponse(h.logger, r.Context().Value("requestId").(string), utils.DeliveryLayer, DeleteAdvertByIdMethod, err, http.StatusBadRequest)
 		utils.WriteError(w, http.StatusBadRequest, err.Error())
 		return
 	}
 
 	if err = utils.WriteResponse(w, http.StatusOK, "Advert successfully deleted"); err != nil {
-		utils.LogErrorResponse(h.logger, ctx.Value("requestId").(string), utils.DeliveryLayer, DeleteAdvertByIdMethod, err, http.StatusInternalServerError)
+		utils.LogErrorResponse(h.logger, r.Context().Value("requestId").(string), utils.DeliveryLayer, DeleteAdvertByIdMethod, err, http.StatusInternalServerError)
 		utils.WriteError(w, http.StatusInternalServerError, err.Error())
 	} else {
-		utils.LogSuccesResponse(h.logger, ctx.Value("requestId").(string), utils.DeliveryLayer, DeleteAdvertByIdMethod)
+		utils.LogSuccesResponse(h.logger, r.Context().Value("requestId").(string), utils.DeliveryLayer, DeleteAdvertByIdMethod)
 	}
 }
 
 // GetSquareAdvertsList handles the request for retrieving a square adverts.
 func (h *AdvertsClientHandler) GetSquareAdvertsList(w http.ResponseWriter, r *http.Request) {
-	ctx := context.WithValue(r.Context(), "requestId", uuid.NewV4().String())
-
 	pageStr := r.URL.Query().Get("page")
 	sizeStr := r.URL.Query().Get("size")
 
@@ -367,9 +355,9 @@ func (h *AdvertsClientHandler) GetSquareAdvertsList(w http.ResponseWriter, r *ht
 
 	offset := (page - 1) * size
 
-	adverts, err := h.uc.GetSquareAdvertsList(ctx, size, offset)
+	adverts, err := h.uc.GetSquareAdvertsList(r.Context(), size, offset)
 	if err != nil {
-		utils.LogErrorResponse(h.logger, ctx.Value("requestId").(string), utils.DeliveryLayer, GetSquareAdvertsListMethod, err, http.StatusBadRequest)
+		utils.LogErrorResponse(h.logger, r.Context().Value("requestId").(string), utils.DeliveryLayer, GetSquareAdvertsListMethod, err, http.StatusBadRequest)
 		utils.WriteError(w, http.StatusBadRequest, err.Error())
 		return
 	}
@@ -378,44 +366,40 @@ func (h *AdvertsClientHandler) GetSquareAdvertsList(w http.ResponseWriter, r *ht
 	}
 
 	if err = utils.WriteResponse(w, http.StatusOK, adverts); err != nil {
-		utils.LogErrorResponse(h.logger, ctx.Value("requestId").(string), utils.DeliveryLayer, GetSquareAdvertsListMethod, err, http.StatusInternalServerError)
+		utils.LogErrorResponse(h.logger, r.Context().Value("requestId").(string), utils.DeliveryLayer, GetSquareAdvertsListMethod, err, http.StatusInternalServerError)
 		utils.WriteError(w, http.StatusInternalServerError, err.Error())
 	} else {
-		utils.LogSuccesResponse(h.logger, ctx.Value("requestId").(string), utils.DeliveryLayer, GetSquareAdvertsListMethod)
+		utils.LogSuccesResponse(h.logger, r.Context().Value("requestId").(string), utils.DeliveryLayer, GetSquareAdvertsListMethod)
 	}
 }
 
 // GetExistBuildingsByAddress handles the request for retrieving an existing buildings by address.
 func (h *AdvertsClientHandler) GetExistBuildingByAddress(w http.ResponseWriter, r *http.Request) {
-	ctx := context.WithValue(r.Context(), "requestId", uuid.NewV4().String())
-
 	data := models.AddressData{}
 
 	if err := utils.ReadRequestData(r, &data); err != nil {
-		utils.LogErrorResponse(h.logger, ctx.Value("requestId").(string), utils.DeliveryLayer, CreateHouseAdvertMethod, err, http.StatusBadRequest)
+		utils.LogErrorResponse(h.logger, r.Context().Value("requestId").(string), utils.DeliveryLayer, CreateHouseAdvertMethod, err, http.StatusBadRequest)
 		utils.WriteError(w, http.StatusBadRequest, "incorrect data format")
 		return
 	}
 
-	building, err := h.uc.GetExistBuildingByAddress(ctx, &data)
+	building, err := h.uc.GetExistBuildingByAddress(r.Context(), &data)
 	if err != nil {
-		utils.LogErrorResponse(h.logger, ctx.Value("requestId").(string), utils.DeliveryLayer, GetExistBuildingsByAddressMethod, err, http.StatusBadRequest)
+		utils.LogErrorResponse(h.logger, r.Context().Value("requestId").(string), utils.DeliveryLayer, GetExistBuildingsByAddressMethod, err, http.StatusBadRequest)
 		utils.WriteError(w, http.StatusBadRequest, err.Error())
 		return
 	}
 
 	if err = utils.WriteResponse(w, http.StatusOK, building); err != nil {
-		utils.LogErrorResponse(h.logger, ctx.Value("requestId").(string), utils.DeliveryLayer, GetExistBuildingsByAddressMethod, err, http.StatusInternalServerError)
+		utils.LogErrorResponse(h.logger, r.Context().Value("requestId").(string), utils.DeliveryLayer, GetExistBuildingsByAddressMethod, err, http.StatusInternalServerError)
 		utils.WriteError(w, http.StatusInternalServerError, err.Error())
 	} else {
-		utils.LogSuccesResponse(h.logger, ctx.Value("requestId").(string), utils.DeliveryLayer, GetExistBuildingsByAddressMethod)
+		utils.LogSuccesResponse(h.logger, r.Context().Value("requestId").(string), utils.DeliveryLayer, GetExistBuildingsByAddressMethod)
 	}
 }
 
 // GetRectangeAdvertsList handles the request for retrieving a rectangle adverts with search.
 func (h *AdvertsClientHandler) GetRectangeAdvertsList(w http.ResponseWriter, r *http.Request) {
-	ctx := context.WithValue(r.Context(), "requestId", uuid.NewV4().String())
-
 	pageStr := r.URL.Query().Get("page")
 	sizeStr := r.URL.Query().Get("size")
 	advertType := r.URL.Query().Get("adverttype") // House/Advert
@@ -457,7 +441,7 @@ func (h *AdvertsClientHandler) GetRectangeAdvertsList(w http.ResponseWriter, r *
 
 	offset := (page - 1) * size
 
-	adverts, err := h.uc.GetRectangleAdvertsList(ctx, models.AdvertFilter{
+	adverts, err := h.uc.GetRectangleAdvertsList(r.Context(), models.AdvertFilter{
 		MinPrice:   minPrice,
 		MaxPrice:   maxPrice,
 		Page:       page,
@@ -470,23 +454,21 @@ func (h *AdvertsClientHandler) GetRectangeAdvertsList(w http.ResponseWriter, r *
 	adverts.Sanitize()
 
 	if err != nil {
-		utils.LogErrorResponse(h.logger, ctx.Value("requestId").(string), utils.DeliveryLayer, GetRectangeAdvertsListMethod, err, http.StatusBadRequest)
+		utils.LogErrorResponse(h.logger, r.Context().Value("requestId").(string), utils.DeliveryLayer, GetRectangeAdvertsListMethod, err, http.StatusBadRequest)
 		utils.WriteError(w, http.StatusBadRequest, err.Error())
 		return
 	}
 
 	if err = utils.WriteResponse(w, http.StatusOK, adverts); err != nil {
-		utils.LogErrorResponse(h.logger, ctx.Value("requestId").(string), utils.DeliveryLayer, GetRectangeAdvertsListMethod, err, http.StatusInternalServerError)
+		utils.LogErrorResponse(h.logger, r.Context().Value("requestId").(string), utils.DeliveryLayer, GetRectangeAdvertsListMethod, err, http.StatusInternalServerError)
 		utils.WriteError(w, http.StatusInternalServerError, err.Error())
 	} else {
-		utils.LogSuccesResponse(h.logger, ctx.Value("requestId").(string), utils.DeliveryLayer, GetRectangeAdvertsListMethod)
+		utils.LogSuccesResponse(h.logger, r.Context().Value("requestId").(string), utils.DeliveryLayer, GetRectangeAdvertsListMethod)
 	}
 }
 
 func (h *AdvertsClientHandler) GetUserAdverts(w http.ResponseWriter, r *http.Request) {
-	ctx := context.WithValue(r.Context(), "requestId", uuid.NewV4().String())
-
-	id := ctx.Value(middleware.CookieName)
+	id := r.Context().Value(middleware.CookieName)
 	pageStr := r.URL.Query().Get("page")
 	sizeStr := r.URL.Query().Get("size")
 
@@ -502,14 +484,14 @@ func (h *AdvertsClientHandler) GetUserAdverts(w http.ResponseWriter, r *http.Req
 
 	ID, ok := id.(int64)
 	if !ok {
-		utils.LogErrorResponse(h.logger, ctx.Value("requestId").(string), utils.DeliveryLayer, GetUserAdvertsMethod, errors.New("error with id user"), http.StatusBadRequest)
+		utils.LogErrorResponse(h.logger, r.Context().Value("requestId").(string), utils.DeliveryLayer, GetUserAdvertsMethod, errors.New("error with id user"), http.StatusBadRequest)
 		utils.WriteError(w, http.StatusBadRequest, "incorrect id")
 		return
 	}
 
 	var userAdverts []*models.AdvertRectangleData
-	if userAdverts, err = h.uc.GetRectangleAdvertsByUserId(ctx, page, size, ID); err != nil {
-		utils.LogErrorResponse(h.logger, ctx.Value("requestId").(string), utils.DeliveryLayer, GetUserAdvertsMethod, err, http.StatusBadRequest)
+	if userAdverts, err = h.uc.GetRectangleAdvertsByUserId(r.Context(), page, size, ID); err != nil {
+		utils.LogErrorResponse(h.logger, r.Context().Value("requestId").(string), utils.DeliveryLayer, GetUserAdvertsMethod, err, http.StatusBadRequest)
 		utils.WriteError(w, http.StatusBadRequest, "error getting user adverts")
 		return
 	}
@@ -518,17 +500,15 @@ func (h *AdvertsClientHandler) GetUserAdverts(w http.ResponseWriter, r *http.Req
 	}
 
 	if err := utils.WriteResponse(w, http.StatusOK, userAdverts); err != nil {
-		utils.LogErrorResponse(h.logger, ctx.Value("requestId").(string), utils.DeliveryLayer, GetUserAdvertsMethod, err, http.StatusInternalServerError)
+		utils.LogErrorResponse(h.logger, r.Context().Value("requestId").(string), utils.DeliveryLayer, GetUserAdvertsMethod, err, http.StatusInternalServerError)
 		utils.WriteError(w, http.StatusInternalServerError, "error write response")
 		return
 	} else {
-		utils.LogSuccesResponse(h.logger, ctx.Value("requestId").(string), utils.DeliveryLayer, GetUserAdvertsMethod)
+		utils.LogSuccesResponse(h.logger, r.Context().Value("requestId").(string), utils.DeliveryLayer, GetUserAdvertsMethod)
 	}
 }
 
 func (h *AdvertsClientHandler) GetComplexAdverts(w http.ResponseWriter, r *http.Request) {
-	ctx := context.WithValue(r.Context(), "requestId", uuid.NewV4().String())
-
 	pageStr := r.URL.Query().Get("page")
 	sizeStr := r.URL.Query().Get("size")
 
@@ -545,22 +525,22 @@ func (h *AdvertsClientHandler) GetComplexAdverts(w http.ResponseWriter, r *http.
 	vars := mux.Vars(r)
 	id := vars["id"]
 	if id == "" {
-		utils.LogErrorResponse(h.logger, ctx.Value("requestId").(string), utils.DeliveryLayer, GetComplexAdvertsMethod, errors.New("error with id complex"), http.StatusBadRequest)
+		utils.LogErrorResponse(h.logger, r.Context().Value("requestId").(string), utils.DeliveryLayer, GetComplexAdvertsMethod, errors.New("error with id complex"), http.StatusBadRequest)
 		utils.WriteError(w, http.StatusBadRequest, "id parameter is required")
 		return
 	}
 
 	complexId, err := strconv.ParseInt(id, 10, 64)
 	if err != nil {
-		utils.LogErrorResponse(h.logger, ctx.Value("requestId").(string), utils.DeliveryLayer, GetComplexAdvertsMethod, err, http.StatusBadRequest)
+		utils.LogErrorResponse(h.logger, r.Context().Value("requestId").(string), utils.DeliveryLayer, GetComplexAdvertsMethod, err, http.StatusBadRequest)
 		utils.WriteError(w, http.StatusBadRequest, "invalid id parameter")
 		return
 	}
 
 	var complexAdverts []*models.AdvertRectangleData
 
-	if complexAdverts, err = h.uc.GetRectangleAdvertsByComplexId(ctx, page, size, complexId); err != nil {
-		utils.LogErrorResponse(h.logger, ctx.Value("requestId").(string), utils.DeliveryLayer, GetComplexAdvertsMethod, err, http.StatusBadRequest)
+	if complexAdverts, err = h.uc.GetRectangleAdvertsByComplexId(r.Context(), page, size, complexId); err != nil {
+		utils.LogErrorResponse(h.logger, r.Context().Value("requestId").(string), utils.DeliveryLayer, GetComplexAdvertsMethod, err, http.StatusBadRequest)
 		utils.WriteError(w, http.StatusBadRequest, "error getting complex adverts")
 		return
 	}
@@ -568,11 +548,11 @@ func (h *AdvertsClientHandler) GetComplexAdverts(w http.ResponseWriter, r *http.
 		adv.Sanitize()
 	}
 	if err := utils.WriteResponse(w, http.StatusOK, complexAdverts); err != nil {
-		utils.LogErrorResponse(h.logger, ctx.Value("requestId").(string), utils.DeliveryLayer, GetComplexAdvertsMethod, err, http.StatusBadRequest)
+		utils.LogErrorResponse(h.logger, r.Context().Value("requestId").(string), utils.DeliveryLayer, GetComplexAdvertsMethod, err, http.StatusBadRequest)
 		utils.WriteError(w, http.StatusInternalServerError, "error write response")
 		return
 	} else {
-		utils.LogSuccesResponse(h.logger, ctx.Value("requestId").(string), utils.DeliveryLayer, GetComplexAdvertsMethod)
+		utils.LogSuccesResponse(h.logger, r.Context().Value("requestId").(string), utils.DeliveryLayer, GetComplexAdvertsMethod)
 	}
 }
 
@@ -582,11 +562,10 @@ func (h *AdvertsClientHandler) LikeAdvert(w http.ResponseWriter, r *http.Request
 		utils.WriteError(w, http.StatusUnauthorized, "csrf cookie not found")
 		return
 	}
-	ctx := context.WithValue(r.Context(), "requestId", uuid.NewV4().String())
 
-	id, ok := ctx.Value(middleware.CookieName).(int64)
+	id, ok := r.Context().Value(middleware.CookieName).(int64)
 	if !ok {
-		utils.LogErrorResponse(h.logger, ctx.Value("requestId").(string), utils.DeliveryLayer, CreateFlatAdvertMethod, errors.New("error with cookie"), http.StatusBadRequest)
+		utils.LogErrorResponse(h.logger, r.Context().Value("requestId").(string), utils.DeliveryLayer, CreateFlatAdvertMethod, errors.New("error with cookie"), http.StatusBadRequest)
 		utils.WriteError(w, http.StatusBadRequest, "incorrect id")
 		return
 	}
@@ -594,31 +573,31 @@ func (h *AdvertsClientHandler) LikeAdvert(w http.ResponseWriter, r *http.Request
 	vars := mux.Vars(r)
 	advertId := vars["id"]
 	if advertId == "" {
-		utils.LogErrorResponse(h.logger, ctx.Value("requestId").(string), utils.DeliveryLayer, GetComplexAdvertsMethod, errors.New("error with id complex"), http.StatusBadRequest)
+		utils.LogErrorResponse(h.logger, r.Context().Value("requestId").(string), utils.DeliveryLayer, GetComplexAdvertsMethod, errors.New("error with id complex"), http.StatusBadRequest)
 		utils.WriteError(w, http.StatusBadRequest, "id parameter is required")
 		return
 	}
 
 	advertIdInt, err := strconv.ParseInt(advertId, 10, 64)
 	if err != nil {
-		utils.LogErrorResponse(h.logger, ctx.Value("requestId").(string), utils.DeliveryLayer, GetComplexAdvertsMethod, err, http.StatusBadRequest)
+		utils.LogErrorResponse(h.logger, r.Context().Value("requestId").(string), utils.DeliveryLayer, GetComplexAdvertsMethod, err, http.StatusBadRequest)
 		utils.WriteError(w, http.StatusBadRequest, "invalid id parameter")
 		return
 	}
 
-	err = h.uc.LikeAdvert(ctx, advertIdInt, id)
+	err = h.uc.LikeAdvert(r.Context(), advertIdInt, id)
 
 	if err != nil {
-		utils.LogErrorResponse(h.logger, ctx.Value("requestId").(string), CreateFlatAdvertMethod, utils.DeliveryLayer, err, http.StatusBadRequest)
+		utils.LogErrorResponse(h.logger, r.Context().Value("requestId").(string), CreateFlatAdvertMethod, utils.DeliveryLayer, err, http.StatusBadRequest)
 		utils.WriteError(w, http.StatusBadRequest, err.Error())
 		return
 	}
 
 	if err = utils.WriteResponse(w, http.StatusCreated, "success liked"); err != nil {
-		utils.LogErrorResponse(h.logger, ctx.Value("requestId").(string), CreateFlatAdvertMethod, utils.DeliveryLayer, err, http.StatusInternalServerError)
+		utils.LogErrorResponse(h.logger, r.Context().Value("requestId").(string), CreateFlatAdvertMethod, utils.DeliveryLayer, err, http.StatusInternalServerError)
 		utils.WriteError(w, http.StatusInternalServerError, err.Error())
 	} else {
-		utils.LogSuccesResponse(h.logger, ctx.Value("requestId").(string), utils.DeliveryLayer, CreateFlatAdvertMethod)
+		utils.LogSuccesResponse(h.logger, r.Context().Value("requestId").(string), utils.DeliveryLayer, CreateFlatAdvertMethod)
 	}
 }
 
@@ -628,11 +607,10 @@ func (h *AdvertsClientHandler) DislikeAdvert(w http.ResponseWriter, r *http.Requ
 		utils.WriteError(w, http.StatusUnauthorized, "csrf cookie not found")
 		return
 	}
-	ctx := context.WithValue(r.Context(), "requestId", uuid.NewV4().String())
 
-	id, ok := ctx.Value(middleware.CookieName).(int64)
+	id, ok := r.Context().Value(middleware.CookieName).(int64)
 	if !ok {
-		utils.LogErrorResponse(h.logger, ctx.Value("requestId").(string), utils.DeliveryLayer, CreateFlatAdvertMethod, errors.New("error with cookie"), http.StatusBadRequest)
+		utils.LogErrorResponse(h.logger, r.Context().Value("requestId").(string), utils.DeliveryLayer, CreateFlatAdvertMethod, errors.New("error with cookie"), http.StatusBadRequest)
 		utils.WriteError(w, http.StatusBadRequest, "incorrect id")
 		return
 	}
@@ -640,38 +618,36 @@ func (h *AdvertsClientHandler) DislikeAdvert(w http.ResponseWriter, r *http.Requ
 	vars := mux.Vars(r)
 	advertId := vars["id"]
 	if advertId == "" {
-		utils.LogErrorResponse(h.logger, ctx.Value("requestId").(string), utils.DeliveryLayer, GetComplexAdvertsMethod, errors.New("error with id complex"), http.StatusBadRequest)
+		utils.LogErrorResponse(h.logger, r.Context().Value("requestId").(string), utils.DeliveryLayer, GetComplexAdvertsMethod, errors.New("error with id complex"), http.StatusBadRequest)
 		utils.WriteError(w, http.StatusBadRequest, "id parameter is required")
 		return
 	}
 
 	advertIdInt, err := strconv.ParseInt(advertId, 10, 64)
 	if err != nil {
-		utils.LogErrorResponse(h.logger, ctx.Value("requestId").(string), utils.DeliveryLayer, GetComplexAdvertsMethod, err, http.StatusBadRequest)
+		utils.LogErrorResponse(h.logger, r.Context().Value("requestId").(string), utils.DeliveryLayer, GetComplexAdvertsMethod, err, http.StatusBadRequest)
 		utils.WriteError(w, http.StatusBadRequest, "invalid id parameter")
 		return
 	}
 
-	err = h.uc.DislikeAdvert(ctx, advertIdInt, id)
+	err = h.uc.DislikeAdvert(r.Context(), advertIdInt, id)
 
 	if err != nil {
-		utils.LogErrorResponse(h.logger, ctx.Value("requestId").(string), CreateFlatAdvertMethod, utils.DeliveryLayer, err, http.StatusBadRequest)
+		utils.LogErrorResponse(h.logger, r.Context().Value("requestId").(string), CreateFlatAdvertMethod, utils.DeliveryLayer, err, http.StatusBadRequest)
 		utils.WriteError(w, http.StatusBadRequest, err.Error())
 		return
 	}
 
 	if err = utils.WriteResponse(w, http.StatusCreated, "success disliked"); err != nil {
-		utils.LogErrorResponse(h.logger, ctx.Value("requestId").(string), CreateFlatAdvertMethod, utils.DeliveryLayer, err, http.StatusInternalServerError)
+		utils.LogErrorResponse(h.logger, r.Context().Value("requestId").(string), CreateFlatAdvertMethod, utils.DeliveryLayer, err, http.StatusInternalServerError)
 		utils.WriteError(w, http.StatusInternalServerError, err.Error())
 	} else {
-		utils.LogSuccesResponse(h.logger, ctx.Value("requestId").(string), utils.DeliveryLayer, CreateFlatAdvertMethod)
+		utils.LogSuccesResponse(h.logger, r.Context().Value("requestId").(string), utils.DeliveryLayer, CreateFlatAdvertMethod)
 	}
 }
 
 func (h *AdvertsClientHandler) GetLikedUserAdverts(w http.ResponseWriter, r *http.Request) {
-	ctx := context.WithValue(r.Context(), "requestId", uuid.NewV4().String())
-
-	id := ctx.Value(middleware.CookieName)
+	id := r.Context().Value(middleware.CookieName)
 	pageStr := r.URL.Query().Get("page")
 	sizeStr := r.URL.Query().Get("size")
 
@@ -687,14 +663,14 @@ func (h *AdvertsClientHandler) GetLikedUserAdverts(w http.ResponseWriter, r *htt
 
 	ID, ok := id.(int64)
 	if !ok {
-		utils.LogErrorResponse(h.logger, ctx.Value("requestId").(string), utils.DeliveryLayer, GetUserAdvertsMethod, errors.New("error with id user"), http.StatusBadRequest)
+		utils.LogErrorResponse(h.logger, r.Context().Value("requestId").(string), utils.DeliveryLayer, GetUserAdvertsMethod, errors.New("error with id user"), http.StatusBadRequest)
 		utils.WriteError(w, http.StatusBadRequest, "incorrect id")
 		return
 	}
 
 	var userAdverts []*models.AdvertRectangleData
-	if userAdverts, err = h.uc.GetRectangleAdvertsLikedByUserId(ctx, page, size, ID); err != nil {
-		utils.LogErrorResponse(h.logger, ctx.Value("requestId").(string), utils.DeliveryLayer, GetUserAdvertsMethod, err, http.StatusBadRequest)
+	if userAdverts, err = h.uc.GetRectangleAdvertsLikedByUserId(r.Context(), page, size, ID); err != nil {
+		utils.LogErrorResponse(h.logger, r.Context().Value("requestId").(string), utils.DeliveryLayer, GetUserAdvertsMethod, err, http.StatusBadRequest)
 		utils.WriteError(w, http.StatusBadRequest, "error getting user adverts")
 		return
 	}
@@ -703,10 +679,10 @@ func (h *AdvertsClientHandler) GetLikedUserAdverts(w http.ResponseWriter, r *htt
 	}
 
 	if err := utils.WriteResponse(w, http.StatusOK, userAdverts); err != nil {
-		utils.LogErrorResponse(h.logger, ctx.Value("requestId").(string), utils.DeliveryLayer, GetUserAdvertsMethod, err, http.StatusInternalServerError)
+		utils.LogErrorResponse(h.logger, r.Context().Value("requestId").(string), utils.DeliveryLayer, GetUserAdvertsMethod, err, http.StatusInternalServerError)
 		utils.WriteError(w, http.StatusInternalServerError, "error write response")
 		return
 	} else {
-		utils.LogSuccesResponse(h.logger, ctx.Value("requestId").(string), utils.DeliveryLayer, GetUserAdvertsMethod)
+		utils.LogSuccesResponse(h.logger, r.Context().Value("requestId").(string), utils.DeliveryLayer, GetUserAdvertsMethod)
 	}
 }

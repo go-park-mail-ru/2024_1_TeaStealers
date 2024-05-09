@@ -8,6 +8,9 @@ service Complex {
   rpc CreateCompany(CreateCompanyRequest) returns (CreateCompanyResponse) {}
   rpc GetCompanyById(GetCompanyByIdRequest) returns (GetCompanyByIdResponse) {}
   rpc UpdateCompanyPhoto(UpdateCompanyPhotoRequest) returns (UpdateCompanyPhotoResponse) {}
+  rpc CreateComplex(CreateComplexRequest) returns (CreateComplexResponse) {}
+  rpc GetComplexById(GetComplexByIdRequest) returns (GetComplexByIdResponse) {}
+  rpc UpdateComplexPhoto(UpdateComplexPhotoRequest) returns (UpdateComplexPhotoResponse) {}
 }
 
 message CreateCompanyRequest {
@@ -29,7 +32,7 @@ message CreateCompanyResponse {
 }
 
 message GetCompanyByIdRequest {
-    int64 Id = 1;
+  int64 Id = 1;
 }
 
 message GetCompanyByIdResponse {
@@ -42,11 +45,84 @@ message GetCompanyByIdResponse {
 }
 
 message UpdateCompanyPhotoRequest {
-    bytes File = 1;
-    string FileType = 2;
-    int64 CompanyId = 3;
+  bytes File = 1;
+  string FileType = 2;
+  int64 CompanyId = 3;
 }
 
 message UpdateCompanyPhotoResponse {
-    string Filename = 1;
+  string Filename = 1;
+}
+
+enum ClassHouse {
+  CLASS_HOUSE_ECONOM = 0;
+  CLASS_HOUSE_COMFORT = 1;
+  CLASS_HOUSE_BUSINESS = 2;
+  CLASS_HOUSE_PREMIUM = 3;
+  CLASS_HOUSE_ELITE = 4;
+}
+
+message CreateComplexRequest {
+  int64 CompanyId = 1;
+  string Name = 2;
+  string Address = 3;
+  string Description = 4;
+  string DateBeginBuild = 5;
+  string DateEndBuild = 6;
+  bool WithoutFinishingOption = 7;
+  bool FinishingOption = 8;
+  bool PreFinishingOption = 9;
+  ClassHouse ClassHousing = 10;
+  bool Parking = 11;
+  bool Security = 12;
+}
+
+message CreateComplexResponse {
+  int64 Id = 1;
+  int64 CompanyId = 2;
+  string Name = 3;
+  string Address = 4;
+  string Photo = 5;
+  string Description = 6;
+  string DateBeginBuild = 7;
+  string DateEndBuild = 8;
+  bool WithoutFinishingOption = 9;
+  bool FinishingOption = 10;
+  bool PreFinishingOption = 11;
+  ClassHouse ClassHousing = 12;
+  bool Parking = 13;
+  bool Security = 14;
+  string DateCreation = 15;
+  bool IsDeleted = 16;
+}
+
+message GetComplexByIdRequest {
+  int64 Id = 1;
+}
+
+message GetComplexByIdResponse {
+  int64 Id = 1;
+  int64 CompanyId = 2;
+  string Name = 3;
+  string Address = 4;
+  string Photo = 5;
+  string Description = 6;
+  string DateBeginBuild = 7;
+  string DateEndBuild = 8;
+  bool WithoutFinishingOption = 9;
+  bool FinishingOption = 10;
+  bool PreFinishingOption = 11;
+  ClassHouse ClassHousing = 12;
+  bool Parking = 13;
+  bool Security = 14;
+}
+
+message UpdateComplexPhotoRequest {
+  bytes File = 1;
+  string FileType = 2;
+  int64 ComplexId = 3;
+}
+
+message UpdateComplexPhotoResponse {
+  string Filename = 1;
 }
