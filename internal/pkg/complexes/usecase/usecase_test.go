@@ -1,18 +1,16 @@
 package usecase_test
 
-/*
 import (
 	"2024_1_TeaStealers/internal/models"
-	transaction "2024_1_TeaStealers/internal/models/mock"
 	complexes_mock "2024_1_TeaStealers/internal/pkg/complexes/mock"
 	"2024_1_TeaStealers/internal/pkg/complexes/usecase"
 	"context"
 	"errors"
+	"math/rand"
 	"testing"
 	"time"
 
 	"github.com/golang/mock/gomock"
-	"github.com/satori/uuid"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/zap"
 )
@@ -21,8 +19,8 @@ func TestCreateComplex(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 	newComplex := &models.Complex{
-		ID:                     uuid.NewV4(),
-		CompanyId:              uuid.NewV4(),
+		ID:                     123,
+		CompanyId:              321,
 		Name:                   "name",
 		Description:            "descr",
 		Address:                "adr",
@@ -37,7 +35,7 @@ func TestCreateComplex(t *testing.T) {
 	}
 
 	createcompl := &models.ComplexCreateData{
-		CompanyId:              uuid.NewV4(),
+		CompanyId:              321,
 		Name:                   "name",
 		Description:            "descr",
 		Address:                "adr",
@@ -99,11 +97,22 @@ func TestCreateBuilding(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 	newBuild := &models.BuildingCreateData{
-		Address: "adr",
+		ComplexID:    321,
+		Floor:        2,
+		Material:     "steel",
+		AddressID:    111,
+		YearCreation: 2000,
 	}
 
 	createBuild := &models.Building{
-		Address: "adr",
+		ID:           123,
+		ComplexID:    321,
+		Floor:        2,
+		Material:     "steel",
+		AddressID:    111,
+		YearCreation: 2000,
+		DateCreation: time.Now(),
+		IsDeleted:    false,
 	}
 	mockRepo := complexes_mock.NewMockComplexRepo(ctrl)
 	usecase := usecase.NewComplexUsecase(mockRepo, &zap.Logger{})
@@ -157,10 +166,11 @@ func TestGetComplexById(t *testing.T) {
 	mockRepo := complexes_mock.NewMockComplexRepo(ctrl)
 	usecase := usecase.NewComplexUsecase(mockRepo, &zap.Logger{})
 	name := "get complex by id ok"
+	id := rand.Int63()
 	foundCData := &models.ComplexData{}
 	t.Run(name, func(t *testing.T) {
 		mockRepo.EXPECT().GetComplexById(gomock.Any(), gomock.Any()).Return(foundCData, nil)
-		_, goterr := usecase.GetComplexById(context.Background(), uuid.NewV4())
+		_, goterr := usecase.GetComplexById(context.Background(), id)
 		// assert.Equal(t, tt.want.user, gotUser)
 		assert.Equal(t, nil, goterr)
 	})
@@ -173,21 +183,23 @@ func TestGetComplexById2(t *testing.T) {
 	mockRepo := complexes_mock.NewMockComplexRepo(ctrl)
 	usecase := usecase.NewComplexUsecase(mockRepo, &zap.Logger{})
 	name := "get complex by id error"
+	id := rand.Int63()
 	foundCData := &models.ComplexData{}
 	t.Run(name, func(t *testing.T) {
 		mockRepo.EXPECT().GetComplexById(gomock.Any(), gomock.Any()).Return(foundCData, errors.New("error"))
-		_, goterr := usecase.GetComplexById(context.Background(), uuid.NewV4())
+		_, goterr := usecase.GetComplexById(context.Background(), id)
 		// assert.Equal(t, tt.want.user, gotUser)
 		assert.Equal(t, errors.New("error"), goterr)
 	})
 }
 
+/*
 func TestCreateFlatAdvert(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 	ctrl2 := gomock.NewController(t)
 	defer ctrl2.Finish()
-	mockTrans := transaction.NewMockTransaction(ctrl2)
+	mockTrans := models_mock.NewMockTransaction(ctrl2)
 	mockRepo := complexes_mock.NewMockComplexRepo(ctrl)
 	usecase := usecase.NewComplexUsecase(mockRepo, &zap.Logger{})
 	name := "create flat advert ok"
@@ -197,9 +209,8 @@ func TestCreateFlatAdvert(t *testing.T) {
 		mockTrans.EXPECT().Commit().Return(nil)
 		mockTrans.EXPECT().Rollback().Return(nil)
 
-		mockRepo.EXPECT().CreateAdvertType(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil)
-		mockRepo.EXPECT().CreateFlat(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil)
-		mockRepo.EXPECT().CreateAdvert(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil)
+		mockRepo.EXPECT().CreateFlat(gomock.Any(), gomock.Any(), gomock.Any()).Return(int64(123), nil)
+		mockRepo.EXPECT().CreateAdvert(gomock.Any(), gomock.Any(), gomock.Any()).Return(int64(123), nil)
 		mockRepo.EXPECT().CreatePriceChange(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil)
 		_, goterr := usecase.CreateFlatAdvert(context.Background(), AdvData)
 		// assert.Equal(t, tt.want.user, gotUser)
@@ -207,12 +218,14 @@ func TestCreateFlatAdvert(t *testing.T) {
 	})
 }
 
+*/
+/*
 func TestCreateHouseAdvert(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 	ctrl2 := gomock.NewController(t)
 	defer ctrl2.Finish()
-	mockTrans := transaction.NewMockTransaction(ctrl2)
+	mockTrans := models_mock.NewMockTransaction(ctrl2)
 	mockRepo := complexes_mock.NewMockComplexRepo(ctrl)
 	usecase := usecase.NewComplexUsecase(mockRepo, &zap.Logger{})
 	name := "create flat advert ok"
@@ -222,226 +235,12 @@ func TestCreateHouseAdvert(t *testing.T) {
 		mockTrans.EXPECT().Commit().Return(nil)
 		mockTrans.EXPECT().Rollback().Return(nil)
 
-		mockRepo.EXPECT().CreateAdvertType(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil)
-		mockRepo.EXPECT().CreateHouse(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil)
-		mockRepo.EXPECT().CreateAdvert(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil)
+		mockRepo.EXPECT().CreateHouse(gomock.Any(), gomock.Any(), gomock.Any()).Return(int64(123), nil)
+		mockRepo.EXPECT().CreateAdvert(gomock.Any(), gomock.Any(), gomock.Any()).Return(int64(123), nil)
 		mockRepo.EXPECT().CreatePriceChange(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil)
 		_, goterr := usecase.CreateHouseAdvert(context.Background(), AdvData)
 		// assert.Equal(t, tt.want.user, gotUser)
 		assert.Equal(t, nil, goterr)
 	})
-}
-
-/*
-func TestUpdateUserInfo(t *testing.T) {
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-
-	mockRepo := users_mock.NewMockUserRepo(ctrl)
-	usecase := usecase.NewUserUsecase(mockRepo)
-	id := uuid.NewV4()
-	type args struct {
-		userUUID uuid.UUID
-		data     *models.UserUpdateData
-	}
-	type want struct {
-		user *models.User
-		err  error
-	}
-	tests := []struct {
-		name string
-		args args
-		want want
-	}{
-		{
-			name: "successful update user",
-			args: args{
-				userUUID: id,
-				data: &models.UserUpdateData{
-					FirstName:    "newname1",
-					SecondName:   "newname2",
-					DateBirthday: time.Now(),
-					Phone:        "+712345678",
-					Email:        "new@mail.ru",
-				},
-			},
-			want: want{
-				user: &models.User{
-					ID:           id,
-					PasswordHash: "hhhhash",
-					LevelUpdate:  1,
-					FirstName:    "newname1",
-					SecondName:   "newname2",
-					DateBirthday: time.Now(),
-					Email:        "new@mail.ru",
-					Phone:        "+712345678",
-					//Photo:        "/url/to/photo",
-				},
-				err: nil,
-			},
-		},
-		{
-			name: "empty phone user",
-			args: args{
-				userUUID: id,
-				data: &models.UserUpdateData{
-					FirstName:    "newname1",
-					SecondName:   "newname2",
-					DateBirthday: time.Now(),
-					Phone:        "",
-					Email:        "new@mail.ru",
-				},
-			},
-			want: want{
-				user: nil,
-				err:  errors.New("phone cannot be empty"),
-			},
-		},
-		{
-			name: "empty email user",
-			args: args{
-				userUUID: id,
-				data: &models.UserUpdateData{
-					FirstName:    "newname1",
-					SecondName:   "newname2",
-					DateBirthday: time.Now(),
-					Phone:        "+712345678",
-					Email:        "",
-				},
-			},
-			want: want{
-				user: nil,
-				err:  errors.New("email cannot be empty"),
-			},
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if tt.name == "successful update user" {
-				mockRepo.EXPECT().UpdateUserInfo(gomock.Eq(tt.args.userUUID), gomock.Eq(tt.args.data)).Return(tt.want.user, tt.want.err)
-			}
-			gotUser, goterr := usecase.UpdateUserInfo(tt.args.userUUID, tt.args.data)
-			assert.Equal(t, tt.want.user, gotUser)
-			assert.Equal(t, tt.want.err, goterr)
-		})
-	}
-}
-
-func TestUpdateUserPassword(t *testing.T) {
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-
-	mockRepo := users_mock.NewMockUserRepo(ctrl)
-	usecase := usecase.NewUserUsecase(mockRepo)
-	id := uuid.NewV4()
-	type args struct {
-		update            *models.UserUpdatePassword
-		errCheckPassword  error
-		errUpdatePassword error
-		UpdatePassword    bool
-		CheckPassword     bool
-	}
-	type want struct {
-		token   string
-		expTime time.Time
-		err     error
-	}
-	tests := []struct {
-		name string
-		args args
-		want want
-	}{
-		{
-			name: "pass must not match",
-			args: args{
-				update: &models.UserUpdatePassword{
-					ID:          id,
-					OldPassword: "oldpassword",
-					NewPassword: "oldpassword",
-				},
-				errCheckPassword:  errors.New("error"),
-				errUpdatePassword: errors.New("error"),
-				UpdatePassword:    false,
-				CheckPassword:     false,
-			},
-			want: want{
-				token:   "",
-				expTime: time.Now(),
-				err:     errors.New("passwords must not match"),
-			},
-		},
-		{
-			name: "incorrect id or passwordhash",
-			args: args{
-				update: &models.UserUpdatePassword{
-					ID:          id,
-					OldPassword: "oldpassword",
-					NewPassword: "newpassword",
-				},
-				errCheckPassword:  nil,
-				errUpdatePassword: errors.New("error"),
-				UpdatePassword:    true,
-				CheckPassword:     true,
-			},
-			want: want{
-				token:   "",
-				expTime: time.Now(),
-				err:     errors.New("incorrect id or passwordhash"),
-			},
-		},
-
-		{
-			name: "ok changePassword",
-			args: args{
-				update: &models.UserUpdatePassword{
-					ID:          id,
-					OldPassword: "oldpassword",
-					NewPassword: "newpassword",
-				},
-				errCheckPassword:  nil,
-				errUpdatePassword: nil,
-				UpdatePassword:    true,
-				CheckPassword:     true,
-			},
-			want: want{
-				token:   "",
-				expTime: time.Now(),
-				err:     nil,
-			},
-		},
-
-		{
-			name: "invalid old password",
-			args: args{
-				update: &models.UserUpdatePassword{
-					ID:          id,
-					OldPassword: "oldpassword",
-					NewPassword: "newpassword",
-				},
-				errCheckPassword:  nil,
-				errUpdatePassword: errors.New("error"),
-				UpdatePassword:    true,
-				CheckPassword:     true,
-			},
-			want: want{
-				token:   "",
-				expTime: time.Now(),
-				err:     errors.New("incorrect id or passwordhash"),
-			},
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if tt.args.CheckPassword {
-				mockRepo.EXPECT().CheckUserPassword(gomock.Eq(tt.args.update.ID), gomock.Eq(utils.GenerateHashString(tt.args.update.OldPassword))).Return(tt.args.errCheckPassword)
-			}
-			if tt.args.UpdatePassword {
-				mockRepo.EXPECT().UpdateUserPassword(gomock.Eq(tt.args.update.ID), gomock.Eq(utils.GenerateHashString(tt.args.update.NewPassword))).Return(1, tt.args.errUpdatePassword)
-			}
-
-			_, _, goterr := usecase.UpdateUserPassword(tt.args.update)
-			assert.Equal(t, tt.want.err, goterr)
-		})
-	}
 }
 */
