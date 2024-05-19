@@ -4,32 +4,35 @@ import (
 	"2024_1_TeaStealers/internal/models"
 	"2024_1_TeaStealers/internal/pkg/middleware"
 	"2024_1_TeaStealers/internal/pkg/questionnaire"
+	question "2024_1_TeaStealers/internal/pkg/questionnaire"
+	genQuestion "2024_1_TeaStealers/internal/pkg/questionnaire/delivery/grpc/gen"
 	"2024_1_TeaStealers/internal/pkg/utils"
 	"net/http"
 
 	"github.com/gorilla/mux"
 	"github.com/satori/uuid"
 	"go.uber.org/zap"
+	"google.golang.org/grpc"
 )
 
-// QuestionnaireHandler handles HTTP requests for questionnaire.
-type QuestionnaireHandler struct {
-	// uc represents the usecase interface for questionnaire.
-	uc     questionnaire.QuestionnaireUsecase
+// QuestionnaireClientHandler handles HTTP requests for questions.
+type QuestionnaireClientHandler struct {
+	client genQuestion.QuestionClient
+	uc     question.QuestionnaireUsecase
 	logger *zap.Logger
 }
 
-// NewQuestionnaireHandler creates a new instance of QuestionnaireHandler.
-func NewQuestionnaireHandler(uc questionnaire.QuestionnaireUsecase, logger *zap.Logger) *QuestionnaireHandler {
-	return &QuestionnaireHandler{uc: uc, logger: logger}
+// NewQuestionnaireClientHandler creates a new instance of QuestionnaireClientHandler.
+func NewQuestionnaireClientHandler(grpcConn *grpc.ClientConn, uc questionnaire.QuestionnaireUsecase, logger *zap.Logger) *QuestionnaireClientHandler {
+	return &QuestionnaireClientHandler{client: genQuestion.NewQuestionClient(grpcConn), uc: uc, logger: logger}
 }
 
 // GetQuestionsByTheme handles the request for getting questions by theme
-func (h *QuestionnaireHandler) GetQuestionsByTheme(w http.ResponseWriter, r *http.Request) {
+func (h *QuestionnaireClientHandler) GetQuestionsByTheme(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	theme := models.QuestionTheme(vars["theme"])
 
-	questions, err := h.uc.GetQuestionsByTheme(r.Context(), &theme)
+	questions, err := h.client.GetQuestionsByTheme(r.Context(), &genQuestion.GetQuestionsByThemeRequest{Theme: string(theme)})
 	if err != nil {
 		utils.WriteError(w, http.StatusBadRequest, err.Error())
 		return
@@ -41,7 +44,7 @@ func (h *QuestionnaireHandler) GetQuestionsByTheme(w http.ResponseWriter, r *htt
 }
 
 // UploadAnswer handles the request for uploading answer for question
-func (h *QuestionnaireHandler) UploadAnswer(w http.ResponseWriter, r *http.Request) {
+func (h *QuestionnaireClientHandler) UploadAnswer(w http.ResponseWriter, r *http.Request) {
 	id := r.Context().Value(middleware.CookieName)
 	_, ok := id.(uuid.UUID)
 	if !ok {
@@ -68,7 +71,7 @@ func (h *QuestionnaireHandler) UploadAnswer(w http.ResponseWriter, r *http.Reque
 }
 
 // GetAnswerStatistics handles the request for getting questionnaire statistics
-func (h *QuestionnaireHandler) GetAnswerStatistics(w http.ResponseWriter, r *http.Request) {
+func (h *QuestionnaireClientHandler) GetAnswerStatistics(w http.ResponseWriter, r *http.Request) {
 
 	statistics, err := h.uc.GetAnswerStatistics(r.Context())
 	if err != nil {

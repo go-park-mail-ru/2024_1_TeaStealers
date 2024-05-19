@@ -31,7 +31,6 @@ func (u *AuthUsecase) SignUp(ctx context.Context, data *models.UserSignUpData) (
 		PasswordHash: utils.GenerateHashString(data.Password),
 		LevelUpdate:  1,
 	}
-
 	userResponse, err := u.repo.CreateUser(ctx, newUser)
 
 	if err != nil {

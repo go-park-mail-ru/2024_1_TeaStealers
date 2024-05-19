@@ -7,7 +7,6 @@ import (
 	"context"
 	"errors"
 
-	"github.com/satori/uuid"
 	"go.uber.org/zap"
 )
 
@@ -42,7 +41,6 @@ func NewServerAuthHandler(uc auth.AuthUsecase, logger *zap.Logger) *AuthServerHa
 // @Failure 500 {string} string "Internal server error"
 // @Router /auth/signup [post]
 func (h *AuthServerHandler) SignUp(ctx context.Context, req *genAuth.SignUpRequest) (*genAuth.SignUpInResponse, error) {
-	ctx = context.WithValue(ctx, "requestId", uuid.NewV4().String())
 	data := models.UserSignUpData{Email: req.Email, Phone: req.Phone, Password: req.Password}
 	data.Sanitize()
 
@@ -61,6 +59,7 @@ func (h *AuthServerHandler) SignUp(ctx context.Context, req *genAuth.SignUpReque
 	dateString := exp.Format(layout)
 
 	h.logger.Info("success logIn")
+
 	// utils.LogSuccesResponse(h.logger, ctx.Value("requestId").(string), utils.DeliveryLayer, SignUpMethod)
 	return &genAuth.SignUpInResponse{Token: token, Exp: dateString}, nil
 
@@ -77,7 +76,6 @@ func (h *AuthServerHandler) SignUp(ctx context.Context, req *genAuth.SignUpReque
 // @Failure 500 {string} string "Internal server error"
 // @Router /auth/login [post]
 func (h *AuthServerHandler) Login(ctx context.Context, req *genAuth.SignInRequest) (*genAuth.SignUpInResponse, error) {
-	ctx = context.WithValue(ctx, "requestId", uuid.NewV4().String())
 	data := models.UserLoginData{Login: req.Email, Password: req.Password}
 	data.Sanitize()
 	_, token, exp, err := h.uc.Login(ctx, &data)
@@ -97,8 +95,6 @@ func (h *AuthServerHandler) Login(ctx context.Context, req *genAuth.SignInReques
 }
 
 func (h *AuthServerHandler) CheckAuth(ctx context.Context, req *genAuth.CheckAuthRequest) (*genAuth.CheckAuthResponse, error) {
-	ctx = context.WithValue(ctx, "requestId", uuid.NewV4().String())
-
 	userId := req.Id
 
 	err := h.uc.CheckAuth(ctx, userId, int(req.Level))
@@ -110,4 +106,21 @@ func (h *AuthServerHandler) CheckAuth(ctx context.Context, req *genAuth.CheckAut
 	h.logger.Info("success checkAuth")
 	// utils.LogSuccesResponse(h.logger, ctx.Value("requestId").(string), utils.DeliveryLayer, CheckAuthMethod)
 	return &genAuth.CheckAuthResponse{Authorized: true}, nil
+}
+
+func (h *AuthServerHandler) UpdateUserPassword(ctx context.Context, req *genAuth.UpdatePasswordRequest) (*genAuth.UpdatePasswordResponse, error) {
+	userId := req.Id
+
+	data := &models.UserUpdatePassword{
+		ID:          userId,
+		OldPassword: req.OldPassword,
+		NewPassword: req.NewPassword,
+	}
+	data.Sanitize()
+
+	token, exp, err := h.uc.UpdateUserPassword(ctx, data)
+	if err != nil {
+		return nil, err
+	}
+	return &genAuth.UpdatePasswordResponse{Updated: true, Token: token, Exp: exp.String()}, nil
 }

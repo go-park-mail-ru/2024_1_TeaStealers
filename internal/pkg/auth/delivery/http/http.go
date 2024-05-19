@@ -7,6 +7,7 @@ import (
 	"2024_1_TeaStealers/internal/pkg/middleware"
 	"2024_1_TeaStealers/internal/pkg/utils"
 	"errors"
+	"log"
 	"net/http"
 
 	"go.uber.org/zap"
@@ -113,6 +114,8 @@ func (h *AuthClientHandler) Login(w http.ResponseWriter, r *http.Request) {
 		utils.WriteError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
+
+	log.Println(middleware.CookieName, token, expTime)
 
 	http.SetCookie(w, jwt.TokenCookie(middleware.CookieName, token, expTime))
 

@@ -4,15 +4,9 @@ import (
 	"2024_1_TeaStealers/internal/models"
 	complex "2024_1_TeaStealers/internal/pkg/complexes"
 	genComplex "2024_1_TeaStealers/internal/pkg/complexes/delivery/grpc/gen"
-	"2024_1_TeaStealers/internal/pkg/utils"
+	"context"
 	"log"
-	"net/http"
-	"path/filepath"
-	"slices"
-	"strconv"
-	"strings"
 
-	"github.com/gorilla/mux"
 	"go.uber.org/zap"
 )
 
@@ -29,205 +23,161 @@ func NewComplexServerHandler(uc complex.ComplexUsecase, logger *zap.Logger) *Com
 	return &ComplexServerHandler{uc: uc, logger: logger}
 }
 
-func (h *ComplexServerHandler) CreateComplex(w http.ResponseWriter, r *http.Request) {
-	_, err := r.Cookie("csrftoken")
-	if err != nil {
-		utils.WriteError(w, http.StatusUnauthorized, "csrf cookie not found")
-		return
-	}
-	data := models.ComplexCreateData{}
+func (h *ComplexServerHandler) CreateComplex(ctx context.Context, req *genComplex.CreateComplexRequest) (*genComplex.CreateComplexResponse, error) {
 
-	if err := utils.ReadRequestData(r, &data); err != nil {
-		utils.WriteError(w, http.StatusBadRequest, "incorrect data format")
-		return
+	var classHousing models.ClassHouse
+	switch req.ClassHousing {
+	case genComplex.ClassHouse_CLASS_HOUSE_BUSINESS:
+		classHousing = models.ClassHouseBusiness
+	case genComplex.ClassHouse_CLASS_HOUSE_PREMIUM:
+		classHousing = models.ClassHousePremium
+	case genComplex.ClassHouse_CLASS_HOUSE_ELITE:
+		classHousing = models.ClassHouseElite
+	case genComplex.ClassHouse_CLASS_HOUSE_ECONOM:
+		classHousing = models.ClassHouseEconom
+	case genComplex.ClassHouse_CLASS_HOUSE_COMFORT:
+		classHousing = models.ClassHouseComfort
 	}
+
+	data := models.ComplexCreateData{CompanyId: req.CompanyId, Name: req.Name, Address: req.Address, Description: req.Description, WithoutFinishingOption: req.WithoutFinishingOption, FinishingOption: req.FinishingOption, PreFinishingOption: req.PreFinishingOption, ClassHousing: classHousing, Parking: req.Parking, Security: req.Security}
 	data.Sanitize()
 
-	newComplex, err := h.uc.CreateComplex(r.Context(), &data)
-	newComplex.Sanitize()
+	newComplex, err := h.uc.CreateComplex(ctx, &data)
 	if err != nil {
 		log.Println(err)
-		utils.WriteError(w, http.StatusBadRequest, "data already is used")
-		return
+		return nil, err
 	}
+	newComplex.Sanitize()
 
-	if err = utils.WriteResponse(w, http.StatusCreated, newComplex); err != nil {
-		utils.WriteError(w, http.StatusInternalServerError, err.Error())
-	}
+	return &genComplex.CreateComplexResponse{}, nil
 }
 
-func (h *ComplexServerHandler) UpdateComplexPhoto(w http.ResponseWriter, r *http.Request) {
-	_, err := r.Cookie("csrftoken")
-	if err != nil {
-		utils.WriteError(w, http.StatusUnauthorized, "csrf cookie not found")
-		return
-	}
-	vars := mux.Vars(r)
-	id := vars["id"]
-	if id == "" {
-		utils.WriteError(w, http.StatusBadRequest, "id parameter is required")
-		return
-	}
+func (h *ComplexServerHandler) UpdateComplexPhoto(ctx context.Context, req *genComplex.UpdateComplexPhotoRequest) (*genComplex.UpdateComplexPhotoResponse, error) {
+	/*
+		complexId, err := strconv.ParseInt(id, 10, 64)
+		if err != nil {
+			utils.WriteError(w, http.StatusBadRequest, "invalid id parameter")
+			return
+		}
+		if err := r.ParseMultipartForm(5 << 20); err != nil {
+			utils.WriteError(w, http.StatusBadRequest, "max size file 5 mb")
+			return
+		}
 
-	complexId, err := strconv.ParseInt(id, 10, 64)
-	if err != nil {
-		utils.WriteError(w, http.StatusBadRequest, "invalid id parameter")
-		return
-	}
-	if err := r.ParseMultipartForm(5 << 20); err != nil {
-		utils.WriteError(w, http.StatusBadRequest, "max size file 5 mb")
-		return
-	}
+		file, head, err := r.FormFile("file")
+		if err != nil {
+			utils.WriteError(w, http.StatusBadRequest, "bad data request")
+			return
+		}
+		defer file.Close()
 
-	file, head, err := r.FormFile("file")
-	if err != nil {
-		utils.WriteError(w, http.StatusBadRequest, "bad data request")
-		return
-	}
-	defer file.Close()
+		allowedExtensions := []string{".jpg", ".jpeg", ".png"}
+		fileType := strings.ToLower(filepath.Ext(head.Filename))
+		if !slices.Contains(allowedExtensions, fileType) {
+			utils.WriteError(w, http.StatusBadRequest, "jpg, jpeg, png only")
+			return
+		}
 
-	allowedExtensions := []string{".jpg", ".jpeg", ".png"}
-	fileType := strings.ToLower(filepath.Ext(head.Filename))
-	if !slices.Contains(allowedExtensions, fileType) {
-		utils.WriteError(w, http.StatusBadRequest, "jpg, jpeg, png only")
-		return
-	}
+		fileName, err := h.uc.UpdateComplexPhoto(file, fileType, complexId)
+		if err != nil {
+			utils.WriteError(w, http.StatusBadRequest, "failed upload file")
+			return
+		}
+		if err := utils.WriteResponse(w, http.StatusOK, fileName); err != nil {
+			utils.WriteError(w, http.StatusInternalServerError, "error write response")
+			return
+		}*/
+	return &genComplex.UpdateComplexPhotoResponse{}, nil
 
-	fileName, err := h.uc.UpdateComplexPhoto(file, fileType, complexId)
-	if err != nil {
-		utils.WriteError(w, http.StatusBadRequest, "failed upload file")
-		return
-	}
-	if err := utils.WriteResponse(w, http.StatusOK, fileName); err != nil {
-		utils.WriteError(w, http.StatusInternalServerError, "error write response")
-		return
-	}
 }
 
 // GetComplexById handles the request for getting complex by id
-func (h *ComplexServerHandler) GetComplexById(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	id := vars["id"]
-	if id == "" {
-		utils.WriteError(w, http.StatusBadRequest, "id parameter is required")
-		return
-	}
-
-	complexId, err := strconv.ParseInt(id, 10, 64)
+func (h *ComplexServerHandler) GetComplexById(ctx context.Context, req *genComplex.GetComplexByIdRequest) (*genComplex.GetComplexByIdResponse, error) {
+	complexData, err := h.uc.GetComplexById(ctx, req.Id)
 	if err != nil {
-		utils.WriteError(w, http.StatusBadRequest, "invalid id parameter")
-		return
+		log.Println(err)
+		return nil, err
 	}
 
-	complexData, err := h.uc.GetComplexById(r.Context(), complexId)
-	if err != nil {
-		utils.WriteError(w, http.StatusBadRequest, err.Error())
-		return
-	}
-	complexData.Sanitize()
+	var classHousing genComplex.ClassHouse
 
-	if err = utils.WriteResponse(w, http.StatusOK, complexData); err != nil {
-		utils.WriteError(w, http.StatusInternalServerError, err.Error())
+	switch complexData.ClassHousing {
+	case models.ClassHouseBusiness:
+		classHousing = genComplex.ClassHouse_CLASS_HOUSE_BUSINESS
+	case models.ClassHousePremium:
+		classHousing = genComplex.ClassHouse_CLASS_HOUSE_PREMIUM
+	case models.ClassHouseElite:
+		classHousing = genComplex.ClassHouse_CLASS_HOUSE_ELITE
+	case models.ClassHouseEconom:
+		classHousing = genComplex.ClassHouse_CLASS_HOUSE_ECONOM
+	case models.ClassHouseComfort:
+		classHousing = genComplex.ClassHouse_CLASS_HOUSE_COMFORT
 	}
+
+	return &genComplex.GetComplexByIdResponse{Id: complexData.ID, CompanyId: complexData.CompanyId, Name: complexData.Name, Address: complexData.Address, Photo: complexData.Photo, Description: complexData.Description, DateBeginBuild: complexData.DateBeginBuild.String(), DateEndBuild: complexData.DateEndBuild.String(), WithoutFinishingOption: complexData.WithoutFinishingOption, FinishingOption: complexData.FinishingOption, PreFinishingOption: complexData.PreFinishingOption, ClassHousing: classHousing, Parking: complexData.Parking, Security: complexData.Security}, nil
 }
 
-func (h *ComplexServerHandler) CreateCompany(w http.ResponseWriter, r *http.Request) {
-	_, err := r.Cookie("csrftoken")
-	if err != nil {
-		utils.WriteError(w, http.StatusUnauthorized, "csrf cookie not found")
-		return
-	}
-	data := models.CompanyCreateData{}
-
-	if err := utils.ReadRequestData(r, &data); err != nil {
-		utils.WriteError(w, http.StatusBadRequest, "incorrect data format")
-		return
-	}
+func (h *ComplexServerHandler) CreateCompany(ctx context.Context, req *genComplex.CreateCompanyRequest) (*genComplex.CreateCompanyResponse, error) {
+	data := models.CompanyCreateData{Name: req.Name, YearFounded: int(req.YearFounded), Phone: req.Phone, Description: req.Description}
 	data.Sanitize()
 
-	newCompany, err := h.uc.CreateCompany(r.Context(), &data)
+	newCompany, err := h.uc.CreateCompany(ctx, &data)
 	if err != nil {
-		utils.WriteError(w, http.StatusBadRequest, "data already is used")
-		return
+		log.Println(err)
+		return nil, err
 	}
 	newCompany.Sanitize()
 
-	if err = utils.WriteResponse(w, http.StatusCreated, newCompany); err != nil {
-		utils.WriteError(w, http.StatusInternalServerError, err.Error())
-	}
+	return &genComplex.CreateCompanyResponse{}, nil
 }
 
-func (h *ComplexServerHandler) UpdateCompanyPhoto(w http.ResponseWriter, r *http.Request) {
-	_, err := r.Cookie("csrftoken")
-	if err != nil {
-		utils.WriteError(w, http.StatusUnauthorized, "csrf cookie not found")
-		return
-	}
-	vars := mux.Vars(r)
-	id := vars["id"]
-	if id == "" {
-		utils.WriteError(w, http.StatusBadRequest, "id parameter is required")
-		return
-	}
+func (h *ComplexServerHandler) UpdateCompanyPhoto(ctx context.Context, req *genComplex.UpdateCompanyPhotoRequest) (*genComplex.UpdateCompanyPhotoResponse, error) {
+	/*
+		companyId, err := strconv.ParseInt(id, 10, 64)
+		if err != nil {
+			utils.WriteError(w, http.StatusBadRequest, "invalid id parameter")
+			return
+		}
+		if err := r.ParseMultipartForm(5 << 20); err != nil {
+			utils.WriteError(w, http.StatusBadRequest, "max size file 5 mb")
+			return
+		}
 
-	companyId, err := strconv.ParseInt(id, 10, 64)
-	if err != nil {
-		utils.WriteError(w, http.StatusBadRequest, "invalid id parameter")
-		return
-	}
-	if err := r.ParseMultipartForm(5 << 20); err != nil {
-		utils.WriteError(w, http.StatusBadRequest, "max size file 5 mb")
-		return
-	}
+		file, head, err := r.FormFile("file")
+		if err != nil {
+			utils.WriteError(w, http.StatusBadRequest, "bad data request")
+			return
+		}
+		defer file.Close()
 
-	file, head, err := r.FormFile("file")
-	if err != nil {
-		utils.WriteError(w, http.StatusBadRequest, "bad data request")
-		return
-	}
-	defer file.Close()
+		allowedExtensions := []string{".jpg", ".jpeg", ".png"}
+		fileType := strings.ToLower(filepath.Ext(head.Filename))
+		if !slices.Contains(allowedExtensions, fileType) {
+			utils.WriteError(w, http.StatusBadRequest, "jpg, jpeg, png only")
+			return
+		}
 
-	allowedExtensions := []string{".jpg", ".jpeg", ".png"}
-	fileType := strings.ToLower(filepath.Ext(head.Filename))
-	if !slices.Contains(allowedExtensions, fileType) {
-		utils.WriteError(w, http.StatusBadRequest, "jpg, jpeg, png only")
-		return
-	}
-
-	fileName, err := h.uc.UpdateCompanyPhoto(file, fileType, companyId)
-	if err != nil {
-		utils.WriteError(w, http.StatusBadRequest, "failed upload file")
-		return
-	}
-	if err := utils.WriteResponse(w, http.StatusOK, fileName); err != nil {
-		utils.WriteError(w, http.StatusInternalServerError, "error write response")
-		return
-	}
+		fileName, err := h.uc.UpdateCompanyPhoto(file, fileType, companyId)
+		if err != nil {
+			utils.WriteError(w, http.StatusBadRequest, "failed upload file")
+			return
+		}
+		if err := utils.WriteResponse(w, http.StatusOK, fileName); err != nil {
+			utils.WriteError(w, http.StatusInternalServerError, "error write response")
+			return
+		}
+	*/
+	return &genComplex.UpdateCompanyPhotoResponse{}, nil
 }
 
 // GetCompanyById handles the request for getting company by id
-func (h *ComplexServerHandler) GetCompanyById(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	id := vars["id"]
-	if id == "" {
-		utils.WriteError(w, http.StatusBadRequest, "id parameter is required")
-		return
-	}
+func (h *ComplexServerHandler) GetCompanyById(ctx context.Context, req *genComplex.GetCompanyByIdRequest) (*genComplex.GetCompanyByIdResponse, error) {
 
-	companyId, err := strconv.ParseInt(id, 10, 64)
+	companyData, err := h.uc.GetCompanyById(ctx, req.Id)
 	if err != nil {
-		utils.WriteError(w, http.StatusBadRequest, "invalid id parameter")
-		return
+		log.Println(err)
+		return nil, err
 	}
 
-	companyData, err := h.uc.GetCompanyById(r.Context(), companyId)
-	if err != nil {
-		utils.WriteError(w, http.StatusBadRequest, err.Error())
-		return
-	}
-	companyData.Sanitize()
-
-	if err = utils.WriteResponse(w, http.StatusOK, companyData); err != nil {
-		utils.WriteError(w, http.StatusInternalServerError, err.Error())
-	}
+	return &genComplex.GetCompanyByIdResponse{Id: companyData.ID, Name: companyData.Name, Photo: companyData.Photo, YearFounded: int32(companyData.YearFounded), Phone: companyData.Phone, Description: companyData.Description}, nil
 }

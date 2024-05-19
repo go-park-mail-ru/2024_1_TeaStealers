@@ -3,10 +3,11 @@ FROM golang:1.21.0-alpine AS builder
 COPY go.mod go.sum /github.com/go-park-mail-ru/2024_1_TeaStealers/
 WORKDIR /github.com/go-park-mail-ru/2024_1_TeaStealers/
 
+RUN go mod download
+
 COPY . .
 
-RUN go mod download
-RUN go clean --modcache
+#RUN go clean --modcache
 RUN CGO_ENABLED=0 GOOS=linux go build -mod=readonly -o ./.bin ./cmd/main/main.go
 
 FROM scratch AS runner

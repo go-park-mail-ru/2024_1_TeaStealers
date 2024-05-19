@@ -3,6 +3,7 @@ package delivery
 import (
 	"2024_1_TeaStealers/internal/models"
 	complex "2024_1_TeaStealers/internal/pkg/complexes"
+	genComplex "2024_1_TeaStealers/internal/pkg/complexes/delivery/grpc/gen"
 	"2024_1_TeaStealers/internal/pkg/utils"
 	"log"
 	"net/http"
@@ -13,21 +14,22 @@ import (
 
 	"github.com/gorilla/mux"
 	"go.uber.org/zap"
+	"google.golang.org/grpc"
 )
 
-// ComplexHandler handles HTTP requests for complex changes.
-type ComplexHandler struct {
-	// uc represents the usecase interface for complex changes.
+// UserClientHandler handles HTTP requests for user.
+type ComplexClientHandler struct {
+	client genComplex.ComplexClient
 	uc     complex.ComplexUsecase
 	logger *zap.Logger
 }
 
-// NewComplexHandler creates a new instance of ComplexHandler.
-func NewComplexHandler(uc complex.ComplexUsecase, logger *zap.Logger) *ComplexHandler {
-	return &ComplexHandler{uc: uc, logger: logger}
+// NewClientUserHandler creates a new instance of UserHandler.
+func NewClientComplexHandler(grpcConn *grpc.ClientConn, uc complex.ComplexUsecase, logger *zap.Logger) *ComplexClientHandler {
+	return &ComplexClientHandler{client: genComplex.NewComplexClient(grpcConn), uc: uc, logger: logger}
 }
 
-func (h *ComplexHandler) CreateComplex(w http.ResponseWriter, r *http.Request) {
+func (h *ComplexClientHandler) CreateComplex(w http.ResponseWriter, r *http.Request) {
 	_, err := r.Cookie("csrftoken")
 	if err != nil {
 		utils.WriteError(w, http.StatusUnauthorized, "csrf cookie not found")
@@ -41,8 +43,23 @@ func (h *ComplexHandler) CreateComplex(w http.ResponseWriter, r *http.Request) {
 	}
 	data.Sanitize()
 
-	newComplex, err := h.uc.CreateComplex(r.Context(), &data)
-	newComplex.Sanitize()
+	var classHousing genComplex.ClassHouse
+
+	switch data.ClassHousing {
+	case models.ClassHouseBusiness:
+		classHousing = genComplex.ClassHouse_CLASS_HOUSE_BUSINESS
+	case models.ClassHousePremium:
+		classHousing = genComplex.ClassHouse_CLASS_HOUSE_PREMIUM
+	case models.ClassHouseElite:
+		classHousing = genComplex.ClassHouse_CLASS_HOUSE_ELITE
+	case models.ClassHouseEconom:
+		classHousing = genComplex.ClassHouse_CLASS_HOUSE_ECONOM
+	case models.ClassHouseComfort:
+		classHousing = genComplex.ClassHouse_CLASS_HOUSE_COMFORT
+	}
+
+	newComplex, err := h.client.CreateComplex(r.Context(), &genComplex.CreateComplexRequest{CompanyId: data.CompanyId, Name: data.Name, Address: data.Address, Description: data.Description, DateBeginBuild: data.DateBeginBuild.String(), DateEndBuild: data.DateEndBuild.String(), WithoutFinishingOption: data.WithoutFinishingOption, FinishingOption: data.FinishingOption, PreFinishingOption: data.PreFinishingOption, ClassHousing: classHousing, Parking: data.Parking, Security: data.Security})
+	//newComplex.Sanitize()
 	if err != nil {
 		log.Println(err)
 		utils.WriteError(w, http.StatusBadRequest, "data already is used")
@@ -54,7 +71,7 @@ func (h *ComplexHandler) CreateComplex(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (h *ComplexHandler) UpdateComplexPhoto(w http.ResponseWriter, r *http.Request) {
+func (h *ComplexClientHandler) UpdateComplexPhoto(w http.ResponseWriter, r *http.Request) {
 	_, err := r.Cookie("csrftoken")
 	if err != nil {
 		utils.WriteError(w, http.StatusUnauthorized, "csrf cookie not found")
@@ -103,7 +120,7 @@ func (h *ComplexHandler) UpdateComplexPhoto(w http.ResponseWriter, r *http.Reque
 }
 
 // GetComplexById handles the request for getting complex by id
-func (h *ComplexHandler) GetComplexById(w http.ResponseWriter, r *http.Request) {
+func (h *ComplexClientHandler) GetComplexById(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	id := vars["id"]
 	if id == "" {
@@ -117,19 +134,19 @@ func (h *ComplexHandler) GetComplexById(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	complexData, err := h.uc.GetComplexById(r.Context(), complexId)
+	complexData, err := h.client.GetComplexById(r.Context(), &genComplex.GetComplexByIdRequest{Id: complexId})
 	if err != nil {
 		utils.WriteError(w, http.StatusBadRequest, err.Error())
 		return
 	}
-	complexData.Sanitize()
+	//complexData.Sanitize()
 
 	if err = utils.WriteResponse(w, http.StatusOK, complexData); err != nil {
 		utils.WriteError(w, http.StatusInternalServerError, err.Error())
 	}
 }
 
-func (h *ComplexHandler) CreateCompany(w http.ResponseWriter, r *http.Request) {
+func (h *ComplexClientHandler) CreateCompany(w http.ResponseWriter, r *http.Request) {
 	_, err := r.Cookie("csrftoken")
 	if err != nil {
 		utils.WriteError(w, http.StatusUnauthorized, "csrf cookie not found")
@@ -143,19 +160,20 @@ func (h *ComplexHandler) CreateCompany(w http.ResponseWriter, r *http.Request) {
 	}
 	data.Sanitize()
 
-	newCompany, err := h.uc.CreateCompany(r.Context(), &data)
+	newCompany, err := h.client.CreateCompany(r.Context(), &genComplex.CreateCompanyRequest{Name: data.Name, YearFounded: int32(data.YearFounded), Phone: data.Phone, Description: data.Description})
 	if err != nil {
+		log.Println(err)
 		utils.WriteError(w, http.StatusBadRequest, "data already is used")
 		return
 	}
-	newCompany.Sanitize()
+	//newCompany.Sanitize()
 
 	if err = utils.WriteResponse(w, http.StatusCreated, newCompany); err != nil {
 		utils.WriteError(w, http.StatusInternalServerError, err.Error())
 	}
 }
 
-func (h *ComplexHandler) UpdateCompanyPhoto(w http.ResponseWriter, r *http.Request) {
+func (h *ComplexClientHandler) UpdateCompanyPhoto(w http.ResponseWriter, r *http.Request) {
 	_, err := r.Cookie("csrftoken")
 	if err != nil {
 		utils.WriteError(w, http.StatusUnauthorized, "csrf cookie not found")
@@ -204,7 +222,7 @@ func (h *ComplexHandler) UpdateCompanyPhoto(w http.ResponseWriter, r *http.Reque
 }
 
 // GetCompanyById handles the request for getting company by id
-func (h *ComplexHandler) GetCompanyById(w http.ResponseWriter, r *http.Request) {
+func (h *ComplexClientHandler) GetCompanyById(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	id := vars["id"]
 	if id == "" {
@@ -218,12 +236,12 @@ func (h *ComplexHandler) GetCompanyById(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	companyData, err := h.uc.GetCompanyById(r.Context(), companyId)
+	companyData, err := h.client.GetCompanyById(r.Context(), &genComplex.GetCompanyByIdRequest{Id: companyId})
 	if err != nil {
 		utils.WriteError(w, http.StatusBadRequest, err.Error())
 		return
 	}
-	companyData.Sanitize()
+	//companyData.Sanitize()
 
 	if err = utils.WriteResponse(w, http.StatusOK, companyData); err != nil {
 		utils.WriteError(w, http.StatusInternalServerError, err.Error())

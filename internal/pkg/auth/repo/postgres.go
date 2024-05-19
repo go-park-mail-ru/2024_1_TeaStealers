@@ -2,11 +2,10 @@ package repo
 
 import (
 	"2024_1_TeaStealers/internal/models"
-	"2024_1_TeaStealers/internal/pkg/auth"
-	"2024_1_TeaStealers/internal/pkg/utils"
 	"context"
 	"database/sql"
 	"errors"
+	"log"
 
 	"go.uber.org/zap"
 )
@@ -25,22 +24,22 @@ func NewRepository(db *sql.DB, logger *zap.Logger) *AuthRepo {
 func (r *AuthRepo) BeginTx(ctx context.Context) (models.Transaction, error) {
 	tx, err := r.db.BeginTx(ctx, nil)
 	if err != nil {
-		utils.LogError(r.logger, ctx.Value("requestId").(string), utils.RepositoryLayer, auth.BeginTxMethod, err)
+		//utils.LogError(r.logger, ctx.Value("requestId").(string), utils.RepositoryLayer, auth.BeginTxMethod, err)
 		return nil, err
 	}
 
-	utils.LogSucces(r.logger, ctx.Value("requestId").(string), utils.RepositoryLayer, auth.BeginTxMethod)
+	//utils.LogSucces(r.logger, ctx.Value("requestId").(string), utils.RepositoryLayer, auth.BeginTxMethod)
 	return tx, nil
 }
 
 // CreateUser creates a new user in the database.
 func (r *AuthRepo) CreateUser(ctx context.Context, user *models.User) (*models.User, error) {
 
-	insert := `INSERT INTO user_data (email, phone, password_hash, first_name, surname, photo) VALUES ($1, $2, $3, '', '', '') RETURNING id`
+	insert := `INSERT INTO user_data (email, phone, password_hash) VALUES ($1, $2, $3) RETURNING id`
 	var lastInsertID int64
 
 	if err := r.db.QueryRowContext(ctx, insert, user.Email, user.Phone, user.PasswordHash).Scan(&lastInsertID); err != nil {
-		utils.LogError(r.logger, ctx.Value("requestId").(string), utils.RepositoryLayer, auth.CreateUserMethod, err)
+		//utils.LogError(r.logger, ctx.Value("requestId").(string), utils.RepositoryLayer, auth.CreateUserMethod, err)
 		return nil, err
 	}
 
@@ -50,12 +49,12 @@ func (r *AuthRepo) CreateUser(ctx context.Context, user *models.User) (*models.U
 
 	newUser := &models.User{ID: lastInsertID}
 	if err := res.Scan(&newUser.Email, &newUser.Phone, &newUser.PasswordHash, &newUser.LevelUpdate); err != nil {
-		utils.LogError(r.logger, ctx.Value("requestId").(string), utils.RepositoryLayer, auth.CreateUserMethod, err)
+		//utils.LogError(r.logger, ctx.Value("requestId").(string), utils.RepositoryLayer, auth.CreateUserMethod, err)
 		return nil,
 			err
 	}
 
-	utils.LogSucces(r.logger, ctx.Value("requestId").(string), utils.RepositoryLayer, auth.CreateUserMethod)
+	//utils.LogSucces(r.logger, ctx.Value("requestId").(string), utils.RepositoryLayer, auth.CreateUserMethod)
 	return newUser, nil
 }
 
@@ -98,6 +97,8 @@ func (r *AuthRepo) CheckUser(ctx context.Context, login string, passwordHash str
 }
 
 func (r *AuthRepo) GetUserLevelById(ctx context.Context, id int64) (int, error) {
+	log.Println("TUT")
+
 	query := `SELECT level_update FROM user_data WHERE id = $1`
 
 	res := r.db.QueryRow(query, id)

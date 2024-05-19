@@ -1,7 +1,6 @@
 package models
 
 import (
-	"github.com/satori/uuid"
 	"time"
 )
 
@@ -23,7 +22,7 @@ const (
 // Question represents a question for user.
 type Question struct {
 	// ID is the unique identifier for the question.
-	ID uuid.UUID `json:"id"`
+	ID int64 `json:"id"`
 	// QuestionText is the text of question which user will be asked.
 	QuestionText string `json:"question_text"`
 	// QuestionTheme represents page where question will be asked.
@@ -38,7 +37,7 @@ type Question struct {
 
 type QuestionResp struct {
 	// ID is the unique identifier for the question.
-	ID uuid.UUID `json:"id"`
+	ID int64 `json:"id"`
 	// QuestionText is the text of question which user will be asked.
 	QuestionText string `json:"question_text"`
 	// QuestionTheme represents page where question will be asked.

@@ -13,10 +13,10 @@ import (
 	imageR "2024_1_TeaStealers/internal/pkg/images/repo"
 	imageUc "2024_1_TeaStealers/internal/pkg/images/usecase"
 	"2024_1_TeaStealers/internal/pkg/middleware"
-	statsH "2024_1_TeaStealers/internal/pkg/questionnaire/delivery"
+	statsH "2024_1_TeaStealers/internal/pkg/questionnaire/delivery/http"
 	statsR "2024_1_TeaStealers/internal/pkg/questionnaire/repo"
 	statsUc "2024_1_TeaStealers/internal/pkg/questionnaire/usecase"
-	http2 "2024_1_TeaStealers/internal/pkg/users/delivery/http"
+	userH "2024_1_TeaStealers/internal/pkg/users/delivery/http"
 	userR "2024_1_TeaStealers/internal/pkg/users/repo"
 	userUc "2024_1_TeaStealers/internal/pkg/users/usecase"
 	"context"
@@ -137,7 +137,7 @@ func main() {
 
 	statRepo := statsR.NewRepository(db, logger)
 	statUsecase := statsUc.NewQuestionnaireUsecase(statRepo, logger)
-	statHandler := statsH.NewQuestionnaireHandler(statUsecase, logger)
+	statHandler := statsH.NewQuestionnaireClientHandler(grcpConnQuestion, statUsecase, logger)
 	stat := r.PathPrefix("/stat").Subrouter()
 	stat.Handle("/answer", jwtMd.JwtMiddleware(http.HandlerFunc(statHandler.UploadAnswer))).Methods(http.MethodPost, http.MethodOptions)
 	stat.Handle("/theme", jwtMd.JwtMiddleware(http.HandlerFunc(statHandler.GetAnswerStatistics))).Methods(http.MethodGet, http.MethodOptions)
@@ -168,8 +168,8 @@ func main() {
 
 	userRepo := userR.NewRepository(db)
 	userUsecase := userUc.NewUserUsecase(userRepo)
-	userHandler := http2.NewClientUserHandler(grcpConnUsers)
-	userHandlerPhoto := http2.NewUserHandlerPhoto(userUsecase)
+	userHandler := userH.NewClientUserHandler(grcpConnUsers)
+	userHandlerPhoto := userH.NewUserHandlerPhoto(userUsecase)
 
 	user := r.PathPrefix("/users").Subrouter()
 	user.Handle("/me", jwtMd.JwtMiddleware(http.HandlerFunc(userHandler.GetCurUser))).Methods(http.MethodGet, http.MethodOptions)
@@ -182,7 +182,7 @@ func main() {
 
 	complexRepo := complexR.NewRepository(db, logger)
 	complexUsecase := complexUc.NewComplexUsecase(complexRepo, logger)
-	complexHandler := complexH.NewComplexHandler(complexUsecase, logger)
+	complexHandler := complexH.NewClientComplexHandler(grcpConnComplex, complexUsecase, logger)
 
 	complexRoute := r.PathPrefix("/complexes").Subrouter()
 	complexRoute.HandleFunc("/", complexHandler.CreateComplex).Methods(http.MethodPost, http.MethodOptions)

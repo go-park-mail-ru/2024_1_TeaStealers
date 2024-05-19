@@ -17,7 +17,18 @@ services:
       - ${DB_PORT}:5432
     networks:
       - tean-network
-
+  
+  #migrate:
+  #  build: .
+  #  depends_on:
+  #    - db
+  #  entrypoint: [
+  #    "/bin/sh", "-c",
+  #    "until pg_isready -h db -p 5432 -U postgres; do echo waiting for db; sleep 2; done; migrate -path=/migrations -database postgres://postgres@db:5432/mydb?sslmode=disable up"
+  #  ]
+  #  volumes:
+  #    - ./migrations:/migrations 
+  
   main:
     depends_on:
       - db

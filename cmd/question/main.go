@@ -1,9 +1,9 @@
 package main
 
 import (
-	genAdverts "2024_1_TeaStealers/internal/pkg/adverts/delivery/grpc/gen"
-	advertsR "2024_1_TeaStealers/internal/pkg/adverts/repo"
-	advertsUc "2024_1_TeaStealers/internal/pkg/adverts/usecase"
+	genQuestion "2024_1_TeaStealers/internal/pkg/questionnaire/delivery/grpc/gen"
+	questionR "2024_1_TeaStealers/internal/pkg/questionnaire/repo"
+	questionUc "2024_1_TeaStealers/internal/pkg/questionnaire/usecase"
 	"net/http"
 
 	"github.com/gorilla/mux"
@@ -22,8 +22,8 @@ import (
 	_ "github.com/lib/pq"
 	"go.uber.org/zap"
 
-	grpcAdverts "2024_1_TeaStealers/internal/pkg/adverts/delivery/grpc"
 	metricsMw "2024_1_TeaStealers/internal/pkg/metrics/middleware"
+	grpcQuestion "2024_1_TeaStealers/internal/pkg/questionnaire/delivery/grpc"
 
 	"google.golang.org/grpc"
 )
@@ -58,12 +58,12 @@ func run() (err error) {
 	r.PathPrefix("/metrics").Handler(promhttp.Handler())
 	http.Handle("/", r)
 
-	advertsRepo := advertsR.NewRepository(db, logger)
-	advertsUsecase := advertsUc.NewAdvertUsecase(advertsRepo, logger)
-	authHandler := grpcAdverts.NewServerAdvertsHandler(advertsUsecase, logger)
+	questionRepo := questionR.NewRepository(db, logger)
+	questionUsecase := questionUc.NewQuestionnaireUsecase(questionRepo, logger)
+	questionHandler := grpcQuestion.NewQuestionServerHandler(questionUsecase, logger)
 	metricMw := metricsMw.Create()
 	gRPCServer := grpc.NewServer(grpc.UnaryInterceptor(metricMw.ServerMetricsInterceptor))
-	genAdverts.RegisterAdvertsServer(gRPCServer, authHandler)
+	genQuestion.RegisterQuestionServer(gRPCServer, questionHandler)
 
 	go func() {
 		logger.Info(fmt.Sprintf("Start server on %s\n", ":8084"))

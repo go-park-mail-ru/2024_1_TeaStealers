@@ -1,9 +1,9 @@
 package main
 
 import (
-	genAdverts "2024_1_TeaStealers/internal/pkg/adverts/delivery/grpc/gen"
-	advertsR "2024_1_TeaStealers/internal/pkg/adverts/repo"
-	advertsUc "2024_1_TeaStealers/internal/pkg/adverts/usecase"
+	genComplex "2024_1_TeaStealers/internal/pkg/complexes/delivery/grpc/gen"
+	complexR "2024_1_TeaStealers/internal/pkg/complexes/repo"
+	complexUc "2024_1_TeaStealers/internal/pkg/complexes/usecase"
 	"net/http"
 
 	"github.com/gorilla/mux"
@@ -22,7 +22,7 @@ import (
 	_ "github.com/lib/pq"
 	"go.uber.org/zap"
 
-	grpcAdverts "2024_1_TeaStealers/internal/pkg/adverts/delivery/grpc"
+	grpcComplex "2024_1_TeaStealers/internal/pkg/complexes/delivery/grpc"
 	metricsMw "2024_1_TeaStealers/internal/pkg/metrics/middleware"
 
 	"google.golang.org/grpc"
@@ -58,12 +58,12 @@ func run() (err error) {
 	r.PathPrefix("/metrics").Handler(promhttp.Handler())
 	http.Handle("/", r)
 
-	advertsRepo := advertsR.NewRepository(db, logger)
-	advertsUsecase := advertsUc.NewAdvertUsecase(advertsRepo, logger)
-	authHandler := grpcAdverts.NewServerAdvertsHandler(advertsUsecase, logger)
+	complexRepo := complexR.NewRepository(db, logger)
+	complexUsecase := complexUc.NewComplexUsecase(complexRepo, logger)
+	complexHandler := grpcComplex.NewComplexServerHandler(complexUsecase, logger)
 	metricMw := metricsMw.Create()
 	gRPCServer := grpc.NewServer(grpc.UnaryInterceptor(metricMw.ServerMetricsInterceptor))
-	genAdverts.RegisterAdvertsServer(gRPCServer, authHandler)
+	genComplex.RegisterComplexServer(gRPCServer, complexHandler)
 
 	go func() {
 		logger.Info(fmt.Sprintf("Start server on %s\n", ":8085"))
