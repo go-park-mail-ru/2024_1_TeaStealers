@@ -5,6 +5,7 @@ import (
 	"2024_1_TeaStealers/internal/pkg/adverts"
 	"2024_1_TeaStealers/internal/pkg/adverts/delivery/grpc/gen"
 	genAdverts "2024_1_TeaStealers/internal/pkg/adverts/delivery/grpc/gen"
+	genComplex "2024_1_TeaStealers/internal/pkg/complexes/delivery/grpc/gen"
 	"2024_1_TeaStealers/internal/pkg/middleware"
 	"2024_1_TeaStealers/internal/pkg/utils"
 	"errors"
@@ -33,14 +34,15 @@ const (
 // AdvertHandler handles HTTP requests for advert changes.
 type AdvertsClientHandler struct {
 	// uc represents the usecase interface for advert changes.
-	client genAdverts.AdvertsClient
-	uc     adverts.AdvertUsecase
-	logger *zap.Logger
+	client        genAdverts.AdvertsClient
+	clientComplex genComplex.ComplexClient
+	uc            adverts.AdvertUsecase
+	logger        *zap.Logger
 }
 
 // NewAdvertHandler creates a new instance of AdvertHandler.
-func NewAdvertsClientHandler(grpcConn *grpc.ClientConn, uc adverts.AdvertUsecase, logger *zap.Logger) *AdvertsClientHandler {
-	return &AdvertsClientHandler{client: genAdverts.NewAdvertsClient(grpcConn), uc: uc, logger: logger}
+func NewAdvertsClientHandler(grpcConn *grpc.ClientConn, grpcConn2 *grpc.ClientConn, uc adverts.AdvertUsecase, logger *zap.Logger) *AdvertsClientHandler {
+	return &AdvertsClientHandler{client: genAdverts.NewAdvertsClient(grpcConn), clientComplex: genComplex.NewComplexClient(grpcConn2), uc: uc, logger: logger}
 }
 
 func (h *AdvertsClientHandler) CreateFlatAdvert(w http.ResponseWriter, r *http.Request) {
@@ -50,14 +52,14 @@ func (h *AdvertsClientHandler) CreateFlatAdvert(w http.ResponseWriter, r *http.R
 		return
 	}
 
-	id, ok := r.Context().Value(middleware.CookieName).(int64)
+	/*id, ok := r.Context().Value(middleware.CookieName).(int64)
 	if !ok {
 		utils.LogErrorResponse(h.logger, r.Context().Value("requestId").(string), utils.DeliveryLayer, CreateFlatAdvertMethod, errors.New("error with cookie"), http.StatusBadRequest)
 		utils.WriteError(w, http.StatusBadRequest, "incorrect id")
 		return
-	}
+	}*/
 
-	data := models.AdvertFlatCreateData{UserID: id}
+	data := models.AdvertFlatCreateData{UserID: 1}
 
 	if err := utils.ReadRequestData(r, &data); err != nil {
 		utils.LogErrorResponse(h.logger, r.Context().Value("requestId").(string), CreateFlatAdvertMethod, utils.DeliveryLayer, err, http.StatusBadRequest)
@@ -399,7 +401,7 @@ func (h *AdvertsClientHandler) GetExistBuildingByAddress(w http.ResponseWriter, 
 }
 
 // GetRectangeAdvertsList handles the request for retrieving a rectangle adverts with search.
-func (h *AdvertsClientHandler) GetRectangeAdvertsList(w http.ResponseWriter, r *http.Request) {
+func (h *AdvertsClientHandler) GetRectangleAdvertsList(w http.ResponseWriter, r *http.Request) {
 	pageStr := r.URL.Query().Get("page")
 	sizeStr := r.URL.Query().Get("size")
 	advertType := r.URL.Query().Get("adverttype") // House/Advert
@@ -441,18 +443,16 @@ func (h *AdvertsClientHandler) GetRectangeAdvertsList(w http.ResponseWriter, r *
 
 	offset := (page - 1) * size
 
-	adverts, err := h.uc.GetRectangleAdvertsList(r.Context(), models.AdvertFilter{
+	adverts, err := h.client.GetRectangleAdvertsList(r.Context(), &genAdverts.GetRectangleAdvertsListRequest{
 		MinPrice:   minPrice,
 		MaxPrice:   maxPrice,
-		Page:       page,
-		Offset:     offset,
-		RoomCount:  roomCount,
+		Page:       int64(page),
+		Size:       int64(offset),
+		RoomCount:  int32(roomCount),
 		Address:    adress,
 		DealType:   dealType,
 		AdvertType: advertType,
 	})
-	adverts.Sanitize()
-
 	if err != nil {
 		utils.LogErrorResponse(h.logger, r.Context().Value("requestId").(string), utils.DeliveryLayer, GetRectangeAdvertsListMethod, err, http.StatusBadRequest)
 		utils.WriteError(w, http.StatusBadRequest, err.Error())

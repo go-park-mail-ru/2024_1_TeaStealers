@@ -145,7 +145,7 @@ func main() {
 
 	advertRepo := advertsR.NewRepository(db, logger)
 	advertUsecase := advertsUc.NewAdvertUsecase(advertRepo, logger)
-	advertHandler := advertsH.NewAdvertsClientHandler(grcpConnAdverts, advertUsecase, logger)
+	advertHandler := advertsH.NewAdvertsClientHandler(grcpConnAdverts, grcpConnComplex, advertUsecase, logger)
 
 	imageRepo := imageR.NewRepository(db, logger)
 	imageUsecase := imageUc.NewImageUsecase(imageRepo, logger)
@@ -159,10 +159,10 @@ func main() {
 	advert.Handle("/{id}/dislike", jwtMd.JwtMiddleware(http.HandlerFunc(advertHandler.DislikeAdvert))).Methods(http.MethodPost, http.MethodOptions)
 	advert.Handle("/houses/", jwtMd.JwtMiddleware(http.HandlerFunc(advertHandler.CreateHouseAdvert))).Methods(http.MethodPost, http.MethodOptions)
 	advert.HandleFunc("/building/", advertHandler.GetExistBuildingByAddress).Methods(http.MethodPost, http.MethodOptions)
-	advert.Handle("/flats/", jwtMd.JwtMiddleware(http.HandlerFunc(advertHandler.CreateFlatAdvert))).Methods(http.MethodPost, http.MethodOptions)
+	advert.Handle("/flats/", http.HandlerFunc(advertHandler.CreateFlatAdvert)).Methods(http.MethodPost, http.MethodOptions)
 	advert.HandleFunc("/squarelist/", advertHandler.GetSquareAdvertsList).Methods(http.MethodGet, http.MethodOptions)
-	advert.Handle("/rectanglelist/", jwtMd.StatMiddleware(http.HandlerFunc(advertHandler.GetRectangeAdvertsList))).Methods(http.MethodGet, http.MethodOptions)
-	advert.Handle("/image/", jwtMd.JwtMiddleware(http.HandlerFunc(imageHandler.UploadImage))).Methods(http.MethodPost, http.MethodOptions)
+	advert.Handle("/rectanglelist/", jwtMd.StatMiddleware(http.HandlerFunc(advertHandler.GetRectangleAdvertsList))).Methods(http.MethodGet, http.MethodOptions)
+	advert.Handle("/image/", http.HandlerFunc(imageHandler.UploadImage)).Methods(http.MethodPost, http.MethodOptions)
 	advert.HandleFunc("/{id}/image", imageHandler.GetAdvertImages).Methods(http.MethodGet, http.MethodOptions)
 	advert.Handle("/{id}/image", jwtMd.JwtMiddleware(http.HandlerFunc(imageHandler.DeleteImage))).Methods(http.MethodDelete, http.MethodOptions)
 

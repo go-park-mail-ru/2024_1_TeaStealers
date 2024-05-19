@@ -14,7 +14,7 @@ service Adverts {
   //rpc GetExistBuildingByAddress(GetExistBuildingByAddressRequest) returns (GetExistBuildingByAddressResponse) {}
   //rpc CreateFlatAdvert(CreateFlatAdvertRequest) returns (CreateFlatAdvertResponse) {}
   //rpc GetSquareAdvertsList(GetSquareAdvertsListRequest) returns (GetSquareAdvertsListResponse) {}
-  //rpc GetRectangeAdvertsList(GetRectangeAdvertsListRequest) returns (GetRectangeAdvertsListResponse) {}
+  rpc GetRectangleAdvertsList(GetRectangleAdvertsListRequest) returns (GetRectangleAdvertsListResponse) {}
   //rpc UploadImage(UploadImageRequest) returns (UploadImageResponse) {}
   //rpc GetAdvertImages(GetAdvertImagesRequest) returns (GetAdvertImagesResponse) {}
   //rpc DeleteImage(DeleteImageRequest) returns (DeleteImageResponse) {}
@@ -119,4 +119,45 @@ message GetAdvertByIdResponse {
   MaterialBuilding Material = 20;
   ComplexAdvertProperties ComplexProperties = 21;
   string DateCreation = 22;
+}
+
+message GetRectangleAdvertsListRequest {
+  int64 Page = 1;
+  int64 Size = 2;
+  string AdvertType = 3;
+  int64 MinPrice = 4;
+  int64 MaxPrice = 5;
+  string DealType = 6;
+  int32 RoomCount = 7;
+  string Address = 8;
+}
+
+message AdvertRectangleData {
+  int64 Id = 1;
+  string AdvertType = 2;
+  string TypeSale = 3;
+  string Title = 4;
+  string Description = 5;
+  int64 Price = 6;
+  string Phone = 7;
+  bool IsLiked = 8;
+  string Metro = 9;
+  string Address = 10;
+  string AddressPoint = 11;
+  string Photo = 12;
+  HouseProperties HouseProperties = 13;
+  FlatProperties FlatProperties = 14;
+  string DateCreation = 15;
+}
+
+message PageInfo {
+  int64 TotalElements = 1;
+  int64 TotalPages = 2;
+  int64 CurrentPage = 3;
+  int64 PageSize = 4;
+}
+
+message GetRectangleAdvertsListResponse {
+  repeated AdvertRectangleData Adverts = 1;
+  PageInfo Info = 2;
 }
