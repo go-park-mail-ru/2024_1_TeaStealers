@@ -5,14 +5,17 @@ import (
 	complex "2024_1_TeaStealers/internal/pkg/complexes"
 	genComplex "2024_1_TeaStealers/internal/pkg/complexes/delivery/grpc/gen"
 	"2024_1_TeaStealers/internal/pkg/utils"
+	"io"
 	"log"
 	"net/http"
+	"os"
 	"path/filepath"
 	"slices"
 	"strconv"
 	"strings"
 
 	"github.com/gorilla/mux"
+	"github.com/satori/uuid"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
 )
@@ -108,7 +111,25 @@ func (h *ComplexClientHandler) UpdateComplexPhoto(w http.ResponseWriter, r *http
 		return
 	}
 
-	fileName, err := h.uc.UpdateComplexPhoto(file, fileType, complexId)
+	newId := uuid.NewV4()
+	newFileName := newId.String() + fileType
+	subDirectory := "complexes"
+	directory := filepath.Join(os.Getenv("DOCKER_DIR"), subDirectory)
+	if err := os.MkdirAll(directory, 0755); err != nil {
+		utils.WriteError(w, http.StatusInternalServerError, "File system error")
+		return
+	}
+	destination, err := os.Create(directory + "/" + newFileName)
+	if err != nil {
+		utils.WriteError(w, http.StatusInternalServerError, "File system error")
+	}
+	defer destination.Close()
+	_, err = io.Copy(destination, file)
+	if err != nil {
+		utils.WriteError(w, http.StatusInternalServerError, "File system error")
+	}
+
+	fileName, err := h.uc.UpdateComplexPhoto(r.Context(), complexId, subDirectory+"/"+newFileName)
 	if err != nil {
 		utils.WriteError(w, http.StatusBadRequest, "failed upload file")
 		return
@@ -210,7 +231,27 @@ func (h *ComplexClientHandler) UpdateCompanyPhoto(w http.ResponseWriter, r *http
 		return
 	}
 
-	fileName, err := h.uc.UpdateCompanyPhoto(file, fileType, companyId)
+	newId := uuid.NewV4()
+	newFileName := newId.String() + fileType
+	subDirectory := "companies"
+	directory := filepath.Join(os.Getenv("DOCKER_DIR"), subDirectory)
+	if err := os.MkdirAll(directory, 0755); err != nil {
+		utils.WriteError(w, http.StatusBadRequest, "File system error")
+		return
+	}
+	destination, err := os.Create(directory + "/" + newFileName)
+	if err != nil {
+		utils.WriteError(w, http.StatusBadRequest, "File system error")
+		return
+	}
+	defer destination.Close()
+	_, err = io.Copy(destination, file)
+	if err != nil {
+		utils.WriteError(w, http.StatusBadRequest, "File system error")
+		return
+	}
+
+	fileName, err := h.uc.UpdateCompanyPhoto(r.Context(), companyId, subDirectory+"/"+newFileName)
 	if err != nil {
 		utils.WriteError(w, http.StatusBadRequest, "failed upload file")
 		return
