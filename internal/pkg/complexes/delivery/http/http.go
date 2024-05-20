@@ -2,7 +2,6 @@ package delivery
 
 import (
 	"2024_1_TeaStealers/internal/models"
-	complex "2024_1_TeaStealers/internal/pkg/complexes"
 	genComplex "2024_1_TeaStealers/internal/pkg/complexes/delivery/grpc/gen"
 	"2024_1_TeaStealers/internal/pkg/utils"
 	"io"
@@ -23,13 +22,12 @@ import (
 // UserClientHandler handles HTTP requests for user.
 type ComplexClientHandler struct {
 	client genComplex.ComplexClient
-	uc     complex.ComplexUsecase
 	logger *zap.Logger
 }
 
 // NewClientUserHandler creates a new instance of UserHandler.
-func NewClientComplexHandler(grpcConn *grpc.ClientConn, uc complex.ComplexUsecase, logger *zap.Logger) *ComplexClientHandler {
-	return &ComplexClientHandler{client: genComplex.NewComplexClient(grpcConn), uc: uc, logger: logger}
+func NewClientComplexHandler(grpcConn *grpc.ClientConn, logger *zap.Logger) *ComplexClientHandler {
+	return &ComplexClientHandler{client: genComplex.NewComplexClient(grpcConn), logger: logger}
 }
 
 func (h *ComplexClientHandler) CreateComplex(w http.ResponseWriter, r *http.Request) {
@@ -129,7 +127,7 @@ func (h *ComplexClientHandler) UpdateComplexPhoto(w http.ResponseWriter, r *http
 		utils.WriteError(w, http.StatusInternalServerError, "File system error")
 	}
 
-	fileName, err := h.uc.UpdateComplexPhoto(r.Context(), complexId, subDirectory+"/"+newFileName)
+	fileName, err := h.client.UpdateComplexPhoto(r.Context(), &genComplex.UpdateComplexPhotoRequest{ComplexId: complexId, FileName: subDirectory + "/" + newFileName})
 	if err != nil {
 		utils.WriteError(w, http.StatusBadRequest, "failed upload file")
 		return
@@ -251,7 +249,7 @@ func (h *ComplexClientHandler) UpdateCompanyPhoto(w http.ResponseWriter, r *http
 		return
 	}
 
-	fileName, err := h.uc.UpdateCompanyPhoto(r.Context(), companyId, subDirectory+"/"+newFileName)
+	fileName, err := h.client.UpdateCompanyPhoto(r.Context(), &genComplex.UpdateCompanyPhotoRequest{CompanyId: companyId, FileName: subDirectory + "/" + newFileName})
 	if err != nil {
 		utils.WriteError(w, http.StatusBadRequest, "failed upload file")
 		return

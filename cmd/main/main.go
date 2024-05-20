@@ -6,8 +6,6 @@ import (
 	advertsUc "2024_1_TeaStealers/internal/pkg/adverts/usecase"
 	authH "2024_1_TeaStealers/internal/pkg/auth/delivery/http"
 	complexH "2024_1_TeaStealers/internal/pkg/complexes/delivery/http"
-	complexR "2024_1_TeaStealers/internal/pkg/complexes/repo"
-	complexUc "2024_1_TeaStealers/internal/pkg/complexes/usecase"
 	"2024_1_TeaStealers/internal/pkg/config"
 	imageH "2024_1_TeaStealers/internal/pkg/images/delivery/http"
 	imageR "2024_1_TeaStealers/internal/pkg/images/repo"
@@ -180,9 +178,7 @@ func main() {
 	user.Handle("/myadverts", jwtMd.JwtMiddleware(http.HandlerFunc(advertHandler.GetUserAdverts))).Methods(http.MethodGet, http.MethodOptions)
 	user.Handle("/likedadverts", jwtMd.JwtMiddleware(http.HandlerFunc(advertHandler.GetLikedUserAdverts))).Methods(http.MethodGet, http.MethodOptions)
 
-	complexRepo := complexR.NewRepository(db, logger)
-	complexUsecase := complexUc.NewComplexUsecase(complexRepo, logger)
-	complexHandler := complexH.NewClientComplexHandler(grcpConnComplex, complexUsecase, logger)
+	complexHandler := complexH.NewClientComplexHandler(grcpConnComplex, logger)
 
 	complexRoute := r.PathPrefix("/complexes").Subrouter()
 	complexRoute.HandleFunc("/", complexHandler.CreateComplex).Methods(http.MethodPost, http.MethodOptions)

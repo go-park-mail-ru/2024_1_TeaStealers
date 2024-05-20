@@ -53,42 +53,13 @@ func (h *ComplexServerHandler) CreateComplex(ctx context.Context, req *genComple
 }
 
 func (h *ComplexServerHandler) UpdateComplexPhoto(ctx context.Context, req *genComplex.UpdateComplexPhotoRequest) (*genComplex.UpdateComplexPhotoResponse, error) {
-	/*
-		complexId, err := strconv.ParseInt(id, 10, 64)
-		if err != nil {
-			utils.WriteError(w, http.StatusBadRequest, "invalid id parameter")
-			return
-		}
-		if err := r.ParseMultipartForm(5 << 20); err != nil {
-			utils.WriteError(w, http.StatusBadRequest, "max size file 5 mb")
-			return
-		}
+	fileName, err := h.uc.UpdateComplexPhoto(ctx, req.ComplexId, req.FileName)
+	if err != nil {
+		log.Println(err)
+		return nil, err
+	}
 
-		file, head, err := r.FormFile("file")
-		if err != nil {
-			utils.WriteError(w, http.StatusBadRequest, "bad data request")
-			return
-		}
-		defer file.Close()
-
-		allowedExtensions := []string{".jpg", ".jpeg", ".png"}
-		fileType := strings.ToLower(filepath.Ext(head.Filename))
-		if !slices.Contains(allowedExtensions, fileType) {
-			utils.WriteError(w, http.StatusBadRequest, "jpg, jpeg, png only")
-			return
-		}
-
-		fileName, err := h.uc.UpdateComplexPhoto(file, fileType, complexId)
-		if err != nil {
-			utils.WriteError(w, http.StatusBadRequest, "failed upload file")
-			return
-		}
-		if err := utils.WriteResponse(w, http.StatusOK, fileName); err != nil {
-			utils.WriteError(w, http.StatusInternalServerError, "error write response")
-			return
-		}*/
-	return &genComplex.UpdateComplexPhotoResponse{}, nil
-
+	return &genComplex.UpdateComplexPhotoResponse{Filename: fileName}, nil
 }
 
 // GetComplexById handles the request for getting complex by id
@@ -132,42 +103,13 @@ func (h *ComplexServerHandler) CreateCompany(ctx context.Context, req *genComple
 }
 
 func (h *ComplexServerHandler) UpdateCompanyPhoto(ctx context.Context, req *genComplex.UpdateCompanyPhotoRequest) (*genComplex.UpdateCompanyPhotoResponse, error) {
-	/*
-		companyId, err := strconv.ParseInt(id, 10, 64)
-		if err != nil {
-			utils.WriteError(w, http.StatusBadRequest, "invalid id parameter")
-			return
-		}
-		if err := r.ParseMultipartForm(5 << 20); err != nil {
-			utils.WriteError(w, http.StatusBadRequest, "max size file 5 mb")
-			return
-		}
+	fileName, err := h.uc.UpdateCompanyPhoto(ctx, req.CompanyId, req.FileName)
+	if err != nil {
+		log.Println(err)
+		return nil, err
+	}
 
-		file, head, err := r.FormFile("file")
-		if err != nil {
-			utils.WriteError(w, http.StatusBadRequest, "bad data request")
-			return
-		}
-		defer file.Close()
-
-		allowedExtensions := []string{".jpg", ".jpeg", ".png"}
-		fileType := strings.ToLower(filepath.Ext(head.Filename))
-		if !slices.Contains(allowedExtensions, fileType) {
-			utils.WriteError(w, http.StatusBadRequest, "jpg, jpeg, png only")
-			return
-		}
-
-		fileName, err := h.uc.UpdateCompanyPhoto(file, fileType, companyId)
-		if err != nil {
-			utils.WriteError(w, http.StatusBadRequest, "failed upload file")
-			return
-		}
-		if err := utils.WriteResponse(w, http.StatusOK, fileName); err != nil {
-			utils.WriteError(w, http.StatusInternalServerError, "error write response")
-			return
-		}
-	*/
-	return &genComplex.UpdateCompanyPhotoResponse{}, nil
+	return &genComplex.UpdateCompanyPhotoResponse{Filename: fileName}, nil
 }
 
 // GetCompanyById handles the request for getting company by id
