@@ -6,6 +6,7 @@ import (
 	"2024_1_TeaStealers/internal/pkg/adverts/delivery/grpc/gen"
 	genAdverts "2024_1_TeaStealers/internal/pkg/adverts/delivery/grpc/gen"
 	"context"
+	"log"
 
 	"github.com/satori/uuid"
 	"go.uber.org/zap"
@@ -118,4 +119,42 @@ func (h *AdvertsServerHandler) GetAdvertById(ctx context.Context, req *genAdvert
 	// utils.LogSuccesResponse(h.logger, ctx.Value("requestId").(string), utils.DeliveryLayer, SignUpMethod)
 	return &genAdverts.GetAdvertByIdResponse{Id: advert.ID, AdvertType: advert.AdvertType, TypeSale: advert.TypeSale, Title: advert.Title, Description: advert.Description, CountViews: advert.CountViews, CountLikes: advert.CountLikes, Price: advert.Price, Phone: advert.Phone, IsLiked: advert.IsLiked, IsAgent: advert.IsAgent, Metro: advert.Metro, Address: advert.Address, AddressPoint: advert.AddressPoint, PriceHistory: priceHistory, Images: images, HouseProperties: houseProperties, FlatProperties: flatProperties, YearCreation: int32(advert.YearCreation), Material: material, ComplexProperties: complexProperties, DateCreation: advert.DateCreation.String()}, nil
 
+}
+
+// GetRectangeAdvertsList handles the request for retrieving a rectangle adverts with search.
+func (h *AdvertsServerHandler) GetRectangleAdvertsList(ctx context.Context, req *genAdverts.GetRectangleAdvertsListRequest) (*genAdverts.GetRectangleAdvertsListResponse, error) {
+	adverts, err := h.uc.GetRectangleAdvertsList(ctx, models.AdvertFilter{
+		MinPrice:   req.MinPrice,
+		MaxPrice:   req.MaxPrice,
+		Page:       int(req.Page),
+		Offset:     int(req.Size),
+		RoomCount:  int(req.RoomCount),
+		Address:    req.Address,
+		DealType:   req.DealType,
+		AdvertType: req.AdvertType,
+	})
+
+	if err != nil {
+		log.Println(err)
+		return nil, err
+	}
+
+	protoAdverts := make([]*gen.AdvertRectangleData, 0, len(adverts.Adverts))
+
+	for _, advert := range adverts.Adverts {
+		var statusArea gen.StatusAreaHouse
+		var statusHome gen.StatusHomeHouse
+		var houseProperties *gen.HouseProperties = nil
+		var flatProperties *gen.FlatProperties = nil
+		if advert.HouseProperties != nil {
+			houseProperties = &gen.HouseProperties{SquareArea: advert.HouseProperties.SquareArea, SquareHouse: advert.HouseProperties.SquareHouse, BedroomCount: int32(advert.HouseProperties.BedroomCount), StatusArea: statusArea, Cottage: advert.HouseProperties.Cottage, StatusHome: statusHome, Floor: int32(advert.HouseProperties.Floor)}
+		}
+
+		if advert.FlatProperties != nil {
+			flatProperties = &gen.FlatProperties{RoomCount: int32(advert.FlatProperties.RoomCount), FloorGeneral: int32(advert.FlatProperties.FloorGeneral), SquareGeneral: advert.FlatProperties.SquareGeneral, Floor: int32(advert.FlatProperties.Floor)}
+		}
+		protoAdverts = append(protoAdverts, &genAdverts.AdvertRectangleData{Id: advert.ID, AdvertType: advert.TypeAdvert, TypeSale: advert.TypeSale, Title: advert.Title, Description: advert.Description, Price: int64(advert.Price), Phone: advert.Phone, IsLiked: advert.IsLiked, Metro: advert.Metro, Address: advert.Address, AddressPoint: advert.AddressPoint, Photo: advert.Photo, HouseProperties: houseProperties, FlatProperties: flatProperties, DateCreation: advert.DateCreation.String()})
+	}
+
+	return &genAdverts.GetRectangleAdvertsListResponse{Adverts: protoAdverts, Info: &genAdverts.PageInfo{TotalElements: int64(adverts.PageInfo.TotalElements), TotalPages: int64(adverts.PageInfo.TotalPages), PageSize: int64(adverts.PageInfo.PageSize), CurrentPage: int64(adverts.PageInfo.CurrentPage)}}, nil
 }

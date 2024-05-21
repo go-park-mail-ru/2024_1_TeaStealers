@@ -19,7 +19,8 @@ import (
 const _ = grpc.SupportPackageIsVersion7
 
 const (
-	Adverts_GetAdvertById_FullMethodName = "/adverts.Adverts/GetAdvertById"
+	Adverts_GetAdvertById_FullMethodName           = "/adverts.Adverts/GetAdvertById"
+	Adverts_GetRectangleAdvertsList_FullMethodName = "/adverts.Adverts/GetRectangleAdvertsList"
 )
 
 // AdvertsClient is the client API for Adverts service.
@@ -27,6 +28,15 @@ const (
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type AdvertsClient interface {
 	GetAdvertById(ctx context.Context, in *GetAdvertByIdRequest, opts ...grpc.CallOption) (*GetAdvertByIdResponse, error)
+	// rpc UpdateAdvertById(UpdateAdvertByIdRequest) returns (UpdateAdvertByIdResponse) {}
+	// rpc DeleteAdvertById(DeleteAdvertByIdRequest) returns (DeleteAdvertByIdResponse) {}
+	// rpc LikeAdvert(LikeAdvertRequest) returns (LikeAdvertResponse) {}
+	// rpc DislikeAdvert(DislikeAdvertRequest) returns (DislikeAdvertResponse) {}
+	// rpc CreateHouseAdvert(CreateHouseAdvertRequest) returns (CreateHouseAdvertResponse) {}
+	// rpc GetExistBuildingByAddress(GetExistBuildingByAddressRequest) returns (GetExistBuildingByAddressResponse) {}
+	// rpc CreateFlatAdvert(CreateFlatAdvertRequest) returns (CreateFlatAdvertResponse) {}
+	// rpc GetSquareAdvertsList(GetSquareAdvertsListRequest) returns (GetSquareAdvertsListResponse) {}
+	GetRectangleAdvertsList(ctx context.Context, in *GetRectangleAdvertsListRequest, opts ...grpc.CallOption) (*GetRectangleAdvertsListResponse, error)
 }
 
 type advertsClient struct {
@@ -46,11 +56,29 @@ func (c *advertsClient) GetAdvertById(ctx context.Context, in *GetAdvertByIdRequ
 	return out, nil
 }
 
+func (c *advertsClient) GetRectangleAdvertsList(ctx context.Context, in *GetRectangleAdvertsListRequest, opts ...grpc.CallOption) (*GetRectangleAdvertsListResponse, error) {
+	out := new(GetRectangleAdvertsListResponse)
+	err := c.cc.Invoke(ctx, Adverts_GetRectangleAdvertsList_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // AdvertsServer is the server API for Adverts service.
 // All implementations must embed UnimplementedAdvertsServer
 // for forward compatibility
 type AdvertsServer interface {
 	GetAdvertById(context.Context, *GetAdvertByIdRequest) (*GetAdvertByIdResponse, error)
+	// rpc UpdateAdvertById(UpdateAdvertByIdRequest) returns (UpdateAdvertByIdResponse) {}
+	// rpc DeleteAdvertById(DeleteAdvertByIdRequest) returns (DeleteAdvertByIdResponse) {}
+	// rpc LikeAdvert(LikeAdvertRequest) returns (LikeAdvertResponse) {}
+	// rpc DislikeAdvert(DislikeAdvertRequest) returns (DislikeAdvertResponse) {}
+	// rpc CreateHouseAdvert(CreateHouseAdvertRequest) returns (CreateHouseAdvertResponse) {}
+	// rpc GetExistBuildingByAddress(GetExistBuildingByAddressRequest) returns (GetExistBuildingByAddressResponse) {}
+	// rpc CreateFlatAdvert(CreateFlatAdvertRequest) returns (CreateFlatAdvertResponse) {}
+	// rpc GetSquareAdvertsList(GetSquareAdvertsListRequest) returns (GetSquareAdvertsListResponse) {}
+	GetRectangleAdvertsList(context.Context, *GetRectangleAdvertsListRequest) (*GetRectangleAdvertsListResponse, error)
 	mustEmbedUnimplementedAdvertsServer()
 }
 
@@ -60,6 +88,9 @@ type UnimplementedAdvertsServer struct {
 
 func (UnimplementedAdvertsServer) GetAdvertById(context.Context, *GetAdvertByIdRequest) (*GetAdvertByIdResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetAdvertById not implemented")
+}
+func (UnimplementedAdvertsServer) GetRectangleAdvertsList(context.Context, *GetRectangleAdvertsListRequest) (*GetRectangleAdvertsListResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetRectangleAdvertsList not implemented")
 }
 func (UnimplementedAdvertsServer) mustEmbedUnimplementedAdvertsServer() {}
 
@@ -92,6 +123,24 @@ func _Adverts_GetAdvertById_Handler(srv interface{}, ctx context.Context, dec fu
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Adverts_GetRectangleAdvertsList_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetRectangleAdvertsListRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AdvertsServer).GetRectangleAdvertsList(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Adverts_GetRectangleAdvertsList_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AdvertsServer).GetRectangleAdvertsList(ctx, req.(*GetRectangleAdvertsListRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // Adverts_ServiceDesc is the grpc.ServiceDesc for Adverts service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -102,6 +151,10 @@ var Adverts_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetAdvertById",
 			Handler:    _Adverts_GetAdvertById_Handler,
+		},
+		{
+			MethodName: "GetRectangleAdvertsList",
+			Handler:    _Adverts_GetRectangleAdvertsList_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

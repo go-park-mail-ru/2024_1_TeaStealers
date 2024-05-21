@@ -423,11 +423,11 @@ func (u *AdvertUsecase) GetSquareAdvertsList(ctx context.Context, pageSize, offs
 // GetRectangleAdvertsList handles the rectangle adverts getting process with paggination and search.
 func (u *AdvertUsecase) GetRectangleAdvertsList(ctx context.Context, advertFilter models.AdvertFilter) (foundAdverts *models.AdvertDataPage, err error) {
 	if foundAdverts, err = u.repo.GetRectangleAdverts(ctx, advertFilter); err != nil {
-		utils.LogError(u.logger, ctx.Value("requestId").(string), utils.UsecaseLayer, adverts.GetRectangleAdvertsListMethod, err)
+		//utils.LogError(u.logger, ctx.Value("requestId").(string), utils.UsecaseLayer, adverts.GetRectangleAdvertsListMethod, err)
 		return nil, err
 	}
 
-	utils.LogSucces(u.logger, ctx.Value("requestId").(string), utils.UsecaseLayer, adverts.GetRectangleAdvertsListMethod)
+	//utils.LogSucces(u.logger, ctx.Value("requestId").(string), utils.UsecaseLayer, adverts.GetRectangleAdvertsListMethod)
 	return foundAdverts, nil
 }
 

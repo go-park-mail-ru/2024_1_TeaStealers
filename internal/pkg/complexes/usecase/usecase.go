@@ -4,11 +4,7 @@ import (
 	"2024_1_TeaStealers/internal/models"
 	complex "2024_1_TeaStealers/internal/pkg/complexes"
 	"context"
-	"io"
-	"os"
-	"path/filepath"
 
-	"github.com/satori/uuid"
 	"go.uber.org/zap"
 )
 
@@ -48,26 +44,10 @@ func (u *ComplexUsecase) CreateComplex(ctx context.Context, data *models.Complex
 	return complex, nil
 }
 
-func (u *ComplexUsecase) UpdateComplexPhoto(file io.Reader, fileType string, id int64) (string, error) {
-	newId := uuid.NewV4()
-	newFileName := newId.String() + fileType
-	subDirectory := "complexes"
-	directory := filepath.Join(os.Getenv("DOCKER_DIR"), subDirectory)
-	if err := os.MkdirAll(directory, 0755); err != nil {
-		return "", err
-	}
-	destination, err := os.Create(directory + "/" + newFileName)
+func (u *ComplexUsecase) UpdateComplexPhoto(ctx context.Context, id int64, filename string) (string, error) {
+	fileName, err := u.repo.UpdateComplexPhoto(ctx, id, filename)
 	if err != nil {
 		return "", err
-	}
-	defer destination.Close()
-	_, err = io.Copy(destination, file)
-	if err != nil {
-		return "", err
-	}
-	fileName, err := u.repo.UpdateComplexPhoto(id, subDirectory+"/"+newFileName)
-	if err != nil {
-		return "", nil
 	}
 	return fileName, nil
 }
@@ -99,24 +79,8 @@ func (u *ComplexUsecase) CreateCompany(ctx context.Context, data *models.Company
 	return company, nil
 }
 
-func (u *ComplexUsecase) UpdateCompanyPhoto(file io.Reader, fileType string, id int64) (string, error) {
-	newId := uuid.NewV4()
-	newFileName := newId.String() + fileType
-	subDirectory := "companies"
-	directory := filepath.Join(os.Getenv("DOCKER_DIR"), subDirectory)
-	if err := os.MkdirAll(directory, 0755); err != nil {
-		return "", err
-	}
-	destination, err := os.Create(directory + "/" + newFileName)
-	if err != nil {
-		return "", err
-	}
-	defer destination.Close()
-	_, err = io.Copy(destination, file)
-	if err != nil {
-		return "", err
-	}
-	fileName, err := u.repo.UpdateCompanyPhoto(id, subDirectory+"/"+newFileName)
+func (u *ComplexUsecase) UpdateCompanyPhoto(ctx context.Context, id int64, filename string) (string, error) {
+	fileName, err := u.repo.UpdateCompanyPhoto(ctx, id, filename)
 	if err != nil {
 		return "", nil
 	}

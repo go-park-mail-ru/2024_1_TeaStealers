@@ -2,17 +2,19 @@ package delivery
 
 import (
 	"2024_1_TeaStealers/internal/models"
-	complex "2024_1_TeaStealers/internal/pkg/complexes"
 	genComplex "2024_1_TeaStealers/internal/pkg/complexes/delivery/grpc/gen"
 	"2024_1_TeaStealers/internal/pkg/utils"
+	"io"
 	"log"
 	"net/http"
+	"os"
 	"path/filepath"
 	"slices"
 	"strconv"
 	"strings"
 
 	"github.com/gorilla/mux"
+	"github.com/satori/uuid"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
 )
@@ -20,13 +22,12 @@ import (
 // UserClientHandler handles HTTP requests for user.
 type ComplexClientHandler struct {
 	client genComplex.ComplexClient
-	uc     complex.ComplexUsecase
 	logger *zap.Logger
 }
 
 // NewClientUserHandler creates a new instance of UserHandler.
-func NewClientComplexHandler(grpcConn *grpc.ClientConn, uc complex.ComplexUsecase, logger *zap.Logger) *ComplexClientHandler {
-	return &ComplexClientHandler{client: genComplex.NewComplexClient(grpcConn), uc: uc, logger: logger}
+func NewClientComplexHandler(grpcConn *grpc.ClientConn, logger *zap.Logger) *ComplexClientHandler {
+	return &ComplexClientHandler{client: genComplex.NewComplexClient(grpcConn), logger: logger}
 }
 
 func (h *ComplexClientHandler) CreateComplex(w http.ResponseWriter, r *http.Request) {
@@ -108,7 +109,25 @@ func (h *ComplexClientHandler) UpdateComplexPhoto(w http.ResponseWriter, r *http
 		return
 	}
 
-	fileName, err := h.uc.UpdateComplexPhoto(file, fileType, complexId)
+	newId := uuid.NewV4()
+	newFileName := newId.String() + fileType
+	subDirectory := "complexes"
+	directory := filepath.Join(os.Getenv("DOCKER_DIR"), subDirectory)
+	if err := os.MkdirAll(directory, 0755); err != nil {
+		utils.WriteError(w, http.StatusInternalServerError, "File system error")
+		return
+	}
+	destination, err := os.Create(directory + "/" + newFileName)
+	if err != nil {
+		utils.WriteError(w, http.StatusInternalServerError, "File system error")
+	}
+	defer destination.Close()
+	_, err = io.Copy(destination, file)
+	if err != nil {
+		utils.WriteError(w, http.StatusInternalServerError, "File system error")
+	}
+
+	fileName, err := h.client.UpdateComplexPhoto(r.Context(), &genComplex.UpdateComplexPhotoRequest{ComplexId: complexId, FileName: subDirectory + "/" + newFileName})
 	if err != nil {
 		utils.WriteError(w, http.StatusBadRequest, "failed upload file")
 		return
@@ -210,7 +229,27 @@ func (h *ComplexClientHandler) UpdateCompanyPhoto(w http.ResponseWriter, r *http
 		return
 	}
 
-	fileName, err := h.uc.UpdateCompanyPhoto(file, fileType, companyId)
+	newId := uuid.NewV4()
+	newFileName := newId.String() + fileType
+	subDirectory := "companies"
+	directory := filepath.Join(os.Getenv("DOCKER_DIR"), subDirectory)
+	if err := os.MkdirAll(directory, 0755); err != nil {
+		utils.WriteError(w, http.StatusBadRequest, "File system error")
+		return
+	}
+	destination, err := os.Create(directory + "/" + newFileName)
+	if err != nil {
+		utils.WriteError(w, http.StatusBadRequest, "File system error")
+		return
+	}
+	defer destination.Close()
+	_, err = io.Copy(destination, file)
+	if err != nil {
+		utils.WriteError(w, http.StatusBadRequest, "File system error")
+		return
+	}
+
+	fileName, err := h.client.UpdateCompanyPhoto(r.Context(), &genComplex.UpdateCompanyPhotoRequest{CompanyId: companyId, FileName: subDirectory + "/" + newFileName})
 	if err != nil {
 		utils.WriteError(w, http.StatusBadRequest, "failed upload file")
 		return

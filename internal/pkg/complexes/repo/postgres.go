@@ -50,7 +50,7 @@ func (r *ComplexRepo) CreateComplex(ctx context.Context, complex *models.Complex
 	return newComplex, nil
 }
 
-func (r *ComplexRepo) UpdateComplexPhoto(id int64, fileName string) (string, error) {
+func (r *ComplexRepo) UpdateComplexPhoto(ctx context.Context, id int64, fileName string) (string, error) {
 	query := `UPDATE complex SET photo = $1 WHERE id = $2`
 	if _, err := r.db.Exec(query, fileName, id); err != nil {
 		log.Println(err)
@@ -96,7 +96,7 @@ func (r *ComplexRepo) CreateCompany(ctx context.Context, company *models.Company
 	return newCompany, nil
 }
 
-func (r *ComplexRepo) UpdateCompanyPhoto(id int64, fileName string) (string, error) {
+func (r *ComplexRepo) UpdateCompanyPhoto(ctx context.Context, id int64, fileName string) (string, error) {
 	query := `UPDATE company SET photo = $1 WHERE id = $2`
 	if _, err := r.db.Exec(query, fileName, id); err != nil {
 		log.Println(err)

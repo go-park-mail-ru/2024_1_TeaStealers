@@ -45,9 +45,8 @@ message GetCompanyByIdResponse {
 }
 
 message UpdateCompanyPhotoRequest {
-  bytes File = 1;
-  string FileType = 2;
-  int64 CompanyId = 3;
+  int64 CompanyId = 1;
+  string FileName = 2;
 }
 
 message UpdateCompanyPhotoResponse {
@@ -118,9 +117,8 @@ message GetComplexByIdResponse {
 }
 
 message UpdateComplexPhotoRequest {
-  bytes File = 1;
-  string FileType = 2;
-  int64 ComplexId = 3;
+  int64 ComplexId = 1;
+  string FileName = 2;
 }
 
 message UpdateComplexPhotoResponse {
