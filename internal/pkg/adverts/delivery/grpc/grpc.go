@@ -24,14 +24,14 @@ func NewServerAdvertsHandler(uc adverts.AdvertUsecase, logger *zap.Logger) *Adve
 	return &AdvertsServerHandler{uc: uc, logger: logger}
 }
 
-func (h *AdvertsServerHandler) GetAdvertById(ctx context.Context, req *genAdverts.GetAdvertByIdRequest) (*genAdverts.GetAdvertByIdResponse, error) {
+func (h *AdvertsServerHandler) GetAdvertById(ctx context.Context, reqAdv *genAdverts.GetAdvertByIdRequest) (*genAdverts.GetAdvertByIdResponse, error) {
 	ctx = context.WithValue(ctx, "requestId", uuid.NewV4().String())
 
-	advert, err := h.uc.GetAdvertById(ctx, req.Id)
+	advert, err := h.uc.GetAdvertById(ctx, reqAdv.Id)
 
 	if err != nil {
 
-		h.logger.Error(err.Error())
+		h.logger.Error(ctx.Value("requestId").(string) + " " + err.Error())
 		// utils.LogErrorResponse(h.logger, ctx.Value("requestId").(string), utils.DeliveryLayer, SignUpMethod, err, http.StatusBadRequest)
 		return nil, err
 	}

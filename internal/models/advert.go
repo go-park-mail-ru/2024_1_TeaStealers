@@ -66,7 +66,7 @@ type AdvertFlatCreateData struct {
 	CeilingHeight float64 `json:"ceilingHeight"`
 	// SquareGeneral is the general square of the flat.
 	SquareGeneral float64 `json:"squareGeneral"`
-	// RoomCount is the how many rooms in flat
+	// RoomCount is how many rooms in flat
 	RoomCount int `json:"roomCount"`
 	// SquareResidential is the residential square of the flat.
 	SquareResidential float64 `json:"squareResidential"`
