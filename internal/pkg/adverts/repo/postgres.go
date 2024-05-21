@@ -969,12 +969,12 @@ func (r *AdvertRepo) CreateBuilding(ctx context.Context, tx models.Transaction, 
 }
 
 // CheckExistsBuilding check exists building.
-func (r *AdvertRepo) CheckExistsBuilding(ctx context.Context, adress *models.AddressData) (*models.Building, error) {
+func (r *AdvertRepo) CheckExistsBuilding(ctx context.Context, address *models.AddressData) (*models.Building, error) {
 	// QueryCheckExistsBuilding = `SELECT b.id, b.address_id, b.floor, b.material_building, b.year_creation FROM building AS b JOIN address AS a ON b.address_id=a.id JOIN house_name AS h ON a.house_name_id=h.id JOIN street AS s ON h.street_id=s.id JOIN town AS t ON s.town_id=t.id JOIN province AS p ON t.province_id=p.id WHERE p.name=$1 AND t.name=$2 AND s.name=$3 AND h.name=$4;`
 
 	building := &models.Building{}
 
-	res := r.db.QueryRowContext(ctx, QueryCheckExistsBuilding, adress.Province, adress.Town, adress.Street, adress.House)
+	res := r.db.QueryRowContext(ctx, QueryCheckExistsBuilding, address.Province, address.Town, address.Street, address.House)
 
 	if err := res.Scan(&building.ID, &building.AddressID, &building.Floor, &building.Material, &building.YearCreation); err != nil {
 		utils.LogError(r.logger, ctx.Value("requestId").(string), utils.RepositoryLayer, adverts.CheckExistsBuildingMethod, err)
@@ -1588,7 +1588,7 @@ func (r *AdvertRepo) UpdateHouseAdvertById(ctx context.Context, tx models.Transa
 	res := tx.QueryRowContext(ctx, QueryGetIdTablesUpdateHouseAdvert, advertUpdateData.ID)
 
 	var buildingId, houseId int64
-	var price float64
+	var price int64
 	if err := res.Scan(&buildingId, &houseId, &price); err != nil {
 		utils.LogError(r.logger, ctx.Value("requestId").(string), utils.RepositoryLayer, adverts.UpdateHouseAdvertByIdMethod, err)
 		return err
@@ -1685,7 +1685,7 @@ func (r *AdvertRepo) UpdateFlatAdvertById(ctx context.Context, tx models.Transac
 	res := tx.QueryRowContext(ctx, QueryGetIdTablesUpdateFlatAdvert, advertUpdateData.ID)
 
 	var buildingId, flatId int64
-	var price float64
+	var price int64
 	if err := res.Scan(&buildingId, &flatId, &price); err != nil {
 		utils.LogError(r.logger, ctx.Value("requestId").(string), utils.RepositoryLayer, adverts.UpdateFlatAdvertByIdMethod, err)
 		return err

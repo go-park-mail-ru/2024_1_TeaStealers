@@ -68,7 +68,7 @@ type AdvertRepo interface {
 	CreateBuilding(ctx context.Context, tx models.Transaction, newBuilding *models.Building) (int64, error)
 	CreateHouse(ctx context.Context, tx models.Transaction, newHouse *models.House) (int64, error)
 	CreateFlat(ctx context.Context, tx models.Transaction, newFlat *models.Flat) (int64, error)
-	CheckExistsBuilding(ctx context.Context, adress *models.AddressData) (*models.Building, error)
+	CheckExistsBuilding(ctx context.Context, address *models.AddressData) (*models.Building, error)
 	GetHouseAdvertById(ctx context.Context, id int64) (*models.AdvertData, error)
 	GetFlatAdvertById(ctx context.Context, id int64) (*models.AdvertData, error)
 	GetTypeAdvertById(ctx context.Context, id int64) (*models.AdvertTypeAdvert, error)
