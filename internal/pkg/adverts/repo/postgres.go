@@ -177,6 +177,601 @@ const (
 	QueryRestoreAdvertTypeFlatChangeTypeAdvert = `UPDATE advert_type_flat SET is_deleted=false WHERE advert_id=$1 AND flat_id=$2;`
 
 	QueryRestoreAdvertTypeHouseChangeTypeAdvert = `UPDATE advert_type_house SET is_deleted=false WHERE advert_id=$1 AND house_id=$2;`
+
+	QueryGetIdTables = `
+		        SELECT
+		            b.id as buildingid,
+		            h.id as houseid,
+		            pc.price
+		        FROM
+		            advert AS a
+		        JOIN
+		            advert_type_house AS at ON a.id = at.advert_id
+		        JOIN
+		            house AS h ON h.id = at.house_id
+		        JOIN
+		            building AS b ON h.building_id = b.id
+		        LEFT JOIN
+		            LATERAL (
+		                SELECT *
+		                FROM price_change AS pc
+		                WHERE pc.advert_id = a.id
+		                ORDER BY pc.created_at DESC
+		                LIMIT 1
+		            ) AS pc ON TRUE
+		        WHERE a.id=$1;`
+
+	QueryUpdateAdvertByIdUpdateHouseAdvert   = `UPDATE advert SET type_placement=$1, title=$2, description=$3, phone=$4, is_agent=$5 WHERE id=$6;`
+	QueryUpdateBuildingByIdUpdateHouseAdvert = `UPDATE building SET floor=$1, material_building=$2, address_id=$3, year_creation=$4 WHERE id=$5;`
+	QueryUpdateHouseByIdUpdateHouseAdvert    = `UPDATE house SET ceiling_height=$1, square_area=$2, square_house=$3, bedroom_count=$4, status_area_house=$5, cottage=$6, status_home_house=$7 WHERE id=$8;`
+	QueryInsertPriceChangeUpdateHouseAdvert  = `INSERT INTO price_change (advert_id, price)
+            VALUES ($1, $2)`
+
+	QueryGetIdTablesUpdateFlatAdvert = `
+                    SELECT
+                        b.id as buildingid,
+                        f.id as flatid,
+                        pc.price
+                    FROM
+                        advert AS a
+                    JOIN
+                        advert_type_flat AS at ON a.id = at.advert_id
+                    JOIN
+                        flat AS f ON f.id = at.flat_id
+                    JOIN
+                        building AS b ON f.building_id = b.id
+                    LEFT JOIN
+                        LATERAL (
+                            SELECT *
+                            FROM price_change AS pc
+                            WHERE pc.advert_id = a.id
+                            ORDER BY pc.created_at DESC
+                            LIMIT 1
+                        ) AS pc ON TRUE
+                    WHERE a.id=$1;`
+
+	QueryUpdateAdvertByIdUpdateFlatAdvert   = `UPDATE advert SET type_placement=$1, title=$2, description=$3, phone=$4, is_agent=$5 WHERE id=$6;`
+	QueryUpdateBuildingByIdUpdateFlatAdvert = `UPDATE building SET floor=$1, material_building=$2, address_id=$3, year_creation=$4 WHERE id=$5;`
+	QueryUpdateFlatByIdUpdateFlatAdvert     = `UPDATE flat SET floor=$1, ceiling_height=$2, square_general=$3, bedroom_count=$4, square_residential=$5, apartament=$6 WHERE id=$7;`
+
+	QueryInsertPriceChangeUpdateFlatAdvert = `INSERT INTO price_change (advert_id, price)
+            VALUES ($1, $2)`
+	QueryGetIdTablesUpdateHouseAdvert = `
+		        SELECT
+		            b.id as buildingid,
+		            h.id as houseid,
+		            pc.price
+		        FROM
+		            advert AS a
+		        JOIN
+		            advert_type_house AS at ON a.id = at.advert_id
+		        JOIN
+		            house AS h ON h.id = at.house_id
+		        JOIN
+		            building AS b ON h.building_id = b.id
+		        LEFT JOIN
+		            LATERAL (
+		                SELECT *
+		                FROM price_change AS pc
+		                WHERE pc.advert_id = a.id
+		                ORDER BY pc.created_at DESC
+		                LIMIT 1
+		            ) AS pc ON TRUE
+		        WHERE a.id=$1;`
+	QueryGetFlatAdvertById = `
+            	SELECT
+            		a.id,
+            		a.type_placement,
+            		a.title,
+            		a.description,
+            		pc.price,
+            		a.phone,
+            		a.is_agent,
+            		ad.metro,
+            		hn.name,
+            		s.name,
+            		t.name,
+            		p.name,
+            		ST_AsText(ad.address_point::geometry),
+                    f.floor,
+                    f.ceiling_height,
+                    f.square_general,
+                    f.bedroom_count,
+                    f.square_residential,
+                    f.apartament,
+                    b.floor AS floorGeneral,
+                    b.year_creation,
+                    COALESCE(b.material_building, 'Brick') as material,
+                    a.created_at,
+            		CASE
+            			WHEN fa.advert_id IS NOT NULL AND fa.is_deleted=false THEN true
+            			ELSE false
+            		END AS is_liked,
+            		CASE
+            			WHEN sva.advert_id IS NOT NULL THEN true
+            			ELSE false
+            		END AS is_viewed,
+                    cx.id AS complexid,
+                    c.photo AS companyphoto,
+                    c.name AS companyname,
+                    cx.name AS complexname
+                FROM
+                    advert AS a
+                JOIN
+                    advert_type_flat AS at ON a.id = at.advert_id
+                JOIN
+                    flat AS f ON f.id = at.flat_id
+                JOIN
+                    building AS b ON f.building_id = b.id
+            		JOIN address AS ad ON b.address_id=ad.id
+            		JOIN house_name AS hn ON hn.id=ad.house_name_id
+            		JOIN street AS s ON s.id=hn.street_id
+            		JOIN town AS t ON t.id=s.town_id
+            		JOIN province AS p ON p.id=t.province_id
+            	LEFT JOIN
+            		favourite_advert AS fa ON fa.advert_id=a.id AND fa.user_id=$2
+            	LEFT JOIN
+            		statistic_view_advert AS sva ON sva.advert_id=a.id AND sva.user_id=$2
+                LEFT JOIN
+                    complex AS cx ON b.complex_id = cx.id
+                LEFT JOIN
+                    company AS c ON cx.company_id = c.id
+                LEFT JOIN
+                    LATERAL (
+                        SELECT *
+                        FROM price_change AS pc
+                        WHERE pc.advert_id = a.id
+                        ORDER BY pc.created_at DESC
+                        LIMIT 1
+                    ) AS pc ON TRUE
+                WHERE
+                    a.id = $1 AND a.is_deleted = FALSE;`
+
+	QueryBaseAdvertGetSquareAdverts = `
+         SELECT
+             a.id,
+             a.type_placement,
+ 			CASE
+            		WHEN ath.house_id IS NOT NULL THEN 'House'
+            		WHEN atf.flat_id IS NOT NULL THEN 'Flat'
+            		ELSE 'None'
+        		END AS type_advert,
+             i.photo,
+             pc.price,
+             a.created_at
+         FROM
+             advert AS a
+ 			LEFT JOIN advert_type_house AS ath ON ath.advert_id=a.id
+ 			LEFT JOIN advert_type_flat AS atf ON atf.advert_id=a.id
+             LEFT JOIN LATERAL (
+                 SELECT *
+                 FROM price_change AS pc
+                 WHERE pc.advert_id = a.id
+                 ORDER BY pc.created_at DESC
+                 LIMIT 1
+             ) AS pc ON TRUE
+             JOIN image AS i ON i.advert_id = a.id
+         WHERE i.priority = (
+                 SELECT MIN(priority)
+                 FROM image
+                 WHERE advert_id = a.id
+                     AND is_deleted = FALSE
+             )
+             AND i.is_deleted = FALSE
+         ORDER BY
+             a.created_at DESC
+         LIMIT $1
+         OFFSET $2;`
+
+	QueryFlatGetSquareAdverts = `
+        SELECT
+            f.square_general,
+            f.floor,
+            ad.metro,
+			hn.name,
+			s.name,
+			t.name,
+			p.name,
+            b.floor AS floorgeneral,
+            f.bedroom_count
+        FROM
+            advert AS a
+            JOIN advert_type_flat AS at ON a.id = at.advert_id
+            JOIN flat AS f ON f.id=at.flat_id
+            JOIN building AS b ON f.building_id=b.id
+			JOIN address AS ad ON b.address_id=ad.id
+			JOIN house_name AS hn ON hn.id=ad.house_name_id
+			JOIN street AS s ON s.id=hn.street_id
+			JOIN town AS t ON t.id=s.town_id
+			JOIN province AS p ON p.id=t.province_id
+        WHERE a.id=$1 AND a.is_deleted = FALSE
+        ORDER BY
+            a.created_at DESC;`
+	QueryHouseGetSquareAdverts = `
+        	SELECT
+			ad.metro,
+			hn.name,
+			s.name,
+			t.name,
+			p.name,
+            h.cottage,
+            h.square_house,
+            h.square_area,
+            h.bedroom_count,
+            b.floor
+        FROM
+            advert AS a
+            JOIN advert_type_house AS at ON a.id = at.advert_id
+            JOIN house AS h ON h.id=at.house_id
+            JOIN building AS b ON h.building_id=b.id
+			JOIN address AS ad ON b.address_id=ad.id
+			JOIN house_name AS hn ON hn.id=ad.house_name_id
+			JOIN street AS s ON s.id=hn.street_id
+			JOIN town AS t ON t.id=s.town_id
+			JOIN province AS p ON p.id=t.province_id
+        WHERE a.id=$1
+        ORDER BY
+            a.created_at DESC;`
+
+	QueryFlatGetRectangleAdverts = `
+		        SELECT
+		            f.square_general,
+		            f.floor,
+					ST_AsText(ad.address_point::geometry),
+					ad.metro,
+					hn.name,
+					s.name,
+					t.name,
+					p.name,
+		            b.floor AS floorgeneral
+		        FROM
+		            advert AS a
+		            JOIN advert_type_flat AS at ON a.id = at.advert_id
+		            JOIN flat AS f ON f.id = at.flat_id
+		            JOIN building AS b ON f.building_id = b.id
+					JOIN address AS ad ON b.address_id=ad.id
+					JOIN house_name AS hn ON hn.id=ad.house_name_id
+					JOIN street AS s ON s.id=hn.street_id
+					JOIN town AS t ON t.id=s.town_id
+					JOIN province AS p ON p.id=t.province_id
+		        WHERE a.id = $1
+		        ORDER BY
+		            a.created_at DESC;`
+	QueryHouseGetRectangleAdverts = `
+		        SELECT
+					ST_AsText(ad.address_point::geometry),
+					ad.metro,
+					hn.name,
+					s.name,
+					t.name,
+					p.name,
+		            h.cottage,
+		            h.square_house,
+		            h.square_area,
+		            b.floor
+		        FROM
+					advert AS a
+					JOIN advert_type_house AS at ON a.id = at.advert_id
+					JOIN house AS h ON h.id = at.house_id
+					JOIN building AS b ON h.building_id = b.id
+					JOIN address AS ad ON b.address_id=ad.id
+					JOIN house_name AS hn ON hn.id=ad.house_name_id
+					JOIN street AS s ON s.id=hn.street_id
+					JOIN town AS t ON t.id=s.town_id
+					JOIN province AS p ON p.id=t.province_id
+		        WHERE a.id = $1
+		        ORDER BY
+		            a.created_at DESC;`
+
+	QueryBaseAdvertGetRectangleAdvertsByUser = `
+	        SELECT
+				a.id,
+				a.title,
+				a.description,
+				CASE
+				   WHEN ath.house_id IS NOT NULL THEN 'House'
+				   WHEN atf.flat_id IS NOT NULL THEN 'Flat'
+				   ELSE 'None'
+			    END AS type_advert,
+	            CASE
+	                WHEN atf.flat_id IS NOT NULL THEN f.bedroom_count
+	                WHEN ath.house_id IS NOT NULL THEN h.bedroom_count
+	                ELSE 0
+	            END AS rcount,
+	            a.phone,
+	            a.type_placement,
+	            pc.price,
+	            i.photo,
+	            a.created_at,
+				CASE
+					WHEN fa.advert_id IS NOT NULL AND fa.is_deleted=false THEN true
+					ELSE false
+				END AS is_liked
+	        FROM
+	            advert AS a
+	            LEFT JOIN advert_type_house AS ath ON a.id = ath.advert_id
+				LEFT JOIN advert_type_flat AS atf ON a.id = atf.advert_id
+				LEFT JOIN favourite_advert AS fa ON a.id=fa.advert_id AND fa.user_id=$1
+	            LEFT JOIN flat AS f ON f.id = atf.flat_id
+	            LEFT JOIN house AS h ON h.id = ath.house_id
+	            JOIN building AS b ON (f.building_id = b.id OR h.building_id = b.id)
+				JOIN address AS ad ON b.address_id=ad.id
+				JOIN house_name AS hn ON hn.id=ad.house_name_id
+				JOIN street AS s ON s.id=hn.street_id
+				JOIN town AS t ON t.id=s.town_id
+				JOIN province AS p ON p.id=t.province_id
+	            LEFT JOIN LATERAL (
+	                SELECT *
+	                FROM price_change AS pc
+	                WHERE pc.advert_id = a.id
+	                ORDER BY pc.created_at DESC
+	                LIMIT 1
+	            ) AS pc ON TRUE
+	            JOIN image AS i ON i.advert_id = a.id
+	        WHERE i.priority = (
+	                SELECT MIN(priority)
+	                FROM image
+	                WHERE advert_id = a.id
+	                    AND is_deleted = FALSE
+	            )
+	            AND i.is_deleted = FALSE
+	            AND a.is_deleted = FALSE
+	            AND a.user_id = $1
+				ORDER BY a.created_at DESC
+				LIMIT $2
+				OFFSET $3`
+	QueryFlatGetRectangleAdvertsByUser = `
+	        SELECT
+	            f.square_general,
+	            f.floor,
+				ad.metro,
+				hn.name,
+				s.name,
+				t.name,
+				p.name,
+	            b.floor AS floorgeneral
+	        FROM
+	            advert AS a
+	            JOIN advert_type_flat AS at ON a.id = at.advert_id
+	            JOIN flat AS f ON f.id = at.flat_id
+	            JOIN building AS b ON f.building_id = b.id
+				JOIN address AS ad ON b.address_id=ad.id
+				JOIN house_name AS hn ON hn.id=ad.house_name_id
+				JOIN street AS s ON s.id=hn.street_id
+				JOIN town AS t ON t.id=s.town_id
+				JOIN province AS p ON p.id=t.province_id
+	        WHERE a.id = $1
+	        ORDER BY
+	            a.created_at DESC;`
+	QueryHouseGetRectangleAdvertsByUser = `
+	        SELECT
+				ad.metro,
+				hn.name,
+				s.name,
+				t.name,
+				p.name,
+	            h.cottage,
+	            h.square_house,
+	            h.square_area,
+	            b.floor
+	        FROM
+				advert AS a
+				JOIN advert_type_house AS at ON a.id = at.advert_id
+				JOIN house AS h ON h.id = at.house_id
+				JOIN building AS b ON h.building_id = b.id
+				JOIN address AS ad ON b.address_id=ad.id
+				JOIN house_name AS hn ON hn.id=ad.house_name_id
+				JOIN street AS s ON s.id=hn.street_id
+				JOIN town AS t ON t.id=s.town_id
+				JOIN province AS p ON p.id=t.province_id
+	        WHERE a.id = $1
+	        ORDER BY
+	            a.created_at DESC;`
+
+	QueryBaseAdvertGetRectangleAdvertsByComplex = `
+		        SELECT
+					a.id,
+					a.title,
+					a.description,
+					CASE
+					   WHEN ath.house_id IS NOT NULL THEN 'House'
+					   WHEN atf.flat_id IS NOT NULL THEN 'Flat'
+					   ELSE 'None'
+				    END AS type_advert,
+		            CASE
+		                WHEN atf.flat_id IS NOT NULL THEN f.bedroom_count
+		                WHEN ath.house_id IS NOT NULL THEN h.bedroom_count
+		                ELSE 0
+		            END AS rcount,
+		            a.phone,
+		            a.type_placement,
+		            pc.price,
+		            i.photo,
+		            a.created_at
+		        FROM
+		            advert AS a
+		            LEFT JOIN advert_type_house AS ath ON a.id = ath.advert_id
+					LEFT JOIN advert_type_flat AS atf ON a.id = atf.advert_id
+		            LEFT JOIN flat AS f ON f.id = atf.flat_id
+		            LEFT JOIN house AS h ON h.id = ath.house_id
+		            JOIN building AS b ON (f.building_id = b.id OR h.building_id = b.id)
+					JOIN address AS ad ON b.address_id=ad.id
+					JOIN house_name AS hn ON hn.id=ad.house_name_id
+					JOIN street AS s ON s.id=hn.street_id
+					JOIN town AS t ON t.id=s.town_id
+					JOIN province AS p ON p.id=t.province_id
+		            LEFT JOIN LATERAL (
+		                SELECT *
+		                FROM price_change AS pc
+		                WHERE pc.advert_id = a.id
+		                ORDER BY pc.created_at DESC
+		                LIMIT 1
+		            ) AS pc ON TRUE
+		            JOIN image AS i ON i.advert_id = a.id
+		        WHERE i.priority = (
+		                SELECT MIN(priority)
+		                FROM image
+		                WHERE advert_id = a.id
+		                    AND is_deleted = FALSE
+		            )
+		            AND i.is_deleted = FALSE
+		            AND a.is_deleted = FALSE
+		            AND b.complex_id = $1
+					ORDER BY a.created_at DESC
+					LIMIT $2
+					OFFSET $3`
+	QueryFlatGetRectangleAdvertsByComplex = `
+		        SELECT
+		            f.square_general,
+		            f.floor,
+					ad.metro,
+					hn.name,
+					s.name,
+					t.name,
+					p.name,
+		            b.floor AS floorgeneral
+		        FROM
+		            advert AS a
+		            JOIN advert_type_flat AS at ON a.id = at.advert_id
+		            JOIN flat AS f ON f.id = at.flat_id
+		            JOIN building AS b ON f.building_id = b.id
+					JOIN address AS ad ON b.address_id=ad.id
+					JOIN house_name AS hn ON hn.id=ad.house_name_id
+					JOIN street AS s ON s.id=hn.street_id
+					JOIN town AS t ON t.id=s.town_id
+					JOIN province AS p ON p.id=t.province_id
+		        WHERE a.id = $1
+		        ORDER BY
+		            a.created_at DESC;`
+	QueryHouseGetRectangleAdvertsByComplex = `
+		        SELECT
+					ad.metro,
+					hn.name,
+					s.name,
+					t.name,
+					p.name,
+		            h.cottage,
+		            h.square_house,
+		            h.square_area,
+		            b.floor
+		        FROM
+					advert AS a
+					JOIN advert_type_house AS at ON a.id = at.advert_id
+					JOIN house AS h ON h.id = at.house_id
+					JOIN building AS b ON h.building_id = b.id
+					JOIN address AS ad ON b.address_id=ad.id
+					JOIN house_name AS hn ON hn.id=ad.house_name_id
+					JOIN street AS s ON s.id=hn.street_id
+					JOIN town AS t ON t.id=s.town_id
+					JOIN province AS p ON p.id=t.province_id
+		        WHERE a.id = $1
+		        ORDER BY
+		            a.created_at DESC;`
+
+	QueryBaseAdvertGetRectangleAdvertsLikedByUser = `
+	        SELECT
+				a.id,
+				a.title,
+				a.description,
+				CASE
+				   WHEN ath.house_id IS NOT NULL THEN 'House'
+				   WHEN atf.flat_id IS NOT NULL THEN 'Flat'
+				   ELSE 'None'
+			    END AS type_advert,
+	            CASE
+	                WHEN atf.flat_id IS NOT NULL THEN f.bedroom_count
+	                WHEN ath.house_id IS NOT NULL THEN h.bedroom_count
+	                ELSE 0
+	            END AS rcount,
+	            a.phone,
+	            a.type_placement,
+	            pc.price,
+	            i.photo,
+	            a.created_at,
+				CASE
+					WHEN fa.advert_id IS NOT NULL AND fa.is_deleted=false THEN true
+					ELSE false
+				END AS is_liked
+	        FROM
+	            advert AS a
+	            LEFT JOIN advert_type_house AS ath ON a.id = ath.advert_id
+				LEFT JOIN advert_type_flat AS atf ON a.id = atf.advert_id
+				JOIN favourite_advert AS fa ON (a.id=fa.advert_id AND fa.user_id=$1 AND fa.is_deleted = false)
+	            LEFT JOIN flat AS f ON f.id = atf.flat_id
+	            LEFT JOIN house AS h ON h.id = ath.house_id
+	            JOIN building AS b ON (f.building_id = b.id OR h.building_id = b.id)
+				JOIN address AS ad ON b.address_id=ad.id
+				JOIN house_name AS hn ON hn.id=ad.house_name_id
+				JOIN street AS s ON s.id=hn.street_id
+				JOIN town AS t ON t.id=s.town_id
+				JOIN province AS p ON p.id=t.province_id
+	            LEFT JOIN LATERAL (
+	                SELECT *
+	                FROM price_change AS pc
+	                WHERE pc.advert_id = a.id
+	                ORDER BY pc.created_at DESC
+	                LIMIT 1
+	            ) AS pc ON TRUE
+	            JOIN image AS i ON i.advert_id = a.id
+	        WHERE i.priority = (
+	                SELECT MIN(priority)
+	                FROM image
+	                WHERE advert_id = a.id
+	                    AND is_deleted = FALSE
+	            )
+	            AND i.is_deleted = FALSE
+	            AND a.is_deleted = FALSE
+	            AND a.user_id = $1
+				ORDER BY a.created_at DESC
+				LIMIT $2
+				OFFSET $3`
+	QueryFlatGetRectangleAdvertsLikedByUser = `
+	        SELECT
+	            f.square_general,
+	            f.floor,
+				ad.metro,
+				hn.name,
+				s.name,
+				t.name,
+				p.name,
+	            b.floor AS floorgeneral
+	        FROM
+	            advert AS a
+	            JOIN advert_type_flat AS at ON a.id = at.advert_id
+	            JOIN flat AS f ON f.id = at.flat_id
+	            JOIN building AS b ON f.building_id = b.id
+				JOIN address AS ad ON b.address_id=ad.id
+				JOIN house_name AS hn ON hn.id=ad.house_name_id
+				JOIN street AS s ON s.id=hn.street_id
+				JOIN town AS t ON t.id=s.town_id
+				JOIN province AS p ON p.id=t.province_id
+	        WHERE a.id = $1
+	        ORDER BY
+	            a.created_at DESC;`
+	QueryHouseGetRectangleAdvertsLikedByUser = `
+	        SELECT
+				ad.metro,
+				hn.name,
+				s.name,
+				t.name,
+				p.name,
+	            h.cottage,
+	            h.square_house,
+	            h.square_area,
+	            b.floor
+	        FROM
+				advert AS a
+				JOIN advert_type_house AS at ON a.id = at.advert_id
+				JOIN house AS h ON h.id = at.house_id
+				JOIN building AS b ON h.building_id = b.id
+				JOIN address AS ad ON b.address_id=ad.id
+				JOIN house_name AS hn ON hn.id=ad.house_name_id
+				JOIN street AS s ON s.id=hn.street_id
+				JOIN town AS t ON t.id=s.town_id
+				JOIN province AS p ON p.id=t.province_id
+	        WHERE a.id = $1
+	        ORDER BY
+	            a.created_at DESC;`
 )
 
 // AdvertRepo represents a repository for adverts changes.
@@ -304,7 +899,7 @@ func (r *AdvertRepo) CreateStreet(ctx context.Context, tx models.Transaction, id
 	return streetId, nil
 }
 
-// CreateHouse creates a new house in the database.
+// CreateHouseAddress creates a new house in the database.
 func (r *AdvertRepo) CreateHouseAddress(ctx context.Context, tx models.Transaction, idStreet int64, name string) (int64, error) {
 	// QueryCreateHouseAddress = `SELECT id FROM house_name WHERE name=$1 AND street_id=$2`
 
@@ -390,7 +985,7 @@ func (r *AdvertRepo) CheckExistsBuilding(ctx context.Context, adress *models.Add
 	return building, nil
 }
 
-// CheckExistsBuildings check exists buildings. Нужна для выпадающего списка существующих зданий по адресу(Для создания объявления)
+// CheckExistsBuildingData check exists buildings. Нужна для выпадающего списка существующих зданий по адресу(Для создания объявления)
 func (r *AdvertRepo) CheckExistsBuildingData(ctx context.Context, adress *models.AddressData) (*models.BuildingData, error) {
 	// QueryCheckExistsBuildingData = `SELECT b.floor, b.material_building, b.year_creation, COALESCE(c.name, '') FROM building AS b JOIN address AS a ON b.address_id=a.id JOIN house_name AS h ON a.house_name_id=h.id JOIN street AS s ON h.street_id=s.id JOIN town AS t ON s.town_id=t.id JOIN province AS p ON t.province_id=p.id LEFT JOIN complex AS c ON c.id=b.complex_id WHERE p.name=$1 AND t.name=$2 AND s.name=$3 AND h.name=$4;`
 
@@ -965,30 +1560,32 @@ func (r *AdvertRepo) ChangeTypeAdvert(ctx context.Context, tx models.Transaction
 
 // UpdateHouseAdvertById updates a house advert in the database.
 func (r *AdvertRepo) UpdateHouseAdvertById(ctx context.Context, tx models.Transaction, advertUpdateData *models.AdvertUpdateData) error {
-	queryGetIdTables := `
-        SELECT
-            b.id as buildingid,
-            h.id as houseid,
-            pc.price
-        FROM
-            advert AS a
-        JOIN
-            advert_type_house AS at ON a.id = at.advert_id
-        JOIN
-            house AS h ON h.id = at.house_id
-        JOIN
-            building AS b ON h.building_id = b.id
-        LEFT JOIN
-            LATERAL (
-                SELECT *
-                FROM price_change AS pc
-                WHERE pc.advert_id = a.id
-                ORDER BY pc.created_at DESC
-                LIMIT 1
-            ) AS pc ON TRUE
-        WHERE a.id=$1;`
+	/*
+			QueryGetIdTablesUpdateHouseAdvert = `
+		        SELECT
+		            b.id as buildingid,
+		            h.id as houseid,
+		            pc.price
+		        FROM
+		            advert AS a
+		        JOIN
+		            advert_type_house AS at ON a.id = at.advert_id
+		        JOIN
+		            house AS h ON h.id = at.house_id
+		        JOIN
+		            building AS b ON h.building_id = b.id
+		        LEFT JOIN
+		            LATERAL (
+		                SELECT *
+		                FROM price_change AS pc
+		                WHERE pc.advert_id = a.id
+		                ORDER BY pc.created_at DESC
+		                LIMIT 1
+		            ) AS pc ON TRUE
+		        WHERE a.id=$1;`
+	*/
 
-	res := tx.QueryRowContext(ctx, queryGetIdTables, advertUpdateData.ID)
+	res := tx.QueryRowContext(ctx, QueryGetIdTablesUpdateHouseAdvert, advertUpdateData.ID)
 
 	var buildingId, houseId int64
 	var price float64
@@ -1027,26 +1624,28 @@ func (r *AdvertRepo) UpdateHouseAdvertById(ctx context.Context, tx models.Transa
 		return err
 	}
 
-	queryUpdateAdvertById := `UPDATE advert SET type_placement=$1, title=$2, description=$3, phone=$4, is_agent=$5 WHERE id=$6;`
-	queryUpdateBuildingById := `UPDATE building SET floor=$1, material_building=$2, address_id=$3, year_creation=$4 WHERE id=$5;`
-	queryUpdateHouseById := `UPDATE house SET ceiling_height=$1, square_area=$2, square_house=$3, bedroom_count=$4, status_area_house=$5, cottage=$6, status_home_house=$7 WHERE id=$8;`
+	// QueryUpdateAdvertByIdUpdateHouseAdvert = `UPDATE advert SET type_placement=$1, title=$2, description=$3, phone=$4, is_agent=$5 WHERE id=$6;`
+	// QueryUpdateBuildingByIdUpdateHouseAdvert = `UPDATE building SET floor=$1, material_building=$2, address_id=$3, year_creation=$4 WHERE id=$5;`
+	// QueryUpdateHouseByIdUpdateHouseAdvert = `UPDATE house SET ceiling_height=$1, square_area=$2, square_house=$3, bedroom_count=$4, status_area_house=$5, cottage=$6, status_home_house=$7 WHERE id=$8;`
 
-	if _, err := tx.Exec(queryUpdateAdvertById, advertUpdateData.TypeSale, advertUpdateData.Title, advertUpdateData.Description, advertUpdateData.Phone, advertUpdateData.IsAgent, advertUpdateData.ID); err != nil {
+	if _, err := tx.Exec(QueryUpdateAdvertByIdUpdateHouseAdvert, advertUpdateData.TypeSale, advertUpdateData.Title, advertUpdateData.Description, advertUpdateData.Phone, advertUpdateData.IsAgent, advertUpdateData.ID); err != nil {
 		utils.LogError(r.logger, ctx.Value("requestId").(string), utils.RepositoryLayer, adverts.UpdateHouseAdvertByIdMethod, err)
 		return err
 	}
-	if _, err := tx.Exec(queryUpdateBuildingById, advertUpdateData.HouseProperties.Floor, advertUpdateData.Material, id, advertUpdateData.YearCreation, buildingId); err != nil {
+	if _, err := tx.Exec(QueryUpdateBuildingByIdUpdateHouseAdvert, advertUpdateData.HouseProperties.Floor, advertUpdateData.Material, id, advertUpdateData.YearCreation, buildingId); err != nil {
 		utils.LogError(r.logger, ctx.Value("requestId").(string), utils.RepositoryLayer, adverts.UpdateHouseAdvertByIdMethod, err)
 		return err
 	}
-	if _, err := tx.Exec(queryUpdateHouseById, advertUpdateData.HouseProperties.CeilingHeight, advertUpdateData.HouseProperties.SquareArea, advertUpdateData.HouseProperties.SquareHouse, advertUpdateData.HouseProperties.BedroomCount, advertUpdateData.HouseProperties.StatusArea, advertUpdateData.HouseProperties.Cottage, advertUpdateData.HouseProperties.StatusHome, houseId); err != nil {
+	if _, err := tx.Exec(QueryUpdateHouseByIdUpdateHouseAdvert, advertUpdateData.HouseProperties.CeilingHeight, advertUpdateData.HouseProperties.SquareArea, advertUpdateData.HouseProperties.SquareHouse, advertUpdateData.HouseProperties.BedroomCount, advertUpdateData.HouseProperties.StatusArea, advertUpdateData.HouseProperties.Cottage, advertUpdateData.HouseProperties.StatusHome, houseId); err != nil {
 		utils.LogError(r.logger, ctx.Value("requestId").(string), utils.RepositoryLayer, adverts.UpdateHouseAdvertByIdMethod, err)
 		return err
 	}
 	if advertUpdateData.Price != price {
-		queryInsertPriceChange := `INSERT INTO price_change (advert_id, price)
-            VALUES ($1, $2)`
-		if _, err := tx.Exec(queryInsertPriceChange, advertUpdateData.ID, advertUpdateData.Price); err != nil {
+		/*
+					QueryInsertPriceChangeUpdateHouseAdvert = `INSERT INTO price_change (advert_id, price)
+			            VALUES ($1, $2)`
+		*/
+		if _, err := tx.Exec(QueryInsertPriceChangeUpdateHouseAdvert, advertUpdateData.ID, advertUpdateData.Price); err != nil {
 			utils.LogError(r.logger, ctx.Value("requestId").(string), utils.RepositoryLayer, adverts.UpdateHouseAdvertByIdMethod, err)
 			return err
 		}
@@ -1058,30 +1657,32 @@ func (r *AdvertRepo) UpdateHouseAdvertById(ctx context.Context, tx models.Transa
 
 // UpdateFlatAdvertById updates a flat advert in the database.
 func (r *AdvertRepo) UpdateFlatAdvertById(ctx context.Context, tx models.Transaction, advertUpdateData *models.AdvertUpdateData) error {
-	queryGetIdTables := `
-        SELECT
-            b.id as buildingid,
-            f.id as flatid,
-            pc.price
-        FROM
-            advert AS a
-        JOIN
-            advert_type_flat AS at ON a.id = at.advert_id
-        JOIN
-            flat AS f ON f.id = at.flat_id
-        JOIN
-            building AS b ON f.building_id = b.id
-        LEFT JOIN
-            LATERAL (
-                SELECT *
-                FROM price_change AS pc
-                WHERE pc.advert_id = a.id
-                ORDER BY pc.created_at DESC
-                LIMIT 1
-            ) AS pc ON TRUE
-        WHERE a.id=$1;`
+	/*
+			QueryGetIdTablesUpdateFlatAdvert = `
+		        SELECT
+		            b.id as buildingid,
+		            f.id as flatid,
+		            pc.price
+		        FROM
+		            advert AS a
+		        JOIN
+		            advert_type_flat AS at ON a.id = at.advert_id
+		        JOIN
+		            flat AS f ON f.id = at.flat_id
+		        JOIN
+		            building AS b ON f.building_id = b.id
+		        LEFT JOIN
+		            LATERAL (
+		                SELECT *
+		                FROM price_change AS pc
+		                WHERE pc.advert_id = a.id
+		                ORDER BY pc.created_at DESC
+		                LIMIT 1
+		            ) AS pc ON TRUE
+		        WHERE a.id=$1;`
+	*/
 
-	res := tx.QueryRowContext(ctx, queryGetIdTables, advertUpdateData.ID)
+	res := tx.QueryRowContext(ctx, QueryGetIdTablesUpdateFlatAdvert, advertUpdateData.ID)
 
 	var buildingId, flatId int64
 	var price float64
@@ -1120,27 +1721,30 @@ func (r *AdvertRepo) UpdateFlatAdvertById(ctx context.Context, tx models.Transac
 		return err
 	}
 
-	queryUpdateAdvertById := `UPDATE advert SET type_placement=$1, title=$2, description=$3, phone=$4, is_agent=$5 WHERE id=$6;`
-	queryUpdateBuildingById := `UPDATE building SET floor=$1, material_building=$2, address_id=$3, year_creation=$4 WHERE id=$5;`
-	queryUpdateFlatById := `UPDATE flat SET floor=$1, ceiling_height=$2, square_general=$3, bedroom_count=$4, square_residential=$5, apartament=$6 WHERE id=$7;`
+	// QueryUpdateAdvertByIdUpdateFlatAdvert = `UPDATE advert SET type_placement=$1, title=$2, description=$3, phone=$4, is_agent=$5 WHERE id=$6;`
+	// QueryUpdateBuildingByIdUpdateFlatAdvert = `UPDATE building SET floor=$1, material_building=$2, address_id=$3, year_creation=$4 WHERE id=$5;`
+	// QueryUpdateFlatByIdUpdateFlatAdvert = `UPDATE flat SET floor=$1, ceiling_height=$2, square_general=$3, bedroom_count=$4, square_residential=$5, apartament=$6 WHERE id=$7;`
 
-	if _, err := tx.Exec(queryUpdateAdvertById, advertUpdateData.TypeSale, advertUpdateData.Title, advertUpdateData.Description, advertUpdateData.Phone, advertUpdateData.IsAgent, advertUpdateData.ID); err != nil {
+	if _, err := tx.Exec(QueryUpdateAdvertByIdUpdateFlatAdvert, advertUpdateData.TypeSale, advertUpdateData.Title, advertUpdateData.Description, advertUpdateData.Phone, advertUpdateData.IsAgent, advertUpdateData.ID); err != nil {
 		utils.LogError(r.logger, ctx.Value("requestId").(string), utils.RepositoryLayer, adverts.UpdateFlatAdvertByIdMethod, err)
 		return err
 	}
-	if _, err := tx.Exec(queryUpdateBuildingById, advertUpdateData.FlatProperties.FloorGeneral, advertUpdateData.Material, id, advertUpdateData.YearCreation, buildingId); err != nil {
+	if _, err := tx.Exec(QueryUpdateBuildingByIdUpdateFlatAdvert, advertUpdateData.FlatProperties.FloorGeneral, advertUpdateData.Material, id, advertUpdateData.YearCreation, buildingId); err != nil {
 		utils.LogError(r.logger, ctx.Value("requestId").(string), utils.RepositoryLayer, adverts.UpdateFlatAdvertByIdMethod, err)
 		return err
 	}
-	if _, err := tx.Exec(queryUpdateFlatById, advertUpdateData.FlatProperties.Floor, advertUpdateData.FlatProperties.CeilingHeight, advertUpdateData.FlatProperties.SquareGeneral, advertUpdateData.FlatProperties.RoomCount, advertUpdateData.FlatProperties.SquareResidential, advertUpdateData.FlatProperties.Apartment, flatId); err != nil {
+	if _, err := tx.Exec(QueryUpdateFlatByIdUpdateFlatAdvert, advertUpdateData.FlatProperties.Floor, advertUpdateData.FlatProperties.CeilingHeight, advertUpdateData.FlatProperties.SquareGeneral, advertUpdateData.FlatProperties.RoomCount, advertUpdateData.FlatProperties.SquareResidential, advertUpdateData.FlatProperties.Apartment, flatId); err != nil {
 		utils.LogError(r.logger, ctx.Value("requestId").(string), utils.RepositoryLayer, adverts.UpdateFlatAdvertByIdMethod, err)
 		return err
 	}
 
 	if advertUpdateData.Price != price {
-		queryInsertPriceChange := `INSERT INTO price_change (advert_id, price)
-            VALUES ($1, $2)`
-		if _, err := tx.Exec(queryInsertPriceChange, advertUpdateData.ID, advertUpdateData.Price); err != nil {
+		/*
+					QueryInsertPriceChangeUpdateFlatAdvert = `INSERT INTO price_change (advert_id, price)
+			            VALUES ($1, $2)`
+
+		*/
+		if _, err := tx.Exec(QueryInsertPriceChangeUpdateFlatAdvert, advertUpdateData.ID, advertUpdateData.Price); err != nil {
 			utils.LogError(r.logger, ctx.Value("requestId").(string), utils.RepositoryLayer, adverts.UpdateFlatAdvertByIdMethod, err)
 			return err
 		}
@@ -1152,74 +1756,77 @@ func (r *AdvertRepo) UpdateFlatAdvertById(ctx context.Context, tx models.Transac
 
 // GetFlatAdvertById retrieves full information about flat advert from the database.
 func (r *AdvertRepo) GetFlatAdvertById(ctx context.Context, id int64) (*models.AdvertData, error) {
-	query := `
-	SELECT
-		a.id,
-		a.type_placement,
-		a.title,
-		a.description,
-		pc.price,
-		a.phone,
-		a.is_agent,
-		ad.metro,
-		hn.name,
-		s.name,
-		t.name,
-		p.name,
-		ST_AsText(ad.address_point::geometry),
-        f.floor,
-        f.ceiling_height,
-        f.square_general,
-        f.bedroom_count,
-        f.square_residential,
-        f.apartament,
-        b.floor AS floorGeneral,
-        b.year_creation,
-        COALESCE(b.material_building, 'Brick') as material,
-        a.created_at,
-		CASE
-			WHEN fa.advert_id IS NOT NULL AND fa.is_deleted=false THEN true
-			ELSE false
-		END AS is_liked,
-		CASE
-			WHEN sva.advert_id IS NOT NULL THEN true
-			ELSE false
-		END AS is_viewed,
-        cx.id AS complexid,
-        c.photo AS companyphoto,
-        c.name AS companyname,
-        cx.name AS complexname
-    FROM
-        advert AS a
-    JOIN
-        advert_type_flat AS at ON a.id = at.advert_id
-    JOIN
-        flat AS f ON f.id = at.flat_id
-    JOIN
-        building AS b ON f.building_id = b.id
-		JOIN address AS ad ON b.address_id=ad.id
-		JOIN house_name AS hn ON hn.id=ad.house_name_id
-		JOIN street AS s ON s.id=hn.street_id
-		JOIN town AS t ON t.id=s.town_id
-		JOIN province AS p ON p.id=t.province_id
-	LEFT JOIN
-		favourite_advert AS fa ON fa.advert_id=a.id AND fa.user_id=$2
-	LEFT JOIN
-		statistic_view_advert AS sva ON sva.advert_id=a.id AND sva.user_id=$2
-    LEFT JOIN
-        complex AS cx ON b.complex_id = cx.id
-    LEFT JOIN
-        company AS c ON cx.company_id = c.id
-    LEFT JOIN
-        LATERAL (
-            SELECT *
-            FROM price_change AS pc
-            WHERE pc.advert_id = a.id
-            ORDER BY pc.created_at DESC
-            LIMIT 1
-        ) AS pc ON TRUE
-    WHERE
-        a.id = $1 AND a.is_deleted = FALSE;`
+	/*
+			QueryGetFlatAdvertById = `
+			SELECT
+				a.id,
+				a.type_placement,
+				a.title,
+				a.description,
+				pc.price,
+				a.phone,
+				a.is_agent,
+				ad.metro,
+				hn.name,
+				s.name,
+				t.name,
+				p.name,
+				ST_AsText(ad.address_point::geometry),
+		        f.floor,
+		        f.ceiling_height,
+		        f.square_general,
+		        f.bedroom_count,
+		        f.square_residential,
+		        f.apartament,
+		        b.floor AS floorGeneral,
+		        b.year_creation,
+		        COALESCE(b.material_building, 'Brick') as material,
+		        a.created_at,
+				CASE
+					WHEN fa.advert_id IS NOT NULL AND fa.is_deleted=false THEN true
+					ELSE false
+				END AS is_liked,
+				CASE
+					WHEN sva.advert_id IS NOT NULL THEN true
+					ELSE false
+				END AS is_viewed,
+		        cx.id AS complexid,
+		        c.photo AS companyphoto,
+		        c.name AS companyname,
+		        cx.name AS complexname
+		    FROM
+		        advert AS a
+		    JOIN
+		        advert_type_flat AS at ON a.id = at.advert_id
+		    JOIN
+		        flat AS f ON f.id = at.flat_id
+		    JOIN
+		        building AS b ON f.building_id = b.id
+				JOIN address AS ad ON b.address_id=ad.id
+				JOIN house_name AS hn ON hn.id=ad.house_name_id
+				JOIN street AS s ON s.id=hn.street_id
+				JOIN town AS t ON t.id=s.town_id
+				JOIN province AS p ON p.id=t.province_id
+			LEFT JOIN
+				favourite_advert AS fa ON fa.advert_id=a.id AND fa.user_id=$2
+			LEFT JOIN
+				statistic_view_advert AS sva ON sva.advert_id=a.id AND sva.user_id=$2
+		    LEFT JOIN
+		        complex AS cx ON b.complex_id = cx.id
+		    LEFT JOIN
+		        company AS c ON cx.company_id = c.id
+		    LEFT JOIN
+		        LATERAL (
+		            SELECT *
+		            FROM price_change AS pc
+		            WHERE pc.advert_id = a.id
+		            ORDER BY pc.created_at DESC
+		            LIMIT 1
+		        ) AS pc ON TRUE
+		    WHERE
+		        a.id = $1 AND a.is_deleted = FALSE;`
+
+	*/
 
 	userId, ok := ctx.Value(middleware.CookieName).(int64)
 
@@ -1227,7 +1834,7 @@ func (r *AdvertRepo) GetFlatAdvertById(ctx context.Context, id int64) (*models.A
 		userId = 0
 	}
 
-	res := r.db.QueryRowContext(ctx, query, id, userId)
+	res := r.db.QueryRowContext(ctx, QueryGetFlatAdvertById, id, userId)
 
 	advertData := &models.AdvertData{}
 	var floor, floorGeneral, roomCount int
@@ -1305,92 +1912,96 @@ func (r *AdvertRepo) GetFlatAdvertById(ctx context.Context, id int64) (*models.A
 
 // GetSquareAdverts retrieves square adverts from the database.
 func (r *AdvertRepo) GetSquareAdverts(ctx context.Context, pageSize, offset int) ([]*models.AdvertSquareData, error) {
-	queryBaseAdvert := `
-        SELECT
-            a.id,
-            a.type_placement,
-			CASE
-           		WHEN ath.house_id IS NOT NULL THEN 'House'
-           		WHEN atf.flat_id IS NOT NULL THEN 'Flat'
-           		ELSE 'None'
-       		END AS type_advert,
-            i.photo,
-            pc.price,
-            a.created_at
-        FROM
-            advert AS a
-			LEFT JOIN advert_type_house AS ath ON ath.advert_id=a.id
-			LEFT JOIN advert_type_flat AS atf ON atf.advert_id=a.id
-            LEFT JOIN LATERAL (
-                SELECT *
-                FROM price_change AS pc
-                WHERE pc.advert_id = a.id
-                ORDER BY pc.created_at DESC
-                LIMIT 1
-            ) AS pc ON TRUE
-            JOIN image AS i ON i.advert_id = a.id
-        WHERE i.priority = (
-                SELECT MIN(priority)
-                FROM image
-                WHERE advert_id = a.id
-                    AND is_deleted = FALSE
-            )
-            AND i.is_deleted = FALSE
-        ORDER BY
-            a.created_at DESC
-        LIMIT $1
-        OFFSET $2;`
-	queryFlat := `
-        SELECT 
-            f.square_general,
-            f.floor,
-            ad.metro,
-			hn.name,
-			s.name,
-			t.name,
-			p.name,
-            b.floor AS floorgeneral,
-            f.bedroom_count
-        FROM
-            advert AS a
-            JOIN advert_type_flat AS at ON a.id = at.advert_id
-            JOIN flat AS f ON f.id=at.flat_id
-            JOIN building AS b ON f.building_id=b.id
-			JOIN address AS ad ON b.address_id=ad.id
-			JOIN house_name AS hn ON hn.id=ad.house_name_id
-			JOIN street AS s ON s.id=hn.street_id
-			JOIN town AS t ON t.id=s.town_id
-			JOIN province AS p ON p.id=t.province_id
-        WHERE a.id=$1 AND a.is_deleted = FALSE
-        ORDER BY
-            a.created_at DESC;`
-	queryHouse := `
-        	SELECT 
-			ad.metro,
-			hn.name,
-			s.name,
-			t.name,
-			p.name,
-            h.cottage,
-            h.square_house,
-            h.square_area,
-            h.bedroom_count,
-            b.floor
-        FROM
-            advert AS a
-            JOIN advert_type_house AS at ON a.id = at.advert_id
-            JOIN house AS h ON h.id=at.house_id
-            JOIN building AS b ON h.building_id=b.id
-			JOIN address AS ad ON b.address_id=ad.id
-			JOIN house_name AS hn ON hn.id=ad.house_name_id
-			JOIN street AS s ON s.id=hn.street_id
-			JOIN town AS t ON t.id=s.town_id
-			JOIN province AS p ON p.id=t.province_id
-        WHERE a.id=$1
-        ORDER BY
-            a.created_at DESC;`
+	/*
+			QueryBaseAdvertGetSquareAdverts = `
+		        SELECT
+		            a.id,
+		            a.type_placement,
+					CASE
+		           		WHEN ath.house_id IS NOT NULL THEN 'House'
+		           		WHEN atf.flat_id IS NOT NULL THEN 'Flat'
+		           		ELSE 'None'
+		       		END AS type_advert,
+		            i.photo,
+		            pc.price,
+		            a.created_at
+		        FROM
+		            advert AS a
+					LEFT JOIN advert_type_house AS ath ON ath.advert_id=a.id
+					LEFT JOIN advert_type_flat AS atf ON atf.advert_id=a.id
+		            LEFT JOIN LATERAL (
+		                SELECT *
+		                FROM price_change AS pc
+		                WHERE pc.advert_id = a.id
+		                ORDER BY pc.created_at DESC
+		                LIMIT 1
+		            ) AS pc ON TRUE
+		            JOIN image AS i ON i.advert_id = a.id
+		        WHERE i.priority = (
+		                SELECT MIN(priority)
+		                FROM image
+		                WHERE advert_id = a.id
+		                    AND is_deleted = FALSE
+		            )
+		            AND i.is_deleted = FALSE
+		        ORDER BY
+		            a.created_at DESC
+		        LIMIT $1
+		        OFFSET $2;`
 
-	rows, err := r.db.Query(queryBaseAdvert, pageSize, offset)
+			QueryFlatGetSquareAdverts = `
+		        SELECT
+		            f.square_general,
+		            f.floor,
+		            ad.metro,
+					hn.name,
+					s.name,
+					t.name,
+					p.name,
+		            b.floor AS floorgeneral,
+		            f.bedroom_count
+		        FROM
+		            advert AS a
+		            JOIN advert_type_flat AS at ON a.id = at.advert_id
+		            JOIN flat AS f ON f.id=at.flat_id
+		            JOIN building AS b ON f.building_id=b.id
+					JOIN address AS ad ON b.address_id=ad.id
+					JOIN house_name AS hn ON hn.id=ad.house_name_id
+					JOIN street AS s ON s.id=hn.street_id
+					JOIN town AS t ON t.id=s.town_id
+					JOIN province AS p ON p.id=t.province_id
+		        WHERE a.id=$1 AND a.is_deleted = FALSE
+		        ORDER BY
+		            a.created_at DESC;`
+			QueryHouseGetSquareAdverts = `
+		        	SELECT
+					ad.metro,
+					hn.name,
+					s.name,
+					t.name,
+					p.name,
+		            h.cottage,
+		            h.square_house,
+		            h.square_area,
+		            h.bedroom_count,
+		            b.floor
+		        FROM
+		            advert AS a
+		            JOIN advert_type_house AS at ON a.id = at.advert_id
+		            JOIN house AS h ON h.id=at.house_id
+		            JOIN building AS b ON h.building_id=b.id
+					JOIN address AS ad ON b.address_id=ad.id
+					JOIN house_name AS hn ON hn.id=ad.house_name_id
+					JOIN street AS s ON s.id=hn.street_id
+					JOIN town AS t ON t.id=s.town_id
+					JOIN province AS p ON p.id=t.province_id
+		        WHERE a.id=$1
+		        ORDER BY
+		            a.created_at DESC;`
+
+	*/
+
+	rows, err := r.db.Query(QueryBaseAdvertGetSquareAdverts, pageSize, offset)
 	if err != nil {
 		utils.LogError(r.logger, ctx.Value("requestId").(string), utils.RepositoryLayer, adverts.GetSquareAdvertsMethod, err)
 		return nil, err
@@ -1410,7 +2021,7 @@ func (r *AdvertRepo) GetSquareAdverts(ctx context.Context, pageSize, offset int)
 		case string(models.AdvertTypeFlat):
 			var squareGeneral float64
 			var floor, floorGeneral, roomCount int
-			row := r.db.QueryRowContext(ctx, queryFlat, squareAdvert.ID)
+			row := r.db.QueryRowContext(ctx, QueryFlatGetSquareAdverts, squareAdvert.ID)
 			if err := row.Scan(&squareGeneral, &floor, &metro, &houseName, &street, &town, &province, &floorGeneral, &roomCount); err != nil {
 				utils.LogError(r.logger, ctx.Value("requestId").(string), utils.RepositoryLayer, adverts.GetSquareAdvertsMethod, err)
 				return nil, err
@@ -1424,7 +2035,7 @@ func (r *AdvertRepo) GetSquareAdverts(ctx context.Context, pageSize, offset int)
 			var cottage bool
 			var squareHouse, squareArea float64
 			var bedroomCount, floor int
-			row := r.db.QueryRowContext(ctx, queryHouse, squareAdvert.ID)
+			row := r.db.QueryRowContext(ctx, QueryHouseGetSquareAdverts, squareAdvert.ID)
 			if err := row.Scan(&metro, &houseName, &street, &town, &province, &cottage, &squareHouse, &squareArea, &bedroomCount, &floor); err != nil {
 				utils.LogError(r.logger, ctx.Value("requestId").(string), utils.RepositoryLayer, adverts.GetSquareAdvertsMethod, err)
 				return nil, err
@@ -1453,106 +2064,159 @@ func (r *AdvertRepo) GetSquareAdverts(ctx context.Context, pageSize, offset int)
 
 // GetRectangleAdverts retrieves rectangle adverts from the database with search.
 func (r *AdvertRepo) GetRectangleAdverts(ctx context.Context, advertFilter models.AdvertFilter) (*models.AdvertDataPage, error) {
-	queryBaseAdvert := `
-        SELECT
-			a.id,
-			a.title,
-			a.description,
-			CASE
-			   WHEN ath.house_id IS NOT NULL THEN 'House'
-			   WHEN atf.flat_id IS NOT NULL THEN 'Flat'
-			   ELSE 'None'
-		    END AS type_advert, 
-            CASE
-                WHEN atf.flat_id IS NOT NULL THEN f.bedroom_count
-                WHEN ath.house_id IS NOT NULL THEN h.bedroom_count
-                ELSE 0
-            END AS rcount,
-            a.phone,
-            a.type_placement,
-            pc.price,
-            i.photo,
-            a.created_at
-        FROM
-            advert AS a
-            LEFT JOIN advert_type_house AS ath ON a.id = ath.advert_id
-			LEFT JOIN advert_type_flat AS atf ON a.id = atf.advert_id
-            LEFT JOIN flat AS f ON f.id = atf.flat_id
-            LEFT JOIN house AS h ON h.id = ath.house_id
-            JOIN building AS b ON (f.building_id = b.id OR h.building_id = b.id)
-			JOIN address AS ad ON b.address_id=ad.id
-			JOIN house_name AS hn ON hn.id=ad.house_name_id
-			JOIN street AS s ON s.id=hn.street_id
-			JOIN town AS t ON t.id=s.town_id
-			JOIN province AS p ON p.id=t.province_id
-            LEFT JOIN LATERAL (
-                SELECT *
-                FROM price_change AS pc
-                WHERE pc.advert_id = a.id
-                ORDER BY pc.created_at DESC
-                LIMIT 1
-            ) AS pc ON TRUE
-            JOIN image AS i ON i.advert_id = a.id
-        WHERE i.priority = (
-                SELECT MIN(priority)
-                FROM image
-                WHERE advert_id = a.id
-                    AND is_deleted = FALSE
-            )
-            AND i.is_deleted = FALSE
-            AND a.is_deleted = FALSE
-            AND pc.price >= $1
-            AND pc.price <= $2
-            AND CONCAT_WS(', ', COALESCE(p.name, ''), COALESCE(t.name, ''), COALESCE(s.name, ''), COALESCE(hn.name, '')) ILIKE $3`
-	queryFlat := `
-        SELECT
-            f.square_general,
-            f.floor,
-			ST_AsText(ad.address_point::geometry),
-			ad.metro,
-			hn.name,
-			s.name,
-			t.name,
-			p.name,
-            b.floor AS floorgeneral
-        FROM
-            advert AS a
-            JOIN advert_type_flat AS at ON a.id = at.advert_id
-            JOIN flat AS f ON f.id = at.flat_id
-            JOIN building AS b ON f.building_id = b.id
-			JOIN address AS ad ON b.address_id=ad.id
-			JOIN house_name AS hn ON hn.id=ad.house_name_id
-			JOIN street AS s ON s.id=hn.street_id
-			JOIN town AS t ON t.id=s.town_id
-			JOIN province AS p ON p.id=t.province_id
-        WHERE a.id = $1
-        ORDER BY
-            a.created_at DESC;`
-	queryHouse := `
-        SELECT
-			ST_AsText(ad.address_point::geometry),
-			ad.metro,
-			hn.name,
-			s.name,
-			t.name,
-			p.name,
-            h.cottage,
-            h.square_house,
-            h.square_area,
-            b.floor
-        FROM
-			advert AS a
-			JOIN advert_type_house AS at ON a.id = at.advert_id
-			JOIN house AS h ON h.id = at.house_id
-			JOIN building AS b ON h.building_id = b.id
-			JOIN address AS ad ON b.address_id=ad.id
-			JOIN house_name AS hn ON hn.id=ad.house_name_id
-			JOIN street AS s ON s.id=hn.street_id
-			JOIN town AS t ON t.id=s.town_id
-			JOIN province AS p ON p.id=t.province_id
-        WHERE a.id = $1
-        ORDER BY
-            a.created_at DESC;`
+	/*
+			QueryBaseAdvertGetRectangleAdverts = `
+		        SELECT
+					a.id,
+					a.title,
+					a.description,
+					CASE
+					   WHEN ath.house_id IS NOT NULL THEN 'House'
+					   WHEN atf.flat_id IS NOT NULL THEN 'Flat'
+					   ELSE 'None'
+				    END AS type_advert,
+		            CASE
+		                WHEN atf.flat_id IS NOT NULL THEN f.bedroom_count
+		                WHEN ath.house_id IS NOT NULL THEN h.bedroom_count
+		                ELSE 0
+		            END AS rcount,
+		            a.phone,
+		            a.type_placement,
+		            pc.price,
+		            i.photo,
+		            a.created_at
+		        FROM
+		            advert AS a
+		            LEFT JOIN advert_type_house AS ath ON a.id = ath.advert_id
+					LEFT JOIN advert_type_flat AS atf ON a.id = atf.advert_id
+		            LEFT JOIN flat AS f ON f.id = atf.flat_id
+		            LEFT JOIN house AS h ON h.id = ath.house_id
+		            JOIN building AS b ON (f.building_id = b.id OR h.building_id = b.id)
+					JOIN address AS ad ON b.address_id=ad.id
+					JOIN house_name AS hn ON hn.id=ad.house_name_id
+					JOIN street AS s ON s.id=hn.street_id
+					JOIN town AS t ON t.id=s.town_id
+					JOIN province AS p ON p.id=t.province_id
+		            LEFT JOIN LATERAL (
+		                SELECT *
+		                FROM price_change AS pc
+		                WHERE pc.advert_id = a.id
+		                ORDER BY pc.created_at DESC
+		                LIMIT 1
+		            ) AS pc ON TRUE
+		            JOIN image AS i ON i.advert_id = a.id
+		        WHERE i.priority = (
+		                SELECT MIN(priority)
+		                FROM image
+		                WHERE advert_id = a.id
+		                    AND is_deleted = FALSE
+		            )
+		            AND i.is_deleted = FALSE
+		            AND a.is_deleted = FALSE
+		            AND pc.price >= $1
+		            AND pc.price <= $2
+		            AND CONCAT_WS(', ', COALESCE(p.name, ''), COALESCE(t.name, ''), COALESCE(s.name, ''), COALESCE(hn.name, '')) ILIKE $3`
+			QueryFlatGetRectangleAdverts = `
+		        SELECT
+		            f.square_general,
+		            f.floor,
+					ST_AsText(ad.address_point::geometry),
+					ad.metro,
+					hn.name,
+					s.name,
+					t.name,
+					p.name,
+		            b.floor AS floorgeneral
+		        FROM
+		            advert AS a
+		            JOIN advert_type_flat AS at ON a.id = at.advert_id
+		            JOIN flat AS f ON f.id = at.flat_id
+		            JOIN building AS b ON f.building_id = b.id
+					JOIN address AS ad ON b.address_id=ad.id
+					JOIN house_name AS hn ON hn.id=ad.house_name_id
+					JOIN street AS s ON s.id=hn.street_id
+					JOIN town AS t ON t.id=s.town_id
+					JOIN province AS p ON p.id=t.province_id
+		        WHERE a.id = $1
+		        ORDER BY
+		            a.created_at DESC;`
+			QueryHouseGetRectangleAdverts = `
+		        SELECT
+					ST_AsText(ad.address_point::geometry),
+					ad.metro,
+					hn.name,
+					s.name,
+					t.name,
+					p.name,
+		            h.cottage,
+		            h.square_house,
+		            h.square_area,
+		            b.floor
+		        FROM
+					advert AS a
+					JOIN advert_type_house AS at ON a.id = at.advert_id
+					JOIN house AS h ON h.id = at.house_id
+					JOIN building AS b ON h.building_id = b.id
+					JOIN address AS ad ON b.address_id=ad.id
+					JOIN house_name AS hn ON hn.id=ad.house_name_id
+					JOIN street AS s ON s.id=hn.street_id
+					JOIN town AS t ON t.id=s.town_id
+					JOIN province AS p ON p.id=t.province_id
+		        WHERE a.id = $1
+		        ORDER BY
+		            a.created_at DESC;`
+	*/
+	QueryBaseAdvertGetRectangleAdverts := `
+		        SELECT
+					a.id,
+					a.title,
+					a.description,
+					CASE
+					   WHEN ath.house_id IS NOT NULL THEN 'House'
+					   WHEN atf.flat_id IS NOT NULL THEN 'Flat'
+					   ELSE 'None'
+				    END AS type_advert,
+		            CASE
+		                WHEN atf.flat_id IS NOT NULL THEN f.bedroom_count
+		                WHEN ath.house_id IS NOT NULL THEN h.bedroom_count
+		                ELSE 0
+		            END AS rcount,
+		            a.phone,
+		            a.type_placement,
+		            pc.price,
+		            i.photo,
+		            a.created_at
+		        FROM
+		            advert AS a
+		            LEFT JOIN advert_type_house AS ath ON a.id = ath.advert_id
+					LEFT JOIN advert_type_flat AS atf ON a.id = atf.advert_id
+		            LEFT JOIN flat AS f ON f.id = atf.flat_id
+		            LEFT JOIN house AS h ON h.id = ath.house_id
+		            JOIN building AS b ON (f.building_id = b.id OR h.building_id = b.id)
+					JOIN address AS ad ON b.address_id=ad.id
+					JOIN house_name AS hn ON hn.id=ad.house_name_id
+					JOIN street AS s ON s.id=hn.street_id
+					JOIN town AS t ON t.id=s.town_id
+					JOIN province AS p ON p.id=t.province_id
+		            LEFT JOIN LATERAL (
+		                SELECT *
+		                FROM price_change AS pc
+		                WHERE pc.advert_id = a.id
+		                ORDER BY pc.created_at DESC
+		                LIMIT 1
+		            ) AS pc ON TRUE
+		            JOIN image AS i ON i.advert_id = a.id
+		        WHERE i.priority = (
+		                SELECT MIN(priority)
+		                FROM image
+		                WHERE advert_id = a.id
+		                    AND is_deleted = FALSE
+		            )
+		            AND i.is_deleted = FALSE
+		            AND a.is_deleted = FALSE
+		            AND pc.price >= $1
+		            AND pc.price <= $2
+		            AND CONCAT_WS(', ', COALESCE(p.name, ''), COALESCE(t.name, ''), COALESCE(s.name, ''), COALESCE(hn.name, '')) ILIKE $3`
 
 	pageInfo := &models.PageInfo{}
 
@@ -1562,25 +2226,25 @@ func (r *AdvertRepo) GetRectangleAdverts(ctx context.Context, advertFilter model
 	advertFilter.Address = "%" + advertFilter.Address + "%"
 
 	if advertFilter.DealType != "" {
-		queryBaseAdvert += " AND a.type_placement = $" + fmt.Sprint(i) + " "
+		QueryBaseAdvertGetRectangleAdverts += " AND a.type_placement = $" + fmt.Sprint(i) + " "
 		argsForQuery = append(argsForQuery, advertFilter.DealType)
 		i++
 	}
 
 	if advertFilter.AdvertType != "" {
-		queryBaseAdvert = "SELECT * FROM (" + queryBaseAdvert + ") AS subqueryforadverttypecalculate WHERE type_advert = $" + fmt.Sprint(i) + " "
+		QueryBaseAdvertGetRectangleAdverts = "SELECT * FROM (" + QueryBaseAdvertGetRectangleAdverts + ") AS subqueryforadverttypecalculate WHERE type_advert = $" + fmt.Sprint(i) + " "
 		argsForQuery = append(argsForQuery, advertFilter.AdvertType)
 		i++
 	}
 
 	if advertFilter.RoomCount != 0 {
-		queryBaseAdvert = "SELECT * FROM (" + queryBaseAdvert + ") AS subqueryforroomcountcalculate WHERE rcount = $" + fmt.Sprint(i) + " "
+		QueryBaseAdvertGetRectangleAdverts = "SELECT * FROM (" + QueryBaseAdvertGetRectangleAdverts + ") AS subqueryforroomcountcalculate WHERE rcount = $" + fmt.Sprint(i) + " "
 		argsForQuery = append(argsForQuery, advertFilter.RoomCount)
 		i++
 	}
 
-	queryCount := "SELECT COUNT(*) FROM (" + queryBaseAdvert + ") AS subqueryforpaginate"
-	queryBaseAdvert += " ORDER BY created_at DESC LIMIT $" + fmt.Sprint(i) + " OFFSET $" + fmt.Sprint(i+1) + ";"
+	queryCount := "SELECT COUNT(*) FROM (" + QueryBaseAdvertGetRectangleAdverts + ") AS subqueryforpaginate"
+	QueryBaseAdvertGetRectangleAdverts += " ORDER BY created_at DESC LIMIT $" + fmt.Sprint(i) + " OFFSET $" + fmt.Sprint(i+1) + ";"
 	rowCountQuery := r.db.QueryRowContext(ctx, queryCount, append([]interface{}{advertFilter.MinPrice, advertFilter.MaxPrice, advertFilter.Address}, argsForQuery...)...)
 
 	if err := rowCountQuery.Scan(&pageInfo.TotalElements); err != nil {
@@ -1589,7 +2253,7 @@ func (r *AdvertRepo) GetRectangleAdverts(ctx context.Context, advertFilter model
 	}
 
 	argsForQuery = append(argsForQuery, advertFilter.Page, advertFilter.Offset)
-	rows, err := r.db.Query(queryBaseAdvert, append([]interface{}{advertFilter.MinPrice, advertFilter.MaxPrice, advertFilter.Address}, argsForQuery...)...)
+	rows, err := r.db.Query(QueryBaseAdvertGetRectangleAdverts, append([]interface{}{advertFilter.MinPrice, advertFilter.MaxPrice, advertFilter.Address}, argsForQuery...)...)
 
 	if err != nil {
 		utils.LogError(r.logger, ctx.Value("requestId").(string), utils.RepositoryLayer, adverts.GetRectangleAdvertsMethod, err)
@@ -1616,7 +2280,7 @@ func (r *AdvertRepo) GetRectangleAdverts(ctx context.Context, advertFilter model
 		case string(models.AdvertTypeFlat):
 			var squareGeneral float64
 			var floor, floorGeneral int
-			row := r.db.QueryRowContext(ctx, queryFlat, rectangleAdvert.ID)
+			row := r.db.QueryRowContext(ctx, QueryBaseAdvertGetRectangleAdverts, rectangleAdvert.ID)
 
 			if err := row.Scan(&squareGeneral, &floor, &rectangleAdvert.AddressPoint, &metro, &houseName, &street, &town, &province, &floorGeneral); err != nil {
 				utils.LogError(r.logger, ctx.Value("requestId").(string), utils.RepositoryLayer, adverts.GetRectangleAdvertsMethod, err)
@@ -1632,7 +2296,7 @@ func (r *AdvertRepo) GetRectangleAdverts(ctx context.Context, advertFilter model
 			var cottage bool
 			var squareHouse, squareArea float64
 			var floor int
-			row := r.db.QueryRowContext(ctx, queryHouse, rectangleAdvert.ID)
+			row := r.db.QueryRowContext(ctx, QueryHouseGetRectangleAdverts, rectangleAdvert.ID)
 
 			if err := row.Scan(&rectangleAdvert.AddressPoint, &metro, &houseName, &street, &town, &province, &cottage, &squareHouse, &squareArea, &floor); err != nil {
 				utils.LogError(r.logger, ctx.Value("requestId").(string), utils.RepositoryLayer, adverts.GetRectangleAdvertsMethod, err)
@@ -1677,112 +2341,114 @@ func (r *AdvertRepo) GetRectangleAdverts(ctx context.Context, advertFilter model
 
 // GetRectangleAdvertsByUserId retrieves rectangle adverts from the database by user id.
 func (r *AdvertRepo) GetRectangleAdvertsByUserId(ctx context.Context, pageSize, offset int, userId int64) ([]*models.AdvertRectangleData, error) {
-	queryBaseAdvert := `
-        SELECT
-			a.id,
-			a.title,
-			a.description,
-			CASE
-			   WHEN ath.house_id IS NOT NULL THEN 'House'
-			   WHEN atf.flat_id IS NOT NULL THEN 'Flat'
-			   ELSE 'None'
-		    END AS type_advert, 
-            CASE
-                WHEN atf.flat_id IS NOT NULL THEN f.bedroom_count
-                WHEN ath.house_id IS NOT NULL THEN h.bedroom_count
-                ELSE 0
-            END AS rcount,
-            a.phone,
-            a.type_placement,
-            pc.price,
-            i.photo,
-            a.created_at,
-			CASE
-				WHEN fa.advert_id IS NOT NULL AND fa.is_deleted=false THEN true
-				ELSE false
-			END AS is_liked
-        FROM
-            advert AS a
-            LEFT JOIN advert_type_house AS ath ON a.id = ath.advert_id
-			LEFT JOIN advert_type_flat AS atf ON a.id = atf.advert_id
-			LEFT JOIN favourite_advert AS fa ON a.id=fa.advert_id AND fa.user_id=$1
-            LEFT JOIN flat AS f ON f.id = atf.flat_id
-            LEFT JOIN house AS h ON h.id = ath.house_id
-            JOIN building AS b ON (f.building_id = b.id OR h.building_id = b.id)
-			JOIN address AS ad ON b.address_id=ad.id
-			JOIN house_name AS hn ON hn.id=ad.house_name_id
-			JOIN street AS s ON s.id=hn.street_id
-			JOIN town AS t ON t.id=s.town_id
-			JOIN province AS p ON p.id=t.province_id
-            LEFT JOIN LATERAL (
-                SELECT *
-                FROM price_change AS pc
-                WHERE pc.advert_id = a.id
-                ORDER BY pc.created_at DESC
-                LIMIT 1
-            ) AS pc ON TRUE
-            JOIN image AS i ON i.advert_id = a.id
-        WHERE i.priority = (
-                SELECT MIN(priority)
-                FROM image
-                WHERE advert_id = a.id
-                    AND is_deleted = FALSE
-            )
-            AND i.is_deleted = FALSE
-            AND a.is_deleted = FALSE
-            AND a.user_id = $1
-			ORDER BY a.created_at DESC
-			LIMIT $2
-			OFFSET $3`
-	queryFlat := `
-        SELECT
-            f.square_general,
-            f.floor,
-			ad.metro,
-			hn.name,
-			s.name,
-			t.name,
-			p.name,
-            b.floor AS floorgeneral
-        FROM
-            advert AS a
-            JOIN advert_type_flat AS at ON a.id = at.advert_id
-            JOIN flat AS f ON f.id = at.flat_id
-            JOIN building AS b ON f.building_id = b.id
-			JOIN address AS ad ON b.address_id=ad.id
-			JOIN house_name AS hn ON hn.id=ad.house_name_id
-			JOIN street AS s ON s.id=hn.street_id
-			JOIN town AS t ON t.id=s.town_id
-			JOIN province AS p ON p.id=t.province_id
-        WHERE a.id = $1
-        ORDER BY
-            a.created_at DESC;`
-	queryHouse := `
-        SELECT
-			ad.metro,
-			hn.name,
-			s.name,
-			t.name,
-			p.name,
-            h.cottage,
-            h.square_house,
-            h.square_area,
-            b.floor
-        FROM
-			advert AS a
-			JOIN advert_type_house AS at ON a.id = at.advert_id
-			JOIN house AS h ON h.id = at.house_id
-			JOIN building AS b ON h.building_id = b.id
-			JOIN address AS ad ON b.address_id=ad.id
-			JOIN house_name AS hn ON hn.id=ad.house_name_id
-			JOIN street AS s ON s.id=hn.street_id
-			JOIN town AS t ON t.id=s.town_id
-			JOIN province AS p ON p.id=t.province_id
-        WHERE a.id = $1
-        ORDER BY
-            a.created_at DESC;`
+	/*
+			QueryBaseAdvertGetRectangleAdvertsByUser = `
+		        SELECT
+					a.id,
+					a.title,
+					a.description,
+					CASE
+					   WHEN ath.house_id IS NOT NULL THEN 'House'
+					   WHEN atf.flat_id IS NOT NULL THEN 'Flat'
+					   ELSE 'None'
+				    END AS type_advert,
+		            CASE
+		                WHEN atf.flat_id IS NOT NULL THEN f.bedroom_count
+		                WHEN ath.house_id IS NOT NULL THEN h.bedroom_count
+		                ELSE 0
+		            END AS rcount,
+		            a.phone,
+		            a.type_placement,
+		            pc.price,
+		            i.photo,
+		            a.created_at,
+					CASE
+						WHEN fa.advert_id IS NOT NULL AND fa.is_deleted=false THEN true
+						ELSE false
+					END AS is_liked
+		        FROM
+		            advert AS a
+		            LEFT JOIN advert_type_house AS ath ON a.id = ath.advert_id
+					LEFT JOIN advert_type_flat AS atf ON a.id = atf.advert_id
+					LEFT JOIN favourite_advert AS fa ON a.id=fa.advert_id AND fa.user_id=$1
+		            LEFT JOIN flat AS f ON f.id = atf.flat_id
+		            LEFT JOIN house AS h ON h.id = ath.house_id
+		            JOIN building AS b ON (f.building_id = b.id OR h.building_id = b.id)
+					JOIN address AS ad ON b.address_id=ad.id
+					JOIN house_name AS hn ON hn.id=ad.house_name_id
+					JOIN street AS s ON s.id=hn.street_id
+					JOIN town AS t ON t.id=s.town_id
+					JOIN province AS p ON p.id=t.province_id
+		            LEFT JOIN LATERAL (
+		                SELECT *
+		                FROM price_change AS pc
+		                WHERE pc.advert_id = a.id
+		                ORDER BY pc.created_at DESC
+		                LIMIT 1
+		            ) AS pc ON TRUE
+		            JOIN image AS i ON i.advert_id = a.id
+		        WHERE i.priority = (
+		                SELECT MIN(priority)
+		                FROM image
+		                WHERE advert_id = a.id
+		                    AND is_deleted = FALSE
+		            )
+		            AND i.is_deleted = FALSE
+		            AND a.is_deleted = FALSE
+		            AND a.user_id = $1
+					ORDER BY a.created_at DESC
+					LIMIT $2
+					OFFSET $3`
+			QueryFlatGetRectangleAdvertsByUser = `
+		        SELECT
+		            f.square_general,
+		            f.floor,
+					ad.metro,
+					hn.name,
+					s.name,
+					t.name,
+					p.name,
+		            b.floor AS floorgeneral
+		        FROM
+		            advert AS a
+		            JOIN advert_type_flat AS at ON a.id = at.advert_id
+		            JOIN flat AS f ON f.id = at.flat_id
+		            JOIN building AS b ON f.building_id = b.id
+					JOIN address AS ad ON b.address_id=ad.id
+					JOIN house_name AS hn ON hn.id=ad.house_name_id
+					JOIN street AS s ON s.id=hn.street_id
+					JOIN town AS t ON t.id=s.town_id
+					JOIN province AS p ON p.id=t.province_id
+		        WHERE a.id = $1
+		        ORDER BY
+		            a.created_at DESC;`
+			QueryHouseGetRectangleAdvertsByUser = `
+		        SELECT
+					ad.metro,
+					hn.name,
+					s.name,
+					t.name,
+					p.name,
+		            h.cottage,
+		            h.square_house,
+		            h.square_area,
+		            b.floor
+		        FROM
+					advert AS a
+					JOIN advert_type_house AS at ON a.id = at.advert_id
+					JOIN house AS h ON h.id = at.house_id
+					JOIN building AS b ON h.building_id = b.id
+					JOIN address AS ad ON b.address_id=ad.id
+					JOIN house_name AS hn ON hn.id=ad.house_name_id
+					JOIN street AS s ON s.id=hn.street_id
+					JOIN town AS t ON t.id=s.town_id
+					JOIN province AS p ON p.id=t.province_id
+		        WHERE a.id = $1
+		        ORDER BY
+		            a.created_at DESC;`
+	*/
 
-	rows, err := r.db.Query(queryBaseAdvert, userId, pageSize, offset)
+	rows, err := r.db.Query(QueryBaseAdvertGetRectangleAdvertsByUser, userId, pageSize, offset)
 	if err != nil {
 		utils.LogError(r.logger, ctx.Value("requestId").(string), utils.RepositoryLayer, adverts.GetRectangleAdvertsByUserIdMethod, err)
 		return nil, err
@@ -1808,7 +2474,7 @@ func (r *AdvertRepo) GetRectangleAdvertsByUserId(ctx context.Context, pageSize, 
 		case string(models.AdvertTypeFlat):
 			var squareGeneral float64
 			var floor, floorGeneral int
-			row := r.db.QueryRowContext(ctx, queryFlat, rectangleAdvert.ID)
+			row := r.db.QueryRowContext(ctx, QueryFlatGetRectangleAdvertsByUser, rectangleAdvert.ID)
 
 			if err := row.Scan(&squareGeneral, &floor, &metro, &houseName, &street, &town, &province, &floorGeneral); err != nil {
 				utils.LogError(r.logger, ctx.Value("requestId").(string), utils.RepositoryLayer, adverts.GetRectangleAdvertsByUserIdMethod, err)
@@ -1824,7 +2490,7 @@ func (r *AdvertRepo) GetRectangleAdvertsByUserId(ctx context.Context, pageSize, 
 			var cottage bool
 			var squareHouse, squareArea float64
 			var floor int
-			row := r.db.QueryRowContext(ctx, queryHouse, rectangleAdvert.ID)
+			row := r.db.QueryRowContext(ctx, QueryHouseGetRectangleAdvertsByUser, rectangleAdvert.ID)
 
 			if err := row.Scan(&metro, &houseName, &street, &town, &province, &cottage, &squareHouse, &squareArea, &floor); err != nil {
 				utils.LogError(r.logger, ctx.Value("requestId").(string), utils.RepositoryLayer, adverts.GetRectangleAdvertsByUserIdMethod, err)
@@ -1855,107 +2521,110 @@ func (r *AdvertRepo) GetRectangleAdvertsByUserId(ctx context.Context, pageSize, 
 
 // GetRectangleAdvertsByComplexId retrieves rectangle adverts from the database by complex id.
 func (r *AdvertRepo) GetRectangleAdvertsByComplexId(ctx context.Context, pageSize, offset int, complexId int64) ([]*models.AdvertRectangleData, error) {
-	queryBaseAdvert := `
-        SELECT
-			a.id,
-			a.title,
-			a.description,
-			CASE
-			   WHEN ath.house_id IS NOT NULL THEN 'House'
-			   WHEN atf.flat_id IS NOT NULL THEN 'Flat'
-			   ELSE 'None'
-		    END AS type_advert, 
-            CASE
-                WHEN atf.flat_id IS NOT NULL THEN f.bedroom_count
-                WHEN ath.house_id IS NOT NULL THEN h.bedroom_count
-                ELSE 0
-            END AS rcount,
-            a.phone,
-            a.type_placement,
-            pc.price,
-            i.photo,
-            a.created_at
-        FROM
-            advert AS a
-            LEFT JOIN advert_type_house AS ath ON a.id = ath.advert_id
-			LEFT JOIN advert_type_flat AS atf ON a.id = atf.advert_id
-            LEFT JOIN flat AS f ON f.id = atf.flat_id
-            LEFT JOIN house AS h ON h.id = ath.house_id
-            JOIN building AS b ON (f.building_id = b.id OR h.building_id = b.id)
-			JOIN address AS ad ON b.address_id=ad.id
-			JOIN house_name AS hn ON hn.id=ad.house_name_id
-			JOIN street AS s ON s.id=hn.street_id
-			JOIN town AS t ON t.id=s.town_id
-			JOIN province AS p ON p.id=t.province_id
-            LEFT JOIN LATERAL (
-                SELECT *
-                FROM price_change AS pc
-                WHERE pc.advert_id = a.id
-                ORDER BY pc.created_at DESC
-                LIMIT 1
-            ) AS pc ON TRUE
-            JOIN image AS i ON i.advert_id = a.id
-        WHERE i.priority = (
-                SELECT MIN(priority)
-                FROM image
-                WHERE advert_id = a.id
-                    AND is_deleted = FALSE
-            )
-            AND i.is_deleted = FALSE
-            AND a.is_deleted = FALSE
-            AND b.complex_id = $1
-			ORDER BY a.created_at DESC
-			LIMIT $2
-			OFFSET $3`
-	queryFlat := `
-        SELECT
-            f.square_general,
-            f.floor,
-			ad.metro,
-			hn.name,
-			s.name,
-			t.name,
-			p.name,
-            b.floor AS floorgeneral
-        FROM
-            advert AS a
-            JOIN advert_type_flat AS at ON a.id = at.advert_id
-            JOIN flat AS f ON f.id = at.flat_id
-            JOIN building AS b ON f.building_id = b.id
-			JOIN address AS ad ON b.address_id=ad.id
-			JOIN house_name AS hn ON hn.id=ad.house_name_id
-			JOIN street AS s ON s.id=hn.street_id
-			JOIN town AS t ON t.id=s.town_id
-			JOIN province AS p ON p.id=t.province_id
-        WHERE a.id = $1
-        ORDER BY
-            a.created_at DESC;`
-	queryHouse := `
-        SELECT
-			ad.metro,
-			hn.name,
-			s.name,
-			t.name,
-			p.name,
-            h.cottage,
-            h.square_house,
-            h.square_area,
-            b.floor
-        FROM
-			advert AS a
-			JOIN advert_type_house AS at ON a.id = at.advert_id
-			JOIN house AS h ON h.id = at.house_id
-			JOIN building AS b ON h.building_id = b.id
-			JOIN address AS ad ON b.address_id=ad.id
-			JOIN house_name AS hn ON hn.id=ad.house_name_id
-			JOIN street AS s ON s.id=hn.street_id
-			JOIN town AS t ON t.id=s.town_id
-			JOIN province AS p ON p.id=t.province_id
-        WHERE a.id = $1
-        ORDER BY
-            a.created_at DESC;`
+	/*
+			QueryBaseAdvertGetRectangleAdvertsByComplex = `
+		        SELECT
+					a.id,
+					a.title,
+					a.description,
+					CASE
+					   WHEN ath.house_id IS NOT NULL THEN 'House'
+					   WHEN atf.flat_id IS NOT NULL THEN 'Flat'
+					   ELSE 'None'
+				    END AS type_advert,
+		            CASE
+		                WHEN atf.flat_id IS NOT NULL THEN f.bedroom_count
+		                WHEN ath.house_id IS NOT NULL THEN h.bedroom_count
+		                ELSE 0
+		            END AS rcount,
+		            a.phone,
+		            a.type_placement,
+		            pc.price,
+		            i.photo,
+		            a.created_at
+		        FROM
+		            advert AS a
+		            LEFT JOIN advert_type_house AS ath ON a.id = ath.advert_id
+					LEFT JOIN advert_type_flat AS atf ON a.id = atf.advert_id
+		            LEFT JOIN flat AS f ON f.id = atf.flat_id
+		            LEFT JOIN house AS h ON h.id = ath.house_id
+		            JOIN building AS b ON (f.building_id = b.id OR h.building_id = b.id)
+					JOIN address AS ad ON b.address_id=ad.id
+					JOIN house_name AS hn ON hn.id=ad.house_name_id
+					JOIN street AS s ON s.id=hn.street_id
+					JOIN town AS t ON t.id=s.town_id
+					JOIN province AS p ON p.id=t.province_id
+		            LEFT JOIN LATERAL (
+		                SELECT *
+		                FROM price_change AS pc
+		                WHERE pc.advert_id = a.id
+		                ORDER BY pc.created_at DESC
+		                LIMIT 1
+		            ) AS pc ON TRUE
+		            JOIN image AS i ON i.advert_id = a.id
+		        WHERE i.priority = (
+		                SELECT MIN(priority)
+		                FROM image
+		                WHERE advert_id = a.id
+		                    AND is_deleted = FALSE
+		            )
+		            AND i.is_deleted = FALSE
+		            AND a.is_deleted = FALSE
+		            AND b.complex_id = $1
+					ORDER BY a.created_at DESC
+					LIMIT $2
+					OFFSET $3`
+			QueryFlatGetRectangleAdvertsByComplex := `
+		        SELECT
+		            f.square_general,
+		            f.floor,
+					ad.metro,
+					hn.name,
+					s.name,
+					t.name,
+					p.name,
+		            b.floor AS floorgeneral
+		        FROM
+		            advert AS a
+		            JOIN advert_type_flat AS at ON a.id = at.advert_id
+		            JOIN flat AS f ON f.id = at.flat_id
+		            JOIN building AS b ON f.building_id = b.id
+					JOIN address AS ad ON b.address_id=ad.id
+					JOIN house_name AS hn ON hn.id=ad.house_name_id
+					JOIN street AS s ON s.id=hn.street_id
+					JOIN town AS t ON t.id=s.town_id
+					JOIN province AS p ON p.id=t.province_id
+		        WHERE a.id = $1
+		        ORDER BY
+		            a.created_at DESC;`
+			QueryHouseGetRectangleAdvertsByComplex := `
+		        SELECT
+					ad.metro,
+					hn.name,
+					s.name,
+					t.name,
+					p.name,
+		            h.cottage,
+		            h.square_house,
+		            h.square_area,
+		            b.floor
+		        FROM
+					advert AS a
+					JOIN advert_type_house AS at ON a.id = at.advert_id
+					JOIN house AS h ON h.id = at.house_id
+					JOIN building AS b ON h.building_id = b.id
+					JOIN address AS ad ON b.address_id=ad.id
+					JOIN house_name AS hn ON hn.id=ad.house_name_id
+					JOIN street AS s ON s.id=hn.street_id
+					JOIN town AS t ON t.id=s.town_id
+					JOIN province AS p ON p.id=t.province_id
+		        WHERE a.id = $1
+		        ORDER BY
+		            a.created_at DESC;`
 
-	rows, err := r.db.Query(queryBaseAdvert, complexId, pageSize, offset)
+	*/
+
+	rows, err := r.db.Query(QueryBaseAdvertGetRectangleAdvertsByComplex, complexId, pageSize, offset)
 	if err != nil {
 		utils.LogError(r.logger, ctx.Value("requestId").(string), utils.RepositoryLayer, adverts.GetRectangleAdvertsByUserIdMethod, err)
 		return nil, err
@@ -1981,7 +2650,7 @@ func (r *AdvertRepo) GetRectangleAdvertsByComplexId(ctx context.Context, pageSiz
 		case string(models.AdvertTypeFlat):
 			var squareGeneral float64
 			var floor, floorGeneral int
-			row := r.db.QueryRowContext(ctx, queryFlat, rectangleAdvert.ID)
+			row := r.db.QueryRowContext(ctx, QueryFlatGetRectangleAdvertsByComplex, rectangleAdvert.ID)
 
 			if err := row.Scan(&squareGeneral, &floor, &metro, &houseName, &street, &town, &province, &floorGeneral); err != nil {
 				utils.LogError(r.logger, ctx.Value("requestId").(string), utils.RepositoryLayer, adverts.GetRectangleAdvertsByUserIdMethod, err)
@@ -1997,7 +2666,7 @@ func (r *AdvertRepo) GetRectangleAdvertsByComplexId(ctx context.Context, pageSiz
 			var cottage bool
 			var squareHouse, squareArea float64
 			var floor int
-			row := r.db.QueryRowContext(ctx, queryHouse, rectangleAdvert.ID)
+			row := r.db.QueryRowContext(ctx, QueryHouseGetRectangleAdvertsByComplex, rectangleAdvert.ID)
 
 			if err := row.Scan(&metro, &houseName, &street, &town, &province, &cottage, &squareHouse, &squareArea, &floor); err != nil {
 				utils.LogError(r.logger, ctx.Value("requestId").(string), utils.RepositoryLayer, adverts.GetRectangleAdvertsByUserIdMethod, err)
@@ -2074,112 +2743,115 @@ func (r *AdvertRepo) DislikeAdvert(ctx context.Context, advertId int64, userId i
 
 // GetRectangleAdvertsByUserId retrieves rectangle adverts from the database by user id.
 func (r *AdvertRepo) GetRectangleAdvertsLikedByUserId(ctx context.Context, pageSize, offset int, userId int64) ([]*models.AdvertRectangleData, error) {
-	queryBaseAdvert := `
-        SELECT
-			a.id,
-			a.title,
-			a.description,
-			CASE
-			   WHEN ath.house_id IS NOT NULL THEN 'House'
-			   WHEN atf.flat_id IS NOT NULL THEN 'Flat'
-			   ELSE 'None'
-		    END AS type_advert, 
-            CASE
-                WHEN atf.flat_id IS NOT NULL THEN f.bedroom_count
-                WHEN ath.house_id IS NOT NULL THEN h.bedroom_count
-                ELSE 0
-            END AS rcount,
-            a.phone,
-            a.type_placement,
-            pc.price,
-            i.photo,
-            a.created_at,
-			CASE
-				WHEN fa.advert_id IS NOT NULL AND fa.is_deleted=false THEN true
-				ELSE false
-			END AS is_liked
-        FROM
-            advert AS a
-            LEFT JOIN advert_type_house AS ath ON a.id = ath.advert_id
-			LEFT JOIN advert_type_flat AS atf ON a.id = atf.advert_id
-			JOIN favourite_advert AS fa ON (a.id=fa.advert_id AND fa.user_id=$1 AND fa.is_deleted = false)
-            LEFT JOIN flat AS f ON f.id = atf.flat_id
-            LEFT JOIN house AS h ON h.id = ath.house_id
-            JOIN building AS b ON (f.building_id = b.id OR h.building_id = b.id)
-			JOIN address AS ad ON b.address_id=ad.id
-			JOIN house_name AS hn ON hn.id=ad.house_name_id
-			JOIN street AS s ON s.id=hn.street_id
-			JOIN town AS t ON t.id=s.town_id
-			JOIN province AS p ON p.id=t.province_id
-            LEFT JOIN LATERAL (
-                SELECT *
-                FROM price_change AS pc
-                WHERE pc.advert_id = a.id
-                ORDER BY pc.created_at DESC
-                LIMIT 1
-            ) AS pc ON TRUE
-            JOIN image AS i ON i.advert_id = a.id
-        WHERE i.priority = (
-                SELECT MIN(priority)
-                FROM image
-                WHERE advert_id = a.id
-                    AND is_deleted = FALSE
-            )
-            AND i.is_deleted = FALSE
-            AND a.is_deleted = FALSE
-            AND a.user_id = $1
-			ORDER BY a.created_at DESC
-			LIMIT $2
-			OFFSET $3`
-	queryFlat := `
-        SELECT
-            f.square_general,
-            f.floor,
-			ad.metro,
-			hn.name,
-			s.name,
-			t.name,
-			p.name,
-            b.floor AS floorgeneral
-        FROM
-            advert AS a
-            JOIN advert_type_flat AS at ON a.id = at.advert_id
-            JOIN flat AS f ON f.id = at.flat_id
-            JOIN building AS b ON f.building_id = b.id
-			JOIN address AS ad ON b.address_id=ad.id
-			JOIN house_name AS hn ON hn.id=ad.house_name_id
-			JOIN street AS s ON s.id=hn.street_id
-			JOIN town AS t ON t.id=s.town_id
-			JOIN province AS p ON p.id=t.province_id
-        WHERE a.id = $1
-        ORDER BY
-            a.created_at DESC;`
-	queryHouse := `
-        SELECT
-			ad.metro,
-			hn.name,
-			s.name,
-			t.name,
-			p.name,
-            h.cottage,
-            h.square_house,
-            h.square_area,
-            b.floor
-        FROM
-			advert AS a
-			JOIN advert_type_house AS at ON a.id = at.advert_id
-			JOIN house AS h ON h.id = at.house_id
-			JOIN building AS b ON h.building_id = b.id
-			JOIN address AS ad ON b.address_id=ad.id
-			JOIN house_name AS hn ON hn.id=ad.house_name_id
-			JOIN street AS s ON s.id=hn.street_id
-			JOIN town AS t ON t.id=s.town_id
-			JOIN province AS p ON p.id=t.province_id
-        WHERE a.id = $1
-        ORDER BY
-            a.created_at DESC;`
+	/*
+			QueryBaseAdvertGetRectangleAdvertsLikedByUser = `
+		        SELECT
+					a.id,
+					a.title,
+					a.description,
+					CASE
+					   WHEN ath.house_id IS NOT NULL THEN 'House'
+					   WHEN atf.flat_id IS NOT NULL THEN 'Flat'
+					   ELSE 'None'
+				    END AS type_advert,
+		            CASE
+		                WHEN atf.flat_id IS NOT NULL THEN f.bedroom_count
+		                WHEN ath.house_id IS NOT NULL THEN h.bedroom_count
+		                ELSE 0
+		            END AS rcount,
+		            a.phone,
+		            a.type_placement,
+		            pc.price,
+		            i.photo,
+		            a.created_at,
+					CASE
+						WHEN fa.advert_id IS NOT NULL AND fa.is_deleted=false THEN true
+						ELSE false
+					END AS is_liked
+		        FROM
+		            advert AS a
+		            LEFT JOIN advert_type_house AS ath ON a.id = ath.advert_id
+					LEFT JOIN advert_type_flat AS atf ON a.id = atf.advert_id
+					JOIN favourite_advert AS fa ON (a.id=fa.advert_id AND fa.user_id=$1 AND fa.is_deleted = false)
+		            LEFT JOIN flat AS f ON f.id = atf.flat_id
+		            LEFT JOIN house AS h ON h.id = ath.house_id
+		            JOIN building AS b ON (f.building_id = b.id OR h.building_id = b.id)
+					JOIN address AS ad ON b.address_id=ad.id
+					JOIN house_name AS hn ON hn.id=ad.house_name_id
+					JOIN street AS s ON s.id=hn.street_id
+					JOIN town AS t ON t.id=s.town_id
+					JOIN province AS p ON p.id=t.province_id
+		            LEFT JOIN LATERAL (
+		                SELECT *
+		                FROM price_change AS pc
+		                WHERE pc.advert_id = a.id
+		                ORDER BY pc.created_at DESC
+		                LIMIT 1
+		            ) AS pc ON TRUE
+		            JOIN image AS i ON i.advert_id = a.id
+		        WHERE i.priority = (
+		                SELECT MIN(priority)
+		                FROM image
+		                WHERE advert_id = a.id
+		                    AND is_deleted = FALSE
+		            )
+		            AND i.is_deleted = FALSE
+		            AND a.is_deleted = FALSE
+		            AND a.user_id = $1
+					ORDER BY a.created_at DESC
+					LIMIT $2
+					OFFSET $3`
+			QueryFlatGetRectangleAdvertsLikedByUser := `
+		        SELECT
+		            f.square_general,
+		            f.floor,
+					ad.metro,
+					hn.name,
+					s.name,
+					t.name,
+					p.name,
+		            b.floor AS floorgeneral
+		        FROM
+		            advert AS a
+		            JOIN advert_type_flat AS at ON a.id = at.advert_id
+		            JOIN flat AS f ON f.id = at.flat_id
+		            JOIN building AS b ON f.building_id = b.id
+					JOIN address AS ad ON b.address_id=ad.id
+					JOIN house_name AS hn ON hn.id=ad.house_name_id
+					JOIN street AS s ON s.id=hn.street_id
+					JOIN town AS t ON t.id=s.town_id
+					JOIN province AS p ON p.id=t.province_id
+		        WHERE a.id = $1
+		        ORDER BY
+		            a.created_at DESC;`
+			QueryHouseGetRectangleAdvertsLikedByUser := `
+		        SELECT
+					ad.metro,
+					hn.name,
+					s.name,
+					t.name,
+					p.name,
+		            h.cottage,
+		            h.square_house,
+		            h.square_area,
+		            b.floor
+		        FROM
+					advert AS a
+					JOIN advert_type_house AS at ON a.id = at.advert_id
+					JOIN house AS h ON h.id = at.house_id
+					JOIN building AS b ON h.building_id = b.id
+					JOIN address AS ad ON b.address_id=ad.id
+					JOIN house_name AS hn ON hn.id=ad.house_name_id
+					JOIN street AS s ON s.id=hn.street_id
+					JOIN town AS t ON t.id=s.town_id
+					JOIN province AS p ON p.id=t.province_id
+		        WHERE a.id = $1
+		        ORDER BY
+		            a.created_at DESC;`
 
-	rows, err := r.db.Query(queryBaseAdvert, userId, pageSize, offset)
+	*/
+
+	rows, err := r.db.Query(QueryBaseAdvertGetRectangleAdvertsLikedByUser, userId, pageSize, offset)
 	if err != nil {
 		utils.LogError(r.logger, ctx.Value("requestId").(string), utils.RepositoryLayer, adverts.GetRectangleAdvertsByUserIdMethod, err)
 		return nil, err
@@ -2205,7 +2877,7 @@ func (r *AdvertRepo) GetRectangleAdvertsLikedByUserId(ctx context.Context, pageS
 		case string(models.AdvertTypeFlat):
 			var squareGeneral float64
 			var floor, floorGeneral int
-			row := r.db.QueryRowContext(ctx, queryFlat, rectangleAdvert.ID)
+			row := r.db.QueryRowContext(ctx, QueryFlatGetRectangleAdvertsLikedByUser, rectangleAdvert.ID)
 
 			if err := row.Scan(&squareGeneral, &floor, &metro, &houseName, &street, &town, &province, &floorGeneral); err != nil {
 				utils.LogError(r.logger, ctx.Value("requestId").(string), utils.RepositoryLayer, adverts.GetRectangleAdvertsByUserIdMethod, err)
@@ -2221,7 +2893,7 @@ func (r *AdvertRepo) GetRectangleAdvertsLikedByUserId(ctx context.Context, pageS
 			var cottage bool
 			var squareHouse, squareArea float64
 			var floor int
-			row := r.db.QueryRowContext(ctx, queryHouse, rectangleAdvert.ID)
+			row := r.db.QueryRowContext(ctx, QueryHouseGetRectangleAdvertsLikedByUser, rectangleAdvert.ID)
 
 			if err := row.Scan(&metro, &houseName, &street, &town, &province, &cottage, &squareHouse, &squareArea, &floor); err != nil {
 				utils.LogError(r.logger, ctx.Value("requestId").(string), utils.RepositoryLayer, adverts.GetRectangleAdvertsByUserIdMethod, err)
