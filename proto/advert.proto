@@ -18,9 +18,9 @@ service Adverts {
   //rpc UploadImage(UploadImageRequest) returns (UploadImageResponse) {}
   //rpc GetAdvertImages(GetAdvertImagesRequest) returns (GetAdvertImagesResponse) {}
   //rpc DeleteImage(DeleteImageRequest) returns (DeleteImageResponse) {}
-  rpc GetUserAdverts(GetUserAdvertsRequest) returns (GetUserAdvertsResponse) {}
-  rpc GetLikedUserAdverts(GetLikedUserAdvertsRequest) returns (GetLikedUserAdvertsResponse) {}
-  rpc GetRectangleAdvertsByComplex(GetComplexAdvertsRequest) returns (GetComplexAdvertsResponse) {}
+  rpc GetRectangleAdvertsByUser(GetUserAdvertsRequest) returns (GetUserAdvertsResponse) {} // есть
+  rpc GetLikedUserAdverts(GetLikedUserAdvertsRequest) returns (GetLikedUserAdvertsResponse) {} // есть
+  rpc GetRectangleAdvertsByComplex(GetComplexAdvertsRequest) returns (GetComplexAdvertsResponse) {} // есть
 }
 
 message GetAdvertByIdRequest {
@@ -123,7 +123,7 @@ message GetAdvertByIdResponse {
   string AddressPoint = 14;
   repeated PriceChangeData PriceHistory = 15;
   repeated ImageResp Images = 16;
-  HouseProperties HouseProperties = 17;
+  HouseProperties HouseProp = 17;
   FlatProperties FlatProperties = 18;
   int32 YearCreation = 19;
   MaterialBuilding Material = 20;
@@ -156,7 +156,7 @@ message AdvertRectangleData {
   string Address = 10;
   string AddressPoint = 11;
   string Photo = 12;
-  HouseProperties HouseProperties = 13;
+  HouseProperties HouseProp = 13;
   FlatProperties FlatProperties = 14;
   string DateCreation = 15;
 }
@@ -185,7 +185,7 @@ message UpdateAdvertByIdRequest{
   string Phone = 7;
   bool isAgent = 8;
   AddressData Address = 9;
-  HouseProperties HouseProperties = 10;
+  HouseProperties HouseProp = 10;
   FlatProperties FlatProperties = 11;
   int32 YearCreation = 12;
   MaterialBuilding Material = 13;
@@ -314,7 +314,7 @@ message GetSquareAdvertsListResponse{
 }
 
 message GetUserAdvertsRequest {
-  int64 userId = 1;
+  int64 UserId = 1;
   int64 Page = 2;
   int64 Size = 3;
 }

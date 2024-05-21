@@ -31,7 +31,7 @@ type AdvertsClient interface {
 	// rpc UploadImage(UploadImageRequest) returns (UploadImageResponse) {}
 	// rpc GetAdvertImages(GetAdvertImagesRequest) returns (GetAdvertImagesResponse) {}
 	// rpc DeleteImage(DeleteImageRequest) returns (DeleteImageResponse) {}
-	GetUserAdverts(ctx context.Context, in *GetUserAdvertsRequest, opts ...grpc.CallOption) (*GetUserAdvertsResponse, error)
+	GetRectangleAdvertsByUser(ctx context.Context, in *GetUserAdvertsRequest, opts ...grpc.CallOption) (*GetUserAdvertsResponse, error)
 	GetLikedUserAdverts(ctx context.Context, in *GetLikedUserAdvertsRequest, opts ...grpc.CallOption) (*GetLikedUserAdvertsResponse, error)
 	GetRectangleAdvertsByComplex(ctx context.Context, in *GetComplexAdvertsRequest, opts ...grpc.CallOption) (*GetComplexAdvertsResponse, error)
 }
@@ -134,9 +134,9 @@ func (c *advertsClient) GetRectangleAdvertsList(ctx context.Context, in *GetRect
 	return out, nil
 }
 
-func (c *advertsClient) GetUserAdverts(ctx context.Context, in *GetUserAdvertsRequest, opts ...grpc.CallOption) (*GetUserAdvertsResponse, error) {
+func (c *advertsClient) GetRectangleAdvertsByUser(ctx context.Context, in *GetUserAdvertsRequest, opts ...grpc.CallOption) (*GetUserAdvertsResponse, error) {
 	out := new(GetUserAdvertsResponse)
-	err := c.cc.Invoke(ctx, "/adverts.Adverts/GetUserAdverts", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/adverts.Adverts/GetRectangleAdvertsByUser", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -178,7 +178,7 @@ type AdvertsServer interface {
 	// rpc UploadImage(UploadImageRequest) returns (UploadImageResponse) {}
 	// rpc GetAdvertImages(GetAdvertImagesRequest) returns (GetAdvertImagesResponse) {}
 	// rpc DeleteImage(DeleteImageRequest) returns (DeleteImageResponse) {}
-	GetUserAdverts(context.Context, *GetUserAdvertsRequest) (*GetUserAdvertsResponse, error)
+	GetRectangleAdvertsByUser(context.Context, *GetUserAdvertsRequest) (*GetUserAdvertsResponse, error)
 	GetLikedUserAdverts(context.Context, *GetLikedUserAdvertsRequest) (*GetLikedUserAdvertsResponse, error)
 	GetRectangleAdvertsByComplex(context.Context, *GetComplexAdvertsRequest) (*GetComplexAdvertsResponse, error)
 	mustEmbedUnimplementedAdvertsServer()
@@ -218,8 +218,8 @@ func (UnimplementedAdvertsServer) GetSquareAdvertsList(context.Context, *GetSqua
 func (UnimplementedAdvertsServer) GetRectangleAdvertsList(context.Context, *GetRectangleAdvertsListRequest) (*GetRectangleAdvertsListResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetRectangleAdvertsList not implemented")
 }
-func (UnimplementedAdvertsServer) GetUserAdverts(context.Context, *GetUserAdvertsRequest) (*GetUserAdvertsResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetUserAdverts not implemented")
+func (UnimplementedAdvertsServer) GetRectangleAdvertsByUser(context.Context, *GetUserAdvertsRequest) (*GetUserAdvertsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetRectangleAdvertsByUser not implemented")
 }
 func (UnimplementedAdvertsServer) GetLikedUserAdverts(context.Context, *GetLikedUserAdvertsRequest) (*GetLikedUserAdvertsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetLikedUserAdverts not implemented")
@@ -420,20 +420,20 @@ func _Adverts_GetRectangleAdvertsList_Handler(srv interface{}, ctx context.Conte
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Adverts_GetUserAdverts_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _Adverts_GetRectangleAdvertsByUser_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(GetUserAdvertsRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(AdvertsServer).GetUserAdverts(ctx, in)
+		return srv.(AdvertsServer).GetRectangleAdvertsByUser(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/adverts.Adverts/GetUserAdverts",
+		FullMethod: "/adverts.Adverts/GetRectangleAdvertsByUser",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(AdvertsServer).GetUserAdverts(ctx, req.(*GetUserAdvertsRequest))
+		return srv.(AdvertsServer).GetRectangleAdvertsByUser(ctx, req.(*GetUserAdvertsRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -522,8 +522,8 @@ var Adverts_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _Adverts_GetRectangleAdvertsList_Handler,
 		},
 		{
-			MethodName: "GetUserAdverts",
-			Handler:    _Adverts_GetUserAdverts_Handler,
+			MethodName: "GetRectangleAdvertsByUser",
+			Handler:    _Adverts_GetRectangleAdvertsByUser_Handler,
 		},
 		{
 			MethodName: "GetLikedUserAdverts",
