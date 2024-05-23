@@ -92,6 +92,21 @@ message HouseProperties {
   int32 Floor = 8;
 }
 
+message HouseSquareProperties {
+  bool Cottage = 1;
+  double SquareArea = 2;
+  double SquareHouse = 3;
+  int32 BedroomCount = 4;
+  int32 Floor = 5;
+}
+
+message FlatSquareProperties {
+  int32 Floor = 1;
+  int32 FloorGeneral = 2;
+  int32 RoomCount = 3;
+  double SquareGeneral = 4;
+}
+
 enum MaterialBuilding {
   MATERIAL_BRICK = 0;
   MATERIAL_MONOLITHIC = 1;
@@ -200,7 +215,7 @@ message DeleteAdvertByIdRequest {
 }
 
 message DeleteAdvertByIdResponse{
-  bool Ok = 1;
+  int64 RespCode = 1;
 }
 
 
@@ -302,8 +317,8 @@ message AdvertSquareData {
   string TypeSale = 4;
   string  Address = 5;
   string  Metro = 6;
-  HouseProperties HouseProp = 7;
-  FlatProperties FlatProp = 8;
+  HouseSquareProperties HouseProp = 7;
+  FlatSquareProperties FlatProp = 8;
   int64 Price = 9;
   string DateCreation = 10;
 }

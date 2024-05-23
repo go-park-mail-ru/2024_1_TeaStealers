@@ -30,7 +30,7 @@ const (
 	GetComplexAdvertsMethod          = "GetComplexAdverts"
 )
 
-// AdvertHandler handles HTTP requests for advert changes.
+// AdvertsClientHandler handles HTTP requests for advert changes.
 type AdvertsClientHandler struct {
 	// uc represents the usecase interface for advert changes.
 	client        genAdverts.AdvertsClient
@@ -39,7 +39,7 @@ type AdvertsClientHandler struct {
 	logger        *zap.Logger
 }
 
-// NewAdvertHandler creates a new instance of AdvertHandler.
+// NewAdvertsClientHandler creates a new instance of AdvertHandler.
 func NewAdvertsClientHandler(grpcConn *grpc.ClientConn, grpcConn2 *grpc.ClientConn, uc adverts.AdvertUsecase, logger *zap.Logger) *AdvertsClientHandler {
 	return &AdvertsClientHandler{client: genAdverts.NewAdvertsClient(grpcConn), clientComplex: genComplex.NewComplexClient(grpcConn2), uc: uc, logger: logger}
 }
@@ -625,14 +625,32 @@ func (h *AdvertsClientHandler) GetSquareAdvertsList(w http.ResponseWriter, r *ht
 	foundAdverts := make([]*models.AdvertSquareData, 0)
 
 	for _, adv := range advResp.SquareData {
+		dateTime, err := utils.StringToTime("2006-01-02 15:04:05", adv.DateCreation)
+
+		if err != nil {
+			utils.LogErrorResponse(h.logger, r.Context().Value("requestId").(string), utils.DeliveryLayer, GetSquareAdvertsListMethod, err, http.StatusInternalServerError)
+			utils.WriteError(w, int(advResp.RespCode), err.Error())
+			return
+		}
+
 		newadv := &models.AdvertSquareData{
 			ID:         adv.Id,
 			TypeAdvert: adv.TypeAdvert,
+			Photo:      adv.Photo,
+			TypeSale:   adv.TypeSale,
 			Address:    adv.Address,
 			Metro:      adv.Metro,
-			HouseProperties: &models.HouseSquareProperties{adv.HouseProp.Cottage,
-				adv.HouseProp.SquareArea, adv.HouseProp.SquareHouse, int(adv.HouseProp.BedroomCount),
-				int(adv.HouseProp.Floor)},
+			HouseProperties: &models.HouseSquareProperties{Cottage: adv.HouseProp.Cottage,
+				SquareArea: adv.HouseProp.SquareArea, SquareHouse: adv.HouseProp.SquareHouse, BedroomCount: int(adv.HouseProp.BedroomCount),
+				Floor: int(adv.HouseProp.Floor)},
+			FlatProperties: &models.FlatSquareProperties{
+				Floor:         int(adv.FlatProp.Floor),
+				FloorGeneral:  int(adv.FlatProp.FloorGeneral),
+				RoomCount:     int(adv.FlatProp.RoomCount),
+				SquareGeneral: adv.FlatProp.SquareGeneral,
+			},
+			Price:        int(adv.Price),
+			DateCreation: dateTime,
 		}
 
 		foundAdverts = append(foundAdverts, newadv)
@@ -646,7 +664,7 @@ func (h *AdvertsClientHandler) GetSquareAdvertsList(w http.ResponseWriter, r *ht
 	}
 }
 
-// GetExistBuildingsByAddress handles the request for retrieving an existing buildings by address.
+// GetExistBuildingByAddress handles the request for retrieving an existing buildings by address.
 func (h *AdvertsClientHandler) GetExistBuildingByAddress(w http.ResponseWriter, r *http.Request) {
 	data := models.AddressData{}
 
@@ -685,7 +703,7 @@ func (h *AdvertsClientHandler) GetExistBuildingByAddress(w http.ResponseWriter, 
 	}
 }
 
-// GetRectangeAdvertsList handles the request for retrieving a rectangle adverts with search.
+// GetRectangleAdvertsList handles the request for retrieving a rectangle adverts with search.
 func (h *AdvertsClientHandler) GetRectangleAdvertsList(w http.ResponseWriter, r *http.Request) {
 	pageStr := r.URL.Query().Get("page")
 	sizeStr := r.URL.Query().Get("size")
@@ -728,7 +746,7 @@ func (h *AdvertsClientHandler) GetRectangleAdvertsList(w http.ResponseWriter, r 
 
 	offset := (page - 1) * size
 
-	adverts, err := h.client.GetRectangleAdvertsList(r.Context(), &genAdverts.GetRectangleAdvertsListRequest{
+	adv, err := h.client.GetRectangleAdvertsList(r.Context(), &genAdverts.GetRectangleAdvertsListRequest{
 		MinPrice:   minPrice,
 		MaxPrice:   maxPrice,
 		Page:       int64(page),
@@ -744,7 +762,7 @@ func (h *AdvertsClientHandler) GetRectangleAdvertsList(w http.ResponseWriter, r 
 		return
 	}
 
-	if err = utils.WriteResponse(w, http.StatusOK, adverts); err != nil {
+	if err = utils.WriteResponse(w, http.StatusOK, adv); err != nil {
 		utils.LogErrorResponse(h.logger, r.Context().Value("requestId").(string), utils.DeliveryLayer, GetRectangeAdvertsListMethod, err, http.StatusInternalServerError)
 		utils.WriteError(w, http.StatusInternalServerError, err.Error())
 	} else {
@@ -775,7 +793,7 @@ func (h *AdvertsClientHandler) GetUserAdverts(w http.ResponseWriter, r *http.Req
 	}
 
 	userAdverts, err := h.client.GetRectangleAdvertsByUser(r.Context(), &genAdverts.GetUserAdvertsRequest{
-		Page: int64(page), Size: int64(size), UserId: int64(UId),
+		Page: int64(page), Size: int64(size), UserId: UId,
 	})
 	if err != nil {
 		utils.LogErrorResponse(h.logger, r.Context().Value("requestId").(string), utils.DeliveryLayer, GetUserAdvertsMethod, err, int(userAdverts.RespCode))

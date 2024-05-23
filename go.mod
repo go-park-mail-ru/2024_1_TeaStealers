@@ -10,6 +10,7 @@ require (
 	github.com/ilyakaznacheev/cleanenv v1.5.0
 	github.com/joho/godotenv v1.5.1
 	github.com/lib/pq v1.10.9
+	github.com/mailru/easyjson v0.7.7
 	github.com/prometheus/client_golang v1.19.0
 	github.com/satori/uuid v1.2.0
 	github.com/stretchr/testify v1.9.0
@@ -31,7 +32,6 @@ require (
 	github.com/go-openapi/spec v0.20.15 // indirect
 	github.com/go-openapi/swag v0.22.10 // indirect
 	github.com/josharian/intern v1.0.0 // indirect
-	github.com/mailru/easyjson v0.7.7 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/prometheus/client_model v0.5.0 // indirect
 	github.com/prometheus/common v0.48.0 // indirect
