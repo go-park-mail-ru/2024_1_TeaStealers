@@ -3,7 +3,6 @@ package delivery
 import (
 	"2024_1_TeaStealers/internal/models"
 	"2024_1_TeaStealers/internal/pkg/adverts"
-	"2024_1_TeaStealers/internal/pkg/adverts/delivery/grpc/gen"
 	genAdverts "2024_1_TeaStealers/internal/pkg/adverts/delivery/grpc/gen"
 	genComplex "2024_1_TeaStealers/internal/pkg/complexes/delivery/grpc/gen"
 	"2024_1_TeaStealers/internal/pkg/middleware"
@@ -31,7 +30,7 @@ const (
 	GetComplexAdvertsMethod          = "GetComplexAdverts"
 )
 
-// AdvertHandler handles HTTP requests for advert changes.
+// AdvertsClientHandler handles HTTP requests for advert changes.
 type AdvertsClientHandler struct {
 	// uc represents the usecase interface for advert changes.
 	client        genAdverts.AdvertsClient
@@ -40,7 +39,7 @@ type AdvertsClientHandler struct {
 	logger        *zap.Logger
 }
 
-// NewAdvertHandler creates a new instance of AdvertHandler.
+// NewAdvertsClientHandler creates a new instance of AdvertHandler.
 func NewAdvertsClientHandler(grpcConn *grpc.ClientConn, grpcConn2 *grpc.ClientConn, uc adverts.AdvertUsecase, logger *zap.Logger) *AdvertsClientHandler {
 	return &AdvertsClientHandler{client: genAdverts.NewAdvertsClient(grpcConn), clientComplex: genComplex.NewComplexClient(grpcConn2), uc: uc, logger: logger}
 }
@@ -62,22 +61,87 @@ func (h *AdvertsClientHandler) CreateFlatAdvert(w http.ResponseWriter, r *http.R
 	data := models.AdvertFlatCreateData{UserID: 1}
 
 	if err := utils.ReadRequestData(r, &data); err != nil {
-		utils.LogErrorResponse(h.logger, r.Context().Value("requestId").(string), CreateFlatAdvertMethod, utils.DeliveryLayer, err, http.StatusBadRequest)
+		utils.LogErrorResponse(h.logger, r.Context().Value("requestId").(string), utils.DeliveryLayer, CreateFlatAdvertMethod, err, http.StatusBadRequest)
 		utils.WriteError(w, http.StatusBadRequest, "incorrect data format")
 		return
 	}
 
-	newAdvert, err := h.uc.CreateFlatAdvert(r.Context(), &data)
-	newAdvert.Sanitize()
+	var mater genAdverts.MaterialBuilding
+	switch data.Material {
+	case models.MaterialBrick:
+		mater = genAdverts.MaterialBuilding_MATERIAL_BRICK
+	case models.MaterialMonolithic:
+		mater = genAdverts.MaterialBuilding_MATERIAL_MONOLITHIC
+	case models.MaterialWood:
+		mater = genAdverts.MaterialBuilding_MATERIAL_WOOD
+	case models.MaterialPanel:
+		mater = genAdverts.MaterialBuilding_MATERIAL_PANEL
+	case models.MaterialStalinsky:
+		mater = genAdverts.MaterialBuilding_MATERIAL_STALINSKY
+	case models.MaterialBlock:
+		mater = genAdverts.MaterialBuilding_MATERIAL_BLOCK
+	case models.MaterialMonolithicBlock:
+		mater = genAdverts.MaterialBuilding_MATERIAL_MONOLITHIC_BLOCK
+	case models.MaterialFrame:
+		mater = genAdverts.MaterialBuilding_MATERIAL_FRAME
+	case models.MaterialAeratedConcreteBlock:
+		mater = genAdverts.MaterialBuilding_MATERIAL_AERATED_CONCRETE_BLOCK
+	case models.MaterialGasSilicateBlock:
+		mater = genAdverts.MaterialBuilding_MATERIAL_GAS_SILICATE_BLOCK
+	case models.MaterialFoamConcreteBlock:
+		mater = genAdverts.MaterialBuilding_MATERIAL_FOAM_CONCRETE_BLOCK
+	}
+
+	newAdvertResp, err := h.client.CreateFlatAdvert(r.Context(), &genAdverts.CreateFlatAdvertRequest{
+		UserId:      data.UserID,
+		TypeSale:    string(data.AdvertTypeSale),
+		Title:       data.Title,
+		Description: data.Description,
+		Phone:       data.Phone,
+		IsAgent:     data.IsAgent,
+		CreateFlatProp: &genAdverts.FlatProperties{
+			Floor:             int32(data.Floor),
+			CeilingHeight:     data.CeilingHeight,
+			SquareGeneral:     data.SquareGeneral,
+			RoomCount:         int32(data.RoomCount),
+			SquareResidential: data.SquareResidential,
+			Apartment:         data.Apartment,
+			FloorGeneral:      int32(data.FloorGeneral),
+		},
+		Price:    data.Price,
+		Material: mater,
+		Address: &genAdverts.AddressData{Province: data.Address.Province,
+			Town: data.Address.Town, Street: data.Address.Street, House: data.Address.House,
+			Metro: data.Address.Metro, AddressPoint: data.Address.AddressPoint},
+		YearCreation: int32(data.YearCreation),
+	})
 
 	if err != nil {
-		utils.LogErrorResponse(h.logger, r.Context().Value("requestId").(string), CreateFlatAdvertMethod, utils.DeliveryLayer, err, http.StatusBadRequest)
+		utils.LogErrorResponse(h.logger, r.Context().Value("requestId").(string), utils.DeliveryLayer, CreateFlatAdvertMethod, err, http.StatusBadRequest)
 		utils.WriteError(w, http.StatusBadRequest, err.Error())
 		return
 	}
 
+	dCr, err := utils.StringToTime("2006-01-02 15:04:05", newAdvertResp.DateCreation[:19])
+	if err != nil {
+		utils.LogErrorResponse(h.logger, r.Context().Value("requestId").(string), utils.DeliveryLayer, CreateFlatAdvertMethod, err, http.StatusInternalServerError)
+		utils.WriteError(w, http.StatusInternalServerError, err.Error())
+	}
+	newAdvert := models.Advert{
+		ID:             newAdvertResp.Id,
+		UserID:         newAdvertResp.UserId,
+		AdvertTypeSale: models.TypePlacementAdvert(newAdvertResp.TypeSale),
+		Title:          newAdvertResp.Title,
+		Description:    newAdvertResp.Description,
+		Phone:          newAdvertResp.Phone,
+		IsAgent:        newAdvertResp.IsAgent,
+		Priority:       int(newAdvertResp.Priority),
+		DateCreation:   dCr,
+	}
+	newAdvert.Sanitize()
+
 	if err = utils.WriteResponse(w, http.StatusCreated, newAdvert); err != nil {
-		utils.LogErrorResponse(h.logger, r.Context().Value("requestId").(string), CreateFlatAdvertMethod, utils.DeliveryLayer, err, http.StatusInternalServerError)
+		utils.LogErrorResponse(h.logger, r.Context().Value("requestId").(string), utils.DeliveryLayer, CreateFlatAdvertMethod, err, http.StatusInternalServerError)
 		utils.WriteError(w, http.StatusInternalServerError, err.Error())
 	} else {
 		utils.LogSuccesResponse(h.logger, r.Context().Value("requestId").(string), utils.DeliveryLayer, CreateFlatAdvertMethod)
@@ -107,14 +171,110 @@ func (h *AdvertsClientHandler) CreateHouseAdvert(w http.ResponseWriter, r *http.
 		return
 	}
 
-	newAdvert, err := h.uc.CreateHouseAdvert(r.Context(), &data)
-	newAdvert.Sanitize()
+	var statusArea genAdverts.StatusAreaHouse
+	switch data.StatusArea {
+	case "IHC":
+		statusArea = genAdverts.StatusAreaHouse_STATUS_AREA_IHC
+	case "DNP":
+		statusArea = genAdverts.StatusAreaHouse_STATUS_AREA_DNP
+	case "G":
+		statusArea = genAdverts.StatusAreaHouse_STATUS_AREA_G
+	case "F":
+		statusArea = genAdverts.StatusAreaHouse_STATUS_AREA_F
+	case "PSP":
+		statusArea = genAdverts.StatusAreaHouse_STATUS_AREA_PSP
+	}
+
+	var statusHome genAdverts.StatusHomeHouse
+	switch data.StatusHome {
+	case "Live":
+		statusHome = genAdverts.StatusHomeHouse_STATUS_HOME_LIVE
+	case "RepairNeed":
+		statusHome = genAdverts.StatusHomeHouse_STATUS_HOME_REPAIR_NEED
+	case "CompleteNeed":
+		statusHome = genAdverts.StatusHomeHouse_STATUS_HOME_COMPLETE_NEED
+	case "Renovation":
+		statusHome = genAdverts.StatusHomeHouse_STATUS_HOME_RENOVATION
+	}
+
+	var mater genAdverts.MaterialBuilding
+	switch data.Material {
+	case models.MaterialBrick:
+		mater = genAdverts.MaterialBuilding_MATERIAL_BRICK
+	case models.MaterialMonolithic:
+		mater = genAdverts.MaterialBuilding_MATERIAL_MONOLITHIC
+	case models.MaterialWood:
+		mater = genAdverts.MaterialBuilding_MATERIAL_WOOD
+	case models.MaterialPanel:
+		mater = genAdverts.MaterialBuilding_MATERIAL_PANEL
+	case models.MaterialStalinsky:
+		mater = genAdverts.MaterialBuilding_MATERIAL_STALINSKY
+	case models.MaterialBlock:
+		mater = genAdverts.MaterialBuilding_MATERIAL_BLOCK
+	case models.MaterialMonolithicBlock:
+		mater = genAdverts.MaterialBuilding_MATERIAL_MONOLITHIC_BLOCK
+	case models.MaterialFrame:
+		mater = genAdverts.MaterialBuilding_MATERIAL_FRAME
+	case models.MaterialAeratedConcreteBlock:
+		mater = genAdverts.MaterialBuilding_MATERIAL_AERATED_CONCRETE_BLOCK
+	case models.MaterialGasSilicateBlock:
+		mater = genAdverts.MaterialBuilding_MATERIAL_GAS_SILICATE_BLOCK
+	case models.MaterialFoamConcreteBlock:
+		mater = genAdverts.MaterialBuilding_MATERIAL_FOAM_CONCRETE_BLOCK
+	}
+
+	resp, err := h.client.CreateHouseAdvert(r.Context(), &genAdverts.CreateHouseAdvertRequest{
+		UserId:      id,
+		TypeSale:    string(data.AdvertTypeSale),
+		Title:       data.Title,
+		Description: data.Description,
+		Phone:       data.Phone,
+		IsAgent:     data.IsAgent,
+		CreateHouseProp: &genAdverts.HouseProperties{
+			CeilingHeight: data.CeilingHeight,
+			SquareArea:    data.SquareArea,
+			SquareHouse:   data.SquareHouse,
+			BedroomCount:  int32(data.BedroomCount),
+			StatusArea:    statusArea,
+			Cottage:       data.Cottage,
+			StatusHome:    statusHome,
+			Floor:         int32(data.FloorGeneral),
+		},
+		Address: &genAdverts.AddressData{Province: data.Address.Province,
+			Town: data.Address.Town, Street: data.Address.Street, House: data.Address.House,
+			Metro: data.Address.Metro, AddressPoint: data.Address.AddressPoint},
+
+		Price:        data.Price,
+		YearCreation: int32(data.YearCreation),
+		Material:     mater})
 
 	if err != nil {
 		utils.LogErrorResponse(h.logger, r.Context().Value("requestId").(string), utils.DeliveryLayer, CreateHouseAdvertMethod, err, http.StatusBadRequest)
 		utils.WriteError(w, http.StatusBadRequest, err.Error())
 		return
 	}
+
+	tCreate, err := utils.StringToTime("2006-01-02 15:04:05", resp.DateCreation[:19])
+
+	if err != nil {
+		utils.LogErrorResponse(h.logger, r.Context().Value("requestId").(string), utils.DeliveryLayer, CreateHouseAdvertMethod, err, http.StatusInternalServerError)
+		utils.WriteError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	newAdvert := models.Advert{
+		ID:             resp.Id,
+		UserID:         resp.UserId,
+		AdvertTypeSale: models.TypePlacementAdvert(resp.TypeSale),
+		Title:          resp.Title,
+		Description:    resp.Description,
+		Phone:          resp.Phone,
+		IsAgent:        resp.IsAgent,
+		Priority:       int(resp.Priority),
+		DateCreation:   tCreate,
+	}
+
+	newAdvert.Sanitize()
 
 	if err = utils.WriteResponse(w, http.StatusCreated, newAdvert); err != nil {
 		utils.LogErrorResponse(h.logger, r.Context().Value("requestId").(string), utils.DeliveryLayer, CreateHouseAdvertMethod, err, http.StatusInternalServerError)
@@ -143,8 +303,8 @@ func (h *AdvertsClientHandler) GetAdvertById(w http.ResponseWriter, r *http.Requ
 
 	advertDataResponse, err := h.client.GetAdvertById(r.Context(), &genAdverts.GetAdvertByIdRequest{Id: advertId})
 	if err != nil {
-		utils.LogErrorResponse(h.logger, r.Context().Value("requestId").(string), utils.DeliveryLayer, GetAdvertByIdMethod, err, http.StatusConflict)
-		utils.WriteError(w, http.StatusConflict, err.Error())
+		utils.LogErrorResponse(h.logger, r.Context().Value("requestId").(string), utils.DeliveryLayer, GetAdvertByIdMethod, err, int(advertDataResponse.RespCode))
+		utils.WriteError(w, int(advertDataResponse.RespCode), err.Error())
 		return
 	}
 
@@ -153,7 +313,7 @@ func (h *AdvertsClientHandler) GetAdvertById(w http.ResponseWriter, r *http.Requ
 		date := pcd.DateCreation[:19]
 		dateTime, err := utils.StringToTime("2006-01-02 15:04:05", date)
 		if err != nil {
-			// utils.LogErrorResponse(h.logger, ctx.Value("requestId").(string), utils.DeliveryLayer, LoginMethod, err, http.StatusInternalServerError)
+			utils.LogErrorResponse(h.logger, r.Context().Value("requestId").(string), utils.DeliveryLayer, GetAdvertByIdMethod, err, http.StatusInternalServerError)
 			utils.WriteError(w, http.StatusInternalServerError, err.Error())
 			return
 		}
@@ -169,27 +329,27 @@ func (h *AdvertsClientHandler) GetAdvertById(w http.ResponseWriter, r *http.Requ
 	var material models.MaterialBuilding
 
 	switch advertDataResponse.Material {
-	case gen.MaterialBuilding_MATERIAL_BRICK:
+	case genAdverts.MaterialBuilding_MATERIAL_BRICK:
 		material = models.MaterialBrick
-	case gen.MaterialBuilding_MATERIAL_MONOLITHIC:
+	case genAdverts.MaterialBuilding_MATERIAL_MONOLITHIC:
 		material = models.MaterialMonolithic
-	case gen.MaterialBuilding_MATERIAL_WOOD:
+	case genAdverts.MaterialBuilding_MATERIAL_WOOD:
 		material = models.MaterialWood
-	case gen.MaterialBuilding_MATERIAL_PANEL:
+	case genAdverts.MaterialBuilding_MATERIAL_PANEL:
 		material = models.MaterialPanel
-	case gen.MaterialBuilding_MATERIAL_STALINSKY:
+	case genAdverts.MaterialBuilding_MATERIAL_STALINSKY:
 		material = models.MaterialStalinsky
-	case gen.MaterialBuilding_MATERIAL_BLOCK:
+	case genAdverts.MaterialBuilding_MATERIAL_BLOCK:
 		material = models.MaterialBlock
-	case gen.MaterialBuilding_MATERIAL_MONOLITHIC_BLOCK:
+	case genAdverts.MaterialBuilding_MATERIAL_MONOLITHIC_BLOCK:
 		material = models.MaterialMonolithicBlock
-	case gen.MaterialBuilding_MATERIAL_FRAME:
+	case genAdverts.MaterialBuilding_MATERIAL_FRAME:
 		material = models.MaterialFrame
-	case gen.MaterialBuilding_MATERIAL_AERATED_CONCRETE_BLOCK:
+	case genAdverts.MaterialBuilding_MATERIAL_AERATED_CONCRETE_BLOCK:
 		material = models.MaterialAeratedConcreteBlock
-	case gen.MaterialBuilding_MATERIAL_GAS_SILICATE_BLOCK:
+	case genAdverts.MaterialBuilding_MATERIAL_GAS_SILICATE_BLOCK:
 		material = models.MaterialGasSilicateBlock
-	case gen.MaterialBuilding_MATERIAL_FOAM_CONCRETE_BLOCK:
+	case genAdverts.MaterialBuilding_MATERIAL_FOAM_CONCRETE_BLOCK:
 		material = models.MaterialFoamConcreteBlock
 	}
 
@@ -199,52 +359,65 @@ func (h *AdvertsClientHandler) GetAdvertById(w http.ResponseWriter, r *http.Requ
 	var flatProperties *models.FlatProperties = nil
 	var complexProperties *models.ComplexAdvertProperties = nil
 
-	if advertDataResponse.HouseProperties != nil {
-		switch advertDataResponse.HouseProperties.StatusArea {
-		case gen.StatusAreaHouse_STATUS_AREA_IHC:
+	if advertDataResponse.HouseProp != nil {
+		switch advertDataResponse.HouseProp.StatusArea {
+		case genAdverts.StatusAreaHouse_STATUS_AREA_IHC:
 			statusArea = "IHC"
-		case gen.StatusAreaHouse_STATUS_AREA_DNP:
+		case genAdverts.StatusAreaHouse_STATUS_AREA_DNP:
 			statusArea = "DNP"
-		case gen.StatusAreaHouse_STATUS_AREA_G:
+		case genAdverts.StatusAreaHouse_STATUS_AREA_G:
 			statusArea = "G"
-		case gen.StatusAreaHouse_STATUS_AREA_F:
+		case genAdverts.StatusAreaHouse_STATUS_AREA_F:
 			statusArea = "F"
-		case gen.StatusAreaHouse_STATUS_AREA_PSP:
+		case genAdverts.StatusAreaHouse_STATUS_AREA_PSP:
 			statusArea = "PSP"
 		}
 
-		switch advertDataResponse.HouseProperties.StatusHome {
-		case gen.StatusHomeHouse_STATUS_HOME_LIVE:
+		switch advertDataResponse.HouseProp.StatusHome {
+		case genAdverts.StatusHomeHouse_STATUS_HOME_LIVE:
 			statusHome = "Live"
-		case gen.StatusHomeHouse_STATUS_HOME_REPAIR_NEED:
+		case genAdverts.StatusHomeHouse_STATUS_HOME_REPAIR_NEED:
 			statusHome = "RepairNeed"
-		case gen.StatusHomeHouse_STATUS_HOME_COMPLETE_NEED:
+		case genAdverts.StatusHomeHouse_STATUS_HOME_COMPLETE_NEED:
 			statusHome = "CompleteNeed"
-		case gen.StatusHomeHouse_STATUS_HOME_RENOVATION:
+		case genAdverts.StatusHomeHouse_STATUS_HOME_RENOVATION:
 			statusHome = "Renovation"
 		}
 
-		houseProperties = &models.HouseProperties{CeilingHeight: advertDataResponse.HouseProperties.CeilingHeight, SquareArea: advertDataResponse.HouseProperties.SquareArea, SquareHouse: advertDataResponse.HouseProperties.SquareHouse, BedroomCount: int(advertDataResponse.HouseProperties.BedroomCount), StatusArea: statusArea, Cottage: advertDataResponse.HouseProperties.Cottage, StatusHome: statusHome, Floor: int(advertDataResponse.HouseProperties.Floor)}
+		houseProperties = &models.HouseProperties{CeilingHeight: advertDataResponse.HouseProp.CeilingHeight,
+			SquareArea: advertDataResponse.HouseProp.SquareArea, SquareHouse: advertDataResponse.HouseProp.SquareHouse,
+			BedroomCount: int(advertDataResponse.HouseProp.BedroomCount), StatusArea: statusArea,
+			Cottage: advertDataResponse.HouseProp.Cottage, StatusHome: statusHome, Floor: int(advertDataResponse.HouseProp.Floor)}
 	}
 
 	if advertDataResponse.FlatProperties != nil {
 		log.Println(advertDataResponse.FlatProperties)
-		flatProperties = &models.FlatProperties{CeilingHeight: advertDataResponse.FlatProperties.CeilingHeight, RoomCount: int(advertDataResponse.FlatProperties.RoomCount), FloorGeneral: int(advertDataResponse.FlatProperties.FloorGeneral), Apartment: advertDataResponse.FlatProperties.Apartment, SquareGeneral: advertDataResponse.FlatProperties.SquareGeneral, Floor: int(advertDataResponse.FlatProperties.Floor), SquareResidential: advertDataResponse.FlatProperties.SquareResidential}
+		flatProperties = &models.FlatProperties{CeilingHeight: advertDataResponse.FlatProperties.CeilingHeight,
+			RoomCount: int(advertDataResponse.FlatProperties.RoomCount), FloorGeneral: int(advertDataResponse.FlatProperties.FloorGeneral),
+			Apartment: advertDataResponse.FlatProperties.Apartment, SquareGeneral: advertDataResponse.FlatProperties.SquareGeneral,
+			Floor: int(advertDataResponse.FlatProperties.Floor), SquareResidential: advertDataResponse.FlatProperties.SquareResidential}
 	}
 
 	if advertDataResponse.ComplexProperties != nil {
-		complexProperties = &models.ComplexAdvertProperties{ComplexId: advertDataResponse.ComplexProperties.ComplexId, NameComplex: advertDataResponse.ComplexProperties.NameComplex, PhotoCompany: advertDataResponse.ComplexProperties.PhotoCompany, NameCompany: advertDataResponse.ComplexProperties.NameCompany}
+		complexProperties = &models.ComplexAdvertProperties{ComplexId: advertDataResponse.ComplexProperties.ComplexId,
+			NameComplex: advertDataResponse.ComplexProperties.NameComplex, PhotoCompany: advertDataResponse.ComplexProperties.PhotoCompany,
+			NameCompany: advertDataResponse.ComplexProperties.NameCompany}
 	}
 
 	date := advertDataResponse.DateCreation[:19]
 	dateTime, err := utils.StringToTime("2006-01-02 15:04:05", date)
 	if err != nil {
-		// utils.LogErrorResponse(h.logger, ctx.Value("requestId").(string), utils.DeliveryLayer, LoginMethod, err, http.StatusInternalServerError)
+		utils.LogErrorResponse(h.logger, r.Context().Value("requestId").(string), utils.DeliveryLayer, GetAdvertByIdMethod, err, http.StatusInternalServerError)
 		utils.WriteError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
 
-	advert := &models.AdvertData{ID: advertDataResponse.Id, AdvertType: advertDataResponse.AdvertType, TypeSale: advertDataResponse.TypeSale, Title: advertDataResponse.Title, Description: advertDataResponse.Description, CountViews: advertDataResponse.CountViews, CountLikes: advertDataResponse.CountLikes, Price: advertDataResponse.Price, Phone: advertDataResponse.Phone, IsLiked: advertDataResponse.IsLiked, IsAgent: advertDataResponse.IsAgent, Metro: advertDataResponse.Metro, Address: advertDataResponse.Address, AddressPoint: advertDataResponse.AddressPoint, YearCreation: int(advertDataResponse.YearCreation), PriceChange: priceHistory, Images: images, FlatProperties: flatProperties, HouseProperties: houseProperties, Material: material, ComplexProperties: complexProperties, DateCreation: dateTime}
+	advert := &models.AdvertData{ID: advertDataResponse.Id, AdvertType: advertDataResponse.AdvertType, TypeSale: advertDataResponse.TypeSale,
+		Title: advertDataResponse.Title, Description: advertDataResponse.Description, CountViews: advertDataResponse.CountViews,
+		CountLikes: advertDataResponse.CountLikes, Price: advertDataResponse.Price, Phone: advertDataResponse.Phone, IsLiked: advertDataResponse.IsLiked,
+		IsAgent: advertDataResponse.IsAgent, Metro: advertDataResponse.Metro, Address: advertDataResponse.Address, AddressPoint: advertDataResponse.AddressPoint,
+		YearCreation: int(advertDataResponse.YearCreation), PriceChange: priceHistory, Images: images, FlatProperties: flatProperties,
+		HouseProperties: houseProperties, Material: material, ComplexProperties: complexProperties, DateCreation: dateTime}
 
 	if err = utils.WriteResponse(w, http.StatusOK, advert); err != nil {
 		utils.LogErrorResponse(h.logger, r.Context().Value("requestId").(string), utils.DeliveryLayer, GetAdvertByIdMethod, err, http.StatusInternalServerError)
@@ -284,14 +457,99 @@ func (h *AdvertsClientHandler) UpdateAdvertById(w http.ResponseWriter, r *http.R
 		utils.WriteError(w, http.StatusBadRequest, "incorrect data format")
 		return
 	}
-	// data.Sanitize()
+	data.Sanitize()
 
 	data.ID = advertId
 
-	err = h.uc.UpdateAdvertById(r.Context(), &data)
+	var statusArea genAdverts.StatusAreaHouse
+	switch data.HouseProperties.StatusArea {
+	case "IHC":
+		statusArea = genAdverts.StatusAreaHouse_STATUS_AREA_IHC
+	case "DNP":
+		statusArea = genAdverts.StatusAreaHouse_STATUS_AREA_DNP
+	case "G":
+		statusArea = genAdverts.StatusAreaHouse_STATUS_AREA_G
+	case "F":
+		statusArea = genAdverts.StatusAreaHouse_STATUS_AREA_F
+	case "PSP":
+		statusArea = genAdverts.StatusAreaHouse_STATUS_AREA_PSP
+	}
+
+	var statusHome genAdverts.StatusHomeHouse
+	switch data.HouseProperties.StatusHome {
+	case "Live":
+		statusHome = genAdverts.StatusHomeHouse_STATUS_HOME_LIVE
+	case "RepairNeed":
+		statusHome = genAdverts.StatusHomeHouse_STATUS_HOME_REPAIR_NEED
+	case "CompleteNeed":
+		statusHome = genAdverts.StatusHomeHouse_STATUS_HOME_COMPLETE_NEED
+	case "Renovation":
+		statusHome = genAdverts.StatusHomeHouse_STATUS_HOME_RENOVATION
+	}
+
+	var mater genAdverts.MaterialBuilding
+	switch data.Material {
+	case models.MaterialBrick:
+		mater = genAdverts.MaterialBuilding_MATERIAL_BRICK
+	case models.MaterialMonolithic:
+		mater = genAdverts.MaterialBuilding_MATERIAL_MONOLITHIC
+	case models.MaterialWood:
+		mater = genAdverts.MaterialBuilding_MATERIAL_WOOD
+	case models.MaterialPanel:
+		mater = genAdverts.MaterialBuilding_MATERIAL_PANEL
+	case models.MaterialStalinsky:
+		mater = genAdverts.MaterialBuilding_MATERIAL_STALINSKY
+	case models.MaterialBlock:
+		mater = genAdverts.MaterialBuilding_MATERIAL_BLOCK
+	case models.MaterialMonolithicBlock:
+		mater = genAdverts.MaterialBuilding_MATERIAL_MONOLITHIC_BLOCK
+	case models.MaterialFrame:
+		mater = genAdverts.MaterialBuilding_MATERIAL_FRAME
+	case models.MaterialAeratedConcreteBlock:
+		mater = genAdverts.MaterialBuilding_MATERIAL_AERATED_CONCRETE_BLOCK
+	case models.MaterialGasSilicateBlock:
+		mater = genAdverts.MaterialBuilding_MATERIAL_GAS_SILICATE_BLOCK
+	case models.MaterialFoamConcreteBlock:
+		mater = genAdverts.MaterialBuilding_MATERIAL_FOAM_CONCRETE_BLOCK
+	}
+
+	resp, err := h.client.UpdateAdvertById(r.Context(), &genAdverts.UpdateAdvertByIdRequest{
+		Id:          advertId,
+		AdvertType:  data.TypeAdvert,
+		TypeSale:    data.TypeSale,
+		Title:       data.Title,
+		Description: data.Description,
+		Price:       data.Price,
+		IsAgent:     data.IsAgent,
+		Address: &genAdverts.AddressData{Province: data.Address.Province,
+			Town: data.Address.Town, Street: data.Address.Street, House: data.Address.House,
+			Metro: data.Address.Metro, AddressPoint: data.Address.AddressPoint},
+		HouseProp: &genAdverts.HouseProperties{
+			CeilingHeight: data.HouseProperties.CeilingHeight,
+			SquareArea:    data.HouseProperties.SquareArea,
+			SquareHouse:   data.HouseProperties.SquareHouse,
+			BedroomCount:  int32(data.HouseProperties.BedroomCount),
+			StatusArea:    statusArea,
+			Cottage:       data.HouseProperties.Cottage,
+			StatusHome:    statusHome,
+			Floor:         int32(data.HouseProperties.Floor),
+		},
+		FlatProperties: &genAdverts.FlatProperties{
+			Floor:             int32(data.FlatProperties.Floor),
+			CeilingHeight:     data.FlatProperties.CeilingHeight,
+			SquareGeneral:     data.FlatProperties.SquareGeneral,
+			RoomCount:         int32(data.FlatProperties.RoomCount),
+			SquareResidential: data.FlatProperties.SquareResidential,
+			Apartment:         data.FlatProperties.Apartment,
+			FloorGeneral:      int32(data.FlatProperties.FloorGeneral),
+		},
+		YearCreation: int32(data.YearCreation),
+		Material:     mater,
+	})
+
 	if err != nil {
-		utils.LogErrorResponse(h.logger, r.Context().Value("requestId").(string), utils.DeliveryLayer, UpdateAdvertByIdMethod, err, http.StatusBadRequest)
-		utils.WriteError(w, http.StatusBadRequest, err.Error())
+		utils.LogErrorResponse(h.logger, r.Context().Value("requestId").(string), utils.DeliveryLayer, UpdateAdvertByIdMethod, err, int(resp.RespCode))
+		utils.WriteError(w, int(resp.RespCode), err.Error())
 		return
 	}
 
@@ -326,7 +584,7 @@ func (h *AdvertsClientHandler) DeleteAdvertById(w http.ResponseWriter, r *http.R
 		return
 	}
 
-	err = h.uc.DeleteAdvertById(r.Context(), advertId)
+	_, err = h.client.DeleteAdvertById(r.Context(), &genAdverts.DeleteAdvertByIdRequest{Id: advertId})
 	if err != nil {
 		utils.LogErrorResponse(h.logger, r.Context().Value("requestId").(string), utils.DeliveryLayer, DeleteAdvertByIdMethod, err, http.StatusBadRequest)
 		utils.WriteError(w, http.StatusBadRequest, err.Error())
@@ -357,17 +615,48 @@ func (h *AdvertsClientHandler) GetSquareAdvertsList(w http.ResponseWriter, r *ht
 
 	offset := (page - 1) * size
 
-	adverts, err := h.uc.GetSquareAdvertsList(r.Context(), size, offset)
+	advResp, err := h.client.GetSquareAdvertsList(r.Context(), &genAdverts.GetSquareAdvertsListRequest{Offset: int64(offset), PageSize: int64(size)})
 	if err != nil {
-		utils.LogErrorResponse(h.logger, r.Context().Value("requestId").(string), utils.DeliveryLayer, GetSquareAdvertsListMethod, err, http.StatusBadRequest)
-		utils.WriteError(w, http.StatusBadRequest, err.Error())
+		utils.LogErrorResponse(h.logger, r.Context().Value("requestId").(string), utils.DeliveryLayer, GetSquareAdvertsListMethod, err, int(advResp.RespCode))
+		utils.WriteError(w, int(advResp.RespCode), err.Error())
 		return
 	}
-	for _, adv := range adverts {
-		adv.Sanitize()
+
+	foundAdverts := make([]*models.AdvertSquareData, 0)
+
+	for _, adv := range advResp.SquareData {
+		dateTime, err := utils.StringToTime("2006-01-02 15:04:05", adv.DateCreation[:19])
+
+		if err != nil {
+			utils.LogErrorResponse(h.logger, r.Context().Value("requestId").(string), utils.DeliveryLayer, GetSquareAdvertsListMethod, err, http.StatusInternalServerError)
+			utils.WriteError(w, int(advResp.RespCode), err.Error())
+			return
+		}
+
+		newadv := &models.AdvertSquareData{
+			ID:         adv.Id,
+			TypeAdvert: adv.TypeAdvert,
+			Photo:      adv.Photo,
+			TypeSale:   adv.TypeSale,
+			Address:    adv.Address,
+			Metro:      adv.Metro,
+			HouseProperties: &models.HouseSquareProperties{Cottage: adv.HouseProp.Cottage,
+				SquareArea: adv.HouseProp.SquareArea, SquareHouse: adv.HouseProp.SquareHouse, BedroomCount: int(adv.HouseProp.BedroomCount),
+				Floor: int(adv.HouseProp.Floor)},
+			FlatProperties: &models.FlatSquareProperties{
+				Floor:         int(adv.FlatProp.Floor),
+				FloorGeneral:  int(adv.FlatProp.FloorGeneral),
+				RoomCount:     int(adv.FlatProp.RoomCount),
+				SquareGeneral: adv.FlatProp.SquareGeneral,
+			},
+			Price:        int(adv.Price),
+			DateCreation: dateTime,
+		}
+
+		foundAdverts = append(foundAdverts, newadv)
 	}
 
-	if err = utils.WriteResponse(w, http.StatusOK, adverts); err != nil {
+	if err = utils.WriteResponse(w, http.StatusOK, foundAdverts); err != nil {
 		utils.LogErrorResponse(h.logger, r.Context().Value("requestId").(string), utils.DeliveryLayer, GetSquareAdvertsListMethod, err, http.StatusInternalServerError)
 		utils.WriteError(w, http.StatusInternalServerError, err.Error())
 	} else {
@@ -375,7 +664,7 @@ func (h *AdvertsClientHandler) GetSquareAdvertsList(w http.ResponseWriter, r *ht
 	}
 }
 
-// GetExistBuildingsByAddress handles the request for retrieving an existing buildings by address.
+// GetExistBuildingByAddress handles the request for retrieving an existing buildings by address.
 func (h *AdvertsClientHandler) GetExistBuildingByAddress(w http.ResponseWriter, r *http.Request) {
 	data := models.AddressData{}
 
@@ -385,12 +674,26 @@ func (h *AdvertsClientHandler) GetExistBuildingByAddress(w http.ResponseWriter, 
 		return
 	}
 
-	building, err := h.uc.GetExistBuildingByAddress(r.Context(), &data)
+	respBuilding, err := h.client.GetExistBuildingByAddress(r.Context(), &genAdverts.GetExistBuildingByAddressRequest{
+		AdrData: &genAdverts.AddressData{Province: data.Province,
+			Town: data.Town, Street: data.Street, House: data.House,
+			Metro: data.Metro, AddressPoint: data.AddressPoint},
+	})
+
 	if err != nil {
-		utils.LogErrorResponse(h.logger, r.Context().Value("requestId").(string), utils.DeliveryLayer, GetExistBuildingsByAddressMethod, err, http.StatusBadRequest)
-		utils.WriteError(w, http.StatusBadRequest, err.Error())
+		utils.LogErrorResponse(h.logger, r.Context().Value("requestId").(string), utils.DeliveryLayer, GetExistBuildingsByAddressMethod, err, int(respBuilding.RespCode))
+		utils.WriteError(w, int(respBuilding.RespCode), err.Error())
 		return
 	}
+
+	building := models.BuildingData{
+		ComplexName:  respBuilding.ComplexName,
+		Floor:        int(respBuilding.Floor),
+		Material:     models.MaterialBuilding(respBuilding.Material),
+		YearCreation: int(respBuilding.YearCreation),
+	}
+
+	building.Sanitize()
 
 	if err = utils.WriteResponse(w, http.StatusOK, building); err != nil {
 		utils.LogErrorResponse(h.logger, r.Context().Value("requestId").(string), utils.DeliveryLayer, GetExistBuildingsByAddressMethod, err, http.StatusInternalServerError)
@@ -400,7 +703,7 @@ func (h *AdvertsClientHandler) GetExistBuildingByAddress(w http.ResponseWriter, 
 	}
 }
 
-// GetRectangeAdvertsList handles the request for retrieving a rectangle adverts with search.
+// GetRectangleAdvertsList handles the request for retrieving a rectangle adverts with search.
 func (h *AdvertsClientHandler) GetRectangleAdvertsList(w http.ResponseWriter, r *http.Request) {
 	pageStr := r.URL.Query().Get("page")
 	sizeStr := r.URL.Query().Get("size")
@@ -443,7 +746,7 @@ func (h *AdvertsClientHandler) GetRectangleAdvertsList(w http.ResponseWriter, r 
 
 	offset := (page - 1) * size
 
-	adverts, err := h.client.GetRectangleAdvertsList(r.Context(), &genAdverts.GetRectangleAdvertsListRequest{
+	adv, err := h.client.GetRectangleAdvertsList(r.Context(), &genAdverts.GetRectangleAdvertsListRequest{
 		MinPrice:   minPrice,
 		MaxPrice:   maxPrice,
 		Page:       int64(page),
@@ -459,7 +762,7 @@ func (h *AdvertsClientHandler) GetRectangleAdvertsList(w http.ResponseWriter, r 
 		return
 	}
 
-	if err = utils.WriteResponse(w, http.StatusOK, adverts); err != nil {
+	if err = utils.WriteResponse(w, http.StatusOK, adv); err != nil {
 		utils.LogErrorResponse(h.logger, r.Context().Value("requestId").(string), utils.DeliveryLayer, GetRectangeAdvertsListMethod, err, http.StatusInternalServerError)
 		utils.WriteError(w, http.StatusInternalServerError, err.Error())
 	} else {
@@ -468,7 +771,7 @@ func (h *AdvertsClientHandler) GetRectangleAdvertsList(w http.ResponseWriter, r 
 }
 
 func (h *AdvertsClientHandler) GetUserAdverts(w http.ResponseWriter, r *http.Request) {
-	id := r.Context().Value(middleware.CookieName)
+	userId := r.Context().Value(middleware.CookieName)
 	pageStr := r.URL.Query().Get("page")
 	sizeStr := r.URL.Query().Get("size")
 
@@ -482,24 +785,58 @@ func (h *AdvertsClientHandler) GetUserAdverts(w http.ResponseWriter, r *http.Req
 		size = 0
 	}
 
-	ID, ok := id.(int64)
+	UId, ok := userId.(int64)
 	if !ok {
 		utils.LogErrorResponse(h.logger, r.Context().Value("requestId").(string), utils.DeliveryLayer, GetUserAdvertsMethod, errors.New("error with id user"), http.StatusBadRequest)
 		utils.WriteError(w, http.StatusBadRequest, "incorrect id")
 		return
 	}
 
-	var userAdverts []*models.AdvertRectangleData
-	if userAdverts, err = h.uc.GetRectangleAdvertsByUserId(r.Context(), page, size, ID); err != nil {
-		utils.LogErrorResponse(h.logger, r.Context().Value("requestId").(string), utils.DeliveryLayer, GetUserAdvertsMethod, err, http.StatusBadRequest)
+	userAdverts, err := h.client.GetRectangleAdvertsByUser(r.Context(), &genAdverts.GetUserAdvertsRequest{
+		Page: int64(page), Size: int64(size), UserId: UId,
+	})
+	if err != nil {
+		utils.LogErrorResponse(h.logger, r.Context().Value("requestId").(string), utils.DeliveryLayer, GetUserAdvertsMethod, err, int(userAdverts.RespCode))
 		utils.WriteError(w, http.StatusBadRequest, "error getting user adverts")
 		return
 	}
-	for _, adv := range userAdverts {
-		adv.Sanitize()
+
+	foundAdverts := make([]*models.AdvertRectangleData, 0)
+
+	for _, adv := range userAdverts.RectDataSlice {
+		tCr, err := utils.StringToTime("2006-01-02 15:04:05", adv.DateCreation[:19])
+		if err != nil {
+			utils.LogErrorResponse(h.logger, r.Context().Value("requestId").(string), utils.DeliveryLayer, GetUserAdvertsMethod, err, http.StatusInternalServerError)
+			utils.WriteError(w, http.StatusInternalServerError, err.Error())
+		}
+		newadv := &models.AdvertRectangleData{
+			ID:          adv.Id,
+			Title:       adv.Title,
+			Description: adv.Description,
+			TypeAdvert:  adv.AdvertType,
+			Photo:       adv.Photo,
+			Phone:       adv.Phone,
+			TypeSale:    adv.TypeSale,
+			Address:     adv.Address,
+			Metro:       adv.Metro,
+			IsLiked:     adv.IsLiked,
+			FlatProperties: &models.FlatRectangleProperties{
+				Floor:         int(adv.FlatProperties.Floor),
+				FloorGeneral:  int(adv.FlatProperties.FloorGeneral),
+				RoomCount:     int(adv.FlatProperties.RoomCount),
+				SquareGeneral: adv.FlatProperties.SquareGeneral,
+			},
+			HouseProperties: &models.HouseRectangleProperties{Cottage: adv.HouseProp.Cottage,
+				SquareArea: adv.HouseProp.SquareArea, SquareHouse: adv.HouseProp.SquareHouse, BedroomCount: int(adv.HouseProp.BedroomCount),
+				Floor: int(adv.HouseProp.Floor)},
+			Price:        int(adv.Price),
+			DateCreation: tCr,
+		}
+
+		foundAdverts = append(foundAdverts, newadv)
 	}
 
-	if err := utils.WriteResponse(w, http.StatusOK, userAdverts); err != nil {
+	if err := utils.WriteResponse(w, http.StatusOK, foundAdverts); err != nil {
 		utils.LogErrorResponse(h.logger, r.Context().Value("requestId").(string), utils.DeliveryLayer, GetUserAdvertsMethod, err, http.StatusInternalServerError)
 		utils.WriteError(w, http.StatusInternalServerError, "error write response")
 		return
@@ -537,17 +874,48 @@ func (h *AdvertsClientHandler) GetComplexAdverts(w http.ResponseWriter, r *http.
 		return
 	}
 
-	var complexAdverts []*models.AdvertRectangleData
-
-	if complexAdverts, err = h.uc.GetRectangleAdvertsByComplexId(r.Context(), page, size, complexId); err != nil {
+	var foundAdverts []*models.AdvertRectangleData
+	complexAdverts, err := h.client.GetRectangleAdvertsByComplex(r.Context(), &genAdverts.GetComplexAdvertsRequest{ComplexId: complexId,
+		PageSize: int64(size), Offset: int64(page)})
+	if err != nil {
 		utils.LogErrorResponse(h.logger, r.Context().Value("requestId").(string), utils.DeliveryLayer, GetComplexAdvertsMethod, err, http.StatusBadRequest)
 		utils.WriteError(w, http.StatusBadRequest, "error getting complex adverts")
 		return
 	}
-	for _, adv := range complexAdverts {
-		adv.Sanitize()
+	for _, adv := range complexAdverts.RectDataSlice {
+		tCr, err := utils.StringToTime("2006-01-02 15:04:05", adv.DateCreation[:19])
+		if err != nil {
+			utils.LogErrorResponse(h.logger, r.Context().Value("requestId").(string), utils.DeliveryLayer, GetUserAdvertsMethod, err, http.StatusInternalServerError)
+			utils.WriteError(w, http.StatusInternalServerError, err.Error())
+		}
+		newadv := &models.AdvertRectangleData{
+			ID:          adv.Id,
+			Title:       adv.Title,
+			Description: adv.Description,
+			TypeAdvert:  adv.AdvertType,
+			Photo:       adv.Photo,
+			Phone:       adv.Phone,
+			TypeSale:    adv.TypeSale,
+			Address:     adv.Address,
+			Metro:       adv.Metro,
+			IsLiked:     adv.IsLiked,
+			FlatProperties: &models.FlatRectangleProperties{
+				Floor:         int(adv.FlatProperties.Floor),
+				FloorGeneral:  int(adv.FlatProperties.FloorGeneral),
+				RoomCount:     int(adv.FlatProperties.RoomCount),
+				SquareGeneral: adv.FlatProperties.SquareGeneral,
+			},
+			HouseProperties: &models.HouseRectangleProperties{Cottage: adv.HouseProp.Cottage,
+				SquareArea: adv.HouseProp.SquareArea, SquareHouse: adv.HouseProp.SquareHouse, BedroomCount: int(adv.HouseProp.BedroomCount),
+				Floor: int(adv.HouseProp.Floor)},
+			Price:        int(adv.Price),
+			DateCreation: tCr,
+		}
+
+		foundAdverts = append(foundAdverts, newadv)
 	}
-	if err := utils.WriteResponse(w, http.StatusOK, complexAdverts); err != nil {
+
+	if err := utils.WriteResponse(w, http.StatusOK, foundAdverts); err != nil {
 		utils.LogErrorResponse(h.logger, r.Context().Value("requestId").(string), utils.DeliveryLayer, GetComplexAdvertsMethod, err, http.StatusBadRequest)
 		utils.WriteError(w, http.StatusInternalServerError, "error write response")
 		return
@@ -585,16 +953,16 @@ func (h *AdvertsClientHandler) LikeAdvert(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	err = h.uc.LikeAdvert(r.Context(), advertIdInt, id)
+	_, err = h.client.LikeAdvert(r.Context(), &genAdverts.LikeAdvertRequest{AdvId: advertIdInt, UserId: id})
 
 	if err != nil {
-		utils.LogErrorResponse(h.logger, r.Context().Value("requestId").(string), CreateFlatAdvertMethod, utils.DeliveryLayer, err, http.StatusBadRequest)
+		utils.LogErrorResponse(h.logger, r.Context().Value("requestId").(string), utils.DeliveryLayer, CreateFlatAdvertMethod, err, http.StatusBadRequest)
 		utils.WriteError(w, http.StatusBadRequest, err.Error())
 		return
 	}
 
 	if err = utils.WriteResponse(w, http.StatusCreated, "success liked"); err != nil {
-		utils.LogErrorResponse(h.logger, r.Context().Value("requestId").(string), CreateFlatAdvertMethod, utils.DeliveryLayer, err, http.StatusInternalServerError)
+		utils.LogErrorResponse(h.logger, r.Context().Value("requestId").(string), utils.DeliveryLayer, CreateFlatAdvertMethod, err, http.StatusInternalServerError)
 		utils.WriteError(w, http.StatusInternalServerError, err.Error())
 	} else {
 		utils.LogSuccesResponse(h.logger, r.Context().Value("requestId").(string), utils.DeliveryLayer, CreateFlatAdvertMethod)
@@ -630,16 +998,16 @@ func (h *AdvertsClientHandler) DislikeAdvert(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	err = h.uc.DislikeAdvert(r.Context(), advertIdInt, id)
+	_, err = h.client.DislikeAdvert(r.Context(), &genAdverts.DislikeAdvertRequest{AdvId: advertIdInt, UserId: id})
 
 	if err != nil {
-		utils.LogErrorResponse(h.logger, r.Context().Value("requestId").(string), CreateFlatAdvertMethod, utils.DeliveryLayer, err, http.StatusBadRequest)
+		utils.LogErrorResponse(h.logger, r.Context().Value("requestId").(string), utils.DeliveryLayer, CreateFlatAdvertMethod, err, http.StatusBadRequest)
 		utils.WriteError(w, http.StatusBadRequest, err.Error())
 		return
 	}
 
 	if err = utils.WriteResponse(w, http.StatusCreated, "success disliked"); err != nil {
-		utils.LogErrorResponse(h.logger, r.Context().Value("requestId").(string), CreateFlatAdvertMethod, utils.DeliveryLayer, err, http.StatusInternalServerError)
+		utils.LogErrorResponse(h.logger, r.Context().Value("requestId").(string), utils.DeliveryLayer, CreateFlatAdvertMethod, err, http.StatusInternalServerError)
 		utils.WriteError(w, http.StatusInternalServerError, err.Error())
 	} else {
 		utils.LogSuccesResponse(h.logger, r.Context().Value("requestId").(string), utils.DeliveryLayer, CreateFlatAdvertMethod)
@@ -661,24 +1029,55 @@ func (h *AdvertsClientHandler) GetLikedUserAdverts(w http.ResponseWriter, r *htt
 		size = 0
 	}
 
-	ID, ok := id.(int64)
+	userID, ok := id.(int64)
 	if !ok {
 		utils.LogErrorResponse(h.logger, r.Context().Value("requestId").(string), utils.DeliveryLayer, GetUserAdvertsMethod, errors.New("error with id user"), http.StatusBadRequest)
 		utils.WriteError(w, http.StatusBadRequest, "incorrect id")
 		return
 	}
 
-	var userAdverts []*models.AdvertRectangleData
-	if userAdverts, err = h.uc.GetRectangleAdvertsLikedByUserId(r.Context(), page, size, ID); err != nil {
-		utils.LogErrorResponse(h.logger, r.Context().Value("requestId").(string), utils.DeliveryLayer, GetUserAdvertsMethod, err, http.StatusBadRequest)
+	var foundAdverts []*models.AdvertRectangleData
+	userAdvertsResp, err := h.client.GetLikedUserAdverts(r.Context(), &genAdverts.GetLikedUserAdvertsRequest{UserId: userID, PageSize: int64(size), Offset: int64(page)})
+	if err != nil {
+		utils.LogErrorResponse(h.logger, r.Context().Value("requestId").(string), utils.DeliveryLayer, GetUserAdvertsMethod, err, int(userAdvertsResp.RespCode))
 		utils.WriteError(w, http.StatusBadRequest, "error getting user adverts")
 		return
 	}
-	for _, adv := range userAdverts {
-		adv.Sanitize()
+
+	for _, adv := range userAdvertsResp.RectDataSlice {
+		tCr, err := utils.StringToTime("2006-01-02 15:04:05", adv.DateCreation[:19])
+		if err != nil {
+			utils.LogErrorResponse(h.logger, r.Context().Value("requestId").(string), utils.DeliveryLayer, GetUserAdvertsMethod, err, http.StatusInternalServerError)
+			utils.WriteError(w, http.StatusInternalServerError, err.Error())
+		}
+		newadv := &models.AdvertRectangleData{
+			ID:          adv.Id,
+			Title:       adv.Title,
+			Description: adv.Description,
+			TypeAdvert:  adv.AdvertType,
+			Photo:       adv.Photo,
+			Phone:       adv.Phone,
+			TypeSale:    adv.TypeSale,
+			Address:     adv.Address,
+			Metro:       adv.Metro,
+			IsLiked:     adv.IsLiked,
+			FlatProperties: &models.FlatRectangleProperties{
+				Floor:         int(adv.FlatProperties.Floor),
+				FloorGeneral:  int(adv.FlatProperties.FloorGeneral),
+				RoomCount:     int(adv.FlatProperties.RoomCount),
+				SquareGeneral: adv.FlatProperties.SquareGeneral,
+			},
+			HouseProperties: &models.HouseRectangleProperties{Cottage: adv.HouseProp.Cottage,
+				SquareArea: adv.HouseProp.SquareArea, SquareHouse: adv.HouseProp.SquareHouse, BedroomCount: int(adv.HouseProp.BedroomCount),
+				Floor: int(adv.HouseProp.Floor)},
+			Price:        int(adv.Price),
+			DateCreation: tCr,
+		}
+
+		foundAdverts = append(foundAdverts, newadv)
 	}
 
-	if err := utils.WriteResponse(w, http.StatusOK, userAdverts); err != nil {
+	if err := utils.WriteResponse(w, http.StatusOK, foundAdverts); err != nil {
 		utils.LogErrorResponse(h.logger, r.Context().Value("requestId").(string), utils.DeliveryLayer, GetUserAdvertsMethod, err, http.StatusInternalServerError)
 		utils.WriteError(w, http.StatusInternalServerError, "error write response")
 		return

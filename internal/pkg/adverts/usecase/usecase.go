@@ -142,7 +142,7 @@ func (u *AdvertUsecase) CreateFlatAdvert(ctx context.Context, data *models.Adver
 	return newAdvert, nil
 }
 
-// CreateFlatAdvert handles the creation advert process.
+// CreateHouseAdvert handles the creation advert process.
 func (u *AdvertUsecase) CreateHouseAdvert(ctx context.Context, data *models.AdvertHouseCreateData) (*models.Advert, error) {
 	tx, err := u.repo.BeginTx(ctx)
 	if err != nil {

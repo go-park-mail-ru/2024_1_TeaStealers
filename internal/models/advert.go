@@ -66,7 +66,7 @@ type AdvertFlatCreateData struct {
 	CeilingHeight float64 `json:"ceilingHeight"`
 	// SquareGeneral is the general square of the flat.
 	SquareGeneral float64 `json:"squareGeneral"`
-	// RoomCount is the how many rooms in flat
+	// RoomCount is how many rooms in flat
 	RoomCount int `json:"roomCount"`
 	// SquareResidential is the residential square of the flat.
 	SquareResidential float64 `json:"squareResidential"`
@@ -381,7 +381,7 @@ type AdvertUpdateData struct {
 	// Description is the description of the advert.
 	Description string `json:"description"`
 	// Price is the price of the advertisement.
-	Price float64 `json:"price"`
+	Price int64 `json:"price"`
 	// Phone is the phone number associated with the advert.
 	Phone string `json:"phone"`
 	// IsAgent indicates whether the advert is posted by an agent.

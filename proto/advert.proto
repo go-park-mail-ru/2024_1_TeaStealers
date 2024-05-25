@@ -5,22 +5,22 @@ option go_package = "./internal/pkg/adverts/delivery/grpc/gen/;gen";
 //protoc --go_out=./gen --go-grpc_out=./gen --go-grpc_opt=paths=source_relative --go_opt=paths=source_relative *.proto
 
 service Adverts {
-  rpc GetAdvertById(GetAdvertByIdRequest) returns (GetAdvertByIdResponse) {}
-  //rpc UpdateAdvertById(UpdateAdvertByIdRequest) returns (UpdateAdvertByIdResponse) {}
-  //rpc DeleteAdvertById(DeleteAdvertByIdRequest) returns (DeleteAdvertByIdResponse) {}
-  //rpc LikeAdvert(LikeAdvertRequest) returns (LikeAdvertResponse) {}
-  //rpc DislikeAdvert(DislikeAdvertRequest) returns (DislikeAdvertResponse) {}
-  //rpc CreateHouseAdvert(CreateHouseAdvertRequest) returns (CreateHouseAdvertResponse) {}
-  //rpc GetExistBuildingByAddress(GetExistBuildingByAddressRequest) returns (GetExistBuildingByAddressResponse) {}
-  //rpc CreateFlatAdvert(CreateFlatAdvertRequest) returns (CreateFlatAdvertResponse) {}
-  //rpc GetSquareAdvertsList(GetSquareAdvertsListRequest) returns (GetSquareAdvertsListResponse) {}
-  rpc GetRectangleAdvertsList(GetRectangleAdvertsListRequest) returns (GetRectangleAdvertsListResponse) {}
+  rpc GetAdvertById(GetAdvertByIdRequest) returns (GetAdvertByIdResponse) {} // есть
+  rpc UpdateAdvertById(UpdateAdvertByIdRequest) returns (UpdateAdvertByIdResponse) {} // есть
+  rpc DeleteAdvertById(DeleteAdvertByIdRequest) returns (DeleteAdvertByIdResponse) {} // есть
+  rpc LikeAdvert(LikeAdvertRequest) returns (LikeAdvertResponse) {} // есть
+  rpc DislikeAdvert(DislikeAdvertRequest) returns (DislikeAdvertResponse) {} // есть
+  rpc CreateHouseAdvert(CreateHouseAdvertRequest) returns (CreateHouseAdvertResponse) {} // есть
+  rpc GetExistBuildingByAddress(GetExistBuildingByAddressRequest) returns (GetExistBuildingByAddressResponse) {} // есть
+  rpc CreateFlatAdvert(CreateFlatAdvertRequest) returns (CreateFlatAdvertResponse) {} // есть
+  rpc GetSquareAdvertsList(GetSquareAdvertsListRequest) returns (GetSquareAdvertsListResponse) {} // есть
+  rpc GetRectangleAdvertsList(GetRectangleAdvertsListRequest) returns (GetRectangleAdvertsListResponse) {} // есть
   //rpc UploadImage(UploadImageRequest) returns (UploadImageResponse) {}
   //rpc GetAdvertImages(GetAdvertImagesRequest) returns (GetAdvertImagesResponse) {}
   //rpc DeleteImage(DeleteImageRequest) returns (DeleteImageResponse) {}
-  //rpc GetUserAdverts(GetUserAdvertsRequest) returns (GetUserAdvertsResponse) {}
-  //rpc GetLikedUserAdverts(GetLikedUserAdvertsRequest) returns (GetLikedUserAdvertsResponse) {}
-  //rpc GetComplexAdverts(GetComplexAdvertsRequest) returns (GetComplexAdvertsResponse) {}
+  rpc GetRectangleAdvertsByUser(GetUserAdvertsRequest) returns (GetUserAdvertsResponse) {} // есть
+  rpc GetLikedUserAdverts(GetLikedUserAdvertsRequest) returns (GetLikedUserAdvertsResponse) {} // есть
+  rpc GetRectangleAdvertsByComplex(GetComplexAdvertsRequest) returns (GetComplexAdvertsResponse) {} // есть
 }
 
 message GetAdvertByIdRequest {
@@ -41,6 +41,16 @@ enum StatusHomeHouse {
   STATUS_HOME_COMPLETE_NEED = 2;
   STATUS_HOME_RENOVATION = 3;
 }
+
+message AddressData {
+  string Province = 1;
+  string Town = 2;
+  string Street = 3;
+  string House = 4;
+  string Metro = 5;
+  string AddressPoint = 6;
+}
+
 
 message ImageResp {
   int64 Id = 1;
@@ -63,12 +73,12 @@ message ComplexAdvertProperties {
 
 message FlatProperties {
   int32 Floor = 1;
-  int32 FloorGeneral = 2;
-  double CeilingHeight = 3;
+  double CeilingHeight = 2;
+  double SquareGeneral = 3;
   int32 RoomCount = 4;
-  double SquareGeneral = 5;
-  double SquareResidential = 6;
-  bool Apartment = 7;
+  double SquareResidential = 5;
+  bool Apartment = 6;
+  int32 FloorGeneral = 7;
 }
 
 message HouseProperties {
@@ -82,18 +92,33 @@ message HouseProperties {
   int32 Floor = 8;
 }
 
+message HouseSquareProperties {
+  bool Cottage = 1;
+  double SquareArea = 2;
+  double SquareHouse = 3;
+  int32 BedroomCount = 4;
+  int32 Floor = 5;
+}
+
+message FlatSquareProperties {
+  int32 Floor = 1;
+  int32 FloorGeneral = 2;
+  int32 RoomCount = 3;
+  double SquareGeneral = 4;
+}
+
 enum MaterialBuilding {
-    MATERIAL_BRICK = 0;
-    MATERIAL_MONOLITHIC = 1;
-    MATERIAL_WOOD = 2;
-    MATERIAL_PANEL = 3;
-    MATERIAL_STALINSKY = 4;
-    MATERIAL_BLOCK = 5;
-    MATERIAL_MONOLITHIC_BLOCK = 6;
-    MATERIAL_FRAME = 7;
-    MATERIAL_AERATED_CONCRETE_BLOCK = 8;
-    MATERIAL_GAS_SILICATE_BLOCK = 9;
-    MATERIAL_FOAM_CONCRETE_BLOCK = 10;
+  MATERIAL_BRICK = 0;
+  MATERIAL_MONOLITHIC = 1;
+  MATERIAL_WOOD = 2;
+  MATERIAL_PANEL = 3;
+  MATERIAL_STALINSKY = 4;
+  MATERIAL_BLOCK = 5;
+  MATERIAL_MONOLITHIC_BLOCK = 6;
+  MATERIAL_FRAME = 7;
+  MATERIAL_AERATED_CONCRETE_BLOCK = 8;
+  MATERIAL_GAS_SILICATE_BLOCK = 9;
+  MATERIAL_FOAM_CONCRETE_BLOCK = 10;
 }
 
 message GetAdvertByIdResponse {
@@ -113,12 +138,13 @@ message GetAdvertByIdResponse {
   string AddressPoint = 14;
   repeated PriceChangeData PriceHistory = 15;
   repeated ImageResp Images = 16;
-  HouseProperties HouseProperties = 17;
+  HouseProperties HouseProp = 17;
   FlatProperties FlatProperties = 18;
   int32 YearCreation = 19;
   MaterialBuilding Material = 20;
   ComplexAdvertProperties ComplexProperties = 21;
   string DateCreation = 22;
+  int32 RespCode = 23;
 }
 
 message GetRectangleAdvertsListRequest {
@@ -145,7 +171,7 @@ message AdvertRectangleData {
   string Address = 10;
   string AddressPoint = 11;
   string Photo = 12;
-  HouseProperties HouseProperties = 13;
+  HouseProperties HouseProp = 13;
   FlatProperties FlatProperties = 14;
   string DateCreation = 15;
 }
@@ -160,4 +186,177 @@ message PageInfo {
 message GetRectangleAdvertsListResponse {
   repeated AdvertRectangleData Adverts = 1;
   PageInfo Info = 2;
+  int32 RespCode = 3;
+
+}
+
+message UpdateAdvertByIdRequest{
+  int64 Id = 1;
+  string AdvertType = 2;
+  string TypeSale = 3;
+  string Title = 4;
+  string Description = 5;
+  int64 Price = 6;
+  string Phone = 7;
+  bool isAgent = 8;
+  AddressData Address = 9;
+  HouseProperties HouseProp = 10;
+  FlatProperties FlatProperties = 11;
+  int32 YearCreation = 12;
+  MaterialBuilding Material = 13;
+}
+
+message UpdateAdvertByIdResponse {
+  int32 RespCode = 2;
+}
+
+message DeleteAdvertByIdRequest {
+  int64 Id = 1;
+}
+
+message DeleteAdvertByIdResponse{
+  int64 RespCode = 1;
+}
+
+
+message LikeAdvertRequest{
+  int64 advId = 1;
+  int64 userId = 2;
+}
+
+message LikeAdvertResponse{
+  int32 RespCode = 2;
+}
+
+message DislikeAdvertRequest{
+  int64 advId = 1;
+  int64 userId = 2;
+}
+
+message DislikeAdvertResponse{
+  int32 RespCode = 2;
+}
+
+message CreateHouseAdvertRequest{
+  int64 UserId = 1;
+  string TypeSale = 2;
+  string Title = 3;
+  string Description =4;
+  string Phone=5;
+  bool IsAgent = 6;
+  HouseProperties CreateHouseProp = 7;
+  int64 Price = 8;
+  MaterialBuilding Material = 9;
+  AddressData Address = 10;
+  int32 YearCreation = 11;
+}
+
+message CreateHouseAdvertResponse{
+  int64 Id = 1;
+  int64 UserId = 2;
+  string TypeSale = 3;
+  string Title = 4;
+  string Description = 5;
+  string Phone = 6;
+  bool IsAgent = 7;
+  int64 Priority = 8;
+  string DateCreation = 9;
+  int32 RespCode = 11;
+
+}
+
+message GetExistBuildingByAddressRequest{
+  AddressData AdrData = 1;
+}
+
+message GetExistBuildingByAddressResponse{
+  string ComplexName = 1;
+  int32 Floor = 2;
+  MaterialBuilding Material = 3;
+  int32 YearCreation = 4;
+  int32 RespCode = 5;
+
+}
+
+message CreateFlatAdvertRequest{
+  int64 UserId = 1;
+  string TypeSale = 2;
+  string Title = 3;
+  string Description =4;
+  string Phone=5;
+  bool IsAgent = 6;
+  FlatProperties CreateFlatProp = 7;
+  int64 Price = 8;
+  MaterialBuilding Material = 9;
+  AddressData Address = 10;
+  int32 YearCreation = 11;
+}
+
+message CreateFlatAdvertResponse{
+  int64 Id = 1;
+  int64 UserId = 2;
+  string TypeSale = 3;
+  string Title = 4;
+  string Description = 5;
+  string Phone = 6;
+  bool IsAgent = 7;
+  int64 Priority = 8;
+  string DateCreation = 9;
+  int32 RespCode = 10;
+}
+
+message GetSquareAdvertsListRequest{
+  int64 PageSize = 1;
+  int64 Offset = 2;
+}
+
+message AdvertSquareData {
+  int64 Id = 1;
+  string TypeAdvert = 2;
+  string Photo = 3;
+  string TypeSale = 4;
+  string  Address = 5;
+  string  Metro = 6;
+  HouseSquareProperties HouseProp = 7;
+  FlatSquareProperties FlatProp = 8;
+  int64 Price = 9;
+  string DateCreation = 10;
+}
+
+message GetSquareAdvertsListResponse{
+  repeated AdvertSquareData SquareData = 1;
+  int32 RespCode = 2;
+}
+
+message GetUserAdvertsRequest {
+  int64 UserId = 1;
+  int64 Page = 2;
+  int64 Size = 3;
+}
+
+message GetUserAdvertsResponse{
+  repeated  AdvertRectangleData RectDataSlice = 1;
+  int32 RespCode = 2;
+}
+
+message GetLikedUserAdvertsRequest{
+  int64 UserId = 1;
+  int64 PageSize = 2;
+  int64 Offset = 3;
+}
+
+message GetLikedUserAdvertsResponse{
+  repeated  AdvertRectangleData RectDataSlice = 1;
+  int32 RespCode = 2;
+}
+
+message GetComplexAdvertsRequest{
+  int64 ComplexId = 1;
+  int64 PageSize = 2;
+  int64 Offset = 3;
+}
+
+message GetComplexAdvertsResponse{
+  repeated  AdvertRectangleData RectDataSlice = 1;
+  int32 RespCode = 2;
 }

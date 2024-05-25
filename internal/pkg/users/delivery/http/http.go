@@ -34,7 +34,8 @@ func (h *UserClientHandler) GetCurUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	userInfo := &models.User{ID: uId, FirstName: resp.FirstName, SecondName: resp.Surname, Phone: resp.Phone, Email: resp.Email}
+	userInfo := &models.User{ID: uId, FirstName: resp.FirstName, SecondName: resp.Surname,
+		Phone: resp.Phone, Email: resp.Email}
 	userInfo.Sanitize()
 
 	if err := utils.WriteResponse(w, http.StatusOK, userInfo); err != nil {

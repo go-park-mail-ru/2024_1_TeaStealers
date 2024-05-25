@@ -155,6 +155,11 @@ services:
     image: grafana/grafana-enterprise
     volumes:
       - ${GRAFANA_DIR}:/var/lib/grafana/
+    ports:
+      - "3000:3000"
+    environment:
+          - GF_SECURITY_ADMIN_USER=root
+          - GF_SECURITY_ADMIN_PASSWORD=root
     networks:
       - tean-network
 
