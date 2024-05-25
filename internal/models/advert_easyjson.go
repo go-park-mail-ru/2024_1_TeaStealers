@@ -453,7 +453,7 @@ func easyjsonA66148a6Decode20241TeaStealersInternalModels3(in *jlexer.Lexer, out
 		case "description":
 			out.Description = string(in.String())
 		case "price":
-			out.Price = float64(in.Float64())
+			out.Price = int64(in.Int64())
 		case "phone":
 			out.Phone = string(in.String())
 		case "isAgent":
@@ -468,7 +468,7 @@ func easyjsonA66148a6Decode20241TeaStealersInternalModels3(in *jlexer.Lexer, out
 				if out.HouseProperties == nil {
 					out.HouseProperties = new(HouseProperties)
 				}
-				easyjsonA66148a6Decode20241TeaStealersInternalModels4(in, out.HouseProperties)
+				(*out.HouseProperties).UnmarshalEasyJSON(in)
 			}
 		case "flatProperties":
 			if in.IsNull() {
@@ -478,7 +478,7 @@ func easyjsonA66148a6Decode20241TeaStealersInternalModels3(in *jlexer.Lexer, out
 				if out.FlatProperties == nil {
 					out.FlatProperties = new(FlatProperties)
 				}
-				easyjsonA66148a6Decode20241TeaStealersInternalModels5(in, out.FlatProperties)
+				(*out.FlatProperties).UnmarshalEasyJSON(in)
 			}
 		case "yearCreation":
 			out.YearCreation = int(in.Int())
@@ -526,7 +526,7 @@ func easyjsonA66148a6Encode20241TeaStealersInternalModels3(out *jwriter.Writer, 
 	{
 		const prefix string = ",\"price\":"
 		out.RawString(prefix)
-		out.Float64(float64(in.Price))
+		out.Int64(int64(in.Price))
 	}
 	{
 		const prefix string = ",\"phone\":"
@@ -546,12 +546,12 @@ func easyjsonA66148a6Encode20241TeaStealersInternalModels3(out *jwriter.Writer, 
 	if in.HouseProperties != nil {
 		const prefix string = ",\"houseProperties\":"
 		out.RawString(prefix)
-		easyjsonA66148a6Encode20241TeaStealersInternalModels4(out, *in.HouseProperties)
+		(*in.HouseProperties).MarshalEasyJSON(out)
 	}
 	if in.FlatProperties != nil {
 		const prefix string = ",\"flatProperties\":"
 		out.RawString(prefix)
-		easyjsonA66148a6Encode20241TeaStealersInternalModels5(out, *in.FlatProperties)
+		(*in.FlatProperties).MarshalEasyJSON(out)
 	}
 	{
 		const prefix string = ",\"yearCreation\":"
@@ -589,182 +589,7 @@ func (v *AdvertUpdateData) UnmarshalJSON(data []byte) error {
 func (v *AdvertUpdateData) UnmarshalEasyJSON(l *jlexer.Lexer) {
 	easyjsonA66148a6Decode20241TeaStealersInternalModels3(l, v)
 }
-func easyjsonA66148a6Decode20241TeaStealersInternalModels5(in *jlexer.Lexer, out *FlatProperties) {
-	isTopLevel := in.IsStart()
-	if in.IsNull() {
-		if isTopLevel {
-			in.Consumed()
-		}
-		in.Skip()
-		return
-	}
-	in.Delim('{')
-	for !in.IsDelim('}') {
-		key := in.UnsafeFieldName(false)
-		in.WantColon()
-		if in.IsNull() {
-			in.Skip()
-			in.WantComma()
-			continue
-		}
-		switch key {
-		case "floor":
-			out.Floor = int(in.Int())
-		case "floorGeneral":
-			out.FloorGeneral = int(in.Int())
-		case "ceilingHeight":
-			out.CeilingHeight = float64(in.Float64())
-		case "roomCount":
-			out.RoomCount = int(in.Int())
-		case "squareGeneral":
-			out.SquareGeneral = float64(in.Float64())
-		case "squareResidential":
-			out.SquareResidential = float64(in.Float64())
-		case "apartment":
-			out.Apartment = bool(in.Bool())
-		default:
-			in.SkipRecursive()
-		}
-		in.WantComma()
-	}
-	in.Delim('}')
-	if isTopLevel {
-		in.Consumed()
-	}
-}
-func easyjsonA66148a6Encode20241TeaStealersInternalModels5(out *jwriter.Writer, in FlatProperties) {
-	out.RawByte('{')
-	first := true
-	_ = first
-	{
-		const prefix string = ",\"floor\":"
-		out.RawString(prefix[1:])
-		out.Int(int(in.Floor))
-	}
-	{
-		const prefix string = ",\"floorGeneral\":"
-		out.RawString(prefix)
-		out.Int(int(in.FloorGeneral))
-	}
-	{
-		const prefix string = ",\"ceilingHeight\":"
-		out.RawString(prefix)
-		out.Float64(float64(in.CeilingHeight))
-	}
-	{
-		const prefix string = ",\"roomCount\":"
-		out.RawString(prefix)
-		out.Int(int(in.RoomCount))
-	}
-	{
-		const prefix string = ",\"squareGeneral\":"
-		out.RawString(prefix)
-		out.Float64(float64(in.SquareGeneral))
-	}
-	{
-		const prefix string = ",\"squareResidential\":"
-		out.RawString(prefix)
-		out.Float64(float64(in.SquareResidential))
-	}
-	{
-		const prefix string = ",\"apartment\":"
-		out.RawString(prefix)
-		out.Bool(bool(in.Apartment))
-	}
-	out.RawByte('}')
-}
-func easyjsonA66148a6Decode20241TeaStealersInternalModels4(in *jlexer.Lexer, out *HouseProperties) {
-	isTopLevel := in.IsStart()
-	if in.IsNull() {
-		if isTopLevel {
-			in.Consumed()
-		}
-		in.Skip()
-		return
-	}
-	in.Delim('{')
-	for !in.IsDelim('}') {
-		key := in.UnsafeFieldName(false)
-		in.WantColon()
-		if in.IsNull() {
-			in.Skip()
-			in.WantComma()
-			continue
-		}
-		switch key {
-		case "ceilingHeight":
-			out.CeilingHeight = float64(in.Float64())
-		case "squareArea":
-			out.SquareArea = float64(in.Float64())
-		case "squareHouse":
-			out.SquareHouse = float64(in.Float64())
-		case "bedroomCount":
-			out.BedroomCount = int(in.Int())
-		case "statusArea":
-			out.StatusArea = StatusAreaHouse(in.String())
-		case "cottage":
-			out.Cottage = bool(in.Bool())
-		case "statusHome":
-			out.StatusHome = StatusHomeHouse(in.String())
-		case "floor":
-			out.Floor = int(in.Int())
-		default:
-			in.SkipRecursive()
-		}
-		in.WantComma()
-	}
-	in.Delim('}')
-	if isTopLevel {
-		in.Consumed()
-	}
-}
-func easyjsonA66148a6Encode20241TeaStealersInternalModels4(out *jwriter.Writer, in HouseProperties) {
-	out.RawByte('{')
-	first := true
-	_ = first
-	{
-		const prefix string = ",\"ceilingHeight\":"
-		out.RawString(prefix[1:])
-		out.Float64(float64(in.CeilingHeight))
-	}
-	{
-		const prefix string = ",\"squareArea\":"
-		out.RawString(prefix)
-		out.Float64(float64(in.SquareArea))
-	}
-	{
-		const prefix string = ",\"squareHouse\":"
-		out.RawString(prefix)
-		out.Float64(float64(in.SquareHouse))
-	}
-	{
-		const prefix string = ",\"bedroomCount\":"
-		out.RawString(prefix)
-		out.Int(int(in.BedroomCount))
-	}
-	{
-		const prefix string = ",\"statusArea\":"
-		out.RawString(prefix)
-		out.String(string(in.StatusArea))
-	}
-	{
-		const prefix string = ",\"cottage\":"
-		out.RawString(prefix)
-		out.Bool(bool(in.Cottage))
-	}
-	{
-		const prefix string = ",\"statusHome\":"
-		out.RawString(prefix)
-		out.String(string(in.StatusHome))
-	}
-	{
-		const prefix string = ",\"floor\":"
-		out.RawString(prefix)
-		out.Int(int(in.Floor))
-	}
-	out.RawByte('}')
-}
-func easyjsonA66148a6Decode20241TeaStealersInternalModels6(in *jlexer.Lexer, out *AdvertSquareData) {
+func easyjsonA66148a6Decode20241TeaStealersInternalModels4(in *jlexer.Lexer, out *AdvertSquareData) {
 	isTopLevel := in.IsStart()
 	if in.IsNull() {
 		if isTopLevel {
@@ -803,7 +628,7 @@ func easyjsonA66148a6Decode20241TeaStealersInternalModels6(in *jlexer.Lexer, out
 				if out.HouseProperties == nil {
 					out.HouseProperties = new(HouseSquareProperties)
 				}
-				easyjsonA66148a6Decode20241TeaStealersInternalModels7(in, out.HouseProperties)
+				(*out.HouseProperties).UnmarshalEasyJSON(in)
 			}
 		case "flatProperties":
 			if in.IsNull() {
@@ -813,7 +638,7 @@ func easyjsonA66148a6Decode20241TeaStealersInternalModels6(in *jlexer.Lexer, out
 				if out.FlatProperties == nil {
 					out.FlatProperties = new(FlatSquareProperties)
 				}
-				easyjsonA66148a6Decode20241TeaStealersInternalModels8(in, out.FlatProperties)
+				(*out.FlatProperties).UnmarshalEasyJSON(in)
 			}
 		case "price":
 			out.Price = int(in.Int())
@@ -831,7 +656,7 @@ func easyjsonA66148a6Decode20241TeaStealersInternalModels6(in *jlexer.Lexer, out
 		in.Consumed()
 	}
 }
-func easyjsonA66148a6Encode20241TeaStealersInternalModels6(out *jwriter.Writer, in AdvertSquareData) {
+func easyjsonA66148a6Encode20241TeaStealersInternalModels4(out *jwriter.Writer, in AdvertSquareData) {
 	out.RawByte('{')
 	first := true
 	_ = first
@@ -868,12 +693,12 @@ func easyjsonA66148a6Encode20241TeaStealersInternalModels6(out *jwriter.Writer, 
 	if in.HouseProperties != nil {
 		const prefix string = ",\"houseProperties\":"
 		out.RawString(prefix)
-		easyjsonA66148a6Encode20241TeaStealersInternalModels7(out, *in.HouseProperties)
+		(*in.HouseProperties).MarshalEasyJSON(out)
 	}
 	if in.FlatProperties != nil {
 		const prefix string = ",\"flatProperties\":"
 		out.RawString(prefix)
-		easyjsonA66148a6Encode20241TeaStealersInternalModels8(out, *in.FlatProperties)
+		(*in.FlatProperties).MarshalEasyJSON(out)
 	}
 	{
 		const prefix string = ",\"price\":"
@@ -891,160 +716,27 @@ func easyjsonA66148a6Encode20241TeaStealersInternalModels6(out *jwriter.Writer, 
 // MarshalJSON supports json.Marshaler interface
 func (v AdvertSquareData) MarshalJSON() ([]byte, error) {
 	w := jwriter.Writer{}
-	easyjsonA66148a6Encode20241TeaStealersInternalModels6(&w, v)
+	easyjsonA66148a6Encode20241TeaStealersInternalModels4(&w, v)
 	return w.Buffer.BuildBytes(), w.Error
 }
 
 // MarshalEasyJSON supports easyjson.Marshaler interface
 func (v AdvertSquareData) MarshalEasyJSON(w *jwriter.Writer) {
-	easyjsonA66148a6Encode20241TeaStealersInternalModels6(w, v)
+	easyjsonA66148a6Encode20241TeaStealersInternalModels4(w, v)
 }
 
 // UnmarshalJSON supports json.Unmarshaler interface
 func (v *AdvertSquareData) UnmarshalJSON(data []byte) error {
 	r := jlexer.Lexer{Data: data}
-	easyjsonA66148a6Decode20241TeaStealersInternalModels6(&r, v)
+	easyjsonA66148a6Decode20241TeaStealersInternalModels4(&r, v)
 	return r.Error()
 }
 
 // UnmarshalEasyJSON supports easyjson.Unmarshaler interface
 func (v *AdvertSquareData) UnmarshalEasyJSON(l *jlexer.Lexer) {
-	easyjsonA66148a6Decode20241TeaStealersInternalModels6(l, v)
+	easyjsonA66148a6Decode20241TeaStealersInternalModels4(l, v)
 }
-func easyjsonA66148a6Decode20241TeaStealersInternalModels8(in *jlexer.Lexer, out *FlatSquareProperties) {
-	isTopLevel := in.IsStart()
-	if in.IsNull() {
-		if isTopLevel {
-			in.Consumed()
-		}
-		in.Skip()
-		return
-	}
-	in.Delim('{')
-	for !in.IsDelim('}') {
-		key := in.UnsafeFieldName(false)
-		in.WantColon()
-		if in.IsNull() {
-			in.Skip()
-			in.WantComma()
-			continue
-		}
-		switch key {
-		case "floor":
-			out.Floor = int(in.Int())
-		case "floorGeneral":
-			out.FloorGeneral = int(in.Int())
-		case "roomCount":
-			out.RoomCount = int(in.Int())
-		case "squareGeneral":
-			out.SquareGeneral = float64(in.Float64())
-		default:
-			in.SkipRecursive()
-		}
-		in.WantComma()
-	}
-	in.Delim('}')
-	if isTopLevel {
-		in.Consumed()
-	}
-}
-func easyjsonA66148a6Encode20241TeaStealersInternalModels8(out *jwriter.Writer, in FlatSquareProperties) {
-	out.RawByte('{')
-	first := true
-	_ = first
-	{
-		const prefix string = ",\"floor\":"
-		out.RawString(prefix[1:])
-		out.Int(int(in.Floor))
-	}
-	{
-		const prefix string = ",\"floorGeneral\":"
-		out.RawString(prefix)
-		out.Int(int(in.FloorGeneral))
-	}
-	{
-		const prefix string = ",\"roomCount\":"
-		out.RawString(prefix)
-		out.Int(int(in.RoomCount))
-	}
-	{
-		const prefix string = ",\"squareGeneral\":"
-		out.RawString(prefix)
-		out.Float64(float64(in.SquareGeneral))
-	}
-	out.RawByte('}')
-}
-func easyjsonA66148a6Decode20241TeaStealersInternalModels7(in *jlexer.Lexer, out *HouseSquareProperties) {
-	isTopLevel := in.IsStart()
-	if in.IsNull() {
-		if isTopLevel {
-			in.Consumed()
-		}
-		in.Skip()
-		return
-	}
-	in.Delim('{')
-	for !in.IsDelim('}') {
-		key := in.UnsafeFieldName(false)
-		in.WantColon()
-		if in.IsNull() {
-			in.Skip()
-			in.WantComma()
-			continue
-		}
-		switch key {
-		case "cottage":
-			out.Cottage = bool(in.Bool())
-		case "squareArea":
-			out.SquareArea = float64(in.Float64())
-		case "squareHouse":
-			out.SquareHouse = float64(in.Float64())
-		case "bedroomCount":
-			out.BedroomCount = int(in.Int())
-		case "floor":
-			out.Floor = int(in.Int())
-		default:
-			in.SkipRecursive()
-		}
-		in.WantComma()
-	}
-	in.Delim('}')
-	if isTopLevel {
-		in.Consumed()
-	}
-}
-func easyjsonA66148a6Encode20241TeaStealersInternalModels7(out *jwriter.Writer, in HouseSquareProperties) {
-	out.RawByte('{')
-	first := true
-	_ = first
-	{
-		const prefix string = ",\"cottage\":"
-		out.RawString(prefix[1:])
-		out.Bool(bool(in.Cottage))
-	}
-	{
-		const prefix string = ",\"squareArea\":"
-		out.RawString(prefix)
-		out.Float64(float64(in.SquareArea))
-	}
-	{
-		const prefix string = ",\"squareHouse\":"
-		out.RawString(prefix)
-		out.Float64(float64(in.SquareHouse))
-	}
-	{
-		const prefix string = ",\"bedroomCount\":"
-		out.RawString(prefix)
-		out.Int(int(in.BedroomCount))
-	}
-	{
-		const prefix string = ",\"floor\":"
-		out.RawString(prefix)
-		out.Int(int(in.Floor))
-	}
-	out.RawByte('}')
-}
-func easyjsonA66148a6Decode20241TeaStealersInternalModels9(in *jlexer.Lexer, out *AdvertRectangleData) {
+func easyjsonA66148a6Decode20241TeaStealersInternalModels5(in *jlexer.Lexer, out *AdvertRectangleData) {
 	isTopLevel := in.IsStart()
 	if in.IsNull() {
 		if isTopLevel {
@@ -1093,7 +785,7 @@ func easyjsonA66148a6Decode20241TeaStealersInternalModels9(in *jlexer.Lexer, out
 				if out.FlatProperties == nil {
 					out.FlatProperties = new(FlatRectangleProperties)
 				}
-				easyjsonA66148a6Decode20241TeaStealersInternalModels10(in, out.FlatProperties)
+				(*out.FlatProperties).UnmarshalEasyJSON(in)
 			}
 		case "houseProperties":
 			if in.IsNull() {
@@ -1103,7 +795,7 @@ func easyjsonA66148a6Decode20241TeaStealersInternalModels9(in *jlexer.Lexer, out
 				if out.HouseProperties == nil {
 					out.HouseProperties = new(HouseRectangleProperties)
 				}
-				easyjsonA66148a6Decode20241TeaStealersInternalModels11(in, out.HouseProperties)
+				(*out.HouseProperties).UnmarshalEasyJSON(in)
 			}
 		case "price":
 			out.Price = int(in.Int())
@@ -1121,7 +813,7 @@ func easyjsonA66148a6Decode20241TeaStealersInternalModels9(in *jlexer.Lexer, out
 		in.Consumed()
 	}
 }
-func easyjsonA66148a6Encode20241TeaStealersInternalModels9(out *jwriter.Writer, in AdvertRectangleData) {
+func easyjsonA66148a6Encode20241TeaStealersInternalModels5(out *jwriter.Writer, in AdvertRectangleData) {
 	out.RawByte('{')
 	first := true
 	_ = first
@@ -1183,12 +875,12 @@ func easyjsonA66148a6Encode20241TeaStealersInternalModels9(out *jwriter.Writer, 
 	if in.FlatProperties != nil {
 		const prefix string = ",\"flatProperties\":"
 		out.RawString(prefix)
-		easyjsonA66148a6Encode20241TeaStealersInternalModels10(out, *in.FlatProperties)
+		(*in.FlatProperties).MarshalEasyJSON(out)
 	}
 	if in.HouseProperties != nil {
 		const prefix string = ",\"houseProperties\":"
 		out.RawString(prefix)
-		easyjsonA66148a6Encode20241TeaStealersInternalModels11(out, *in.HouseProperties)
+		(*in.HouseProperties).MarshalEasyJSON(out)
 	}
 	{
 		const prefix string = ",\"price\":"
@@ -1206,160 +898,27 @@ func easyjsonA66148a6Encode20241TeaStealersInternalModels9(out *jwriter.Writer, 
 // MarshalJSON supports json.Marshaler interface
 func (v AdvertRectangleData) MarshalJSON() ([]byte, error) {
 	w := jwriter.Writer{}
-	easyjsonA66148a6Encode20241TeaStealersInternalModels9(&w, v)
+	easyjsonA66148a6Encode20241TeaStealersInternalModels5(&w, v)
 	return w.Buffer.BuildBytes(), w.Error
 }
 
 // MarshalEasyJSON supports easyjson.Marshaler interface
 func (v AdvertRectangleData) MarshalEasyJSON(w *jwriter.Writer) {
-	easyjsonA66148a6Encode20241TeaStealersInternalModels9(w, v)
+	easyjsonA66148a6Encode20241TeaStealersInternalModels5(w, v)
 }
 
 // UnmarshalJSON supports json.Unmarshaler interface
 func (v *AdvertRectangleData) UnmarshalJSON(data []byte) error {
 	r := jlexer.Lexer{Data: data}
-	easyjsonA66148a6Decode20241TeaStealersInternalModels9(&r, v)
+	easyjsonA66148a6Decode20241TeaStealersInternalModels5(&r, v)
 	return r.Error()
 }
 
 // UnmarshalEasyJSON supports easyjson.Unmarshaler interface
 func (v *AdvertRectangleData) UnmarshalEasyJSON(l *jlexer.Lexer) {
-	easyjsonA66148a6Decode20241TeaStealersInternalModels9(l, v)
+	easyjsonA66148a6Decode20241TeaStealersInternalModels5(l, v)
 }
-func easyjsonA66148a6Decode20241TeaStealersInternalModels11(in *jlexer.Lexer, out *HouseRectangleProperties) {
-	isTopLevel := in.IsStart()
-	if in.IsNull() {
-		if isTopLevel {
-			in.Consumed()
-		}
-		in.Skip()
-		return
-	}
-	in.Delim('{')
-	for !in.IsDelim('}') {
-		key := in.UnsafeFieldName(false)
-		in.WantColon()
-		if in.IsNull() {
-			in.Skip()
-			in.WantComma()
-			continue
-		}
-		switch key {
-		case "cottage":
-			out.Cottage = bool(in.Bool())
-		case "squareArea":
-			out.SquareArea = float64(in.Float64())
-		case "squareHouse":
-			out.SquareHouse = float64(in.Float64())
-		case "bedroomCount":
-			out.BedroomCount = int(in.Int())
-		case "floor":
-			out.Floor = int(in.Int())
-		default:
-			in.SkipRecursive()
-		}
-		in.WantComma()
-	}
-	in.Delim('}')
-	if isTopLevel {
-		in.Consumed()
-	}
-}
-func easyjsonA66148a6Encode20241TeaStealersInternalModels11(out *jwriter.Writer, in HouseRectangleProperties) {
-	out.RawByte('{')
-	first := true
-	_ = first
-	{
-		const prefix string = ",\"cottage\":"
-		out.RawString(prefix[1:])
-		out.Bool(bool(in.Cottage))
-	}
-	{
-		const prefix string = ",\"squareArea\":"
-		out.RawString(prefix)
-		out.Float64(float64(in.SquareArea))
-	}
-	{
-		const prefix string = ",\"squareHouse\":"
-		out.RawString(prefix)
-		out.Float64(float64(in.SquareHouse))
-	}
-	{
-		const prefix string = ",\"bedroomCount\":"
-		out.RawString(prefix)
-		out.Int(int(in.BedroomCount))
-	}
-	{
-		const prefix string = ",\"floor\":"
-		out.RawString(prefix)
-		out.Int(int(in.Floor))
-	}
-	out.RawByte('}')
-}
-func easyjsonA66148a6Decode20241TeaStealersInternalModels10(in *jlexer.Lexer, out *FlatRectangleProperties) {
-	isTopLevel := in.IsStart()
-	if in.IsNull() {
-		if isTopLevel {
-			in.Consumed()
-		}
-		in.Skip()
-		return
-	}
-	in.Delim('{')
-	for !in.IsDelim('}') {
-		key := in.UnsafeFieldName(false)
-		in.WantColon()
-		if in.IsNull() {
-			in.Skip()
-			in.WantComma()
-			continue
-		}
-		switch key {
-		case "floor":
-			out.Floor = int(in.Int())
-		case "floorGeneral":
-			out.FloorGeneral = int(in.Int())
-		case "roomCount":
-			out.RoomCount = int(in.Int())
-		case "squareGeneral":
-			out.SquareGeneral = float64(in.Float64())
-		default:
-			in.SkipRecursive()
-		}
-		in.WantComma()
-	}
-	in.Delim('}')
-	if isTopLevel {
-		in.Consumed()
-	}
-}
-func easyjsonA66148a6Encode20241TeaStealersInternalModels10(out *jwriter.Writer, in FlatRectangleProperties) {
-	out.RawByte('{')
-	first := true
-	_ = first
-	{
-		const prefix string = ",\"floor\":"
-		out.RawString(prefix[1:])
-		out.Int(int(in.Floor))
-	}
-	{
-		const prefix string = ",\"floorGeneral\":"
-		out.RawString(prefix)
-		out.Int(int(in.FloorGeneral))
-	}
-	{
-		const prefix string = ",\"roomCount\":"
-		out.RawString(prefix)
-		out.Int(int(in.RoomCount))
-	}
-	{
-		const prefix string = ",\"squareGeneral\":"
-		out.RawString(prefix)
-		out.Float64(float64(in.SquareGeneral))
-	}
-	out.RawByte('}')
-}
-func easyjsonA66148a6Decode20241TeaStealersInternalModels12(in *jlexer.Lexer, out *AdvertHouseCreateData) {
+func easyjsonA66148a6Decode20241TeaStealersInternalModels6(in *jlexer.Lexer, out *AdvertHouseCreateData) {
 	isTopLevel := in.IsStart()
 	if in.IsNull() {
 		if isTopLevel {
@@ -1424,7 +983,7 @@ func easyjsonA66148a6Decode20241TeaStealersInternalModels12(in *jlexer.Lexer, ou
 		in.Consumed()
 	}
 }
-func easyjsonA66148a6Encode20241TeaStealersInternalModels12(out *jwriter.Writer, in AdvertHouseCreateData) {
+func easyjsonA66148a6Encode20241TeaStealersInternalModels6(out *jwriter.Writer, in AdvertHouseCreateData) {
 	out.RawByte('{')
 	first := true
 	_ = first
@@ -1524,27 +1083,27 @@ func easyjsonA66148a6Encode20241TeaStealersInternalModels12(out *jwriter.Writer,
 // MarshalJSON supports json.Marshaler interface
 func (v AdvertHouseCreateData) MarshalJSON() ([]byte, error) {
 	w := jwriter.Writer{}
-	easyjsonA66148a6Encode20241TeaStealersInternalModels12(&w, v)
+	easyjsonA66148a6Encode20241TeaStealersInternalModels6(&w, v)
 	return w.Buffer.BuildBytes(), w.Error
 }
 
 // MarshalEasyJSON supports easyjson.Marshaler interface
 func (v AdvertHouseCreateData) MarshalEasyJSON(w *jwriter.Writer) {
-	easyjsonA66148a6Encode20241TeaStealersInternalModels12(w, v)
+	easyjsonA66148a6Encode20241TeaStealersInternalModels6(w, v)
 }
 
 // UnmarshalJSON supports json.Unmarshaler interface
 func (v *AdvertHouseCreateData) UnmarshalJSON(data []byte) error {
 	r := jlexer.Lexer{Data: data}
-	easyjsonA66148a6Decode20241TeaStealersInternalModels12(&r, v)
+	easyjsonA66148a6Decode20241TeaStealersInternalModels6(&r, v)
 	return r.Error()
 }
 
 // UnmarshalEasyJSON supports easyjson.Unmarshaler interface
 func (v *AdvertHouseCreateData) UnmarshalEasyJSON(l *jlexer.Lexer) {
-	easyjsonA66148a6Decode20241TeaStealersInternalModels12(l, v)
+	easyjsonA66148a6Decode20241TeaStealersInternalModels6(l, v)
 }
-func easyjsonA66148a6Decode20241TeaStealersInternalModels13(in *jlexer.Lexer, out *AdvertFlatCreateData) {
+func easyjsonA66148a6Decode20241TeaStealersInternalModels7(in *jlexer.Lexer, out *AdvertFlatCreateData) {
 	isTopLevel := in.IsStart()
 	if in.IsNull() {
 		if isTopLevel {
@@ -1607,7 +1166,7 @@ func easyjsonA66148a6Decode20241TeaStealersInternalModels13(in *jlexer.Lexer, ou
 		in.Consumed()
 	}
 }
-func easyjsonA66148a6Encode20241TeaStealersInternalModels13(out *jwriter.Writer, in AdvertFlatCreateData) {
+func easyjsonA66148a6Encode20241TeaStealersInternalModels7(out *jwriter.Writer, in AdvertFlatCreateData) {
 	out.RawByte('{')
 	first := true
 	_ = first
@@ -1702,27 +1261,27 @@ func easyjsonA66148a6Encode20241TeaStealersInternalModels13(out *jwriter.Writer,
 // MarshalJSON supports json.Marshaler interface
 func (v AdvertFlatCreateData) MarshalJSON() ([]byte, error) {
 	w := jwriter.Writer{}
-	easyjsonA66148a6Encode20241TeaStealersInternalModels13(&w, v)
+	easyjsonA66148a6Encode20241TeaStealersInternalModels7(&w, v)
 	return w.Buffer.BuildBytes(), w.Error
 }
 
 // MarshalEasyJSON supports easyjson.Marshaler interface
 func (v AdvertFlatCreateData) MarshalEasyJSON(w *jwriter.Writer) {
-	easyjsonA66148a6Encode20241TeaStealersInternalModels13(w, v)
+	easyjsonA66148a6Encode20241TeaStealersInternalModels7(w, v)
 }
 
 // UnmarshalJSON supports json.Unmarshaler interface
 func (v *AdvertFlatCreateData) UnmarshalJSON(data []byte) error {
 	r := jlexer.Lexer{Data: data}
-	easyjsonA66148a6Decode20241TeaStealersInternalModels13(&r, v)
+	easyjsonA66148a6Decode20241TeaStealersInternalModels7(&r, v)
 	return r.Error()
 }
 
 // UnmarshalEasyJSON supports easyjson.Unmarshaler interface
 func (v *AdvertFlatCreateData) UnmarshalEasyJSON(l *jlexer.Lexer) {
-	easyjsonA66148a6Decode20241TeaStealersInternalModels13(l, v)
+	easyjsonA66148a6Decode20241TeaStealersInternalModels7(l, v)
 }
-func easyjsonA66148a6Decode20241TeaStealersInternalModels14(in *jlexer.Lexer, out *AdvertFilter) {
+func easyjsonA66148a6Decode20241TeaStealersInternalModels8(in *jlexer.Lexer, out *AdvertFilter) {
 	isTopLevel := in.IsStart()
 	if in.IsNull() {
 		if isTopLevel {
@@ -1767,7 +1326,7 @@ func easyjsonA66148a6Decode20241TeaStealersInternalModels14(in *jlexer.Lexer, ou
 		in.Consumed()
 	}
 }
-func easyjsonA66148a6Encode20241TeaStealersInternalModels14(out *jwriter.Writer, in AdvertFilter) {
+func easyjsonA66148a6Encode20241TeaStealersInternalModels8(out *jwriter.Writer, in AdvertFilter) {
 	out.RawByte('{')
 	first := true
 	_ = first
@@ -1817,27 +1376,27 @@ func easyjsonA66148a6Encode20241TeaStealersInternalModels14(out *jwriter.Writer,
 // MarshalJSON supports json.Marshaler interface
 func (v AdvertFilter) MarshalJSON() ([]byte, error) {
 	w := jwriter.Writer{}
-	easyjsonA66148a6Encode20241TeaStealersInternalModels14(&w, v)
+	easyjsonA66148a6Encode20241TeaStealersInternalModels8(&w, v)
 	return w.Buffer.BuildBytes(), w.Error
 }
 
 // MarshalEasyJSON supports easyjson.Marshaler interface
 func (v AdvertFilter) MarshalEasyJSON(w *jwriter.Writer) {
-	easyjsonA66148a6Encode20241TeaStealersInternalModels14(w, v)
+	easyjsonA66148a6Encode20241TeaStealersInternalModels8(w, v)
 }
 
 // UnmarshalJSON supports json.Unmarshaler interface
 func (v *AdvertFilter) UnmarshalJSON(data []byte) error {
 	r := jlexer.Lexer{Data: data}
-	easyjsonA66148a6Decode20241TeaStealersInternalModels14(&r, v)
+	easyjsonA66148a6Decode20241TeaStealersInternalModels8(&r, v)
 	return r.Error()
 }
 
 // UnmarshalEasyJSON supports easyjson.Unmarshaler interface
 func (v *AdvertFilter) UnmarshalEasyJSON(l *jlexer.Lexer) {
-	easyjsonA66148a6Decode20241TeaStealersInternalModels14(l, v)
+	easyjsonA66148a6Decode20241TeaStealersInternalModels8(l, v)
 }
-func easyjsonA66148a6Decode20241TeaStealersInternalModels15(in *jlexer.Lexer, out *AdvertDataPage) {
+func easyjsonA66148a6Decode20241TeaStealersInternalModels9(in *jlexer.Lexer, out *AdvertDataPage) {
 	isTopLevel := in.IsStart()
 	if in.IsNull() {
 		if isTopLevel {
@@ -1907,7 +1466,7 @@ func easyjsonA66148a6Decode20241TeaStealersInternalModels15(in *jlexer.Lexer, ou
 		in.Consumed()
 	}
 }
-func easyjsonA66148a6Encode20241TeaStealersInternalModels15(out *jwriter.Writer, in AdvertDataPage) {
+func easyjsonA66148a6Encode20241TeaStealersInternalModels9(out *jwriter.Writer, in AdvertDataPage) {
 	out.RawByte('{')
 	first := true
 	_ = first
@@ -1946,27 +1505,27 @@ func easyjsonA66148a6Encode20241TeaStealersInternalModels15(out *jwriter.Writer,
 // MarshalJSON supports json.Marshaler interface
 func (v AdvertDataPage) MarshalJSON() ([]byte, error) {
 	w := jwriter.Writer{}
-	easyjsonA66148a6Encode20241TeaStealersInternalModels15(&w, v)
+	easyjsonA66148a6Encode20241TeaStealersInternalModels9(&w, v)
 	return w.Buffer.BuildBytes(), w.Error
 }
 
 // MarshalEasyJSON supports easyjson.Marshaler interface
 func (v AdvertDataPage) MarshalEasyJSON(w *jwriter.Writer) {
-	easyjsonA66148a6Encode20241TeaStealersInternalModels15(w, v)
+	easyjsonA66148a6Encode20241TeaStealersInternalModels9(w, v)
 }
 
 // UnmarshalJSON supports json.Unmarshaler interface
 func (v *AdvertDataPage) UnmarshalJSON(data []byte) error {
 	r := jlexer.Lexer{Data: data}
-	easyjsonA66148a6Decode20241TeaStealersInternalModels15(&r, v)
+	easyjsonA66148a6Decode20241TeaStealersInternalModels9(&r, v)
 	return r.Error()
 }
 
 // UnmarshalEasyJSON supports easyjson.Unmarshaler interface
 func (v *AdvertDataPage) UnmarshalEasyJSON(l *jlexer.Lexer) {
-	easyjsonA66148a6Decode20241TeaStealersInternalModels15(l, v)
+	easyjsonA66148a6Decode20241TeaStealersInternalModels9(l, v)
 }
-func easyjsonA66148a6Decode20241TeaStealersInternalModels16(in *jlexer.Lexer, out *AdvertData) {
+func easyjsonA66148a6Decode20241TeaStealersInternalModels10(in *jlexer.Lexer, out *AdvertData) {
 	isTopLevel := in.IsStart()
 	if in.IsNull() {
 		if isTopLevel {
@@ -2037,7 +1596,7 @@ func easyjsonA66148a6Decode20241TeaStealersInternalModels16(in *jlexer.Lexer, ou
 						if v4 == nil {
 							v4 = new(PriceChangeData)
 						}
-						easyjsonA66148a6Decode20241TeaStealersInternalModels17(in, v4)
+						(*v4).UnmarshalEasyJSON(in)
 					}
 					out.PriceChange = append(out.PriceChange, v4)
 					in.WantComma()
@@ -2068,7 +1627,7 @@ func easyjsonA66148a6Decode20241TeaStealersInternalModels16(in *jlexer.Lexer, ou
 						if v5 == nil {
 							v5 = new(ImageResp)
 						}
-						easyjsonA66148a6Decode20241TeaStealersInternalModels18(in, v5)
+						(*v5).UnmarshalEasyJSON(in)
 					}
 					out.Images = append(out.Images, v5)
 					in.WantComma()
@@ -2083,7 +1642,7 @@ func easyjsonA66148a6Decode20241TeaStealersInternalModels16(in *jlexer.Lexer, ou
 				if out.HouseProperties == nil {
 					out.HouseProperties = new(HouseProperties)
 				}
-				easyjsonA66148a6Decode20241TeaStealersInternalModels4(in, out.HouseProperties)
+				(*out.HouseProperties).UnmarshalEasyJSON(in)
 			}
 		case "flatProperties":
 			if in.IsNull() {
@@ -2093,7 +1652,7 @@ func easyjsonA66148a6Decode20241TeaStealersInternalModels16(in *jlexer.Lexer, ou
 				if out.FlatProperties == nil {
 					out.FlatProperties = new(FlatProperties)
 				}
-				easyjsonA66148a6Decode20241TeaStealersInternalModels5(in, out.FlatProperties)
+				(*out.FlatProperties).UnmarshalEasyJSON(in)
 			}
 		case "yearCreation":
 			out.YearCreation = int(in.Int())
@@ -2107,7 +1666,7 @@ func easyjsonA66148a6Decode20241TeaStealersInternalModels16(in *jlexer.Lexer, ou
 				if out.ComplexProperties == nil {
 					out.ComplexProperties = new(ComplexAdvertProperties)
 				}
-				easyjsonA66148a6Decode20241TeaStealersInternalModels19(in, out.ComplexProperties)
+				(*out.ComplexProperties).UnmarshalEasyJSON(in)
 			}
 		case "dateCreation":
 			if data := in.Raw(); in.Ok() {
@@ -2123,7 +1682,7 @@ func easyjsonA66148a6Decode20241TeaStealersInternalModels16(in *jlexer.Lexer, ou
 		in.Consumed()
 	}
 }
-func easyjsonA66148a6Encode20241TeaStealersInternalModels16(out *jwriter.Writer, in AdvertData) {
+func easyjsonA66148a6Encode20241TeaStealersInternalModels10(out *jwriter.Writer, in AdvertData) {
 	out.RawByte('{')
 	first := true
 	_ = first
@@ -2211,7 +1770,7 @@ func easyjsonA66148a6Encode20241TeaStealersInternalModels16(out *jwriter.Writer,
 				if v7 == nil {
 					out.RawString("null")
 				} else {
-					easyjsonA66148a6Encode20241TeaStealersInternalModels17(out, *v7)
+					(*v7).MarshalEasyJSON(out)
 				}
 			}
 			out.RawByte(']')
@@ -2231,7 +1790,7 @@ func easyjsonA66148a6Encode20241TeaStealersInternalModels16(out *jwriter.Writer,
 				if v9 == nil {
 					out.RawString("null")
 				} else {
-					easyjsonA66148a6Encode20241TeaStealersInternalModels18(out, *v9)
+					(*v9).MarshalEasyJSON(out)
 				}
 			}
 			out.RawByte(']')
@@ -2240,12 +1799,12 @@ func easyjsonA66148a6Encode20241TeaStealersInternalModels16(out *jwriter.Writer,
 	if in.HouseProperties != nil {
 		const prefix string = ",\"houseProperties\":"
 		out.RawString(prefix)
-		easyjsonA66148a6Encode20241TeaStealersInternalModels4(out, *in.HouseProperties)
+		(*in.HouseProperties).MarshalEasyJSON(out)
 	}
 	if in.FlatProperties != nil {
 		const prefix string = ",\"flatProperties\":"
 		out.RawString(prefix)
-		easyjsonA66148a6Encode20241TeaStealersInternalModels5(out, *in.FlatProperties)
+		(*in.FlatProperties).MarshalEasyJSON(out)
 	}
 	{
 		const prefix string = ",\"yearCreation\":"
@@ -2260,7 +1819,7 @@ func easyjsonA66148a6Encode20241TeaStealersInternalModels16(out *jwriter.Writer,
 	if in.ComplexProperties != nil {
 		const prefix string = ",\"complexProperties\":"
 		out.RawString(prefix)
-		easyjsonA66148a6Encode20241TeaStealersInternalModels19(out, *in.ComplexProperties)
+		(*in.ComplexProperties).MarshalEasyJSON(out)
 	}
 	{
 		const prefix string = ",\"dateCreation\":"
@@ -2273,197 +1832,27 @@ func easyjsonA66148a6Encode20241TeaStealersInternalModels16(out *jwriter.Writer,
 // MarshalJSON supports json.Marshaler interface
 func (v AdvertData) MarshalJSON() ([]byte, error) {
 	w := jwriter.Writer{}
-	easyjsonA66148a6Encode20241TeaStealersInternalModels16(&w, v)
+	easyjsonA66148a6Encode20241TeaStealersInternalModels10(&w, v)
 	return w.Buffer.BuildBytes(), w.Error
 }
 
 // MarshalEasyJSON supports easyjson.Marshaler interface
 func (v AdvertData) MarshalEasyJSON(w *jwriter.Writer) {
-	easyjsonA66148a6Encode20241TeaStealersInternalModels16(w, v)
+	easyjsonA66148a6Encode20241TeaStealersInternalModels10(w, v)
 }
 
 // UnmarshalJSON supports json.Unmarshaler interface
 func (v *AdvertData) UnmarshalJSON(data []byte) error {
 	r := jlexer.Lexer{Data: data}
-	easyjsonA66148a6Decode20241TeaStealersInternalModels16(&r, v)
+	easyjsonA66148a6Decode20241TeaStealersInternalModels10(&r, v)
 	return r.Error()
 }
 
 // UnmarshalEasyJSON supports easyjson.Unmarshaler interface
 func (v *AdvertData) UnmarshalEasyJSON(l *jlexer.Lexer) {
-	easyjsonA66148a6Decode20241TeaStealersInternalModels16(l, v)
+	easyjsonA66148a6Decode20241TeaStealersInternalModels10(l, v)
 }
-func easyjsonA66148a6Decode20241TeaStealersInternalModels19(in *jlexer.Lexer, out *ComplexAdvertProperties) {
-	isTopLevel := in.IsStart()
-	if in.IsNull() {
-		if isTopLevel {
-			in.Consumed()
-		}
-		in.Skip()
-		return
-	}
-	in.Delim('{')
-	for !in.IsDelim('}') {
-		key := in.UnsafeFieldName(false)
-		in.WantColon()
-		if in.IsNull() {
-			in.Skip()
-			in.WantComma()
-			continue
-		}
-		switch key {
-		case "complexId":
-			out.ComplexId = string(in.String())
-		case "nameComplex":
-			out.NameComplex = string(in.String())
-		case "photoCompany":
-			out.PhotoCompany = string(in.String())
-		case "nameCompany":
-			out.NameCompany = string(in.String())
-		default:
-			in.SkipRecursive()
-		}
-		in.WantComma()
-	}
-	in.Delim('}')
-	if isTopLevel {
-		in.Consumed()
-	}
-}
-func easyjsonA66148a6Encode20241TeaStealersInternalModels19(out *jwriter.Writer, in ComplexAdvertProperties) {
-	out.RawByte('{')
-	first := true
-	_ = first
-	{
-		const prefix string = ",\"complexId\":"
-		out.RawString(prefix[1:])
-		out.String(string(in.ComplexId))
-	}
-	{
-		const prefix string = ",\"nameComplex\":"
-		out.RawString(prefix)
-		out.String(string(in.NameComplex))
-	}
-	{
-		const prefix string = ",\"photoCompany\":"
-		out.RawString(prefix)
-		out.String(string(in.PhotoCompany))
-	}
-	{
-		const prefix string = ",\"nameCompany\":"
-		out.RawString(prefix)
-		out.String(string(in.NameCompany))
-	}
-	out.RawByte('}')
-}
-func easyjsonA66148a6Decode20241TeaStealersInternalModels18(in *jlexer.Lexer, out *ImageResp) {
-	isTopLevel := in.IsStart()
-	if in.IsNull() {
-		if isTopLevel {
-			in.Consumed()
-		}
-		in.Skip()
-		return
-	}
-	in.Delim('{')
-	for !in.IsDelim('}') {
-		key := in.UnsafeFieldName(false)
-		in.WantColon()
-		if in.IsNull() {
-			in.Skip()
-			in.WantComma()
-			continue
-		}
-		switch key {
-		case "id":
-			out.ID = int64(in.Int64())
-		case "photo":
-			out.Photo = string(in.String())
-		case "priority":
-			out.Priority = int(in.Int())
-		default:
-			in.SkipRecursive()
-		}
-		in.WantComma()
-	}
-	in.Delim('}')
-	if isTopLevel {
-		in.Consumed()
-	}
-}
-func easyjsonA66148a6Encode20241TeaStealersInternalModels18(out *jwriter.Writer, in ImageResp) {
-	out.RawByte('{')
-	first := true
-	_ = first
-	{
-		const prefix string = ",\"id\":"
-		out.RawString(prefix[1:])
-		out.Int64(int64(in.ID))
-	}
-	{
-		const prefix string = ",\"photo\":"
-		out.RawString(prefix)
-		out.String(string(in.Photo))
-	}
-	{
-		const prefix string = ",\"priority\":"
-		out.RawString(prefix)
-		out.Int(int(in.Priority))
-	}
-	out.RawByte('}')
-}
-func easyjsonA66148a6Decode20241TeaStealersInternalModels17(in *jlexer.Lexer, out *PriceChangeData) {
-	isTopLevel := in.IsStart()
-	if in.IsNull() {
-		if isTopLevel {
-			in.Consumed()
-		}
-		in.Skip()
-		return
-	}
-	in.Delim('{')
-	for !in.IsDelim('}') {
-		key := in.UnsafeFieldName(false)
-		in.WantColon()
-		if in.IsNull() {
-			in.Skip()
-			in.WantComma()
-			continue
-		}
-		switch key {
-		case "price":
-			out.Price = int64(in.Int64())
-		case "data":
-			if data := in.Raw(); in.Ok() {
-				in.AddError((out.DateCreation).UnmarshalJSON(data))
-			}
-		default:
-			in.SkipRecursive()
-		}
-		in.WantComma()
-	}
-	in.Delim('}')
-	if isTopLevel {
-		in.Consumed()
-	}
-}
-func easyjsonA66148a6Encode20241TeaStealersInternalModels17(out *jwriter.Writer, in PriceChangeData) {
-	out.RawByte('{')
-	first := true
-	_ = first
-	{
-		const prefix string = ",\"price\":"
-		out.RawString(prefix[1:])
-		out.Int64(int64(in.Price))
-	}
-	{
-		const prefix string = ",\"data\":"
-		out.RawString(prefix)
-		out.Raw((in.DateCreation).MarshalJSON())
-	}
-	out.RawByte('}')
-}
-func easyjsonA66148a6Decode20241TeaStealersInternalModels20(in *jlexer.Lexer, out *Advert) {
+func easyjsonA66148a6Decode20241TeaStealersInternalModels11(in *jlexer.Lexer, out *Advert) {
 	isTopLevel := in.IsStart()
 	if in.IsNull() {
 		if isTopLevel {
@@ -2508,7 +1897,7 @@ func easyjsonA66148a6Decode20241TeaStealersInternalModels20(in *jlexer.Lexer, ou
 		in.Consumed()
 	}
 }
-func easyjsonA66148a6Encode20241TeaStealersInternalModels20(out *jwriter.Writer, in Advert) {
+func easyjsonA66148a6Encode20241TeaStealersInternalModels11(out *jwriter.Writer, in Advert) {
 	out.RawByte('{')
 	first := true
 	_ = first
@@ -2558,27 +1947,27 @@ func easyjsonA66148a6Encode20241TeaStealersInternalModels20(out *jwriter.Writer,
 // MarshalJSON supports json.Marshaler interface
 func (v Advert) MarshalJSON() ([]byte, error) {
 	w := jwriter.Writer{}
-	easyjsonA66148a6Encode20241TeaStealersInternalModels20(&w, v)
+	easyjsonA66148a6Encode20241TeaStealersInternalModels11(&w, v)
 	return w.Buffer.BuildBytes(), w.Error
 }
 
 // MarshalEasyJSON supports easyjson.Marshaler interface
 func (v Advert) MarshalEasyJSON(w *jwriter.Writer) {
-	easyjsonA66148a6Encode20241TeaStealersInternalModels20(w, v)
+	easyjsonA66148a6Encode20241TeaStealersInternalModels11(w, v)
 }
 
 // UnmarshalJSON supports json.Unmarshaler interface
 func (v *Advert) UnmarshalJSON(data []byte) error {
 	r := jlexer.Lexer{Data: data}
-	easyjsonA66148a6Decode20241TeaStealersInternalModels20(&r, v)
+	easyjsonA66148a6Decode20241TeaStealersInternalModels11(&r, v)
 	return r.Error()
 }
 
 // UnmarshalEasyJSON supports easyjson.Unmarshaler interface
 func (v *Advert) UnmarshalEasyJSON(l *jlexer.Lexer) {
-	easyjsonA66148a6Decode20241TeaStealersInternalModels20(l, v)
+	easyjsonA66148a6Decode20241TeaStealersInternalModels11(l, v)
 }
-func easyjsonA66148a6Decode20241TeaStealersInternalModels21(in *jlexer.Lexer, out *AddressData) {
+func easyjsonA66148a6Decode20241TeaStealersInternalModels12(in *jlexer.Lexer, out *AddressData) {
 	isTopLevel := in.IsStart()
 	if in.IsNull() {
 		if isTopLevel {
@@ -2619,7 +2008,7 @@ func easyjsonA66148a6Decode20241TeaStealersInternalModels21(in *jlexer.Lexer, ou
 		in.Consumed()
 	}
 }
-func easyjsonA66148a6Encode20241TeaStealersInternalModels21(out *jwriter.Writer, in AddressData) {
+func easyjsonA66148a6Encode20241TeaStealersInternalModels12(out *jwriter.Writer, in AddressData) {
 	out.RawByte('{')
 	first := true
 	_ = first
@@ -2659,23 +2048,23 @@ func easyjsonA66148a6Encode20241TeaStealersInternalModels21(out *jwriter.Writer,
 // MarshalJSON supports json.Marshaler interface
 func (v AddressData) MarshalJSON() ([]byte, error) {
 	w := jwriter.Writer{}
-	easyjsonA66148a6Encode20241TeaStealersInternalModels21(&w, v)
+	easyjsonA66148a6Encode20241TeaStealersInternalModels12(&w, v)
 	return w.Buffer.BuildBytes(), w.Error
 }
 
 // MarshalEasyJSON supports easyjson.Marshaler interface
 func (v AddressData) MarshalEasyJSON(w *jwriter.Writer) {
-	easyjsonA66148a6Encode20241TeaStealersInternalModels21(w, v)
+	easyjsonA66148a6Encode20241TeaStealersInternalModels12(w, v)
 }
 
 // UnmarshalJSON supports json.Unmarshaler interface
 func (v *AddressData) UnmarshalJSON(data []byte) error {
 	r := jlexer.Lexer{Data: data}
-	easyjsonA66148a6Decode20241TeaStealersInternalModels21(&r, v)
+	easyjsonA66148a6Decode20241TeaStealersInternalModels12(&r, v)
 	return r.Error()
 }
 
 // UnmarshalEasyJSON supports easyjson.Unmarshaler interface
 func (v *AddressData) UnmarshalEasyJSON(l *jlexer.Lexer) {
-	easyjsonA66148a6Decode20241TeaStealersInternalModels21(l, v)
+	easyjsonA66148a6Decode20241TeaStealersInternalModels12(l, v)
 }
