@@ -344,9 +344,7 @@ func easyjson5d887aeeDecode20241TeaStealersInternalModels3(in *jlexer.Lexer, out
 		}
 		switch key {
 		case "question_id":
-			if data := in.UnsafeBytes(); in.Ok() {
-				in.AddError((out.QuestionID).UnmarshalText(data))
-			}
+			out.QuestionID = int64(in.Int64())
 		case "mark":
 			out.Mark = int(in.Int())
 		default:
@@ -366,7 +364,7 @@ func easyjson5d887aeeEncode20241TeaStealersInternalModels3(out *jwriter.Writer, 
 	{
 		const prefix string = ",\"question_id\":"
 		out.RawString(prefix[1:])
-		out.RawText((in.QuestionID).MarshalText())
+		out.Int64(int64(in.QuestionID))
 	}
 	{
 		const prefix string = ",\"mark\":"
@@ -419,13 +417,9 @@ func easyjson5d887aeeDecode20241TeaStealersInternalModels4(in *jlexer.Lexer, out
 		}
 		switch key {
 		case "user_id":
-			if data := in.UnsafeBytes(); in.Ok() {
-				in.AddError((out.UserID).UnmarshalText(data))
-			}
+			out.UserID = int64(in.Int64())
 		case "question_id":
-			if data := in.UnsafeBytes(); in.Ok() {
-				in.AddError((out.QuestionID).UnmarshalText(data))
-			}
+			out.QuestionID = int64(in.Int64())
 		case "mark":
 			out.Mark = int(in.Int())
 		default:
@@ -445,12 +439,12 @@ func easyjson5d887aeeEncode20241TeaStealersInternalModels4(out *jwriter.Writer, 
 	{
 		const prefix string = ",\"user_id\":"
 		out.RawString(prefix[1:])
-		out.RawText((in.UserID).MarshalText())
+		out.Int64(int64(in.UserID))
 	}
 	{
 		const prefix string = ",\"question_id\":"
 		out.RawString(prefix)
-		out.RawText((in.QuestionID).MarshalText())
+		out.Int64(int64(in.QuestionID))
 	}
 	{
 		const prefix string = ",\"mark\":"

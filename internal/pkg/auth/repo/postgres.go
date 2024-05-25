@@ -5,7 +5,6 @@ import (
 	"context"
 	"database/sql"
 	"errors"
-	"log"
 
 	"go.uber.org/zap"
 )
@@ -97,7 +96,6 @@ func (r *AuthRepo) CheckUser(ctx context.Context, login string, passwordHash str
 }
 
 func (r *AuthRepo) GetUserLevelById(ctx context.Context, id int64) (int, error) {
-	log.Println("TUT")
 
 	query := `SELECT level_update FROM user_data WHERE id = $1`
 

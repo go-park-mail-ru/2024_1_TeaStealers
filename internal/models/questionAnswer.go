@@ -2,16 +2,14 @@ package models
 
 import (
 	"time"
-
-	"github.com/satori/uuid"
 )
 
 // QuestionAnswer represents a user answer for question.
 type QuestionAnswer struct {
 	// UserID is the unique identifier for the user.
-	UserID uuid.UUID `json:"user_id"`
+	UserID int64 `json:"user_id"`
 	// QuestionID is the unique identifier for the question.
-	QuestionID uuid.UUID `json:"question_id"`
+	QuestionID int64 `json:"question_id"`
 	// Mark is user mark for the question.
 	Mark int `json:"mark"`
 	// DateCreation is the date when the price change was created.
@@ -22,7 +20,7 @@ type QuestionAnswer struct {
 
 type QuestionAnswerResp struct {
 	// QuestionID is the unique identifier for the question.
-	QuestionID uuid.UUID `json:"question_id"`
+	QuestionID int64 `json:"question_id"`
 	// Mark is user mark for the question.
 	Mark int `json:"mark"`
 }

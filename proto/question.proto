@@ -6,8 +6,18 @@ option go_package = "./internal/pkg/questionnaire/delivery/grpc/gen/;gen";
 
 service Question {
   rpc GetQuestionsByTheme(GetQuestionsByThemeRequest) returns (GetQuestionsByThemeResponse) {}
-  //rpc UploadAnswer(UploadAnswerRequest) returns (UploadAnswerResponse) {}
+  rpc UploadAnswer(UploadAnswerRequest) returns (UploadAnswerResponse) {}
   //rpc GetAnswerStatistics(GetAnswerStatisticsRequest) returns (GetAnswerStatisticsResponse) {}
+}
+
+message UploadAnswerRequest {
+  int64 UserId = 1;
+  int64 QuestionId  = 2;
+  int64 Mark = 3;
+}
+
+message UploadAnswerResponse {
+
 }
 
 message GetQuestionsByThemeRequest {
