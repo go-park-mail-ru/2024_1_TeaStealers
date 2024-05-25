@@ -121,8 +121,8 @@ func (h *AdvertsClientHandler) CreateFlatAdvert(w http.ResponseWriter, r *http.R
 		utils.WriteError(w, http.StatusBadRequest, err.Error())
 		return
 	}
-
-	dCr, err := utils.StringToTime("2006-01-02 15:04:05", newAdvertResp.DateCreation[:19])
+	date := newAdvertResp.DateCreation[:19]
+	dCr, err := utils.StringToTime("2006-01-02 15:04:05", date)
 	if err != nil {
 		utils.LogErrorResponse(h.logger, r.Context().Value("requestId").(string), utils.DeliveryLayer, CreateFlatAdvertMethod, err, http.StatusInternalServerError)
 		utils.WriteError(w, http.StatusInternalServerError, err.Error())
@@ -253,8 +253,8 @@ func (h *AdvertsClientHandler) CreateHouseAdvert(w http.ResponseWriter, r *http.
 		utils.WriteError(w, http.StatusBadRequest, err.Error())
 		return
 	}
-
-	tCreate, err := utils.StringToTime("2006-01-02 15:04:05", resp.DateCreation[:19])
+	date := resp.DateCreation[:19]
+	tCreate, err := utils.StringToTime("2006-01-02 15:04:05", date)
 
 	if err != nil {
 		utils.LogErrorResponse(h.logger, r.Context().Value("requestId").(string), utils.DeliveryLayer, CreateHouseAdvertMethod, err, http.StatusInternalServerError)
@@ -625,7 +625,8 @@ func (h *AdvertsClientHandler) GetSquareAdvertsList(w http.ResponseWriter, r *ht
 	foundAdverts := make([]*models.AdvertSquareData, 0)
 
 	for _, adv := range advResp.SquareData {
-		dateTime, err := utils.StringToTime("2006-01-02 15:04:05", adv.DateCreation[:19])
+		date := adv.DateCreation[:19]
+		dateTime, err := utils.StringToTime("2006-01-02 15:04:05", date)
 
 		if err != nil {
 			utils.LogErrorResponse(h.logger, r.Context().Value("requestId").(string), utils.DeliveryLayer, GetSquareAdvertsListMethod, err, http.StatusInternalServerError)
@@ -804,7 +805,8 @@ func (h *AdvertsClientHandler) GetUserAdverts(w http.ResponseWriter, r *http.Req
 	foundAdverts := make([]*models.AdvertRectangleData, 0)
 
 	for _, adv := range userAdverts.RectDataSlice {
-		tCr, err := utils.StringToTime("2006-01-02 15:04:05", adv.DateCreation[:19])
+		date := adv.DateCreation[:19]
+		tCr, err := utils.StringToTime("2006-01-02 15:04:05", date)
 		if err != nil {
 			utils.LogErrorResponse(h.logger, r.Context().Value("requestId").(string), utils.DeliveryLayer, GetUserAdvertsMethod, err, http.StatusInternalServerError)
 			utils.WriteError(w, http.StatusInternalServerError, err.Error())
@@ -883,7 +885,8 @@ func (h *AdvertsClientHandler) GetComplexAdverts(w http.ResponseWriter, r *http.
 		return
 	}
 	for _, adv := range complexAdverts.RectDataSlice {
-		tCr, err := utils.StringToTime("2006-01-02 15:04:05", adv.DateCreation[:19])
+		date := adv.DateCreation[:19]
+		tCr, err := utils.StringToTime("2006-01-02 15:04:05", date)
 		if err != nil {
 			utils.LogErrorResponse(h.logger, r.Context().Value("requestId").(string), utils.DeliveryLayer, GetUserAdvertsMethod, err, http.StatusInternalServerError)
 			utils.WriteError(w, http.StatusInternalServerError, err.Error())
