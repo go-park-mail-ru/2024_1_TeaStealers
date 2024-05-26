@@ -35,7 +35,7 @@ func (h *AdvertsServerHandler) GetAdvertById(ctx context.Context, reqAdv *genAdv
 
 	if err != nil {
 
-		h.logger.Error(ctx.Value("requestId").(string) + " " + err.Error())
+		// h.logger.Error(ctx.Value("requestId").(string) + " " + err.Error())
 		// utils.LogErrorResponse(h.logger, ctx.Value("requestId").(string), utils.DeliveryLayer, SignUpMethod, err, http.StatusBadRequest)
 		return &genAdverts.GetAdvertByIdResponse{RespCode: StatusBadRequest}, err
 	}

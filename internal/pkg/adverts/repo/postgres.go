@@ -1923,7 +1923,7 @@ func (r *AdvertRepo) LikeAdvert(ctx context.Context, advertId int64, userId int6
 		return err
 	}
 
-	if _, err = r.UpdatePriority(ctx, tx, adId, 100); err != nil {
+	if _, err = r.UpdatePriority(ctx, tx, advertId, 100); err != nil {
 		return err
 	}
 
@@ -2022,7 +2022,6 @@ func (r *AdvertRepo) GetRectangleAdvertsLikedByUserId(ctx context.Context, pageS
             )
             AND i.is_deleted = FALSE
             AND a.is_deleted = FALSE
-            AND a.user_id = $1
 			ORDER BY a.created_at DESC
 			LIMIT $2
 			OFFSET $3`

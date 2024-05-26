@@ -313,8 +313,13 @@ func (h *AdvertsClientHandler) GetAdvertById(w http.ResponseWriter, r *http.Requ
 		utils.WriteError(w, http.StatusBadRequest, "invalid id parameter")
 		return
 	}
-
-	md := metadata.New(map[string]string{"userid": strconv.FormatInt(r.Context().Value(middleware.CookieName).(int64), 10)})
+	userId := r.Context().Value(middleware.CookieName)
+	var md metadata.MD
+	if userId == nil {
+		md = metadata.New(map[string]string{"userid": "0"})
+	} else {
+		md = metadata.New(map[string]string{"userid": strconv.FormatInt(r.Context().Value(middleware.CookieName).(int64), 10)})
+	}
 	ctx := metadata.NewOutgoingContext(context.Background(), md)
 
 	advertDataResponse, err := h.client.GetAdvertById(ctx, &genAdverts.GetAdvertByIdRequest{Id: advertId})
