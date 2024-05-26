@@ -5,6 +5,7 @@ import (
 	"2024_1_TeaStealers/internal/pkg/adverts"
 	"2024_1_TeaStealers/internal/pkg/adverts/delivery/grpc/gen"
 	genAdverts "2024_1_TeaStealers/internal/pkg/adverts/delivery/grpc/gen"
+	"2024_1_TeaStealers/internal/pkg/utils"
 	"context"
 	"log"
 
@@ -360,7 +361,7 @@ func (h *AdvertsServerHandler) CreateHouseAdvert(ctx context.Context, reqAdv *ge
 		Phone:        gotadv.Phone,
 		IsAgent:      gotadv.IsAgent,
 		Priority:     int64(gotadv.Priority),
-		DateCreation: gotadv.DateCreation.Format("2006-01-02 15:04:05"),
+		DateCreation: gotadv.DateCreation.String(),
 		RespCode:     StatusOk}, nil
 
 }
@@ -495,7 +496,11 @@ func (h *AdvertsServerHandler) CreateFlatAdvert(ctx context.Context, reqAdv *gen
 }
 
 func (h *AdvertsServerHandler) GetSquareAdvertsList(ctx context.Context, req *genAdverts.GetSquareAdvertsListRequest) (*genAdverts.GetSquareAdvertsListResponse, error) {
+
+	utils.LogSuccesResponse(h.logger, "HERE GRPC ONE", utils.DeliveryLayer, "GetSquareAdvertsList")
+
 	ctx = context.WithValue(ctx, "requestId", uuid.NewV4().String())
+	utils.LogSuccesResponse(h.logger, "HERE GRPC TWO", utils.DeliveryLayer, "GetSquareAdvertsList")
 
 	gotList, err := h.uc.GetSquareAdvertsList(ctx, int(req.PageSize), int(req.Offset))
 
@@ -503,28 +508,42 @@ func (h *AdvertsServerHandler) GetSquareAdvertsList(ctx context.Context, req *ge
 		h.logger.Error(ctx.Value("requestId").(string) + " " + err.Error())
 		return &genAdverts.GetSquareAdvertsListResponse{RespCode: StatusBadRequest}, err
 	}
+	utils.LogSuccesResponse(h.logger, "HERE GRPC THREE", utils.DeliveryLayer, "GetSquareAdvertsList")
 
 	foundAdverts := make([]*genAdverts.AdvertSquareData, 0)
 
 	for _, adv := range gotList {
 		newadv := &genAdverts.AdvertSquareData{
-			Id:         adv.ID,
-			TypeAdvert: adv.TypeAdvert,
-			Photo:      adv.Photo,
-			TypeSale:   adv.TypeSale,
-			Address:    adv.Address,
-			Metro:      adv.Metro,
-
-			HouseProp: &genAdverts.HouseSquareProperties{
-				Cottage:      adv.HouseProperties.Cottage,
+			Id:           adv.ID,
+			TypeAdvert:   adv.TypeAdvert,
+			Photo:        adv.Photo,
+			TypeSale:     adv.TypeSale,
+			Address:      adv.Address,
+			Metro:        adv.Metro,
+			DateCreation: adv.DateCreation.String(),
+		}
+		if adv.HouseProperties != nil {
+			newadv.HouseProp = &gen.HouseSquareProperties{
 				SquareArea:   adv.HouseProperties.SquareArea,
 				SquareHouse:  adv.HouseProperties.SquareHouse,
 				BedroomCount: int32(adv.HouseProperties.BedroomCount),
-				Floor:        int32(adv.HouseProperties.Floor)},
+				Cottage:      adv.HouseProperties.Cottage,
+				Floor:        int32(adv.HouseProperties.Floor)}
 		}
+
+		if adv.FlatProperties != nil {
+			newadv.FlatProp = &gen.FlatSquareProperties{
+				RoomCount:     int32(adv.FlatProperties.RoomCount),
+				FloorGeneral:  int32(adv.FlatProperties.FloorGeneral),
+				SquareGeneral: adv.FlatProperties.SquareGeneral,
+				Floor:         int32(adv.FlatProperties.Floor)}
+		}
+
+		utils.LogSuccesResponse(h.logger, "HERE GRPC FOUR", utils.DeliveryLayer, "GetSquareAdvertsList")
 
 		foundAdverts = append(foundAdverts, newadv)
 	}
+	utils.LogSuccesResponse(h.logger, "HERE GRPC FiVE", utils.DeliveryLayer, "GetSquareAdvertsList")
 
 	return &genAdverts.GetSquareAdvertsListResponse{
 		SquareData: foundAdverts,
@@ -548,11 +567,12 @@ func (h *AdvertsServerHandler) DeleteAdvertById(ctx context.Context, reqAdv *gen
 
 // GetRectangleAdvertsList handles the request for retrieving a rectangle adverts with search.
 func (h *AdvertsServerHandler) GetRectangleAdvertsList(ctx context.Context, req *genAdverts.GetRectangleAdvertsListRequest) (*genAdverts.GetRectangleAdvertsListResponse, error) {
+	ctx = context.WithValue(ctx, "requestId", uuid.NewV4().String())
 	advList, err := h.uc.GetRectangleAdvertsList(ctx, models.AdvertFilter{
 		MinPrice:   req.MinPrice,
 		MaxPrice:   req.MaxPrice,
-		Page:       int(req.Page),
-		Offset:     int(req.Size),
+		Page:       int(req.Size),
+		Offset:     int(req.Page),
 		RoomCount:  int(req.RoomCount),
 		Address:    req.Address,
 		DealType:   req.DealType,
@@ -585,6 +605,7 @@ func (h *AdvertsServerHandler) GetRectangleAdvertsList(ctx context.Context, req 
 }
 
 func (h *AdvertsServerHandler) GetRectangleAdvertsByUser(ctx context.Context, req *genAdverts.GetUserAdvertsRequest) (*genAdverts.GetUserAdvertsResponse, error) {
+	ctx = context.WithValue(ctx, "requestId", uuid.NewV4().String())
 	advList, err := h.uc.GetRectangleAdvertsByUserId(ctx, int(req.Size), int(req.Page), req.UserId) // todo МБ тут ошибка и надо поменять местами int(req.Size), int(req.Page)
 
 	if err != nil {
@@ -617,6 +638,7 @@ func (h *AdvertsServerHandler) GetRectangleAdvertsByUser(ctx context.Context, re
 }
 
 func (h *AdvertsServerHandler) GetLikedUserAdverts(ctx context.Context, req *genAdverts.GetLikedUserAdvertsRequest) (*genAdverts.GetLikedUserAdvertsResponse, error) {
+	ctx = context.WithValue(ctx, "requestId", uuid.NewV4().String())
 	advList, err := h.uc.GetRectangleAdvertsLikedByUserId(ctx, int(req.PageSize), int(req.Offset), req.UserId) // todo МБ тут ошибка и надо поменять местами int(req.Size), int(req.Page)
 
 	if err != nil {
@@ -649,6 +671,7 @@ func (h *AdvertsServerHandler) GetLikedUserAdverts(ctx context.Context, req *gen
 }
 
 func (h *AdvertsServerHandler) GetRectangleAdvertsByComplex(ctx context.Context, req *genAdverts.GetComplexAdvertsRequest) (*genAdverts.GetComplexAdvertsResponse, error) {
+	ctx = context.WithValue(ctx, "requestId", uuid.NewV4().String())
 	advList, err := h.uc.GetRectangleAdvertsByComplexId(ctx, int(req.PageSize), int(req.Offset), req.ComplexId) // todo МБ тут ошибка и надо поменять местами int(req.Size), int(req.Page)
 
 	if err != nil {

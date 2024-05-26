@@ -1469,7 +1469,7 @@ func (r *AdvertRepo) GetRectangleAdverts(ctx context.Context, advertFilter model
 	}
 
 	pageInfo.PageSize = advertFilter.Page
-	pageInfo.TotalPages = pageInfo.TotalElements / pageInfo.PageSize
+	pageInfo.TotalPages = pageInfo.TotalElements / pageInfo.PageSize //todo обработать pageSIze = 0
 
 	if pageInfo.TotalElements%pageInfo.PageSize != 0 {
 		pageInfo.TotalPages++
