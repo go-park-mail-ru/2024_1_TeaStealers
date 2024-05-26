@@ -11,7 +11,6 @@ import (
 	reflect "reflect"
 
 	gomock "github.com/golang/mock/gomock"
-	uuid "github.com/satori/uuid"
 )
 
 // MockComplexUsecase is a mock of ComplexUsecase interface.
@@ -98,7 +97,7 @@ func (mr *MockComplexUsecaseMockRecorder) CreateHouseAdvert(ctx, data interface{
 }
 
 // GetComplexById mocks base method.
-func (m *MockComplexUsecase) GetComplexById(ctx context.Context, id uuid.UUID) (*models.ComplexData, error) {
+func (m *MockComplexUsecase) GetComplexById(ctx context.Context, id int64) (*models.ComplexData, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetComplexById", ctx, id)
 	ret0, _ := ret[0].(*models.ComplexData)
@@ -113,7 +112,7 @@ func (mr *MockComplexUsecaseMockRecorder) GetComplexById(ctx, id interface{}) *g
 }
 
 // UpdateComplexPhoto mocks base method.
-func (m *MockComplexUsecase) UpdateComplexPhoto(file io.Reader, fileType string, id uuid.UUID) (string, error) {
+func (m *MockComplexUsecase) UpdateComplexPhoto(file io.Reader, fileType string, id int64) (string, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "UpdateComplexPhoto", file, fileType, id)
 	ret0, _ := ret[0].(string)
@@ -166,11 +165,12 @@ func (mr *MockComplexRepoMockRecorder) BeginTx(ctx interface{}) *gomock.Call {
 }
 
 // CreateAdvert mocks base method.
-func (m *MockComplexRepo) CreateAdvert(ctx context.Context, tx models.Transaction, newAdvert *models.Advert) error {
+func (m *MockComplexRepo) CreateAdvert(ctx context.Context, tx models.Transaction, newAdvert *models.Advert) (int64, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "CreateAdvert", ctx, tx, newAdvert)
-	ret0, _ := ret[0].(error)
-	return ret0
+	ret0, _ := ret[0].(int64)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
 }
 
 // CreateAdvert indicates an expected call of CreateAdvert.
@@ -179,18 +179,32 @@ func (mr *MockComplexRepoMockRecorder) CreateAdvert(ctx, tx, newAdvert interface
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateAdvert", reflect.TypeOf((*MockComplexRepo)(nil).CreateAdvert), ctx, tx, newAdvert)
 }
 
-// CreateAdvertType mocks base method.
-func (m *MockComplexRepo) CreateAdvertType(ctx context.Context, tx models.Transaction, newAdvertType *models.AdvertType) error {
+// CreateAdvertTypeFlat mocks base method.
+func (m *MockComplexRepo) CreateAdvertTypeFlat(ctx context.Context, tx models.Transaction, newAdvertType *models.FlatTypeAdvert) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CreateAdvertType", ctx, tx, newAdvertType)
+	ret := m.ctrl.Call(m, "CreateAdvertTypeFlat", ctx, tx, newAdvertType)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
-// CreateAdvertType indicates an expected call of CreateAdvertType.
-func (mr *MockComplexRepoMockRecorder) CreateAdvertType(ctx, tx, newAdvertType interface{}) *gomock.Call {
+// CreateAdvertTypeFlat indicates an expected call of CreateAdvertTypeFlat.
+func (mr *MockComplexRepoMockRecorder) CreateAdvertTypeFlat(ctx, tx, newAdvertType interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateAdvertType", reflect.TypeOf((*MockComplexRepo)(nil).CreateAdvertType), ctx, tx, newAdvertType)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateAdvertTypeFlat", reflect.TypeOf((*MockComplexRepo)(nil).CreateAdvertTypeFlat), ctx, tx, newAdvertType)
+}
+
+// CreateAdvertTypeHouse mocks base method.
+func (m *MockComplexRepo) CreateAdvertTypeHouse(ctx context.Context, tx models.Transaction, newAdvertType *models.HouseTypeAdvert) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CreateAdvertTypeHouse", ctx, tx, newAdvertType)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// CreateAdvertTypeHouse indicates an expected call of CreateAdvertTypeHouse.
+func (mr *MockComplexRepoMockRecorder) CreateAdvertTypeHouse(ctx, tx, newAdvertType interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateAdvertTypeHouse", reflect.TypeOf((*MockComplexRepo)(nil).CreateAdvertTypeHouse), ctx, tx, newAdvertType)
 }
 
 // CreateBuilding mocks base method.
@@ -224,11 +238,12 @@ func (mr *MockComplexRepoMockRecorder) CreateComplex(ctx, company interface{}) *
 }
 
 // CreateFlat mocks base method.
-func (m *MockComplexRepo) CreateFlat(ctx context.Context, tx models.Transaction, newFlat *models.Flat) error {
+func (m *MockComplexRepo) CreateFlat(ctx context.Context, tx models.Transaction, newFlat *models.Flat) (int64, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "CreateFlat", ctx, tx, newFlat)
-	ret0, _ := ret[0].(error)
-	return ret0
+	ret0, _ := ret[0].(int64)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
 }
 
 // CreateFlat indicates an expected call of CreateFlat.
@@ -238,11 +253,12 @@ func (mr *MockComplexRepoMockRecorder) CreateFlat(ctx, tx, newFlat interface{}) 
 }
 
 // CreateHouse mocks base method.
-func (m *MockComplexRepo) CreateHouse(ctx context.Context, tx models.Transaction, newHouse *models.House) error {
+func (m *MockComplexRepo) CreateHouse(ctx context.Context, tx models.Transaction, newHouse *models.House) (int64, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "CreateHouse", ctx, tx, newHouse)
-	ret0, _ := ret[0].(error)
-	return ret0
+	ret0, _ := ret[0].(int64)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
 }
 
 // CreateHouse indicates an expected call of CreateHouse.
@@ -266,7 +282,7 @@ func (mr *MockComplexRepoMockRecorder) CreatePriceChange(ctx, tx, newPriceChange
 }
 
 // GetComplexById mocks base method.
-func (m *MockComplexRepo) GetComplexById(ctx context.Context, complexId uuid.UUID) (*models.ComplexData, error) {
+func (m *MockComplexRepo) GetComplexById(ctx context.Context, complexId int64) (*models.ComplexData, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetComplexById", ctx, complexId)
 	ret0, _ := ret[0].(*models.ComplexData)
@@ -281,7 +297,7 @@ func (mr *MockComplexRepoMockRecorder) GetComplexById(ctx, complexId interface{}
 }
 
 // UpdateComplexPhoto mocks base method.
-func (m *MockComplexRepo) UpdateComplexPhoto(id uuid.UUID, fileName string) (string, error) {
+func (m *MockComplexRepo) UpdateComplexPhoto(id int64, fileName string) (string, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "UpdateComplexPhoto", id, fileName)
 	ret0, _ := ret[0].(string)

@@ -2,15 +2,12 @@ package usecase
 
 import (
 	"2024_1_TeaStealers/internal/models"
-	"2024_1_TeaStealers/internal/pkg/jwt"
 	"2024_1_TeaStealers/internal/pkg/users"
-	"2024_1_TeaStealers/internal/pkg/utils"
 	"context"
 	"errors"
 	"io"
 	"os"
 	"path/filepath"
-	"time"
 
 	"github.com/satori/uuid"
 )
@@ -77,28 +74,4 @@ func (u *UserUsecase) UpdateUserInfo(ctx context.Context, id int64, data *models
 		return nil, errors.New("this email or phone already in use")
 	}
 	return user, nil
-}
-
-func (u *UserUsecase) UpdateUserPassword(ctx context.Context, data *models.UserUpdatePassword) (string, time.Time, error) {
-	oldPasswordHash := utils.GenerateHashString(data.OldPassword)
-	newPasswordHash := utils.GenerateHashString(data.NewPassword)
-	if oldPasswordHash == newPasswordHash {
-		return "", time.Now(), errors.New("passwords must not match")
-	}
-	if err := u.repo.CheckUserPassword(ctx, data.ID, oldPasswordHash); err != nil {
-		return "", time.Now(), errors.New("invalid old password")
-	}
-	level, err := u.repo.UpdateUserPassword(ctx, data.ID, newPasswordHash)
-	if err != nil {
-		return "", time.Now(), errors.New("incorrect id or passwordhash")
-	}
-	user := &models.User{
-		ID:          data.ID,
-		LevelUpdate: level,
-	}
-	token, exp, err := jwt.GenerateToken(user)
-	if err != nil {
-		return "", time.Now(), errors.New("unable to generate token")
-	}
-	return token, exp, nil
 }

@@ -4,9 +4,10 @@ import (
 	genAuth "2024_1_TeaStealers/internal/pkg/auth/delivery/grpc/gen"
 	authR "2024_1_TeaStealers/internal/pkg/auth/repo"
 	authUc "2024_1_TeaStealers/internal/pkg/auth/usecase"
+	"net/http"
+
 	"github.com/gorilla/mux"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
-	"net/http"
 
 	"database/sql"
 	"fmt"

@@ -17,7 +17,18 @@ services:
       - ${DB_PORT}:5432
     networks:
       - tean-network
-
+  
+  #migrate:
+  #  build: .
+  #  depends_on:
+  #    - db
+  #  entrypoint: [
+  #    "/bin/sh", "-c",
+  #    "until pg_isready -h db -p 5432 -U postgres; do echo waiting for db; sleep 2; done; migrate -path=/migrations -database postgres://postgres@db:5432/mydb?sslmode=disable up"
+  #  ]
+  #  volumes:
+  #    - ./migrations:/migrations 
+  
   main:
     depends_on:
       - db
@@ -78,6 +89,36 @@ services:
       - db
     networks:
       - tean-network
+  
+  tean-question:
+    env_file:
+       - ./.env
+    container_name: ${GRPC_QUESTION_CONTAINER_IP}
+    build:
+      context: .
+      dockerfile: ./build/question.Dockerfile
+    restart: always
+    expose:
+      - "${GRPC_QUESTION_PORT}"
+    depends_on:
+      - db
+    networks:
+      - tean-network
+  
+  tean-complex:
+    env_file:
+       - ./.env
+    container_name: ${GRPC_COMPLEX_CONTAINER_IP}
+    build:
+      context: .
+      dockerfile: ./build/complex.Dockerfile
+    restart: always
+    expose:
+      - "${GRPC_COMPLEX_PORT}"
+    depends_on:
+      - db
+    networks:
+      - tean-network
 
   prometheus:
     image: prom/prometheus:latest
@@ -114,6 +155,11 @@ services:
     image: grafana/grafana-enterprise
     volumes:
       - ${GRAFANA_DIR}:/var/lib/grafana/
+    ports:
+      - "3000:3000"
+    environment:
+          - GF_SECURITY_ADMIN_USER=root
+          - GF_SECURITY_ADMIN_PASSWORD=root
     networks:
       - tean-network
 

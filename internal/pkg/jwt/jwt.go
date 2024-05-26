@@ -30,6 +30,7 @@ func GenerateToken(user *models.User) (string, time.Time, error) {
 // ParseToken parses the provided JWT token string and returns the parsed token.
 func ParseToken(token string) (*jwt.Token, error) {
 	return jwt.Parse(token, func(token *jwt.Token) (interface{}, error) {
+
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
 		}

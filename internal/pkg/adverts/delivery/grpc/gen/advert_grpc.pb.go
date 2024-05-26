@@ -19,7 +19,21 @@ import (
 const _ = grpc.SupportPackageIsVersion7
 
 const (
-	Adverts_GetAdvertById_FullMethodName = "/adverts.Adverts/GetAdvertById"
+	Adverts_GetAdvertById_FullMethodName                = "/adverts.Adverts/GetAdvertById"
+	Adverts_UpdateAdvertById_FullMethodName             = "/adverts.Adverts/UpdateAdvertById"
+	Adverts_DeleteAdvertById_FullMethodName             = "/adverts.Adverts/DeleteAdvertById"
+	Adverts_LikeAdvert_FullMethodName                   = "/adverts.Adverts/LikeAdvert"
+	Adverts_DislikeAdvert_FullMethodName                = "/adverts.Adverts/DislikeAdvert"
+	Adverts_CreateHouseAdvert_FullMethodName            = "/adverts.Adverts/CreateHouseAdvert"
+	Adverts_GetExistBuildingByAddress_FullMethodName    = "/adverts.Adverts/GetExistBuildingByAddress"
+	Adverts_CreateFlatAdvert_FullMethodName             = "/adverts.Adverts/CreateFlatAdvert"
+	Adverts_GetSquareAdvertsList_FullMethodName         = "/adverts.Adverts/GetSquareAdvertsList"
+	Adverts_GetRectangleAdvertsList_FullMethodName      = "/adverts.Adverts/GetRectangleAdvertsList"
+	Adverts_GetRectangleAdvertsByUser_FullMethodName    = "/adverts.Adverts/GetRectangleAdvertsByUser"
+	Adverts_GetLikedUserAdverts_FullMethodName          = "/adverts.Adverts/GetLikedUserAdverts"
+	Adverts_GetRectangleAdvertsByComplex_FullMethodName = "/adverts.Adverts/GetRectangleAdvertsByComplex"
+	Adverts_IncreasePriority_FullMethodName             = "/adverts.Adverts/IncreasePriority"
+	Adverts_GetPriority_FullMethodName                  = "/adverts.Adverts/GetPriority"
 )
 
 // AdvertsClient is the client API for Adverts service.
@@ -27,6 +41,23 @@ const (
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type AdvertsClient interface {
 	GetAdvertById(ctx context.Context, in *GetAdvertByIdRequest, opts ...grpc.CallOption) (*GetAdvertByIdResponse, error)
+	UpdateAdvertById(ctx context.Context, in *UpdateAdvertByIdRequest, opts ...grpc.CallOption) (*UpdateAdvertByIdResponse, error)
+	DeleteAdvertById(ctx context.Context, in *DeleteAdvertByIdRequest, opts ...grpc.CallOption) (*DeleteAdvertByIdResponse, error)
+	LikeAdvert(ctx context.Context, in *LikeAdvertRequest, opts ...grpc.CallOption) (*LikeAdvertResponse, error)
+	DislikeAdvert(ctx context.Context, in *DislikeAdvertRequest, opts ...grpc.CallOption) (*DislikeAdvertResponse, error)
+	CreateHouseAdvert(ctx context.Context, in *CreateHouseAdvertRequest, opts ...grpc.CallOption) (*CreateHouseAdvertResponse, error)
+	GetExistBuildingByAddress(ctx context.Context, in *GetExistBuildingByAddressRequest, opts ...grpc.CallOption) (*GetExistBuildingByAddressResponse, error)
+	CreateFlatAdvert(ctx context.Context, in *CreateFlatAdvertRequest, opts ...grpc.CallOption) (*CreateFlatAdvertResponse, error)
+	GetSquareAdvertsList(ctx context.Context, in *GetSquareAdvertsListRequest, opts ...grpc.CallOption) (*GetSquareAdvertsListResponse, error)
+	GetRectangleAdvertsList(ctx context.Context, in *GetRectangleAdvertsListRequest, opts ...grpc.CallOption) (*GetRectangleAdvertsListResponse, error)
+	// rpc UploadImage(UploadImageRequest) returns (UploadImageResponse) {}
+	// rpc GetAdvertImages(GetAdvertImagesRequest) returns (GetAdvertImagesResponse) {}
+	// rpc DeleteImage(DeleteImageRequest) returns (DeleteImageResponse) {}
+	GetRectangleAdvertsByUser(ctx context.Context, in *GetUserAdvertsRequest, opts ...grpc.CallOption) (*GetUserAdvertsResponse, error)
+	GetLikedUserAdverts(ctx context.Context, in *GetLikedUserAdvertsRequest, opts ...grpc.CallOption) (*GetLikedUserAdvertsResponse, error)
+	GetRectangleAdvertsByComplex(ctx context.Context, in *GetComplexAdvertsRequest, opts ...grpc.CallOption) (*GetComplexAdvertsResponse, error)
+	IncreasePriority(ctx context.Context, in *IncreasePriorityRequest, opts ...grpc.CallOption) (*IncreasePriorityResponse, error)
+	GetPriority(ctx context.Context, in *GetPriorityRequest, opts ...grpc.CallOption) (*GetPriorityResponse, error)
 }
 
 type advertsClient struct {
@@ -46,11 +77,154 @@ func (c *advertsClient) GetAdvertById(ctx context.Context, in *GetAdvertByIdRequ
 	return out, nil
 }
 
+func (c *advertsClient) UpdateAdvertById(ctx context.Context, in *UpdateAdvertByIdRequest, opts ...grpc.CallOption) (*UpdateAdvertByIdResponse, error) {
+	out := new(UpdateAdvertByIdResponse)
+	err := c.cc.Invoke(ctx, Adverts_UpdateAdvertById_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *advertsClient) DeleteAdvertById(ctx context.Context, in *DeleteAdvertByIdRequest, opts ...grpc.CallOption) (*DeleteAdvertByIdResponse, error) {
+	out := new(DeleteAdvertByIdResponse)
+	err := c.cc.Invoke(ctx, Adverts_DeleteAdvertById_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *advertsClient) LikeAdvert(ctx context.Context, in *LikeAdvertRequest, opts ...grpc.CallOption) (*LikeAdvertResponse, error) {
+	out := new(LikeAdvertResponse)
+	err := c.cc.Invoke(ctx, Adverts_LikeAdvert_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *advertsClient) DislikeAdvert(ctx context.Context, in *DislikeAdvertRequest, opts ...grpc.CallOption) (*DislikeAdvertResponse, error) {
+	out := new(DislikeAdvertResponse)
+	err := c.cc.Invoke(ctx, Adverts_DislikeAdvert_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *advertsClient) CreateHouseAdvert(ctx context.Context, in *CreateHouseAdvertRequest, opts ...grpc.CallOption) (*CreateHouseAdvertResponse, error) {
+	out := new(CreateHouseAdvertResponse)
+	err := c.cc.Invoke(ctx, Adverts_CreateHouseAdvert_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *advertsClient) GetExistBuildingByAddress(ctx context.Context, in *GetExistBuildingByAddressRequest, opts ...grpc.CallOption) (*GetExistBuildingByAddressResponse, error) {
+	out := new(GetExistBuildingByAddressResponse)
+	err := c.cc.Invoke(ctx, Adverts_GetExistBuildingByAddress_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *advertsClient) CreateFlatAdvert(ctx context.Context, in *CreateFlatAdvertRequest, opts ...grpc.CallOption) (*CreateFlatAdvertResponse, error) {
+	out := new(CreateFlatAdvertResponse)
+	err := c.cc.Invoke(ctx, Adverts_CreateFlatAdvert_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *advertsClient) GetSquareAdvertsList(ctx context.Context, in *GetSquareAdvertsListRequest, opts ...grpc.CallOption) (*GetSquareAdvertsListResponse, error) {
+	out := new(GetSquareAdvertsListResponse)
+	err := c.cc.Invoke(ctx, Adverts_GetSquareAdvertsList_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *advertsClient) GetRectangleAdvertsList(ctx context.Context, in *GetRectangleAdvertsListRequest, opts ...grpc.CallOption) (*GetRectangleAdvertsListResponse, error) {
+	out := new(GetRectangleAdvertsListResponse)
+	err := c.cc.Invoke(ctx, Adverts_GetRectangleAdvertsList_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *advertsClient) GetRectangleAdvertsByUser(ctx context.Context, in *GetUserAdvertsRequest, opts ...grpc.CallOption) (*GetUserAdvertsResponse, error) {
+	out := new(GetUserAdvertsResponse)
+	err := c.cc.Invoke(ctx, Adverts_GetRectangleAdvertsByUser_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *advertsClient) GetLikedUserAdverts(ctx context.Context, in *GetLikedUserAdvertsRequest, opts ...grpc.CallOption) (*GetLikedUserAdvertsResponse, error) {
+	out := new(GetLikedUserAdvertsResponse)
+	err := c.cc.Invoke(ctx, Adverts_GetLikedUserAdverts_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *advertsClient) GetRectangleAdvertsByComplex(ctx context.Context, in *GetComplexAdvertsRequest, opts ...grpc.CallOption) (*GetComplexAdvertsResponse, error) {
+	out := new(GetComplexAdvertsResponse)
+	err := c.cc.Invoke(ctx, Adverts_GetRectangleAdvertsByComplex_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *advertsClient) IncreasePriority(ctx context.Context, in *IncreasePriorityRequest, opts ...grpc.CallOption) (*IncreasePriorityResponse, error) {
+	out := new(IncreasePriorityResponse)
+	err := c.cc.Invoke(ctx, Adverts_IncreasePriority_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *advertsClient) GetPriority(ctx context.Context, in *GetPriorityRequest, opts ...grpc.CallOption) (*GetPriorityResponse, error) {
+	out := new(GetPriorityResponse)
+	err := c.cc.Invoke(ctx, Adverts_GetPriority_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // AdvertsServer is the server API for Adverts service.
 // All implementations must embed UnimplementedAdvertsServer
 // for forward compatibility
 type AdvertsServer interface {
 	GetAdvertById(context.Context, *GetAdvertByIdRequest) (*GetAdvertByIdResponse, error)
+	UpdateAdvertById(context.Context, *UpdateAdvertByIdRequest) (*UpdateAdvertByIdResponse, error)
+	DeleteAdvertById(context.Context, *DeleteAdvertByIdRequest) (*DeleteAdvertByIdResponse, error)
+	LikeAdvert(context.Context, *LikeAdvertRequest) (*LikeAdvertResponse, error)
+	DislikeAdvert(context.Context, *DislikeAdvertRequest) (*DislikeAdvertResponse, error)
+	CreateHouseAdvert(context.Context, *CreateHouseAdvertRequest) (*CreateHouseAdvertResponse, error)
+	GetExistBuildingByAddress(context.Context, *GetExistBuildingByAddressRequest) (*GetExistBuildingByAddressResponse, error)
+	CreateFlatAdvert(context.Context, *CreateFlatAdvertRequest) (*CreateFlatAdvertResponse, error)
+	GetSquareAdvertsList(context.Context, *GetSquareAdvertsListRequest) (*GetSquareAdvertsListResponse, error)
+	GetRectangleAdvertsList(context.Context, *GetRectangleAdvertsListRequest) (*GetRectangleAdvertsListResponse, error)
+	// rpc UploadImage(UploadImageRequest) returns (UploadImageResponse) {}
+	// rpc GetAdvertImages(GetAdvertImagesRequest) returns (GetAdvertImagesResponse) {}
+	// rpc DeleteImage(DeleteImageRequest) returns (DeleteImageResponse) {}
+	GetRectangleAdvertsByUser(context.Context, *GetUserAdvertsRequest) (*GetUserAdvertsResponse, error)
+	GetLikedUserAdverts(context.Context, *GetLikedUserAdvertsRequest) (*GetLikedUserAdvertsResponse, error)
+	GetRectangleAdvertsByComplex(context.Context, *GetComplexAdvertsRequest) (*GetComplexAdvertsResponse, error)
+	IncreasePriority(context.Context, *IncreasePriorityRequest) (*IncreasePriorityResponse, error)
+	GetPriority(context.Context, *GetPriorityRequest) (*GetPriorityResponse, error)
 	mustEmbedUnimplementedAdvertsServer()
 }
 
@@ -60,6 +234,48 @@ type UnimplementedAdvertsServer struct {
 
 func (UnimplementedAdvertsServer) GetAdvertById(context.Context, *GetAdvertByIdRequest) (*GetAdvertByIdResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetAdvertById not implemented")
+}
+func (UnimplementedAdvertsServer) UpdateAdvertById(context.Context, *UpdateAdvertByIdRequest) (*UpdateAdvertByIdResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UpdateAdvertById not implemented")
+}
+func (UnimplementedAdvertsServer) DeleteAdvertById(context.Context, *DeleteAdvertByIdRequest) (*DeleteAdvertByIdResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DeleteAdvertById not implemented")
+}
+func (UnimplementedAdvertsServer) LikeAdvert(context.Context, *LikeAdvertRequest) (*LikeAdvertResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method LikeAdvert not implemented")
+}
+func (UnimplementedAdvertsServer) DislikeAdvert(context.Context, *DislikeAdvertRequest) (*DislikeAdvertResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DislikeAdvert not implemented")
+}
+func (UnimplementedAdvertsServer) CreateHouseAdvert(context.Context, *CreateHouseAdvertRequest) (*CreateHouseAdvertResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CreateHouseAdvert not implemented")
+}
+func (UnimplementedAdvertsServer) GetExistBuildingByAddress(context.Context, *GetExistBuildingByAddressRequest) (*GetExistBuildingByAddressResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetExistBuildingByAddress not implemented")
+}
+func (UnimplementedAdvertsServer) CreateFlatAdvert(context.Context, *CreateFlatAdvertRequest) (*CreateFlatAdvertResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CreateFlatAdvert not implemented")
+}
+func (UnimplementedAdvertsServer) GetSquareAdvertsList(context.Context, *GetSquareAdvertsListRequest) (*GetSquareAdvertsListResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetSquareAdvertsList not implemented")
+}
+func (UnimplementedAdvertsServer) GetRectangleAdvertsList(context.Context, *GetRectangleAdvertsListRequest) (*GetRectangleAdvertsListResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetRectangleAdvertsList not implemented")
+}
+func (UnimplementedAdvertsServer) GetRectangleAdvertsByUser(context.Context, *GetUserAdvertsRequest) (*GetUserAdvertsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetRectangleAdvertsByUser not implemented")
+}
+func (UnimplementedAdvertsServer) GetLikedUserAdverts(context.Context, *GetLikedUserAdvertsRequest) (*GetLikedUserAdvertsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetLikedUserAdverts not implemented")
+}
+func (UnimplementedAdvertsServer) GetRectangleAdvertsByComplex(context.Context, *GetComplexAdvertsRequest) (*GetComplexAdvertsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetRectangleAdvertsByComplex not implemented")
+}
+func (UnimplementedAdvertsServer) IncreasePriority(context.Context, *IncreasePriorityRequest) (*IncreasePriorityResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method IncreasePriority not implemented")
+}
+func (UnimplementedAdvertsServer) GetPriority(context.Context, *GetPriorityRequest) (*GetPriorityResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetPriority not implemented")
 }
 func (UnimplementedAdvertsServer) mustEmbedUnimplementedAdvertsServer() {}
 
@@ -92,6 +308,258 @@ func _Adverts_GetAdvertById_Handler(srv interface{}, ctx context.Context, dec fu
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Adverts_UpdateAdvertById_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpdateAdvertByIdRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AdvertsServer).UpdateAdvertById(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Adverts_UpdateAdvertById_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AdvertsServer).UpdateAdvertById(ctx, req.(*UpdateAdvertByIdRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Adverts_DeleteAdvertById_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DeleteAdvertByIdRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AdvertsServer).DeleteAdvertById(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Adverts_DeleteAdvertById_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AdvertsServer).DeleteAdvertById(ctx, req.(*DeleteAdvertByIdRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Adverts_LikeAdvert_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(LikeAdvertRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AdvertsServer).LikeAdvert(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Adverts_LikeAdvert_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AdvertsServer).LikeAdvert(ctx, req.(*LikeAdvertRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Adverts_DislikeAdvert_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DislikeAdvertRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AdvertsServer).DislikeAdvert(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Adverts_DislikeAdvert_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AdvertsServer).DislikeAdvert(ctx, req.(*DislikeAdvertRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Adverts_CreateHouseAdvert_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CreateHouseAdvertRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AdvertsServer).CreateHouseAdvert(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Adverts_CreateHouseAdvert_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AdvertsServer).CreateHouseAdvert(ctx, req.(*CreateHouseAdvertRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Adverts_GetExistBuildingByAddress_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetExistBuildingByAddressRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AdvertsServer).GetExistBuildingByAddress(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Adverts_GetExistBuildingByAddress_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AdvertsServer).GetExistBuildingByAddress(ctx, req.(*GetExistBuildingByAddressRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Adverts_CreateFlatAdvert_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CreateFlatAdvertRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AdvertsServer).CreateFlatAdvert(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Adverts_CreateFlatAdvert_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AdvertsServer).CreateFlatAdvert(ctx, req.(*CreateFlatAdvertRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Adverts_GetSquareAdvertsList_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetSquareAdvertsListRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AdvertsServer).GetSquareAdvertsList(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Adverts_GetSquareAdvertsList_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AdvertsServer).GetSquareAdvertsList(ctx, req.(*GetSquareAdvertsListRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Adverts_GetRectangleAdvertsList_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetRectangleAdvertsListRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AdvertsServer).GetRectangleAdvertsList(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Adverts_GetRectangleAdvertsList_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AdvertsServer).GetRectangleAdvertsList(ctx, req.(*GetRectangleAdvertsListRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Adverts_GetRectangleAdvertsByUser_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetUserAdvertsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AdvertsServer).GetRectangleAdvertsByUser(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Adverts_GetRectangleAdvertsByUser_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AdvertsServer).GetRectangleAdvertsByUser(ctx, req.(*GetUserAdvertsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Adverts_GetLikedUserAdverts_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetLikedUserAdvertsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AdvertsServer).GetLikedUserAdverts(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Adverts_GetLikedUserAdverts_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AdvertsServer).GetLikedUserAdverts(ctx, req.(*GetLikedUserAdvertsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Adverts_GetRectangleAdvertsByComplex_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetComplexAdvertsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AdvertsServer).GetRectangleAdvertsByComplex(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Adverts_GetRectangleAdvertsByComplex_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AdvertsServer).GetRectangleAdvertsByComplex(ctx, req.(*GetComplexAdvertsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Adverts_IncreasePriority_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(IncreasePriorityRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AdvertsServer).IncreasePriority(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Adverts_IncreasePriority_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AdvertsServer).IncreasePriority(ctx, req.(*IncreasePriorityRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Adverts_GetPriority_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetPriorityRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AdvertsServer).GetPriority(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Adverts_GetPriority_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AdvertsServer).GetPriority(ctx, req.(*GetPriorityRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // Adverts_ServiceDesc is the grpc.ServiceDesc for Adverts service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -102,6 +570,62 @@ var Adverts_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetAdvertById",
 			Handler:    _Adverts_GetAdvertById_Handler,
+		},
+		{
+			MethodName: "UpdateAdvertById",
+			Handler:    _Adverts_UpdateAdvertById_Handler,
+		},
+		{
+			MethodName: "DeleteAdvertById",
+			Handler:    _Adverts_DeleteAdvertById_Handler,
+		},
+		{
+			MethodName: "LikeAdvert",
+			Handler:    _Adverts_LikeAdvert_Handler,
+		},
+		{
+			MethodName: "DislikeAdvert",
+			Handler:    _Adverts_DislikeAdvert_Handler,
+		},
+		{
+			MethodName: "CreateHouseAdvert",
+			Handler:    _Adverts_CreateHouseAdvert_Handler,
+		},
+		{
+			MethodName: "GetExistBuildingByAddress",
+			Handler:    _Adverts_GetExistBuildingByAddress_Handler,
+		},
+		{
+			MethodName: "CreateFlatAdvert",
+			Handler:    _Adverts_CreateFlatAdvert_Handler,
+		},
+		{
+			MethodName: "GetSquareAdvertsList",
+			Handler:    _Adverts_GetSquareAdvertsList_Handler,
+		},
+		{
+			MethodName: "GetRectangleAdvertsList",
+			Handler:    _Adverts_GetRectangleAdvertsList_Handler,
+		},
+		{
+			MethodName: "GetRectangleAdvertsByUser",
+			Handler:    _Adverts_GetRectangleAdvertsByUser_Handler,
+		},
+		{
+			MethodName: "GetLikedUserAdverts",
+			Handler:    _Adverts_GetLikedUserAdverts_Handler,
+		},
+		{
+			MethodName: "GetRectangleAdvertsByComplex",
+			Handler:    _Adverts_GetRectangleAdvertsByComplex_Handler,
+		},
+		{
+			MethodName: "IncreasePriority",
+			Handler:    _Adverts_IncreasePriority_Handler,
+		},
+		{
+			MethodName: "GetPriority",
+			Handler:    _Adverts_GetPriority_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

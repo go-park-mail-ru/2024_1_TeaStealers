@@ -4,11 +4,13 @@ import (
 	"2024_1_TeaStealers/internal/models"
 	"2024_1_TeaStealers/internal/pkg/auth"
 	genAuth "2024_1_TeaStealers/internal/pkg/auth/delivery/grpc/gen"
+	"2024_1_TeaStealers/internal/pkg/utils"
 	"context"
 	"errors"
+	"net/http"
 
-	"github.com/satori/uuid"
 	"go.uber.org/zap"
+	"google.golang.org/grpc/metadata"
 )
 
 const (
@@ -42,7 +44,6 @@ func NewServerAuthHandler(uc auth.AuthUsecase, logger *zap.Logger) *AuthServerHa
 // @Failure 500 {string} string "Internal server error"
 // @Router /auth/signup [post]
 func (h *AuthServerHandler) SignUp(ctx context.Context, req *genAuth.SignUpRequest) (*genAuth.SignUpInResponse, error) {
-	ctx = context.WithValue(ctx, "requestId", uuid.NewV4().String())
 	data := models.UserSignUpData{Email: req.Email, Phone: req.Phone, Password: req.Password}
 	data.Sanitize()
 
@@ -61,6 +62,7 @@ func (h *AuthServerHandler) SignUp(ctx context.Context, req *genAuth.SignUpReque
 	dateString := exp.Format(layout)
 
 	h.logger.Info("success logIn")
+
 	// utils.LogSuccesResponse(h.logger, ctx.Value("requestId").(string), utils.DeliveryLayer, SignUpMethod)
 	return &genAuth.SignUpInResponse{Token: token, Exp: dateString}, nil
 
@@ -77,14 +79,17 @@ func (h *AuthServerHandler) SignUp(ctx context.Context, req *genAuth.SignUpReque
 // @Failure 500 {string} string "Internal server error"
 // @Router /auth/login [post]
 func (h *AuthServerHandler) Login(ctx context.Context, req *genAuth.SignInRequest) (*genAuth.SignUpInResponse, error) {
-	ctx = context.WithValue(ctx, "requestId", uuid.NewV4().String())
+	md, _ := metadata.FromIncomingContext(ctx)
+	requestID := md["requestid"]
+
 	data := models.UserLoginData{Login: req.Email, Password: req.Password}
 	data.Sanitize()
+
+	ctx = context.WithValue(ctx, "requestId", requestID[0])
 	_, token, exp, err := h.uc.Login(ctx, &data)
 
 	if err != nil {
-		h.logger.Error(err.Error())
-		// utils.LogErrorResponse(h.logger, ctx.Value("requestId").(string), utils.DeliveryLayer, LoginMethod, err, http.StatusBadRequest)
+		utils.LogErrorResponse(h.logger, requestID[0], utils.DeliveryLayer, LoginMethod, err, http.StatusBadRequest)
 		return nil, errors.New("error login")
 	}
 
@@ -92,13 +97,11 @@ func (h *AuthServerHandler) Login(ctx context.Context, req *genAuth.SignInReques
 	dateString := exp.Format(layout)
 
 	h.logger.Info("success signUp")
-	// utils.LogSuccesResponse(h.logger, ctx.Value("requestId").(string), utils.DeliveryLayer, LoginMethod)
+	utils.LogSuccesResponse(h.logger, requestID[0], utils.DeliveryLayer, LoginMethod)
 	return &genAuth.SignUpInResponse{Token: token, Exp: dateString}, nil
 }
 
 func (h *AuthServerHandler) CheckAuth(ctx context.Context, req *genAuth.CheckAuthRequest) (*genAuth.CheckAuthResponse, error) {
-	ctx = context.WithValue(ctx, "requestId", uuid.NewV4().String())
-
 	userId := req.Id
 
 	err := h.uc.CheckAuth(ctx, userId, int(req.Level))
@@ -110,4 +113,21 @@ func (h *AuthServerHandler) CheckAuth(ctx context.Context, req *genAuth.CheckAut
 	h.logger.Info("success checkAuth")
 	// utils.LogSuccesResponse(h.logger, ctx.Value("requestId").(string), utils.DeliveryLayer, CheckAuthMethod)
 	return &genAuth.CheckAuthResponse{Authorized: true}, nil
+}
+
+func (h *AuthServerHandler) UpdateUserPassword(ctx context.Context, req *genAuth.UpdatePasswordRequest) (*genAuth.UpdatePasswordResponse, error) {
+	userId := req.Id
+
+	data := &models.UserUpdatePassword{
+		ID:          userId,
+		OldPassword: req.OldPassword,
+		NewPassword: req.NewPassword,
+	}
+	data.Sanitize()
+
+	token, exp, err := h.uc.UpdateUserPassword(ctx, data)
+	if err != nil {
+		return nil, err
+	}
+	return &genAuth.UpdatePasswordResponse{Updated: true, Token: token, Exp: exp.String()}, nil
 }
