@@ -257,6 +257,30 @@ func (h *AdvertsServerHandler) DislikeAdvert(ctx context.Context, reqAdv *genAdv
 
 }
 
+func (h *AdvertsServerHandler) IncreasePriority(ctx context.Context, reqAdv *genAdverts.IncreasePriorityRequest) (*genAdverts.IncreasePriorityResponse, error) {
+	ctx = context.WithValue(ctx, "requestId", uuid.NewV4().String())
+
+	newPriority, err := h.uc.UpdatePriority(ctx, reqAdv.AdvertId, reqAdv.Amount)
+	if err != nil {
+		h.logger.Error(ctx.Value("requestId").(string) + " " + err.Error())
+		return nil, err
+	}
+
+	return &genAdverts.IncreasePriorityResponse{Amount: newPriority}, nil
+}
+
+func (h *AdvertsServerHandler) GetPriority(ctx context.Context, reqAdv *genAdverts.GetPriorityRequest) (*genAdverts.GetPriorityResponse, error) {
+	ctx = context.WithValue(ctx, "requestId", uuid.NewV4().String())
+
+	priority, err := h.uc.GetPriority(ctx, reqAdv.AdvertId)
+	if err != nil {
+		h.logger.Error(ctx.Value("requestId").(string) + " " + err.Error())
+		return nil, err
+	}
+
+	return &genAdverts.GetPriorityResponse{Amount: priority}, nil
+}
+
 func (h *AdvertsServerHandler) CreateHouseAdvert(ctx context.Context, reqAdv *genAdverts.CreateHouseAdvertRequest) (*genAdverts.CreateHouseAdvertResponse, error) {
 	ctx = context.WithValue(ctx, "requestId", uuid.NewV4().String())
 
@@ -578,7 +602,7 @@ func (h *AdvertsServerHandler) GetRectangleAdvertsList(ctx context.Context, req 
 		if advert.FlatProperties != nil {
 			flatProperties = &gen.FlatProperties{RoomCount: int32(advert.FlatProperties.RoomCount), FloorGeneral: int32(advert.FlatProperties.FloorGeneral), SquareGeneral: advert.FlatProperties.SquareGeneral, Floor: int32(advert.FlatProperties.Floor)}
 		}
-		protoAdverts = append(protoAdverts, &genAdverts.AdvertRectangleData{Id: advert.ID, AdvertType: advert.TypeAdvert, TypeSale: advert.TypeSale, Title: advert.Title, Description: advert.Description, Price: int64(advert.Price), Phone: advert.Phone, IsLiked: advert.IsLiked, Metro: advert.Metro, Address: advert.Address, AddressPoint: advert.AddressPoint, Photo: advert.Photo, HouseProp: houseProperties, FlatProperties: flatProperties, DateCreation: advert.DateCreation.String()})
+		protoAdverts = append(protoAdverts, &genAdverts.AdvertRectangleData{Id: advert.ID, AdvertType: advert.TypeAdvert, TypeSale: advert.TypeSale, Title: advert.Title, Description: advert.Description, Price: int64(advert.Price), Phone: advert.Phone, IsLiked: advert.IsLiked, Metro: advert.Metro, Address: advert.Address, AddressPoint: advert.AddressPoint, Photo: advert.Photo, HouseProp: houseProperties, FlatProperties: flatProperties, DateCreation: advert.DateCreation.String(), Rating: advert.Rating})
 	}
 
 	return &genAdverts.GetRectangleAdvertsListResponse{Adverts: protoAdverts, Info: &genAdverts.PageInfo{TotalElements: int64(advList.PageInfo.TotalElements), TotalPages: int64(advList.PageInfo.TotalPages), PageSize: int64(advList.PageInfo.PageSize), CurrentPage: int64(advList.PageInfo.CurrentPage)}}, nil
@@ -607,7 +631,7 @@ func (h *AdvertsServerHandler) GetRectangleAdvertsByUser(ctx context.Context, re
 		if advert.FlatProperties != nil {
 			flatProperties = &gen.FlatProperties{RoomCount: int32(advert.FlatProperties.RoomCount), FloorGeneral: int32(advert.FlatProperties.FloorGeneral), SquareGeneral: advert.FlatProperties.SquareGeneral, Floor: int32(advert.FlatProperties.Floor)}
 		}
-		protoAdverts = append(protoAdverts, &genAdverts.AdvertRectangleData{Id: advert.ID, AdvertType: advert.TypeAdvert, TypeSale: advert.TypeSale, Title: advert.Title, Description: advert.Description, Price: int64(advert.Price), Phone: advert.Phone, IsLiked: advert.IsLiked, Metro: advert.Metro, Address: advert.Address, AddressPoint: advert.AddressPoint, Photo: advert.Photo, HouseProp: houseProperties, FlatProperties: flatProperties, DateCreation: advert.DateCreation.String()})
+		protoAdverts = append(protoAdverts, &genAdverts.AdvertRectangleData{Id: advert.ID, AdvertType: advert.TypeAdvert, TypeSale: advert.TypeSale, Title: advert.Title, Description: advert.Description, Price: int64(advert.Price), Phone: advert.Phone, IsLiked: advert.IsLiked, Metro: advert.Metro, Address: advert.Address, AddressPoint: advert.AddressPoint, Photo: advert.Photo, HouseProp: houseProperties, FlatProperties: flatProperties, DateCreation: advert.DateCreation.String(), Rating: advert.Rating})
 	}
 
 	return &genAdverts.GetUserAdvertsResponse{

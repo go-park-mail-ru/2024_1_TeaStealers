@@ -277,6 +277,8 @@ type AdvertRectangleData struct {
 	TypeAdvert string `json:"typeAdvert"`
 	// Photo is the filename of the photo.
 	Photo string `json:"photo"`
+	// Rating is the rating of the advert.
+	Rating string `json:"rating"`
 	// Phone is the phone number associated with the advert.
 	Phone string `json:"phone"`
 	// TypeSale represents the sale type of the advertisement (Sale/Rent).

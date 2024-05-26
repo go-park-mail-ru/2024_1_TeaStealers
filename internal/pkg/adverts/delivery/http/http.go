@@ -7,6 +7,7 @@ import (
 	genComplex "2024_1_TeaStealers/internal/pkg/complexes/delivery/grpc/gen"
 	"2024_1_TeaStealers/internal/pkg/middleware"
 	"2024_1_TeaStealers/internal/pkg/utils"
+	"context"
 	"errors"
 	"log"
 	"net/http"
@@ -15,6 +16,7 @@ import (
 	"github.com/gorilla/mux"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/metadata"
 )
 
 const (
@@ -51,14 +53,14 @@ func (h *AdvertsClientHandler) CreateFlatAdvert(w http.ResponseWriter, r *http.R
 		return
 	}
 
-	/*id, ok := r.Context().Value(middleware.CookieName).(int64)
+	id, ok := r.Context().Value(middleware.CookieName).(int64)
 	if !ok {
 		utils.LogErrorResponse(h.logger, r.Context().Value("requestId").(string), utils.DeliveryLayer, CreateFlatAdvertMethod, errors.New("error with cookie"), http.StatusBadRequest)
 		utils.WriteError(w, http.StatusBadRequest, "incorrect id")
 		return
-	}*/
+	}
 
-	data := models.AdvertFlatCreateData{UserID: 1}
+	data := models.AdvertFlatCreateData{UserID: id}
 
 	if err := utils.ReadRequestData(r, &data); err != nil {
 		utils.LogErrorResponse(h.logger, r.Context().Value("requestId").(string), utils.DeliveryLayer, CreateFlatAdvertMethod, err, http.StatusBadRequest)
@@ -301,7 +303,10 @@ func (h *AdvertsClientHandler) GetAdvertById(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	advertDataResponse, err := h.client.GetAdvertById(r.Context(), &genAdverts.GetAdvertByIdRequest{Id: advertId})
+	md := metadata.New(map[string]string{"userid": strconv.FormatInt(r.Context().Value(middleware.CookieName).(int64), 10)})
+	ctx := metadata.NewOutgoingContext(context.Background(), md)
+
+	advertDataResponse, err := h.client.GetAdvertById(ctx, &genAdverts.GetAdvertByIdRequest{Id: advertId})
 	if err != nil {
 		utils.LogErrorResponse(h.logger, r.Context().Value("requestId").(string), utils.DeliveryLayer, GetAdvertByIdMethod, err, int(advertDataResponse.RespCode))
 		utils.WriteError(w, int(advertDataResponse.RespCode), err.Error())
@@ -420,6 +425,85 @@ func (h *AdvertsClientHandler) GetAdvertById(w http.ResponseWriter, r *http.Requ
 		HouseProperties: houseProperties, Material: material, ComplexProperties: complexProperties, DateCreation: dateTime}
 
 	if err = utils.WriteResponse(w, http.StatusOK, advert); err != nil {
+		utils.LogErrorResponse(h.logger, r.Context().Value("requestId").(string), utils.DeliveryLayer, GetAdvertByIdMethod, err, http.StatusInternalServerError)
+		utils.WriteError(w, http.StatusInternalServerError, err.Error())
+	} else {
+		utils.LogSuccesResponse(h.logger, r.Context().Value("requestId").(string), utils.DeliveryLayer, GetAdvertByIdMethod)
+	}
+}
+
+// UpdatePriority handles the request for updatin advert priority
+func (h *AdvertsClientHandler) UpdatePriority(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	id := vars["id"]
+	if id == "" {
+		utils.LogErrorResponse(h.logger, r.Context().Value("requestId").(string), utils.DeliveryLayer, GetAdvertByIdMethod, errors.New("error with id advert"), http.StatusBadRequest)
+		utils.WriteError(w, http.StatusBadRequest, "id parameter is required")
+		return
+	}
+
+	advertId, err := strconv.ParseInt(id, 10, 64)
+	if err != nil {
+		utils.LogErrorResponse(h.logger, r.Context().Value("requestId").(string), utils.DeliveryLayer, GetAdvertByIdMethod, err, http.StatusBadRequest)
+		utils.WriteError(w, http.StatusBadRequest, "invalid id parameter")
+		return
+	}
+
+	data := models.UpdatePriorityRequest{}
+
+	if err := utils.ReadRequestData(r, &data); err != nil {
+		utils.LogErrorResponse(h.logger, r.Context().Value("requestId").(string), utils.DeliveryLayer, CreateHouseAdvertMethod, err, http.StatusBadRequest)
+		utils.WriteError(w, http.StatusBadRequest, "incorrect data format")
+		return
+	}
+
+	amount, err := strconv.Atoi(data.DonationAmount)
+	if err != nil {
+		utils.LogErrorResponse(h.logger, r.Context().Value("requestId").(string), utils.DeliveryLayer, GetAdvertByIdMethod, err, http.StatusBadRequest)
+		utils.WriteError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	priorityResponse, err := h.client.IncreasePriority(r.Context(), &genAdverts.IncreasePriorityRequest{AdvertId: advertId, Amount: int64(amount)})
+	if err != nil {
+		utils.LogErrorResponse(h.logger, r.Context().Value("requestId").(string), utils.DeliveryLayer, GetAdvertByIdMethod, err, http.StatusBadRequest)
+		utils.WriteError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	if err = utils.WriteResponse(w, http.StatusOK, &models.Rating{Rating: priorityResponse.Amount}); err != nil {
+		utils.LogErrorResponse(h.logger, r.Context().Value("requestId").(string), utils.DeliveryLayer, GetAdvertByIdMethod, err, http.StatusInternalServerError)
+		utils.WriteError(w, http.StatusInternalServerError, err.Error())
+	} else {
+		utils.LogSuccesResponse(h.logger, r.Context().Value("requestId").(string), utils.DeliveryLayer, GetAdvertByIdMethod)
+	}
+}
+
+// GetPriority handles the request for priority advert priority
+func (h *AdvertsClientHandler) GetPriority(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	id := vars["id"]
+	if id == "" {
+		utils.LogErrorResponse(h.logger, r.Context().Value("requestId").(string), utils.DeliveryLayer, GetAdvertByIdMethod, errors.New("error with id advert"), http.StatusBadRequest)
+		utils.WriteError(w, http.StatusBadRequest, "id parameter is required")
+		return
+	}
+
+	advertId, err := strconv.ParseInt(id, 10, 64)
+	if err != nil {
+		utils.LogErrorResponse(h.logger, r.Context().Value("requestId").(string), utils.DeliveryLayer, GetAdvertByIdMethod, err, http.StatusBadRequest)
+		utils.WriteError(w, http.StatusBadRequest, "invalid id parameter")
+		return
+	}
+
+	priorityResponse, err := h.client.GetPriority(r.Context(), &genAdverts.GetPriorityRequest{AdvertId: advertId})
+	if err != nil {
+		utils.LogErrorResponse(h.logger, r.Context().Value("requestId").(string), utils.DeliveryLayer, GetAdvertByIdMethod, err, http.StatusBadRequest)
+		utils.WriteError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	if err = utils.WriteResponse(w, http.StatusOK, &models.Rating{Rating: priorityResponse.Amount}); err != nil {
 		utils.LogErrorResponse(h.logger, r.Context().Value("requestId").(string), utils.DeliveryLayer, GetAdvertByIdMethod, err, http.StatusInternalServerError)
 		utils.WriteError(w, http.StatusInternalServerError, err.Error())
 	} else {
