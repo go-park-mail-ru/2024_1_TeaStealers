@@ -1239,26 +1239,33 @@ func (h *AdvertsClientHandler) GetLikedUserAdverts(w http.ResponseWriter, r *htt
 			return
 		}
 		newadv := &models.AdvertRectangleData{
-			ID:          adv.Id,
-			Title:       adv.Title,
-			Description: adv.Description,
-			TypeAdvert:  adv.AdvertType,
-			Photo:       adv.Photo,
-			Phone:       adv.Phone,
-			TypeSale:    adv.TypeSale,
-			Address:     adv.Address,
-			IsLiked:     adv.IsLiked,
-			FlatProperties: &models.FlatRectangleProperties{
+			ID:           adv.Id,
+			Title:        adv.Title,
+			Description:  adv.Description,
+			TypeAdvert:   adv.AdvertType,
+			Photo:        adv.Photo,
+			Phone:        adv.Phone,
+			TypeSale:     adv.TypeSale,
+			Address:      adv.Address,
+			IsLiked:      adv.IsLiked,
+			Rating:       adv.Rating,
+			Price:        int(adv.Price),
+			DateCreation: tCr,
+		}
+
+		if adv.FlatProperties != nil {
+			newadv.FlatProperties = &models.FlatRectangleProperties{
 				Floor:         int(adv.FlatProperties.Floor),
 				FloorGeneral:  int(adv.FlatProperties.FloorGeneral),
 				RoomCount:     int(adv.FlatProperties.RoomCount),
 				SquareGeneral: adv.FlatProperties.SquareGeneral,
-			},
-			HouseProperties: &models.HouseRectangleProperties{Cottage: adv.HouseProp.Cottage,
+			}
+		}
+
+		if adv.HouseProp != nil {
+			newadv.HouseProperties = &models.HouseRectangleProperties{Cottage: adv.HouseProp.Cottage,
 				SquareArea: adv.HouseProp.SquareArea, SquareHouse: adv.HouseProp.SquareHouse, BedroomCount: int(adv.HouseProp.BedroomCount),
-				Floor: int(adv.HouseProp.Floor)},
-			Price:        int(adv.Price),
-			DateCreation: tCr,
+				Floor: int(adv.HouseProp.Floor)}
 		}
 
 		foundAdverts = append(foundAdverts, newadv)
