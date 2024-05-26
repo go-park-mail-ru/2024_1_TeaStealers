@@ -905,6 +905,7 @@ func (h *AdvertsClientHandler) GetRectangleAdvertsList(w http.ResponseWriter, r 
 			IsLiked:      adv.IsLiked,
 			Price:        int(adv.Price),
 			DateCreation: tCr,
+			Rating:       adv.Rating,
 		}
 
 		if adv.FlatProperties != nil {
@@ -994,6 +995,7 @@ func (h *AdvertsClientHandler) GetUserAdverts(w http.ResponseWriter, r *http.Req
 			Metro:        adv.Metro,
 			IsLiked:      adv.IsLiked,
 			Price:        int(adv.Price),
+			Rating:       adv.Rating,
 			DateCreation: tCr,
 		}
 
