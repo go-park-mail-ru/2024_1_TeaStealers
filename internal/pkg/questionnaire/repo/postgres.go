@@ -7,7 +7,6 @@ import (
 	"database/sql"
 	"fmt"
 
-	"github.com/satori/uuid"
 	"go.uber.org/zap"
 )
 
@@ -39,9 +38,9 @@ func (r *QuestionRepo) SelectQuestionsByTheme(ctx context.Context, theme *models
 	queryAllAnswersByThemeAndUser := `(SELECT q.id, q.question_text, q.max_mark FROM question AS q  WHERE q.theme=$1) EXCEPT (SELECT q.id, q.question_text, q.max_mark FROM question AS q JOIN question_answer AS qa ON qa.question_id=q.id WHERE q.theme=$1 AND qa.user_id=$2)`
 
 	id := ctx.Value(middleware.CookieName)
-	UUID, _ := id.(uuid.UUID)
+	IdUser, _ := id.(int64)
 
-	rows, err := r.db.Query(queryAllAnswersByThemeAndUser, *theme, UUID)
+	rows, err := r.db.Query(queryAllAnswersByThemeAndUser, *theme, IdUser)
 
 	if err != nil {
 		// utils.LogError(r.logger, ctx.Value("requestId").(string), utils.RepositoryLayer, adverts.GetRectangleAdvertsByUserIdMethod, err)

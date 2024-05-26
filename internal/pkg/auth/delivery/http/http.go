@@ -6,12 +6,13 @@ import (
 	"2024_1_TeaStealers/internal/pkg/jwt"
 	"2024_1_TeaStealers/internal/pkg/middleware"
 	"2024_1_TeaStealers/internal/pkg/utils"
+	"context"
 	"errors"
-	"log"
 	"net/http"
 
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/metadata"
 )
 
 const (
@@ -98,9 +99,12 @@ func (h *AuthClientHandler) Login(w http.ResponseWriter, r *http.Request) {
 		utils.WriteError(w, http.StatusBadRequest, err.Error())
 		return
 	}
-
 	data.Sanitize()
-	loginResp, err := h.client.Login(r.Context(), &genAuth.SignInRequest{Email: data.Login, Password: data.Password})
+
+	md := metadata.New(map[string]string{"requestId": r.Context().Value("requestId").(string)})
+	ctx := metadata.NewOutgoingContext(context.Background(), md)
+
+	loginResp, err := h.client.Login(ctx, &genAuth.SignInRequest{Email: data.Login, Password: data.Password})
 	if err != nil {
 		utils.LogErrorResponse(h.logger, r.Context().Value("requestId").(string), utils.DeliveryLayer, SignUpMethod, err, http.StatusInternalServerError)
 		utils.WriteError(w, http.StatusBadRequest, "incorrect password or login")
@@ -114,8 +118,6 @@ func (h *AuthClientHandler) Login(w http.ResponseWriter, r *http.Request) {
 		utils.WriteError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
-
-	log.Println(middleware.CookieName, token, expTime)
 
 	http.SetCookie(w, jwt.TokenCookie(middleware.CookieName, token, expTime))
 

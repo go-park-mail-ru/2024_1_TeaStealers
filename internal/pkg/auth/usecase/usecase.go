@@ -54,19 +54,19 @@ func (u *AuthUsecase) Login(ctx context.Context, data *models.UserLoginData) (*m
 	user, err := u.repo.CheckUser(ctx, data.Login, utils.GenerateHashString(data.Password))
 	if err != nil {
 		u.logger.Error(err.Error())
-		// utils.LogError(u.logger, ctx.Value("requestId").(string), utils.UsecaseLayer, auth.LoginMethod, err)
+		utils.LogError(u.logger, ctx.Value("requestId").(string), utils.UsecaseLayer, auth.LoginMethod, err)
 		return nil, "", time.Now(), err
 	}
 
 	token, exp, err := jwt.GenerateToken(user)
 	if err != nil {
 		u.logger.Error(err.Error())
-		// utils.LogError(u.logger, ctx.Value("requestId").(string), utils.UsecaseLayer, auth.LoginMethod, err)
+		utils.LogError(u.logger, ctx.Value("requestId").(string), utils.UsecaseLayer, auth.LoginMethod, err)
 		return nil, "", time.Now(), err
 	}
 
 	u.logger.Info("success login usecase")
-	// utils.LogSucces(u.logger, ctx.Value("requestId").(string), utils.UsecaseLayer, auth.LoginMethod)
+	utils.LogSucces(u.logger, ctx.Value("requestId").(string), utils.UsecaseLayer, auth.LoginMethod)
 	return user, token, exp, nil
 }
 

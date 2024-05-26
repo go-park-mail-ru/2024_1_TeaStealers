@@ -20,6 +20,7 @@ const _ = grpc.SupportPackageIsVersion7
 
 const (
 	Question_GetQuestionsByTheme_FullMethodName = "/questionnaire.Question/GetQuestionsByTheme"
+	Question_UploadAnswer_FullMethodName        = "/questionnaire.Question/UploadAnswer"
 )
 
 // QuestionClient is the client API for Question service.
@@ -27,6 +28,7 @@ const (
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type QuestionClient interface {
 	GetQuestionsByTheme(ctx context.Context, in *GetQuestionsByThemeRequest, opts ...grpc.CallOption) (*GetQuestionsByThemeResponse, error)
+	UploadAnswer(ctx context.Context, in *UploadAnswerRequest, opts ...grpc.CallOption) (*UploadAnswerResponse, error)
 }
 
 type questionClient struct {
@@ -46,11 +48,21 @@ func (c *questionClient) GetQuestionsByTheme(ctx context.Context, in *GetQuestio
 	return out, nil
 }
 
+func (c *questionClient) UploadAnswer(ctx context.Context, in *UploadAnswerRequest, opts ...grpc.CallOption) (*UploadAnswerResponse, error) {
+	out := new(UploadAnswerResponse)
+	err := c.cc.Invoke(ctx, Question_UploadAnswer_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // QuestionServer is the server API for Question service.
 // All implementations must embed UnimplementedQuestionServer
 // for forward compatibility
 type QuestionServer interface {
 	GetQuestionsByTheme(context.Context, *GetQuestionsByThemeRequest) (*GetQuestionsByThemeResponse, error)
+	UploadAnswer(context.Context, *UploadAnswerRequest) (*UploadAnswerResponse, error)
 	mustEmbedUnimplementedQuestionServer()
 }
 
@@ -60,6 +72,9 @@ type UnimplementedQuestionServer struct {
 
 func (UnimplementedQuestionServer) GetQuestionsByTheme(context.Context, *GetQuestionsByThemeRequest) (*GetQuestionsByThemeResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetQuestionsByTheme not implemented")
+}
+func (UnimplementedQuestionServer) UploadAnswer(context.Context, *UploadAnswerRequest) (*UploadAnswerResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UploadAnswer not implemented")
 }
 func (UnimplementedQuestionServer) mustEmbedUnimplementedQuestionServer() {}
 
@@ -92,6 +107,24 @@ func _Question_GetQuestionsByTheme_Handler(srv interface{}, ctx context.Context,
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Question_UploadAnswer_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UploadAnswerRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(QuestionServer).UploadAnswer(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Question_UploadAnswer_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(QuestionServer).UploadAnswer(ctx, req.(*UploadAnswerRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // Question_ServiceDesc is the grpc.ServiceDesc for Question service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -102,6 +135,10 @@ var Question_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetQuestionsByTheme",
 			Handler:    _Question_GetQuestionsByTheme_Handler,
+		},
+		{
+			MethodName: "UploadAnswer",
+			Handler:    _Question_UploadAnswer_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

@@ -431,6 +431,58 @@ func (u *AdvertUsecase) GetRectangleAdvertsList(ctx context.Context, advertFilte
 	return foundAdverts, nil
 }
 
+// UpdatePriority handles the updating advert priority.
+func (u *AdvertUsecase) UpdatePriority(ctx context.Context, advertId int64, priority int64) (newPriority int64, err error) {
+	tx, err := u.repo.BeginTx(ctx)
+	if err != nil {
+		utils.LogError(u.logger, ctx.Value("requestId").(string), utils.UsecaseLayer, adverts.DeleteAdvertByIdMethod, err)
+		return 0, err
+	}
+
+	defer func() {
+		if err := tx.Rollback(); err != nil {
+			utils.LogError(u.logger, ctx.Value("requestId").(string), utils.UsecaseLayer, adverts.DeleteAdvertByIdMethod, err)
+		}
+	}()
+
+	if newPriority, err = u.repo.UpdatePriority(ctx, tx, advertId, priority); err != nil {
+		utils.LogError(u.logger, ctx.Value("requestId").(string), utils.UsecaseLayer, adverts.GetRectangleAdvertsListMethod, err)
+		return 0, err
+	}
+	err = tx.Commit()
+	if err != nil {
+		utils.LogError(u.logger, ctx.Value("requestId").(string), utils.UsecaseLayer, adverts.GetRectangleAdvertsListMethod, err)
+		return 0, err
+	}
+
+	utils.LogSucces(u.logger, ctx.Value("requestId").(string), utils.UsecaseLayer, adverts.GetRectangleAdvertsListMethod)
+	return newPriority, nil
+}
+
+// GetPriority handles the getting advert priority.
+func (u *AdvertUsecase) GetPriority(ctx context.Context, advertId int64) (priority int64, err error) {
+	tx, err := u.repo.BeginTx(ctx)
+	if err != nil {
+		utils.LogError(u.logger, ctx.Value("requestId").(string), utils.UsecaseLayer, adverts.DeleteAdvertByIdMethod, err)
+		return 0, err
+	}
+
+	defer func() {
+		if err := tx.Rollback(); err != nil {
+			utils.LogError(u.logger, ctx.Value("requestId").(string), utils.UsecaseLayer, adverts.DeleteAdvertByIdMethod, err)
+		}
+	}()
+
+	if priority, err = u.repo.GetPriority(ctx, tx, advertId); err != nil {
+		//utils.LogError(u.logger, ctx.Value("requestId").(string), utils.UsecaseLayer, adverts.GetRectangleAdvertsListMethod, err)
+		return 0, err
+	}
+	err = tx.Commit()
+
+	//utils.LogSucces(u.logger, ctx.Value("requestId").(string), utils.UsecaseLayer, adverts.GetRectangleAdvertsListMethod)
+	return priority, nil
+}
+
 // GetExistBuildingByAddress handles the buildings getting process by address with paggination.
 func (u *AdvertUsecase) GetExistBuildingByAddress(ctx context.Context, address *models.AddressData) (foundBuilding *models.BuildingData, err error) {
 	if foundBuilding, err = u.repo.CheckExistsBuildingData(ctx, address); err != nil {

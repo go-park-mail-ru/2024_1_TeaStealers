@@ -39,3 +39,16 @@ func (h *QuestionServerHandler) GetQuestionsByTheme(ctx context.Context, req *ge
 
 	return response, nil
 }
+
+func (h *QuestionServerHandler) UploadAnswer(ctx context.Context, req *genQuestion.UploadAnswerRequest) (*genQuestion.UploadAnswerResponse, error) {
+
+	data := &models.QuestionAnswerResp{QuestionID: req.QuestionId, Mark: int(req.Mark)}
+
+	err := h.uc.UploadAnswer(ctx, data, req.UserId)
+	if err != nil {
+		log.Println(err)
+		return nil, err
+	}
+
+	return &genQuestion.UploadAnswerResponse{}, nil
+}

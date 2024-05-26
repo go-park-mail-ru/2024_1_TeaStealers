@@ -10,7 +10,6 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
-	"github.com/satori/uuid"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
 )
@@ -46,7 +45,7 @@ func (h *QuestionnaireClientHandler) GetQuestionsByTheme(w http.ResponseWriter, 
 // UploadAnswer handles the request for uploading answer for question
 func (h *QuestionnaireClientHandler) UploadAnswer(w http.ResponseWriter, r *http.Request) {
 	id := r.Context().Value(middleware.CookieName)
-	_, ok := id.(uuid.UUID)
+	ID, ok := id.(int64)
 	if !ok {
 		utils.WriteError(w, http.StatusBadRequest, "incorrect id")
 		return
@@ -59,7 +58,7 @@ func (h *QuestionnaireClientHandler) UploadAnswer(w http.ResponseWriter, r *http
 		return
 	}
 
-	err := h.uc.UploadAnswer(r.Context(), &data)
+	_, err := h.client.UploadAnswer(r.Context(), &genQuestion.UploadAnswerRequest{UserId: ID, QuestionId: data.QuestionID, Mark: int64(data.Mark)})
 	if err != nil {
 		utils.WriteError(w, http.StatusBadRequest, err.Error())
 		return

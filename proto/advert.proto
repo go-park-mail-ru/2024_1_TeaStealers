@@ -21,6 +21,25 @@ service Adverts {
   rpc GetRectangleAdvertsByUser(GetUserAdvertsRequest) returns (GetUserAdvertsResponse) {} // есть
   rpc GetLikedUserAdverts(GetLikedUserAdvertsRequest) returns (GetLikedUserAdvertsResponse) {} // есть
   rpc GetRectangleAdvertsByComplex(GetComplexAdvertsRequest) returns (GetComplexAdvertsResponse) {} // есть
+  rpc IncreasePriority(IncreasePriorityRequest) returns (IncreasePriorityResponse) {} // есть
+  rpc GetPriority(GetPriorityRequest) returns (GetPriorityResponse) {} // есть
+}
+
+message IncreasePriorityRequest {
+  int64 AdvertId = 1;
+  int64 Amount = 2;
+}
+
+message IncreasePriorityResponse {
+  int64 Amount = 1;
+}
+
+message GetPriorityRequest {
+  int64 AdvertId = 1;
+}
+
+message GetPriorityResponse {
+  int64 Amount = 1;
 }
 
 message GetAdvertByIdRequest {
@@ -174,6 +193,7 @@ message AdvertRectangleData {
   HouseProperties HouseProp = 13;
   FlatProperties FlatProperties = 14;
   string DateCreation = 15;
+  string Rating = 16;
 }
 
 message PageInfo {
