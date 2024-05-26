@@ -1881,18 +1881,24 @@ func (r *AdvertRepo) GetRectangleAdvertsByComplexId(ctx context.Context, pageSiz
 
 // LikeAdvert creates a like in the database.
 func (r *AdvertRepo) LikeAdvert(ctx context.Context, advertId int64, userId int64) error {
+	tx, err := r.BeginTx(ctx)
+	defer func() {
+		if err := tx.Rollback(); err != nil {
+			utils.LogError(r.logger, ctx.Value("requestId").(string), utils.UsecaseLayer, adverts.DeleteAdvertByIdMethod, err)
+		}
+	}()
+
 	query := `SELECT advert_id, user_id FROM favourite_advert WHERE advert_id = $1 AND user_id = $2`
 
 	res := r.db.QueryRow(query, advertId, userId)
 
 	var adId, usId int64
-	if err := res.Scan(&adId, &usId); err == nil {
+	if err := res.Scan(&adId, &usId); err == nil && res != nil {
 		update := `UPDATE favourite_advert SET is_deleted = false WHERE advert_id = $1 AND user_id = $2`
 		if _, err := r.db.Exec(update, adId, usId); err != nil {
 			// utils.LogError(r.logger, ctx.Value("requestId").(string), utils.RepositoryLayer, adverts.CreateAdvertMethod, err)
 			return err
 		}
-		tx, err := r.BeginTx(ctx)
 		if err != nil {
 			utils.LogError(r.logger, ctx.Value("requestId").(string), utils.UsecaseLayer, adverts.DeleteAdvertByIdMethod, err)
 			return err
@@ -1901,13 +1907,6 @@ func (r *AdvertRepo) LikeAdvert(ctx context.Context, advertId int64, userId int6
 		if _, err = r.UpdatePriority(ctx, tx, int64(advertId), 100); err != nil {
 			return err
 		}
-
-		defer func() {
-			if err := tx.Rollback(); err != nil {
-				utils.LogError(r.logger, ctx.Value("requestId").(string), utils.UsecaseLayer, adverts.DeleteAdvertByIdMethod, err)
-			}
-		}()
-
 		tx.Commit()
 		// utils.LogError(r.logger, ctx.Value("requestId").(string), utils.RepositoryLayer, adverts.CreateAdvertMethod, err)
 		return nil
@@ -1919,21 +1918,14 @@ func (r *AdvertRepo) LikeAdvert(ctx context.Context, advertId int64, userId int6
 		return err
 	}
 
-	tx, err := r.BeginTx(ctx)
 	if err != nil {
 		utils.LogError(r.logger, ctx.Value("requestId").(string), utils.UsecaseLayer, adverts.DeleteAdvertByIdMethod, err)
 		return err
 	}
 
-	if _, err = r.UpdatePriority(ctx, tx, int64(adId), 100); err != nil {
+	if _, err = r.UpdatePriority(ctx, tx, adId, 100); err != nil {
 		return err
 	}
-
-	defer func() {
-		if err := tx.Rollback(); err != nil {
-			utils.LogError(r.logger, ctx.Value("requestId").(string), utils.UsecaseLayer, adverts.DeleteAdvertByIdMethod, err)
-		}
-	}()
 
 	tx.Commit()
 
@@ -1944,7 +1936,16 @@ func (r *AdvertRepo) LikeAdvert(ctx context.Context, advertId int64, userId int6
 // DislikeAdvert set dislike in the database.
 func (r *AdvertRepo) DislikeAdvert(ctx context.Context, advertId int64, userId int64) error {
 	query := `SELECT advert_id, user_id FROM favourite_advert WHERE advert_id = $1 AND user_id = $2`
-
+	tx, err := r.BeginTx(ctx)
+	if err != nil {
+		//utils.LogError(r.logger, ctx.Value("requestId").(string), utils.UsecaseLayer, adverts.DeleteAdvertByIdMethod, err)
+		return err
+	}
+	defer func() {
+		if err := tx.Rollback(); err != nil {
+			//utils.LogError(r.logger, ctx.Value("requestId").(string), utils.UsecaseLayer, adverts.DeleteAdvertByIdMethod, err)
+		}
+	}()
 	res := r.db.QueryRow(query, advertId, userId)
 
 	var adId, usId int64
@@ -1955,21 +1956,9 @@ func (r *AdvertRepo) DislikeAdvert(ctx context.Context, advertId int64, userId i
 			return err
 		}
 
-		tx, err := r.BeginTx(ctx)
-		if err != nil {
-			//utils.LogError(r.logger, ctx.Value("requestId").(string), utils.UsecaseLayer, adverts.DeleteAdvertByIdMethod, err)
-			return err
-		}
-
 		if _, err = r.UpdatePriority(ctx, tx, int64(advertId), -100); err != nil {
 			return err
 		}
-
-		defer func() {
-			if err := tx.Rollback(); err != nil {
-				//utils.LogError(r.logger, ctx.Value("requestId").(string), utils.UsecaseLayer, adverts.DeleteAdvertByIdMethod, err)
-			}
-		}()
 
 		tx.Commit()
 	}
@@ -2192,6 +2181,16 @@ func (r *AdvertRepo) SelectCountViews(ctx context.Context, id int64) (int64, err
 func (r *AdvertRepo) CreateView(ctx context.Context, advertId int64, userId int64) error {
 	query := `SELECT advert_id, user_id FROM statistic_view_advert WHERE advert_id = $1 AND user_id = $2`
 
+	tx, err := r.BeginTx(ctx)
+	if err != nil {
+		//utils.LogError(r.logger, ctx.Value("requestId").(string), utils.UsecaseLayer, adverts.DeleteAdvertByIdMethod, err)
+		return err
+	}
+	defer func() {
+		if err := tx.Rollback(); err != nil {
+			//utils.LogError(r.logger, ctx.Value("requestId").(string), utils.UsecaseLayer, adverts.DeleteAdvertByIdMethod, err)
+		}
+	}()
 	res := r.db.QueryRow(query, advertId, userId)
 
 	var adId, usId int64
@@ -2206,21 +2205,9 @@ func (r *AdvertRepo) CreateView(ctx context.Context, advertId int64, userId int6
 		return err
 	}
 
-	tx, err := r.BeginTx(ctx)
-	if err != nil {
-		//utils.LogError(r.logger, ctx.Value("requestId").(string), utils.UsecaseLayer, adverts.DeleteAdvertByIdMethod, err)
-		return err
-	}
-
 	if _, err = r.UpdatePriority(ctx, tx, int64(advertId), 50); err != nil {
 		return err
 	}
-
-	defer func() {
-		if err := tx.Rollback(); err != nil {
-			//utils.LogError(r.logger, ctx.Value("requestId").(string), utils.UsecaseLayer, adverts.DeleteAdvertByIdMethod, err)
-		}
-	}()
 
 	tx.Commit()
 

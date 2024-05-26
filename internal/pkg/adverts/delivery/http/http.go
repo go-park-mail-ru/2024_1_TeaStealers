@@ -1207,7 +1207,7 @@ func (h *AdvertsClientHandler) GetLikedUserAdverts(w http.ResponseWriter, r *htt
 
 	page, err := strconv.Atoi(pageStr)
 	if err != nil {
-		page = 1
+		page = 0
 	}
 
 	size, err := strconv.Atoi(sizeStr)
