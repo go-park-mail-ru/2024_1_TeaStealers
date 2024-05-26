@@ -66,7 +66,7 @@ type AdvertFlatCreateData struct {
 	CeilingHeight float64 `json:"ceilingHeight"`
 	// SquareGeneral is the general square of the flat.
 	SquareGeneral float64 `json:"squareGeneral"`
-	// RoomCount is the how many rooms in flat
+	// RoomCount is how many rooms in flat
 	RoomCount int `json:"roomCount"`
 	// SquareResidential is the residential square of the flat.
 	SquareResidential float64 `json:"squareResidential"`
@@ -285,8 +285,8 @@ type AdvertRectangleData struct {
 	Address string `json:"adress"`
 	// AddressPoint is the address of the advertisement.
 	AddressPoint string `json:"adressPoint"`
-	// Metro is the metro of the advertisement.
-	Metro string `json:"metro"`
+	// Rating is the metro of the advertisement.
+	Rating string `json:"rating"`
 	// IsLiked indicates whether the advert is liked.
 	IsLiked bool `json:"isLiked"`
 	// Complex represents residential complex information.
@@ -299,6 +299,8 @@ type AdvertRectangleData struct {
 	Price int `json:"price"`
 	// DateCreation is the date when the advert was created.
 	DateCreation time.Time `json:"dateCreation"`
+	// Rating is the rating of the advert.
+	//Rating string `json:"rating"`
 }
 
 func (advRectDat *AdvertRectangleData) Sanitize() {
@@ -381,7 +383,7 @@ type AdvertUpdateData struct {
 	// Description is the description of the advert.
 	Description string `json:"description"`
 	// Price is the price of the advertisement.
-	Price float64 `json:"price"`
+	Price int64 `json:"price"`
 	// Phone is the phone number associated with the advert.
 	Phone string `json:"phone"`
 	// IsAgent indicates whether the advert is posted by an agent.

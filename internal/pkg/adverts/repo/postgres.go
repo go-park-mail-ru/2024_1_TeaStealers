@@ -3,14 +3,16 @@ package repo
 import (
 	"2024_1_TeaStealers/internal/models"
 	"2024_1_TeaStealers/internal/pkg/adverts"
-	"2024_1_TeaStealers/internal/pkg/middleware"
 	"2024_1_TeaStealers/internal/pkg/utils"
 	"context"
 	"database/sql"
 	"fmt"
+	"log"
+	"strconv"
 	"time"
 
 	"go.uber.org/zap"
+	"google.golang.org/grpc/metadata"
 )
 
 // AdvertRepo represents a repository for adverts changes.
@@ -70,6 +72,40 @@ func (r *AdvertRepo) CreateAdvert(ctx context.Context, tx models.Transaction, ne
 
 	utils.LogSucces(r.logger, ctx.Value("requestId").(string), utils.RepositoryLayer, adverts.CreateAdvertMethod)
 	return idAdvert, nil
+}
+
+// UpdatePriority UpdatesPriority in the database.
+func (r *AdvertRepo) UpdatePriority(ctx context.Context, tx models.Transaction, advertId int64, newPriority int64) (int64, error) {
+	priority, err := r.GetPriority(ctx, tx, advertId)
+	if err != nil {
+		//utils.LogError(r.logger, ctx.Value("requestId").(string), utils.RepositoryLayer, adverts.CreateAdvertMethod, err)
+		return 0, err
+	}
+
+	update := `UPDATE advert SET priority = $1 WHERE id=$2`
+	if _, err := tx.Exec(update, priority+newPriority, advertId); err != nil {
+		//utils.LogError(r.logger, ctx.Value("requestId").(string), utils.RepositoryLayer, adverts.CreateAdvertMethod, err)
+		return 0, err
+	}
+
+	//utils.LogSucces(r.logger, ctx.Value("requestId").(string), utils.RepositoryLayer, adverts.CreateAdvertMethod)
+	return priority + newPriority, nil
+}
+
+// GetPriority getting a priority of advert in database.
+func (r *AdvertRepo) GetPriority(ctx context.Context, tx models.Transaction, advertId int64) (int64, error) {
+	query := `SELECT priority FROM advert WHERE id=$1`
+
+	res := tx.QueryRowContext(ctx, query, advertId)
+
+	var priority int64
+	if err := res.Scan(&priority); err != nil {
+		//utils.LogError(r.logger, ctx.Value("requestId").(string), utils.RepositoryLayer, adverts.CreateAdvertMethod, err)
+		return 0, err
+	}
+
+	//utils.LogSucces(r.logger, ctx.Value("requestId").(string), utils.RepositoryLayer, adverts.CreateAdvertMethod)
+	return priority, nil
 }
 
 // CreateProvince creates a new province in the database.
@@ -422,10 +458,12 @@ func (r *AdvertRepo) GetHouseAdvertById(ctx context.Context, id int64) (*models.
     WHERE
         a.id = $1 AND a.is_deleted = FALSE;`
 
-	userId, ok := ctx.Value(middleware.CookieName).(int64)
+	md, _ := metadata.FromIncomingContext(ctx)
+	userStr := md["userid"]
+	userId := 0
 
-	if !ok {
-		userId = 0
+	if userStr[0] != "" {
+		userId, _ = strconv.Atoi(userStr[0])
 	}
 
 	res := r.db.QueryRowContext(ctx, query, id, userId)
@@ -476,7 +514,7 @@ func (r *AdvertRepo) GetHouseAdvertById(ctx context.Context, id int64) (*models.
 	}
 
 	if !isViewed && userId != 0 {
-		if err := r.CreateView(ctx, id, userId); err != nil {
+		if err := r.CreateView(ctx, id, int64(userId)); err != nil {
 			return nil, err
 		}
 	}
@@ -801,7 +839,7 @@ func (r *AdvertRepo) UpdateHouseAdvertById(ctx context.Context, tx models.Transa
 	res := tx.QueryRowContext(ctx, queryGetIdTables, advertUpdateData.ID)
 
 	var buildingId, houseId int64
-	var price float64
+	var price int64
 	if err := res.Scan(&buildingId, &houseId, &price); err != nil {
 		utils.LogError(r.logger, ctx.Value("requestId").(string), utils.RepositoryLayer, adverts.UpdateHouseAdvertByIdMethod, err)
 		return err
@@ -894,7 +932,7 @@ func (r *AdvertRepo) UpdateFlatAdvertById(ctx context.Context, tx models.Transac
 	res := tx.QueryRowContext(ctx, queryGetIdTables, advertUpdateData.ID)
 
 	var buildingId, flatId int64
-	var price float64
+	var price int64
 	if err := res.Scan(&buildingId, &flatId, &price); err != nil {
 		utils.LogError(r.logger, ctx.Value("requestId").(string), utils.RepositoryLayer, adverts.UpdateFlatAdvertByIdMethod, err)
 		return err
@@ -1031,10 +1069,13 @@ func (r *AdvertRepo) GetFlatAdvertById(ctx context.Context, id int64) (*models.A
     WHERE
         a.id = $1 AND a.is_deleted = FALSE;`
 
-	userId, ok := ctx.Value(middleware.CookieName).(int64)
+	md, _ := metadata.FromIncomingContext(ctx)
+	userStr := md["userid"]
+	log.Println(userStr)
+	userId := 0
 
-	if !ok {
-		userId = 0
+	if userStr[0] != "" {
+		userId, _ = strconv.Atoi(userStr[0])
 	}
 
 	res := r.db.QueryRowContext(ctx, query, id, userId)
@@ -1083,7 +1124,7 @@ func (r *AdvertRepo) GetFlatAdvertById(ctx context.Context, id int64) (*models.A
 	}
 
 	if !isViewed && userId != 0 {
-		if err := r.CreateView(ctx, id, userId); err != nil {
+		if err := r.CreateView(ctx, id, int64(userId)); err != nil {
 			return nil, err
 		}
 	}
@@ -1282,7 +1323,8 @@ func (r *AdvertRepo) GetRectangleAdverts(ctx context.Context, advertFilter model
             a.type_placement,
             pc.price,
             i.photo,
-            a.created_at
+            a.created_at,
+			a.priority
         FROM
             advert AS a
             LEFT JOIN advert_type_house AS ath ON a.id = ath.advert_id
@@ -1390,11 +1432,11 @@ func (r *AdvertRepo) GetRectangleAdverts(ctx context.Context, advertFilter model
 	}
 
 	queryCount := "SELECT COUNT(*) FROM (" + queryBaseAdvert + ") AS subqueryforpaginate"
-	queryBaseAdvert += " ORDER BY created_at DESC LIMIT $" + fmt.Sprint(i) + " OFFSET $" + fmt.Sprint(i+1) + ";"
+	queryBaseAdvert += " ORDER BY priority DESC, created_at DESC LIMIT $" + fmt.Sprint(i) + " OFFSET $" + fmt.Sprint(i+1) + ";"
 	rowCountQuery := r.db.QueryRowContext(ctx, queryCount, append([]interface{}{advertFilter.MinPrice, advertFilter.MaxPrice, advertFilter.Address}, argsForQuery...)...)
 
 	if err := rowCountQuery.Scan(&pageInfo.TotalElements); err != nil {
-		utils.LogError(r.logger, ctx.Value("requestId").(string), utils.RepositoryLayer, adverts.GetRectangleAdvertsMethod, err)
+		//utils.LogError(r.logger, ctx.Value("requestId").(string), utils.RepositoryLayer, adverts.GetRectangleAdvertsMethod, err)
 		return nil, err
 	}
 
@@ -1402,7 +1444,7 @@ func (r *AdvertRepo) GetRectangleAdverts(ctx context.Context, advertFilter model
 	rows, err := r.db.Query(queryBaseAdvert, append([]interface{}{advertFilter.MinPrice, advertFilter.MaxPrice, advertFilter.Address}, argsForQuery...)...)
 
 	if err != nil {
-		utils.LogError(r.logger, ctx.Value("requestId").(string), utils.RepositoryLayer, adverts.GetRectangleAdvertsMethod, err)
+		//utils.LogError(r.logger, ctx.Value("requestId").(string), utils.RepositoryLayer, adverts.GetRectangleAdvertsMethod, err)
 		return nil, err
 	}
 
@@ -1413,10 +1455,10 @@ func (r *AdvertRepo) GetRectangleAdverts(ctx context.Context, advertFilter model
 	for rows.Next() {
 		var roomCount int
 		rectangleAdvert := &models.AdvertRectangleData{}
-		err := rows.Scan(&rectangleAdvert.ID, &rectangleAdvert.Title, &rectangleAdvert.Description, &rectangleAdvert.TypeAdvert, &roomCount, &rectangleAdvert.Phone, &rectangleAdvert.TypeSale, &rectangleAdvert.Price, &rectangleAdvert.Photo, &rectangleAdvert.DateCreation)
+		err := rows.Scan(&rectangleAdvert.ID, &rectangleAdvert.Title, &rectangleAdvert.Description, &rectangleAdvert.TypeAdvert, &roomCount, &rectangleAdvert.Phone, &rectangleAdvert.TypeSale, &rectangleAdvert.Price, &rectangleAdvert.Photo, &rectangleAdvert.DateCreation, &rectangleAdvert.Rating)
 
 		if err != nil {
-			utils.LogError(r.logger, ctx.Value("requestId").(string), utils.RepositoryLayer, adverts.GetRectangleAdvertsMethod, err)
+			//utils.LogError(r.logger, ctx.Value("requestId").(string), utils.RepositoryLayer, adverts.GetRectangleAdvertsMethod, err)
 			return nil, err
 		}
 
@@ -1429,7 +1471,7 @@ func (r *AdvertRepo) GetRectangleAdverts(ctx context.Context, advertFilter model
 			row := r.db.QueryRowContext(ctx, queryFlat, rectangleAdvert.ID)
 
 			if err := row.Scan(&squareGeneral, &floor, &rectangleAdvert.AddressPoint, &metro, &houseName, &street, &town, &province, &floorGeneral); err != nil {
-				utils.LogError(r.logger, ctx.Value("requestId").(string), utils.RepositoryLayer, adverts.GetRectangleAdvertsMethod, err)
+				//utils.LogError(r.logger, ctx.Value("requestId").(string), utils.RepositoryLayer, adverts.GetRectangleAdvertsMethod, err)
 				return nil, err
 			}
 
@@ -1445,7 +1487,7 @@ func (r *AdvertRepo) GetRectangleAdverts(ctx context.Context, advertFilter model
 			row := r.db.QueryRowContext(ctx, queryHouse, rectangleAdvert.ID)
 
 			if err := row.Scan(&rectangleAdvert.AddressPoint, &metro, &houseName, &street, &town, &province, &cottage, &squareHouse, &squareArea, &floor); err != nil {
-				utils.LogError(r.logger, ctx.Value("requestId").(string), utils.RepositoryLayer, adverts.GetRectangleAdvertsMethod, err)
+				//utils.LogError(r.logger, ctx.Value("requestId").(string), utils.RepositoryLayer, adverts.GetRectangleAdvertsMethod, err)
 				return nil, err
 			}
 
@@ -1458,18 +1500,18 @@ func (r *AdvertRepo) GetRectangleAdverts(ctx context.Context, advertFilter model
 		}
 
 		rectangleAdvert.Address = province + ", " + town + ", " + street + ", " + houseName
-		rectangleAdvert.Metro = metro
+		//rectangleAdvert.Metro = metro
 
 		rectangleAdverts = append(rectangleAdverts, rectangleAdvert)
 	}
 
 	if err := rows.Err(); err != nil {
-		utils.LogError(r.logger, ctx.Value("requestId").(string), utils.RepositoryLayer, adverts.GetRectangleAdvertsMethod, err)
+		//utils.LogError(r.logger, ctx.Value("requestId").(string), utils.RepositoryLayer, adverts.GetRectangleAdvertsMethod, err)
 		return nil, err
 	}
 
 	pageInfo.PageSize = advertFilter.Page
-	pageInfo.TotalPages = pageInfo.TotalElements / pageInfo.PageSize
+	pageInfo.TotalPages = pageInfo.TotalElements / pageInfo.PageSize //todo обработать pageSIze = 0
 
 	if pageInfo.TotalElements%pageInfo.PageSize != 0 {
 		pageInfo.TotalPages++
@@ -1477,7 +1519,7 @@ func (r *AdvertRepo) GetRectangleAdverts(ctx context.Context, advertFilter model
 
 	pageInfo.CurrentPage = (advertFilter.Offset / pageInfo.PageSize) + 1
 
-	utils.LogSucces(r.logger, ctx.Value("requestId").(string), utils.RepositoryLayer, adverts.GetRectangleAdvertsMethod)
+	//utils.LogSucces(r.logger, ctx.Value("requestId").(string), utils.RepositoryLayer, adverts.GetRectangleAdvertsMethod)
 
 	return &models.AdvertDataPage{
 		Adverts:  rectangleAdverts,
@@ -1510,7 +1552,8 @@ func (r *AdvertRepo) GetRectangleAdvertsByUserId(ctx context.Context, pageSize, 
 			CASE
 				WHEN fa.advert_id IS NOT NULL AND fa.is_deleted=false THEN true
 				ELSE false
-			END AS is_liked
+			END AS is_liked,
+			a.priority
         FROM
             advert AS a
             LEFT JOIN advert_type_house AS ath ON a.id = ath.advert_id
@@ -1607,7 +1650,7 @@ func (r *AdvertRepo) GetRectangleAdvertsByUserId(ctx context.Context, pageSize, 
 		rectangleAdvert := &models.AdvertRectangleData{}
 		err := rows.Scan(&rectangleAdvert.ID, &rectangleAdvert.Title, &rectangleAdvert.Description, &rectangleAdvert.TypeAdvert,
 			&roomCount, &rectangleAdvert.Phone, &rectangleAdvert.TypeSale, &rectangleAdvert.Price,
-			&rectangleAdvert.Photo, &rectangleAdvert.DateCreation, &rectangleAdvert.IsLiked)
+			&rectangleAdvert.Photo, &rectangleAdvert.DateCreation, &rectangleAdvert.IsLiked, &rectangleAdvert.Rating)
 
 		if err != nil {
 			utils.LogError(r.logger, ctx.Value("requestId").(string), utils.RepositoryLayer, adverts.GetRectangleAdvertsByUserIdMethod, err)
@@ -1650,7 +1693,7 @@ func (r *AdvertRepo) GetRectangleAdvertsByUserId(ctx context.Context, pageSize, 
 		}
 
 		rectangleAdvert.Address = province + ", " + town + ", " + street + ", " + houseName
-		rectangleAdvert.Metro = metro
+		//rectangleAdvert.Metro = metro
 
 		rectangleAdverts = append(rectangleAdverts, rectangleAdvert)
 	}
@@ -1823,7 +1866,7 @@ func (r *AdvertRepo) GetRectangleAdvertsByComplexId(ctx context.Context, pageSiz
 		}
 
 		rectangleAdvert.Address = province + ", " + town + ", " + street + ", " + houseName
-		rectangleAdvert.Metro = metro
+		//rectangleAdvert.Metro = metro
 
 		rectangleAdverts = append(rectangleAdverts, rectangleAdvert)
 	}
@@ -1849,6 +1892,23 @@ func (r *AdvertRepo) LikeAdvert(ctx context.Context, advertId int64, userId int6
 			// utils.LogError(r.logger, ctx.Value("requestId").(string), utils.RepositoryLayer, adverts.CreateAdvertMethod, err)
 			return err
 		}
+		tx, err := r.BeginTx(ctx)
+		if err != nil {
+			utils.LogError(r.logger, ctx.Value("requestId").(string), utils.UsecaseLayer, adverts.DeleteAdvertByIdMethod, err)
+			return err
+		}
+
+		if _, err = r.UpdatePriority(ctx, tx, int64(advertId), 100); err != nil {
+			return err
+		}
+
+		defer func() {
+			if err := tx.Rollback(); err != nil {
+				utils.LogError(r.logger, ctx.Value("requestId").(string), utils.UsecaseLayer, adverts.DeleteAdvertByIdMethod, err)
+			}
+		}()
+
+		tx.Commit()
 		// utils.LogError(r.logger, ctx.Value("requestId").(string), utils.RepositoryLayer, adverts.CreateAdvertMethod, err)
 		return nil
 	}
@@ -1858,6 +1918,24 @@ func (r *AdvertRepo) LikeAdvert(ctx context.Context, advertId int64, userId int6
 		// utils.LogError(r.logger, ctx.Value("requestId").(string), utils.RepositoryLayer, adverts.CreateAdvertMethod, err)
 		return err
 	}
+
+	tx, err := r.BeginTx(ctx)
+	if err != nil {
+		utils.LogError(r.logger, ctx.Value("requestId").(string), utils.UsecaseLayer, adverts.DeleteAdvertByIdMethod, err)
+		return err
+	}
+
+	if _, err = r.UpdatePriority(ctx, tx, int64(adId), 100); err != nil {
+		return err
+	}
+
+	defer func() {
+		if err := tx.Rollback(); err != nil {
+			utils.LogError(r.logger, ctx.Value("requestId").(string), utils.UsecaseLayer, adverts.DeleteAdvertByIdMethod, err)
+		}
+	}()
+
+	tx.Commit()
 
 	// utils.LogSucces(r.logger, ctx.Value("requestId").(string), utils.RepositoryLayer, adverts.CreateAdvertMethod)
 	return nil
@@ -1872,10 +1950,28 @@ func (r *AdvertRepo) DislikeAdvert(ctx context.Context, advertId int64, userId i
 	var adId, usId int64
 	if err := res.Scan(&adId, &usId); err == nil {
 		update := `UPDATE favourite_advert SET is_deleted = true WHERE advert_id = $1 AND user_id = $2`
-		if _, err := r.db.Exec(update, adId, usId); err != nil {
+		if _, err := r.db.Exec(update, advertId, usId); err != nil {
 			// utils.LogError(r.logger, ctx.Value("requestId").(string), utils.RepositoryLayer, adverts.CreateAdvertMethod, err)
 			return err
 		}
+
+		tx, err := r.BeginTx(ctx)
+		if err != nil {
+			//utils.LogError(r.logger, ctx.Value("requestId").(string), utils.UsecaseLayer, adverts.DeleteAdvertByIdMethod, err)
+			return err
+		}
+
+		if _, err = r.UpdatePriority(ctx, tx, int64(advertId), -100); err != nil {
+			return err
+		}
+
+		defer func() {
+			if err := tx.Rollback(); err != nil {
+				//utils.LogError(r.logger, ctx.Value("requestId").(string), utils.UsecaseLayer, adverts.DeleteAdvertByIdMethod, err)
+			}
+		}()
+
+		tx.Commit()
 	}
 
 	// utils.LogSucces(r.logger, ctx.Value("requestId").(string), utils.RepositoryLayer, adverts.CreateAdvertMethod)
@@ -2047,7 +2143,7 @@ func (r *AdvertRepo) GetRectangleAdvertsLikedByUserId(ctx context.Context, pageS
 		}
 
 		rectangleAdvert.Address = province + ", " + town + ", " + street + ", " + houseName
-		rectangleAdvert.Metro = metro
+		//rectangleAdvert.Metro = metro
 
 		rectangleAdverts = append(rectangleAdverts, rectangleAdvert)
 	}
@@ -2109,6 +2205,24 @@ func (r *AdvertRepo) CreateView(ctx context.Context, advertId int64, userId int6
 		// utils.LogError(r.logger, ctx.Value("requestId").(string), utils.RepositoryLayer, adverts.CreateAdvertMethod, err)
 		return err
 	}
+
+	tx, err := r.BeginTx(ctx)
+	if err != nil {
+		//utils.LogError(r.logger, ctx.Value("requestId").(string), utils.UsecaseLayer, adverts.DeleteAdvertByIdMethod, err)
+		return err
+	}
+
+	if _, err = r.UpdatePriority(ctx, tx, int64(advertId), 50); err != nil {
+		return err
+	}
+
+	defer func() {
+		if err := tx.Rollback(); err != nil {
+			//utils.LogError(r.logger, ctx.Value("requestId").(string), utils.UsecaseLayer, adverts.DeleteAdvertByIdMethod, err)
+		}
+	}()
+
+	tx.Commit()
 
 	// utils.LogSucces(r.logger, ctx.Value("requestId").(string), utils.RepositoryLayer, adverts.CreateAdvertMethod)
 	return nil

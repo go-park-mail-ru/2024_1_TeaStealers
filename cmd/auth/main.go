@@ -6,6 +6,7 @@ import (
 	authUc "2024_1_TeaStealers/internal/pkg/auth/usecase"
 	"net/http"
 
+	"github.com/gorilla/mux"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 
 	"database/sql"
@@ -52,7 +53,9 @@ func run() (err error) {
 		log.Println(err)
 	}
 
-	http.Handle("/metrics", promhttp.Handler())
+	r := mux.NewRouter().PathPrefix("/api").Subrouter()
+	r.PathPrefix("/metrics").Handler(promhttp.Handler())
+	http.Handle("/", r)
 
 	authRepo := authR.NewRepository(db, logger)
 	authUsecase := authUc.NewAuthUsecase(authRepo, logger)

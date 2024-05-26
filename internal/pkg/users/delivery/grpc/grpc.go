@@ -54,22 +54,3 @@ func (h *UserServerHandler) UpdateUserInfo(ctx context.Context, req *genUsers.Up
 
 	return &genUsers.UpdateUserInfoResponse{Updated: true}, nil
 }
-
-func (h *UserServerHandler) UpdateUserPassword(ctx context.Context, req *genUsers.UpdatePasswordRequest) (*genUsers.UpdatePasswordResponse, error) {
-	ctx = context.WithValue(ctx, "requestId", uuid.NewV4().String())
-
-	userId := req.Id
-
-	data := &models.UserUpdatePassword{
-		ID:          userId,
-		OldPassword: req.OldPassword,
-		NewPassword: req.NewPassword,
-	}
-	data.Sanitize()
-
-	token, exp, err := h.uc.UpdateUserPassword(ctx, data)
-	if err != nil {
-		return nil, err
-	}
-	return &genUsers.UpdatePasswordResponse{Updated: true, Token: token, Exp: exp.String()}, nil
-}

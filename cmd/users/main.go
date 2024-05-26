@@ -5,6 +5,7 @@ import (
 	genUsers "2024_1_TeaStealers/internal/pkg/users/delivery/grpc/gen"
 	UsersR "2024_1_TeaStealers/internal/pkg/users/repo"
 	UsersUc "2024_1_TeaStealers/internal/pkg/users/usecase"
+	"github.com/gorilla/mux"
 	"net/http"
 
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -53,7 +54,9 @@ func run() (err error) {
 		log.Println(err)
 	}
 
-	http.Handle("/metrics", promhttp.Handler())
+	r := mux.NewRouter().PathPrefix("/api").Subrouter()
+	r.PathPrefix("/metrics").Handler(promhttp.Handler())
+	http.Handle("/", r)
 
 	usersRepo := UsersR.NewRepository(db)
 	usersUsecase := UsersUc.NewUserUsecase(usersRepo)

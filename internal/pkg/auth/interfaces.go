@@ -23,6 +23,7 @@ type AuthUsecase interface {
 	SignUp(context.Context, *models.UserSignUpData) (*models.User, string, time.Time, error)
 	Login(context.Context, *models.UserLoginData) (*models.User, string, time.Time, error)
 	CheckAuth(ctx context.Context, id int64, jwtLevel int) error
+	UpdateUserPassword(context.Context, *models.UserUpdatePassword) (string, time.Time, error) // тут менять левел юзера + генерировать новый жвт
 }
 
 // AuthRepo represents the repository interface for authentication.
@@ -31,4 +32,6 @@ type AuthRepo interface {
 	CheckUser(ctx context.Context, login string, passwordHash string) (*models.User, error)
 	GetUserByLogin(ctx context.Context, login string) (*models.User, error)
 	GetUserLevelById(ctx context.Context, id int64) (int, error)
+	UpdateUserPassword(context.Context, int64, string) (int, error)
+	CheckUserPassword(context.Context, int64, string) error
 }

@@ -12,14 +12,27 @@ import (
 	"time"
 )
 
+type respSuccess struct {
+	StatusCode int         `json:"statusCode"`
+	Message    string      `json:"message,omitempty"`
+	Payload    interface{} `json:"payload"`
+}
+
+type respError struct {
+	Message string `json:"message"`
+}
+
+type responser interface {
+	MarshalJSON() ([]byte, error)
+	UnmarshalJSON(data []byte) error
+}
+
 // WriteError prints error in json
 func WriteError(w http.ResponseWriter, statusCode int, message string) {
-	errorResponse := struct {
-		Message string `json:"message"`
-	}{
+	errorResponse := respError{
 		Message: message,
 	}
-	resp, err := json.Marshal(errorResponse)
+	resp, err := errorResponse.MarshalJSON()
 	if err != nil {
 		return
 	}
@@ -30,15 +43,11 @@ func WriteError(w http.ResponseWriter, statusCode int, message string) {
 
 // WriteResponse writes a JSON response with the specified status code and data.
 func WriteResponse(w http.ResponseWriter, statusCode int, response interface{}) error {
-	respSuccess := struct {
-		StatusCode int         `json:"statusCode"`
-		Message    string      `json:"message,omitempty"`
-		Payload    interface{} `json:"payload"`
-	}{
+	respSuccess := respSuccess{
 		StatusCode: statusCode,
 		Payload:    response,
 	}
-	resp, err := json.Marshal(respSuccess)
+	resp, err := respSuccess.MarshalJSON()
 	if err != nil {
 		return err
 	}

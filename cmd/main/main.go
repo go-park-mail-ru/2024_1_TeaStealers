@@ -5,22 +5,16 @@ import (
 	advertsR "2024_1_TeaStealers/internal/pkg/adverts/repo"
 	advertsUc "2024_1_TeaStealers/internal/pkg/adverts/usecase"
 	authH "2024_1_TeaStealers/internal/pkg/auth/delivery/http"
-	companyH "2024_1_TeaStealers/internal/pkg/companies/delivery"
-	companyR "2024_1_TeaStealers/internal/pkg/companies/repo"
-	companyUc "2024_1_TeaStealers/internal/pkg/companies/usecase"
-	complexH "2024_1_TeaStealers/internal/pkg/complexes/delivery"
-	complexR "2024_1_TeaStealers/internal/pkg/complexes/repo"
-	complexUc "2024_1_TeaStealers/internal/pkg/complexes/usecase"
+	complexH "2024_1_TeaStealers/internal/pkg/complexes/delivery/http"
 	"2024_1_TeaStealers/internal/pkg/config"
 	imageH "2024_1_TeaStealers/internal/pkg/images/delivery/http"
 	imageR "2024_1_TeaStealers/internal/pkg/images/repo"
 	imageUc "2024_1_TeaStealers/internal/pkg/images/usecase"
-	metricsMw "2024_1_TeaStealers/internal/pkg/metrics/middleware"
 	"2024_1_TeaStealers/internal/pkg/middleware"
-	statsH "2024_1_TeaStealers/internal/pkg/questionnaire/delivery"
+	statsH "2024_1_TeaStealers/internal/pkg/questionnaire/delivery/http"
 	statsR "2024_1_TeaStealers/internal/pkg/questionnaire/repo"
 	statsUc "2024_1_TeaStealers/internal/pkg/questionnaire/usecase"
-	http2 "2024_1_TeaStealers/internal/pkg/users/delivery/http"
+	userH "2024_1_TeaStealers/internal/pkg/users/delivery/http"
 	userR "2024_1_TeaStealers/internal/pkg/users/repo"
 	userUc "2024_1_TeaStealers/internal/pkg/users/usecase"
 	"context"
@@ -74,13 +68,13 @@ func main() {
 		log.Println(err)
 	}
 
-	http.Handle("/metrics", promhttp.Handler())
-	metricsMd := metricsMw.Create()
-	// metricsMd.ServerMetricsMiddleware()
+	//http.Handle("/metrics", promhttp.Handler())
+
 	r := mux.NewRouter().PathPrefix("/api").Subrouter()
-	r.Use(middleware.CORSMiddleware)
-	r.Handle("/ping", metricsMd.ServerMetricsMiddleware(http.HandlerFunc(pingPongHandler), 0, 0, "")).Methods(http.MethodGet)
+	r.Use(middleware.CORSMiddleware, middleware.AccessLogMiddleware)
+	r.HandleFunc("/ping", pingPongHandler).Methods(http.MethodGet)
 	r.PathPrefix("/docs/").Handler(httpSwagger.WrapHandler)
+	r.PathPrefix("/metrics").Handler(promhttp.Handler())
 
 	grcpConnAuth, err := grpc.Dial(
 		fmt.Sprintf("%s:%d", cfg.GRPC.AuthContainerIP, cfg.GRPC.AuthPort),
@@ -90,6 +84,24 @@ func main() {
 		log.Fatalf("cant connect to grpc")
 	}
 	defer grcpConnAuth.Close()
+
+	grcpConnQuestion, err := grpc.Dial(
+		fmt.Sprintf("%s:%d", cfg.GRPC.QuestionContainerIP, cfg.GRPC.QuestionPort),
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
+	)
+	if err != nil {
+		log.Fatalf("cant connect to grpc")
+	}
+	defer grcpConnQuestion.Close()
+
+	grcpConnComplex, err := grpc.Dial(
+		fmt.Sprintf("%s:%d", cfg.GRPC.ComplexContainerIP, cfg.GRPC.ComplexPort),
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
+	)
+	if err != nil {
+		log.Fatalf("cant connect to grpc")
+	}
+	defer grcpConnComplex.Close()
 
 	grcpConnUsers, err := grpc.Dial(
 		fmt.Sprintf("%s:%d", cfg.GRPC.UsersContainerIP, cfg.GRPC.UserPort),
@@ -116,77 +128,72 @@ func main() {
 	csrfMd := middleware.NewCsrfMiddleware()
 
 	auth := r.PathPrefix("/auth").Subrouter()
-	auth.Handle("/signup", metricsMd.ServerMetricsMiddleware(csrfMd.SetCSRFToken(http.HandlerFunc(authHandler.SignUp)), 0, 0, "")).Methods(http.MethodPost, http.MethodOptions)
-	auth.Handle("/login", metricsMd.ServerMetricsMiddleware(csrfMd.SetCSRFToken(http.HandlerFunc(authHandler.Login)), 0, 0, "")).Methods(http.MethodPost, http.MethodOptions)
-	auth.Handle("/logout", metricsMd.ServerMetricsMiddleware(jwtMd.JwtMiddleware(http.HandlerFunc(authHandler.Logout)), 0, 0, "")).Methods(http.MethodGet, http.MethodOptions)
-	auth.Handle("/check_auth", metricsMd.ServerMetricsMiddleware(jwtMd.JwtMiddleware(http.HandlerFunc(authHandler.CheckAuth)), 0, 0, "")).Methods(http.MethodGet, http.MethodOptions)
+	auth.Handle("/signup", csrfMd.SetCSRFToken(http.HandlerFunc(authHandler.SignUp))).Methods(http.MethodPost, http.MethodOptions)
+	auth.Handle("/login", csrfMd.SetCSRFToken(http.HandlerFunc(authHandler.Login))).Methods(http.MethodPost, http.MethodOptions)
+	auth.Handle("/logout", jwtMd.JwtMiddleware(http.HandlerFunc(authHandler.Logout))).Methods(http.MethodGet, http.MethodOptions)
+	auth.Handle("/check_auth", jwtMd.JwtMiddleware(http.HandlerFunc(authHandler.CheckAuth))).Methods(http.MethodGet, http.MethodOptions)
 
 	statRepo := statsR.NewRepository(db, logger)
 	statUsecase := statsUc.NewQuestionnaireUsecase(statRepo, logger)
-	statHandler := statsH.NewQuestionnaireHandler(statUsecase, logger)
+	statHandler := statsH.NewQuestionnaireClientHandler(grcpConnQuestion, statUsecase, logger)
 	stat := r.PathPrefix("/stat").Subrouter()
-	stat.Handle("/answer", metricsMd.ServerMetricsMiddleware(jwtMd.JwtMiddleware(http.HandlerFunc(statHandler.UploadAnswer)), 0, 0, "")).Methods(http.MethodPost, http.MethodOptions)
-	stat.Handle("/theme", metricsMd.ServerMetricsMiddleware(jwtMd.JwtMiddleware(http.HandlerFunc(statHandler.GetAnswerStatistics)), 0, 0, "")).Methods(http.MethodGet, http.MethodOptions)
-	stat.Handle("/{theme}/questions", metricsMd.ServerMetricsMiddleware(jwtMd.JwtMiddleware(http.HandlerFunc(statHandler.GetQuestionsByTheme)), 0, 3, "theme")).Methods(http.MethodGet, http.MethodOptions)
+	stat.Handle("/answer", jwtMd.JwtMiddleware(http.HandlerFunc(statHandler.UploadAnswer))).Methods(http.MethodPost, http.MethodOptions)
+	stat.Handle("/theme", jwtMd.JwtMiddleware(http.HandlerFunc(statHandler.GetAnswerStatistics))).Methods(http.MethodGet, http.MethodOptions)
+	stat.Handle("/{theme}/questions", jwtMd.JwtMiddleware(http.HandlerFunc(statHandler.GetQuestionsByTheme))).Methods(http.MethodGet, http.MethodOptions)
 
 	advertRepo := advertsR.NewRepository(db, logger)
 	advertUsecase := advertsUc.NewAdvertUsecase(advertRepo, logger)
-	advertHandler := advertsH.NewAdvertsClientHandler(grcpConnAdverts, advertUsecase, logger)
+	advertHandler := advertsH.NewAdvertsClientHandler(grcpConnAdverts, grcpConnComplex, advertUsecase, logger)
 
 	imageRepo := imageR.NewRepository(db, logger)
 	imageUsecase := imageUc.NewImageUsecase(imageRepo, logger)
 	imageHandler := imageH.NewImageHandler(imageUsecase, logger)
 
 	advert := r.PathPrefix("/adverts").Subrouter()
-	advert.Handle("/{id}", metricsMd.ServerMetricsMiddleware(jwtMd.StatMiddleware(http.HandlerFunc(advertHandler.GetAdvertById)), 0, 3, "getAdvert")).Methods(http.MethodGet, http.MethodOptions)
-	advert.Handle("/{id}", metricsMd.ServerMetricsMiddleware(jwtMd.JwtMiddleware(http.HandlerFunc(advertHandler.UpdateAdvertById)), 0, 3, "updateAdvert")).Methods(http.MethodPost, http.MethodOptions)
-	advert.Handle("/{id}", metricsMd.ServerMetricsMiddleware(jwtMd.JwtMiddleware(http.HandlerFunc(advertHandler.DeleteAdvertById)), 0, 3, "deleteAdvert")).Methods(http.MethodDelete, http.MethodOptions)
-	advert.Handle("/{id}/like", metricsMd.ServerMetricsMiddleware(jwtMd.JwtMiddleware(http.HandlerFunc(advertHandler.LikeAdvert)), 0, 3, "id")).Methods(http.MethodPost, http.MethodOptions)
-	advert.Handle("/{id}/dislike", metricsMd.ServerMetricsMiddleware(jwtMd.JwtMiddleware(http.HandlerFunc(advertHandler.DislikeAdvert)), 0, 3, "id")).Methods(http.MethodPost, http.MethodOptions)
-	advert.Handle("/houses/", metricsMd.ServerMetricsMiddleware(jwtMd.JwtMiddleware(http.HandlerFunc(advertHandler.CreateHouseAdvert)), 0, 0, "")).Methods(http.MethodPost, http.MethodOptions)
-	advert.Handle("/building/", metricsMd.ServerMetricsMiddleware(http.HandlerFunc(advertHandler.GetExistBuildingByAddress), 0, 0, "")).Methods(http.MethodPost, http.MethodOptions)
-	advert.Handle("/flats/", metricsMd.ServerMetricsMiddleware(jwtMd.JwtMiddleware(http.HandlerFunc(advertHandler.CreateFlatAdvert)), 0, 0, "")).Methods(http.MethodPost, http.MethodOptions)
-	advert.Handle("/squarelist/", metricsMd.ServerMetricsMiddleware(http.HandlerFunc(advertHandler.GetSquareAdvertsList), 0, 0, "")).Methods(http.MethodGet, http.MethodOptions)
-	advert.Handle("/rectanglelist/", metricsMd.ServerMetricsMiddleware(jwtMd.StatMiddleware(http.HandlerFunc(advertHandler.GetRectangeAdvertsList)), 0, 0, "")).Methods(http.MethodGet, http.MethodOptions)
-	advert.Handle("/image/", metricsMd.ServerMetricsMiddleware(jwtMd.JwtMiddleware(http.HandlerFunc(imageHandler.UploadImage)), 0, 0, "")).Methods(http.MethodPost, http.MethodOptions)
-	advert.Handle("/{id}/image", metricsMd.ServerMetricsMiddleware(http.HandlerFunc(imageHandler.GetAdvertImages), 0, 3, "id")).Methods(http.MethodGet, http.MethodOptions)
-	advert.Handle("/{id}/image", metricsMd.ServerMetricsMiddleware(jwtMd.JwtMiddleware(http.HandlerFunc(imageHandler.DeleteImage)), 0, 3, "deleteId")).Methods(http.MethodDelete, http.MethodOptions)
+	advert.Handle("/{id}", jwtMd.StatMiddleware(http.HandlerFunc(advertHandler.GetAdvertById))).Methods(http.MethodGet, http.MethodOptions)
+	advert.Handle("/{id}", jwtMd.JwtMiddleware(http.HandlerFunc(advertHandler.UpdateAdvertById))).Methods(http.MethodPost, http.MethodOptions)
+	advert.Handle("/{id}", jwtMd.JwtMiddleware(http.HandlerFunc(advertHandler.DeleteAdvertById))).Methods(http.MethodDelete, http.MethodOptions)
+	advert.Handle("/{id}/like", jwtMd.JwtMiddleware(http.HandlerFunc(advertHandler.LikeAdvert))).Methods(http.MethodPost, http.MethodOptions)
+	advert.Handle("/{id}/dislike", jwtMd.JwtMiddleware(http.HandlerFunc(advertHandler.DislikeAdvert))).Methods(http.MethodPost, http.MethodOptions)
+	advert.Handle("/houses/", jwtMd.JwtMiddleware(http.HandlerFunc(advertHandler.CreateHouseAdvert))).Methods(http.MethodPost, http.MethodOptions)
+	advert.HandleFunc("/building/", advertHandler.GetExistBuildingByAddress).Methods(http.MethodPost, http.MethodOptions)
+	advert.Handle("/flats/", jwtMd.JwtMiddleware(http.HandlerFunc(advertHandler.CreateFlatAdvert))).Methods(http.MethodPost, http.MethodOptions)
+	advert.HandleFunc("/squarelist/", advertHandler.GetSquareAdvertsList).Methods(http.MethodGet, http.MethodOptions)
+	advert.Handle("/rectanglelist/", jwtMd.StatMiddleware(http.HandlerFunc(advertHandler.GetRectangleAdvertsList))).Methods(http.MethodGet, http.MethodOptions)
+	advert.Handle("/image/", http.HandlerFunc(imageHandler.UploadImage)).Methods(http.MethodPost, http.MethodOptions)
+	advert.HandleFunc("/{id}/image", imageHandler.GetAdvertImages).Methods(http.MethodGet, http.MethodOptions)
+	advert.Handle("/{id}/image", jwtMd.JwtMiddleware(http.HandlerFunc(imageHandler.DeleteImage))).Methods(http.MethodDelete, http.MethodOptions)
+	advert.Handle("/{id}/donate", jwtMd.JwtMiddleware(http.HandlerFunc(advertHandler.UpdatePriority))).Methods(http.MethodPost, http.MethodOptions)
+	advert.HandleFunc("/{id}/rating", advertHandler.GetPriority).Methods(http.MethodGet, http.MethodOptions)
 
 	userRepo := userR.NewRepository(db)
 	userUsecase := userUc.NewUserUsecase(userRepo)
-	userHandler := http2.NewClientUserHandler(grcpConnUsers)
-	userHandlerPhoto := http2.NewUserHandlerPhoto(userUsecase)
+	userHandler := userH.NewClientUserHandler(grcpConnUsers)
+	userHandlerPhoto := userH.NewUserHandlerPhoto(userUsecase)
 
 	user := r.PathPrefix("/users").Subrouter()
-	user.Handle("/me", metricsMd.ServerMetricsMiddleware(jwtMd.JwtMiddleware(http.HandlerFunc(userHandler.GetCurUser)), 0, 0, "")).Methods(http.MethodGet, http.MethodOptions)
-	user.Handle("/avatar", metricsMd.ServerMetricsMiddleware(jwtMd.JwtMiddleware(http.HandlerFunc(userHandlerPhoto.UpdateUserPhoto)), 0, 0, "")).Methods(http.MethodPost, http.MethodOptions)
-	user.Handle("/avatar", metricsMd.ServerMetricsMiddleware(jwtMd.JwtMiddleware(http.HandlerFunc(userHandlerPhoto.DeleteUserPhoto)), 0, 0, "")).Methods(http.MethodDelete, http.MethodOptions)
-	user.Handle("/info", metricsMd.ServerMetricsMiddleware(jwtMd.JwtMiddleware(http.HandlerFunc(userHandler.UpdateUserInfo)), 0, 0, "")).Methods(http.MethodPost, http.MethodOptions)
-	user.Handle("/password", metricsMd.ServerMetricsMiddleware(jwtMd.JwtMiddleware(http.HandlerFunc(userHandler.UpdateUserPassword)), 0, 0, "")).Methods(http.MethodPost, http.MethodOptions)
-	user.Handle("/myadverts", metricsMd.ServerMetricsMiddleware(jwtMd.JwtMiddleware(http.HandlerFunc(advertHandler.GetUserAdverts)), 0, 0, "")).Methods(http.MethodGet, http.MethodOptions)
-	user.Handle("/likedadverts", metricsMd.ServerMetricsMiddleware(jwtMd.JwtMiddleware(http.HandlerFunc(advertHandler.GetLikedUserAdverts)), 0, 0, "")).Methods(http.MethodGet, http.MethodOptions)
+	user.Handle("/me", jwtMd.JwtMiddleware(http.HandlerFunc(userHandler.GetCurUser))).Methods(http.MethodGet, http.MethodOptions)
+	user.Handle("/avatar", jwtMd.JwtMiddleware(http.HandlerFunc(userHandlerPhoto.UpdateUserPhoto))).Methods(http.MethodPost, http.MethodOptions)
+	user.Handle("/avatar", jwtMd.JwtMiddleware(http.HandlerFunc(userHandlerPhoto.DeleteUserPhoto))).Methods(http.MethodDelete, http.MethodOptions)
+	user.Handle("/info", jwtMd.JwtMiddleware(http.HandlerFunc(userHandler.UpdateUserInfo))).Methods(http.MethodPost, http.MethodOptions)
+	user.Handle("/password", jwtMd.JwtMiddleware(http.HandlerFunc(authHandler.UpdateUserPassword))).Methods(http.MethodPost, http.MethodOptions)
+	user.Handle("/savedadverts", jwtMd.JwtMiddleware(http.HandlerFunc(advertHandler.GetUserAdverts))).Methods(http.MethodGet, http.MethodOptions)
+	user.Handle("/myadverts", jwtMd.JwtMiddleware(http.HandlerFunc(advertHandler.GetUserAdverts))).Methods(http.MethodGet, http.MethodOptions)
+	user.Handle("/likedadverts", jwtMd.JwtMiddleware(http.HandlerFunc(advertHandler.GetLikedUserAdverts))).Methods(http.MethodGet, http.MethodOptions)
 
-	companyRepo := companyR.NewRepository(db, logger)
-	companyUsecase := companyUc.NewCompanyUsecase(companyRepo, logger)
-	companyHandler := companyH.NewCompanyHandler(companyUsecase, logger)
-
-	company := r.PathPrefix("/companies").Subrouter()
-	company.Handle("/", metricsMd.ServerMetricsMiddleware(http.HandlerFunc(companyHandler.CreateCompany), 0, 0, "")).Methods(http.MethodPost, http.MethodOptions)
-	company.Handle("/{id}", metricsMd.ServerMetricsMiddleware(http.HandlerFunc(companyHandler.GetCompanyById), 0, 3, "id")).Methods(http.MethodGet, http.MethodOptions)
-	company.Handle("/images/{id}", metricsMd.ServerMetricsMiddleware(http.HandlerFunc(companyHandler.UpdateCompanyPhoto), 0, 4, "id")).Methods(http.MethodPost, http.MethodOptions)
-
-	complexRepo := complexR.NewRepository(db, logger)
-	complexUsecase := complexUc.NewComplexUsecase(complexRepo, logger)
-	complexHandler := complexH.NewComplexHandler(complexUsecase, logger)
+	complexHandler := complexH.NewClientComplexHandler(grcpConnComplex, logger)
 
 	complexRoute := r.PathPrefix("/complexes").Subrouter()
-	complexRoute.Handle("/", metricsMd.ServerMetricsMiddleware(http.HandlerFunc(complexHandler.CreateComplex), 0, 0, "")).Methods(http.MethodPost, http.MethodOptions)
-	complexRoute.Handle("/{id}", metricsMd.ServerMetricsMiddleware(http.HandlerFunc(complexHandler.GetComplexById), 0, 3, "id")).Methods(http.MethodGet, http.MethodOptions)
-	complexRoute.Handle("/{id}/rectanglelist/", metricsMd.ServerMetricsMiddleware(http.HandlerFunc(advertHandler.GetComplexAdverts), 0, 3, "id")).Methods(http.MethodGet, http.MethodOptions)
-	complexRoute.Handle("/houses", metricsMd.ServerMetricsMiddleware(http.HandlerFunc(complexHandler.CreateHouseAdvert), 0, 0, "")).Methods(http.MethodPost, http.MethodOptions)
-	complexRoute.Handle("/flats", metricsMd.ServerMetricsMiddleware(http.HandlerFunc(complexHandler.CreateFlatAdvert), 0, 0, "")).Methods(http.MethodPost, http.MethodOptions)
-	complexRoute.Handle("/buildings", metricsMd.ServerMetricsMiddleware(http.HandlerFunc(complexHandler.CreateBuilding), 0, 0, "")).Methods(http.MethodPost, http.MethodOptions)
-	complexRoute.Handle("/images/{id}", metricsMd.ServerMetricsMiddleware(http.HandlerFunc(complexHandler.UpdateComplexPhoto), 0, 4, "id")).Methods(http.MethodPost, http.MethodOptions)
+	complexRoute.HandleFunc("/", complexHandler.CreateComplex).Methods(http.MethodPost, http.MethodOptions)
+	complexRoute.HandleFunc("/{id}", complexHandler.GetComplexById).Methods(http.MethodGet, http.MethodOptions)
+	complexRoute.HandleFunc("/{id}/rectanglelist/", advertHandler.GetComplexAdverts).Methods(http.MethodGet, http.MethodOptions)
+	complexRoute.HandleFunc("/images/{id}", complexHandler.UpdateComplexPhoto).Methods(http.MethodPost, http.MethodOptions)
+
+	company := r.PathPrefix("/companies").Subrouter()
+	company.HandleFunc("/", complexHandler.CreateCompany).Methods(http.MethodPost, http.MethodOptions)
+	company.HandleFunc("/{id}", complexHandler.GetCompanyById).Methods(http.MethodGet, http.MethodOptions)
+	company.HandleFunc("/images/{id}", complexHandler.UpdateCompanyPhoto).Methods(http.MethodPost, http.MethodOptions)
+
 	srv := &http.Server{
 		Addr:              ":8080",
 		Handler:           r,

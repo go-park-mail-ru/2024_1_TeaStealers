@@ -31,7 +31,6 @@ func (u *AuthUsecase) SignUp(ctx context.Context, data *models.UserSignUpData) (
 		PasswordHash: utils.GenerateHashString(data.Password),
 		LevelUpdate:  1,
 	}
-
 	userResponse, err := u.repo.CreateUser(ctx, newUser)
 
 	if err != nil {
@@ -55,19 +54,19 @@ func (u *AuthUsecase) Login(ctx context.Context, data *models.UserLoginData) (*m
 	user, err := u.repo.CheckUser(ctx, data.Login, utils.GenerateHashString(data.Password))
 	if err != nil {
 		u.logger.Error(err.Error())
-		// utils.LogError(u.logger, ctx.Value("requestId").(string), utils.UsecaseLayer, auth.LoginMethod, err)
+		utils.LogError(u.logger, ctx.Value("requestId").(string), utils.UsecaseLayer, auth.LoginMethod, err)
 		return nil, "", time.Now(), err
 	}
 
 	token, exp, err := jwt.GenerateToken(user)
 	if err != nil {
 		u.logger.Error(err.Error())
-		// utils.LogError(u.logger, ctx.Value("requestId").(string), utils.UsecaseLayer, auth.LoginMethod, err)
+		utils.LogError(u.logger, ctx.Value("requestId").(string), utils.UsecaseLayer, auth.LoginMethod, err)
 		return nil, "", time.Now(), err
 	}
 
 	u.logger.Info("success login usecase")
-	// utils.LogSucces(u.logger, ctx.Value("requestId").(string), utils.UsecaseLayer, auth.LoginMethod)
+	utils.LogSucces(u.logger, ctx.Value("requestId").(string), utils.UsecaseLayer, auth.LoginMethod)
 	return user, token, exp, nil
 }
 
@@ -85,4 +84,28 @@ func (u *AuthUsecase) CheckAuth(ctx context.Context, id int64, jwtLevel int) err
 
 	// utils.LogSucces(u.logger, ctx.Value("requestId").(string), utils.UsecaseLayer, auth.GetUserLevelByIdMethod)
 	return nil
+}
+
+func (u *AuthUsecase) UpdateUserPassword(ctx context.Context, data *models.UserUpdatePassword) (string, time.Time, error) {
+	oldPasswordHash := utils.GenerateHashString(data.OldPassword)
+	newPasswordHash := utils.GenerateHashString(data.NewPassword)
+	if oldPasswordHash == newPasswordHash {
+		return "", time.Now(), errors.New("passwords must not match")
+	}
+	if err := u.repo.CheckUserPassword(ctx, data.ID, oldPasswordHash); err != nil {
+		return "", time.Now(), errors.New("invalid old password")
+	}
+	level, err := u.repo.UpdateUserPassword(ctx, data.ID, newPasswordHash)
+	if err != nil {
+		return "", time.Now(), errors.New("incorrect id or passwordhash")
+	}
+	user := &models.User{
+		ID:          data.ID,
+		LevelUpdate: level,
+	}
+	token, exp, err := jwt.GenerateToken(user)
+	if err != nil {
+		return "", time.Now(), errors.New("unable to generate token")
+	}
+	return token, exp, nil
 }

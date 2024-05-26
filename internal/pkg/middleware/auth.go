@@ -4,6 +4,7 @@ import (
 	genAuth "2024_1_TeaStealers/internal/pkg/auth/delivery/grpc/gen"
 	"2024_1_TeaStealers/internal/pkg/jwt"
 	"context"
+	"log"
 	"net/http"
 	"time"
 
@@ -35,8 +36,10 @@ func (md *AuthMiddleware) JwtMiddleware(next http.Handler) http.Handler {
 		}
 
 		token := cookie.Value
+
 		claims, err := jwt.ParseToken(token)
 		if err != nil {
+			log.Println(err)
 			w.WriteHeader(http.StatusUnauthorized)
 			return
 		}
