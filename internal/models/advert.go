@@ -277,8 +277,6 @@ type AdvertRectangleData struct {
 	TypeAdvert string `json:"typeAdvert"`
 	// Photo is the filename of the photo.
 	Photo string `json:"photo"`
-	// Rating is the rating of the advert.
-	Rating string `json:"rating"`
 	// Phone is the phone number associated with the advert.
 	Phone string `json:"phone"`
 	// TypeSale represents the sale type of the advertisement (Sale/Rent).
@@ -287,8 +285,8 @@ type AdvertRectangleData struct {
 	Address string `json:"adress"`
 	// AddressPoint is the address of the advertisement.
 	AddressPoint string `json:"adressPoint"`
-	// Metro is the metro of the advertisement.
-	Metro string `json:"metro"`
+	// Rating is the metro of the advertisement.
+	Rating string `json:"rating"`
 	// IsLiked indicates whether the advert is liked.
 	IsLiked bool `json:"isLiked"`
 	// Complex represents residential complex information.
@@ -301,6 +299,8 @@ type AdvertRectangleData struct {
 	Price int `json:"price"`
 	// DateCreation is the date when the advert was created.
 	DateCreation time.Time `json:"dateCreation"`
+	// Rating is the rating of the advert.
+	//Rating string `json:"rating"`
 }
 
 func (advRectDat *AdvertRectangleData) Sanitize() {

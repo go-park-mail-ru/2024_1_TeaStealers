@@ -1500,7 +1500,7 @@ func (r *AdvertRepo) GetRectangleAdverts(ctx context.Context, advertFilter model
 		}
 
 		rectangleAdvert.Address = province + ", " + town + ", " + street + ", " + houseName
-		rectangleAdvert.Metro = metro
+		//rectangleAdvert.Metro = metro
 
 		rectangleAdverts = append(rectangleAdverts, rectangleAdvert)
 	}
@@ -1693,7 +1693,7 @@ func (r *AdvertRepo) GetRectangleAdvertsByUserId(ctx context.Context, pageSize, 
 		}
 
 		rectangleAdvert.Address = province + ", " + town + ", " + street + ", " + houseName
-		rectangleAdvert.Metro = metro
+		//rectangleAdvert.Metro = metro
 
 		rectangleAdverts = append(rectangleAdverts, rectangleAdvert)
 	}
@@ -1866,7 +1866,7 @@ func (r *AdvertRepo) GetRectangleAdvertsByComplexId(ctx context.Context, pageSiz
 		}
 
 		rectangleAdvert.Address = province + ", " + town + ", " + street + ", " + houseName
-		rectangleAdvert.Metro = metro
+		//rectangleAdvert.Metro = metro
 
 		rectangleAdverts = append(rectangleAdverts, rectangleAdvert)
 	}
@@ -2143,7 +2143,7 @@ func (r *AdvertRepo) GetRectangleAdvertsLikedByUserId(ctx context.Context, pageS
 		}
 
 		rectangleAdvert.Address = province + ", " + town + ", " + street + ", " + houseName
-		rectangleAdvert.Metro = metro
+		//rectangleAdvert.Metro = metro
 
 		rectangleAdverts = append(rectangleAdverts, rectangleAdvert)
 	}

@@ -47,7 +47,6 @@ func WriteResponse(w http.ResponseWriter, statusCode int, response interface{}) 
 		StatusCode: statusCode,
 		Payload:    response,
 	}
-
 	resp, err := respSuccess.MarshalJSON()
 	if err != nil {
 		return err

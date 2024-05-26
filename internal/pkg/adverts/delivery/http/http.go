@@ -901,7 +901,6 @@ func (h *AdvertsClientHandler) GetRectangleAdvertsList(w http.ResponseWriter, r 
 			Phone:        adv.Phone,
 			TypeSale:     adv.TypeSale,
 			Address:      adv.Address,
-			Metro:        adv.Metro,
 			IsLiked:      adv.IsLiked,
 			Price:        int(adv.Price),
 			DateCreation: tCr,
@@ -992,7 +991,6 @@ func (h *AdvertsClientHandler) GetUserAdverts(w http.ResponseWriter, r *http.Req
 			Phone:        adv.Phone,
 			TypeSale:     adv.TypeSale,
 			Address:      adv.Address,
-			Metro:        adv.Metro,
 			IsLiked:      adv.IsLiked,
 			Price:        int(adv.Price),
 			Rating:       adv.Rating,
@@ -1081,7 +1079,6 @@ func (h *AdvertsClientHandler) GetComplexAdverts(w http.ResponseWriter, r *http.
 			Phone:       adv.Phone,
 			TypeSale:    adv.TypeSale,
 			Address:     adv.Address,
-			Metro:       adv.Metro,
 			IsLiked:     adv.IsLiked,
 			FlatProperties: &models.FlatRectangleProperties{
 				Floor:         int(adv.FlatProperties.Floor),
@@ -1250,7 +1247,6 @@ func (h *AdvertsClientHandler) GetLikedUserAdverts(w http.ResponseWriter, r *htt
 			Phone:       adv.Phone,
 			TypeSale:    adv.TypeSale,
 			Address:     adv.Address,
-			Metro:       adv.Metro,
 			IsLiked:     adv.IsLiked,
 			FlatProperties: &models.FlatRectangleProperties{
 				Floor:         int(adv.FlatProperties.Floor),
