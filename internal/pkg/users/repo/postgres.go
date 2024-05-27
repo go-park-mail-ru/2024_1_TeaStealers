@@ -4,6 +4,7 @@ import (
 	"2024_1_TeaStealers/internal/models"
 	"context"
 	"database/sql"
+	"fmt"
 )
 
 // UserRepo represents a repository for user.
@@ -18,12 +19,20 @@ func NewRepository(db *sql.DB) *UserRepo {
 
 func (r *UserRepo) GetUserById(ctx context.Context, id int64) (*models.User, error) {
 	user := &models.User{}
-	query := `SELECT id, first_name, surname, birthdate, phone, email, photo FROM user_data WHERE id=$1`
+	query := `SELECT id, phone, email FROM user_data WHERE id=$1`
+	queryProfile := `SELECT first_name, surname, photo, birthdate FROM user_profile_data WHERE user_id=$1`
+
 	res := r.db.QueryRow(query, id)
+	resProfile := r.db.QueryRow(queryProfile, id)
+
 	var firstname, secondname, photo sql.NullString
 	var dateBirthday sql.NullTime
-	if err := res.Scan(&user.ID, &firstname, &secondname, &dateBirthday, &user.Phone, &user.Email, &photo); err != nil {
+	if err := res.Scan(&user.ID, &user.Phone, &user.Email); err != nil {
 		return nil, err
+	}
+	if err := resProfile.Scan(&firstname, &secondname, &photo, &dateBirthday); err != nil {
+		fmt.Println("У пользователя нет  информации профиля")
+		fmt.Println(err.Error())
 	}
 	user.FirstName = firstname.String
 	user.SecondName = secondname.String
@@ -34,8 +43,8 @@ func (r *UserRepo) GetUserById(ctx context.Context, id int64) (*models.User, err
 }
 
 func (r *UserRepo) UpdateUserPhoto(ctx context.Context, id int64, fileName string) (string, error) {
-	query := `UPDATE user_data SET photo = $1 WHERE id = $2`
-	if _, err := r.db.Query(query, fileName, id); err != nil {
+	query := `INSERT INTO user_profile_data (user_id, first_name, surname, birthdate, photo)  VALUES ($1, ' ', ' ', '0001-01-01T00:00:00Z', $2) ON CONFLICT (user_id) DO UPDATE SET photo = EXCLUDED.photo;`
+	if _, err := r.db.Exec(query, id, fileName); err != nil {
 		return "", err
 	}
 	return fileName, nil
@@ -50,17 +59,29 @@ func (r *UserRepo) DeleteUserPhoto(ctx context.Context, id int64) error {
 }
 
 func (r *UserRepo) UpdateUserInfo(ctx context.Context, id int64, data *models.UserUpdateData) (*models.User, error) {
-	query := `UPDATE user_data SET first_name = $1, surname = $2, phone = $3, email = $4 WHERE id = $5`
+	if data.FirstName == "" {
+		data.FirstName = " "
+	}
+	if data.SecondName == "" {
+		data.SecondName = " "
+	}
+	query := `INSERT INTO user_profile_data (user_id, first_name, surname, birthdate, photo)  VALUES ($1, $2, $3, '0001-01-01T00:00:00Z', 'avatar/defaultAvatar.png') ON CONFLICT (user_id) DO UPDATE SET first_name = excluded.first_name, surname = excluded.surname;`
 
-	if _, err := r.db.Exec(query, data.FirstName, data.SecondName, data.Phone, data.Email, id); err != nil {
+	if _, err := r.db.Exec(query, id, data.FirstName, data.SecondName); err != nil {
+		fmt.Println(err.Error())
 		return nil, err
 	}
-	user := &models.User{}
-	querySelect := `SELECT id, first_name, surname, phone, email FROM user_data WHERE id = $1`
-	res := r.db.QueryRow(querySelect, id)
-	if err := res.Scan(&user.ID, &user.FirstName, &user.SecondName, &user.Phone, &user.Email); err != nil {
+
+	updateQuery := `
+        UPDATE user_data
+        SET phone = $1, email = $2
+        WHERE id = $3;
+    `
+	_, err := r.db.ExecContext(ctx, updateQuery, data.Phone, data.Email, id)
+	if err != nil {
+		fmt.Println("Error executing update query:", err)
 		return nil, err
 	}
 
-	return user, nil
+	return r.GetUserById(ctx, id)
 }
