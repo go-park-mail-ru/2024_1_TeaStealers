@@ -4,11 +4,10 @@ import (
 	genComplex "2024_1_TeaStealers/internal/pkg/complexes/delivery/grpc/gen"
 	complexR "2024_1_TeaStealers/internal/pkg/complexes/repo"
 	complexUc "2024_1_TeaStealers/internal/pkg/complexes/usecase"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"net/http"
 
 	"github.com/gorilla/mux"
-
-	"github.com/prometheus/client_golang/prometheus/promhttp"
 
 	"database/sql"
 	"fmt"
@@ -55,6 +54,7 @@ func run() (err error) {
 	}
 
 	r := mux.NewRouter().PathPrefix("/api").Subrouter()
+	// http.Handle("/metrics", promhttp.Handler())
 	r.PathPrefix("/metrics").Handler(promhttp.Handler())
 	http.Handle("/", r)
 

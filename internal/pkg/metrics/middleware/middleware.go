@@ -2,9 +2,7 @@ package middleware
 
 import (
 	"2024_1_TeaStealers/internal/pkg/metrics"
-	"2024_1_TeaStealers/internal/pkg/utils"
 	"context"
-	"fmt"
 	"github.com/prometheus/client_golang/prometheus"
 	"google.golang.org/grpc"
 	"net/http"
@@ -12,42 +10,46 @@ import (
 )
 
 type GrpcMiddleware struct {
-	totalErrors        *prometheus.CounterVec
-	totalHits          *prometheus.CounterVec
-	responseStatusHits *prometheus.CounterVec
-	requestTimings     *prometheus.HistogramVec
-	extSystemErrors    *prometheus.CounterVec
+	// totalHitsHandler   *prometheus.CounterVec todo - агрегация??
+	HitsHandlerStatusCode *prometheus.CounterVec   // хиты хэндлеров с разделением по кодам
+	HandlerTimings        *prometheus.HistogramVec // тайминги по хэндлерам
+	microserviceTimings   *prometheus.HistogramVec // тайминги микросервисов
+	queryTimings          *prometheus.HistogramVec // тайминги запросов
+	extSystemErrors       *prometheus.CounterVec   // ошибки запросов / микросервисов
 }
 
 func Create() metrics.MetricsHTTP {
-	labelErrors := []string{"status_code", "path", "method"}
-	totalErrors := prometheus.NewCounterVec(prometheus.CounterOpts{
-		Name: "http_requests_errors_total",
-		Help: "number_of_all_errors",
-	}, labelErrors)
-	prometheus.MustRegister(totalErrors)
-
-	labelHits := []string{"path", "method"}
-	totalHits := prometheus.NewCounterVec(prometheus.CounterOpts{
-		Name: "http_requests_total",
-		Help: "number_of_all_requests",
-	}, labelHits)
-	prometheus.MustRegister(totalHits)
 
 	labelResponseStatusHits := []string{"status_code", "path", "method"}
-	responseStatusHits := prometheus.NewCounterVec(prometheus.CounterOpts{
-		Name: "http_requests_status_hits_total",
+	HitsHandlerStatusCode := prometheus.NewCounterVec(prometheus.CounterOpts{
+		Name: "http_requests_status_hits_handler",
 		Help: "number_of_requests_by_status_code",
 	}, labelResponseStatusHits)
-	prometheus.MustRegister(responseStatusHits)
+	prometheus.MustRegister(HitsHandlerStatusCode)
 
-	labelLatency := []string{"path", "method"}
-	requestTimings := prometheus.NewHistogramVec(prometheus.HistogramOpts{
+	labelLatency := []string{"path"}
+	HandlerTimings := prometheus.NewHistogramVec(prometheus.HistogramOpts{
 		Name:    "http_request_latency_seconds",
 		Help:    "Latency of HTTP requests.",
 		Buckets: prometheus.DefBuckets,
 	}, labelLatency)
-	prometheus.MustRegister(requestTimings)
+	prometheus.MustRegister(HandlerTimings)
+
+	labelLatencymicro := []string{"microservice", "method"}
+	microserviceTimings := prometheus.NewHistogramVec(prometheus.HistogramOpts{
+		Name:    "microservice_request_latency_seconds",
+		Help:    "Latency of microservice requests.",
+		Buckets: prometheus.DefBuckets,
+	}, labelLatencymicro)
+	prometheus.MustRegister(microserviceTimings)
+
+	labelLatencyQuery := []string{"repo_method", "query_name", "method"}
+	QueryTimings := prometheus.NewHistogramVec(prometheus.HistogramOpts{
+		Name:    "query_request_latency_seconds",
+		Help:    "Latency of microservice requests.",
+		Buckets: prometheus.DefBuckets,
+	}, labelLatencyQuery)
+	prometheus.MustRegister(QueryTimings)
 
 	labelExtSystemErrors := []string{"system_name", "error_type"}
 	extSystemErrors := prometheus.NewCounterVec(prometheus.CounterOpts{
@@ -57,25 +59,28 @@ func Create() metrics.MetricsHTTP {
 	prometheus.MustRegister(extSystemErrors)
 
 	return &GrpcMiddleware{
-		totalErrors:        totalErrors,
-		totalHits:          totalHits,
-		responseStatusHits: responseStatusHits,
-		requestTimings:     requestTimings,
-		extSystemErrors:    extSystemErrors,
+		HitsHandlerStatusCode: HitsHandlerStatusCode,
+		HandlerTimings:        HandlerTimings,
+		microserviceTimings:   microserviceTimings,
+		queryTimings:          QueryTimings,
+		extSystemErrors:       extSystemErrors,
 	}
 }
 
-func (m *GrpcMiddleware) IncreaseHits(method, path string) {
-	m.totalHits.WithLabelValues(path, method).Inc()
+func (m *GrpcMiddleware) IncreaseHits(status, method, path string) {
+	m.HitsHandlerStatusCode.WithLabelValues(status, path, method).Inc()
 }
 
-func (m *GrpcMiddleware) IncreaseErr(statusCode, method, path string) {
-	m.totalErrors.WithLabelValues(statusCode, path, method).Inc()
-	m.responseStatusHits.WithLabelValues(statusCode, path, method).Inc()
+func (m *GrpcMiddleware) AddDurationToHandlerTimings(path string, duration time.Duration) {
+	m.HandlerTimings.WithLabelValues(path).Observe(duration.Seconds())
 }
 
-func (m *GrpcMiddleware) AddDurationToHistogram(method, path string, duration time.Duration) {
-	m.requestTimings.WithLabelValues(path, method).Observe(duration.Seconds())
+func (m *GrpcMiddleware) AddDurationToMicroserviceTimings(mcrService, method string, duration time.Duration) {
+	m.HandlerTimings.WithLabelValues(mcrService, method).Observe(duration.Seconds())
+}
+
+func (m *GrpcMiddleware) AddDurationToQueryTimings(repo_method, query_name, method string, duration time.Duration) {
+	m.HandlerTimings.WithLabelValues(repo_method, query_name, method).Observe(duration.Seconds())
 }
 
 func (m *GrpcMiddleware) IncreaseExtSystemErr(systemName, errorType string) {
@@ -83,32 +88,37 @@ func (m *GrpcMiddleware) IncreaseExtSystemErr(systemName, errorType string) {
 }
 
 func (m *GrpcMiddleware) ServerMetricsInterceptor(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
+	startTime := time.Now()
 
-	start := time.Now()
-	h, err := handler(ctx, req)
-	tm := time.Since(start)
-	if err != nil { // todo - ошибка не всегда означает 500, надо подумать как различать
-		m.IncreaseErr("500", info.FullMethod, "")
+	resp, err := handler(ctx, req)
+
+	duration := time.Since(startTime)
+	status := "200"
+	if err != nil {
+		status = "400" // todo
 	}
-	m.IncreaseHits(info.FullMethod, "")
-	m.AddDurationToHistogram(info.FullMethod, "", tm)
-	return h, err
+	m.IncreaseHits(status, "", info.FullMethod)
+
+	// Record the duration in the histogram for handler timings
+	m.AddDurationToHandlerTimings("", duration)
+
+	return resp, err
 }
 
 func (m *GrpcMiddleware) ServerMetricsMiddleware(next http.Handler, urlTruncCount int, replacePos int, altName string) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
-		start := time.Now()
-		ww := &responseWriter{ResponseWriter: w}
-		next.ServeHTTP(ww, r)
-		tm := time.Since(start)
-		methodName, err1 := utils.TruncSlash(r.URL.String(), urlTruncCount)
-		methodName, err2 := utils.ReplaceURLPart(methodName, replacePos, altName)
-		if err1 == nil && err2 == nil {
-			m.IncreaseHits(methodName, r.Method)
-			m.AddDurationToHistogram(methodName, r.Method, tm)
-			m.IncreaseErr(fmt.Sprintf("%d", ww.statusCode), r.Method, methodName)
-		}
+		// start := time.Now()
+		// ww := &responseWriter{ResponseWriter: w}
+		next.ServeHTTP(w, r)
+		// tm := time.Since(start)
+		// methodName, err1 := utils.TruncSlash(r.URL.String(), urlTruncCount)
+		// methodName, err2 := utils.ReplaceURLPart(methodName, replacePos, altName)
+		// if err1 == nil && err2 == nil {
+		// m.IncreaseHits(methodName, r.Method)
+		// m.AddDurationToHistogram(methodName, r.Method, tm)
+		// m.IncreaseErr(fmt.Sprintf("%d", ww.statusCode), r.Method, methodName)
+		// }
 	})
 }
 

@@ -4,11 +4,10 @@ import (
 	genAdverts "2024_1_TeaStealers/internal/pkg/adverts/delivery/grpc/gen"
 	advertsR "2024_1_TeaStealers/internal/pkg/adverts/repo"
 	advertsUc "2024_1_TeaStealers/internal/pkg/adverts/usecase"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"net/http"
 
 	"github.com/gorilla/mux"
-
-	"github.com/prometheus/client_golang/prometheus/promhttp"
 
 	"database/sql"
 	"fmt"
@@ -55,6 +54,7 @@ func run() (err error) {
 	}
 
 	r := mux.NewRouter().PathPrefix("/api").Subrouter()
+	// http.Handle("/metrics", promhttp.Handler())
 	r.PathPrefix("/metrics").Handler(promhttp.Handler())
 	http.Handle("/", r)
 

@@ -10,6 +10,7 @@ import (
 	imageH "2024_1_TeaStealers/internal/pkg/images/delivery/http"
 	imageR "2024_1_TeaStealers/internal/pkg/images/repo"
 	imageUc "2024_1_TeaStealers/internal/pkg/images/usecase"
+	metricsMw "2024_1_TeaStealers/internal/pkg/metrics/middleware"
 	"2024_1_TeaStealers/internal/pkg/middleware"
 	statsH "2024_1_TeaStealers/internal/pkg/questionnaire/delivery/http"
 	statsR "2024_1_TeaStealers/internal/pkg/questionnaire/repo"
@@ -52,6 +53,8 @@ func main() {
 	cfg := config.MustLoad()
 	_ = godotenv.Load()
 	logger := zap.Must(zap.NewDevelopment())
+	metricsMw.Create()
+
 	db, err := sql.Open("postgres", fmt.Sprintf("postgres://%v:%v@%v:%v/%v?sslmode=disable",
 		os.Getenv("DB_USER"),
 		os.Getenv("DB_PASS"),
@@ -75,7 +78,7 @@ func main() {
 	r.HandleFunc("/ping", pingPongHandler).Methods(http.MethodGet)
 	r.PathPrefix("/docs/").Handler(httpSwagger.WrapHandler)
 	r.PathPrefix("/metrics").Handler(promhttp.Handler())
-
+	//http.Handle("/metrics", promhttp.Handler())
 	grcpConnAuth, err := grpc.Dial(
 		fmt.Sprintf("%s:%d", cfg.GRPC.AuthContainerIP, cfg.GRPC.AuthPort),
 		grpc.WithTransportCredentials(insecure.NewCredentials()),

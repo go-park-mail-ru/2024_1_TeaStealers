@@ -37,7 +37,6 @@ func main() {
 func run() (err error) {
 	_ = godotenv.Load()
 	logger := zap.Must(zap.NewDevelopment())
-
 	db, err := sql.Open("postgres", fmt.Sprintf("postgres://%v:%v@%v:%v/%v?sslmode=disable",
 		os.Getenv("DB_USER"),
 		os.Getenv("DB_PASS"),
@@ -54,6 +53,7 @@ func run() (err error) {
 		log.Println(err)
 	}
 
+	// http.Handle("/metrics", promhttp.Handler())
 	r := mux.NewRouter().PathPrefix("/api").Subrouter()
 	r.PathPrefix("/metrics").Handler(promhttp.Handler())
 	http.Handle("/", r)
