@@ -19,21 +19,6 @@ jobs:
         with:
           go-version: '1.21.x'
 
-      - name: Clean Go module cache
-        run: |
-          rm -rf ~/.cache/go-build
-          rm -rf ~/go/pkg/mod
-
-      - name: Cache Go modules
-        uses: actions/cache@v2
-        with:
-          path: |
-            ~/.cache/go-build
-            ~/go/pkg/mod
-          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
-          restore-keys: |
-            ${{ runner.os }}-go-
-
       - name: golangci-lint
         uses: golangci/golangci-lint-action@v3
 
