@@ -29,11 +29,15 @@ message CheckAuthRequest {
 
 message CheckAuthResponse {
   bool Authorized = 1;
+  int32 RespCode = 2;
+
 }
 
 message SignUpInResponse {
   string Token = 1;
   string Exp = 2;
+  int32 RespCode = 3;
+
 }
 
 message ProfileInfoResponse {
@@ -41,6 +45,8 @@ message ProfileInfoResponse {
   string Email = 2;
   string PasswordHash = 3;
   int64 LevelUpdate = 4;
+  int32 RespCode = 5;
+
 }
 
 message UpdatePasswordRequest {
@@ -53,4 +59,5 @@ message UpdatePasswordResponse {
   bool Updated = 1;
   string Token= 2;
   string Exp= 3;
+  int32 RespCode = 4;
 }

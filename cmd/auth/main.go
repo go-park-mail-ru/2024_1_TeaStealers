@@ -4,17 +4,19 @@ import (
 	genAuth "2024_1_TeaStealers/internal/pkg/auth/delivery/grpc/gen"
 	authR "2024_1_TeaStealers/internal/pkg/auth/repo"
 	authUc "2024_1_TeaStealers/internal/pkg/auth/usecase"
-	"github.com/prometheus/client_golang/prometheus/promhttp"
-	"net/http"
-
+	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 	"github.com/gorilla/mux"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"log"
 	"net"
+	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
 	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
@@ -51,21 +53,35 @@ func run() (err error) {
 		err = fmt.Errorf("error happened in db.Ping: %w", err)
 		log.Println(err)
 	}
-
 	r := mux.NewRouter().PathPrefix("/api").Subrouter()
-	// http.Handle("/metrics", promhttp.Handler())
 	r.PathPrefix("/metrics").Handler(promhttp.Handler())
-	http.Handle("/", r)
+	httpSrv := &http.Server{
+		Addr:              ":8091",
+		Handler:           r,
+		ReadHeaderTimeout: 10 * time.Second,
+		ReadTimeout:       10 * time.Second,
+		WriteTimeout:      10 * time.Second,
+	}
+
+	go func() {
+
+		logger.Info("Starting HTTP server for metrics on :8091")
+		if err := httpSrv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
+			logger.Error(fmt.Sprintf("HTTP server listen: %s\n", err))
+		}
+	}()
 
 	authRepo := authR.NewRepository(db, logger)
 	authUsecase := authUc.NewAuthUsecase(authRepo, logger)
 	authHandler := grpcAuth.NewServerAuthHandler(authUsecase, logger)
 	metricMw := metricsMw.Create()
+	metricMw.RegisterMetrics()
+
 	gRPCServer := grpc.NewServer(grpc.UnaryInterceptor(metricMw.ServerMetricsInterceptor))
 	genAuth.RegisterAuthServer(gRPCServer, authHandler)
 
 	go func() {
-		logger.Info(fmt.Sprintf("Start server on %s\n", ":8081"))
+		logger.Info(fmt.Sprintf("Start gRPC server on %s\n", ":8081"))
 		listener, err := net.Listen("tcp", ":8081")
 		if err != nil {
 			log.Fatal(err)
@@ -79,6 +95,15 @@ func run() (err error) {
 	signal.Notify(stop, syscall.SIGTERM, syscall.SIGINT)
 
 	<-stop
+	logger.Info(fmt.Sprintf("Received signal: %v\n", stop))
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+	if err := httpSrv.Shutdown(ctx); err != nil {
+		logger.Error(fmt.Sprintf("Server shutdown failed: %s\n", err))
+	}
+
 	gRPCServer.GracefulStop()
+
 	return nil
 }

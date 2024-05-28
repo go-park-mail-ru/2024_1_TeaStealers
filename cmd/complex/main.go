@@ -4,8 +4,11 @@ import (
 	genComplex "2024_1_TeaStealers/internal/pkg/complexes/delivery/grpc/gen"
 	complexR "2024_1_TeaStealers/internal/pkg/complexes/repo"
 	complexUc "2024_1_TeaStealers/internal/pkg/complexes/usecase"
+	"context"
+	"errors"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"net/http"
+	"time"
 
 	"github.com/gorilla/mux"
 
@@ -54,14 +57,29 @@ func run() (err error) {
 	}
 
 	r := mux.NewRouter().PathPrefix("/api").Subrouter()
-	// http.Handle("/metrics", promhttp.Handler())
 	r.PathPrefix("/metrics").Handler(promhttp.Handler())
 	http.Handle("/", r)
+	httpSrv := &http.Server{
+		Addr:              ":8095",
+		Handler:           r,
+		ReadHeaderTimeout: 10 * time.Second,
+		ReadTimeout:       10 * time.Second,
+		WriteTimeout:      10 * time.Second,
+	}
+
+	go func() {
+
+		logger.Info("Starting HTTP server for metrics on :8095")
+		if err := httpSrv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
+			logger.Error(fmt.Sprintf("HTTP server listen: %s\n", err))
+		}
+	}()
 
 	complexRepo := complexR.NewRepository(db, logger)
 	complexUsecase := complexUc.NewComplexUsecase(complexRepo, logger)
 	complexHandler := grpcComplex.NewComplexServerHandler(complexUsecase, logger)
 	metricMw := metricsMw.Create()
+	metricMw.RegisterMetrics()
 	gRPCServer := grpc.NewServer(grpc.UnaryInterceptor(metricMw.ServerMetricsInterceptor))
 	genComplex.RegisterComplexServer(gRPCServer, complexHandler)
 
@@ -80,6 +98,15 @@ func run() (err error) {
 	signal.Notify(stop, syscall.SIGTERM, syscall.SIGINT)
 
 	<-stop
+	logger.Info(fmt.Sprintf("Received signal: %v\n", stop))
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+	if err := httpSrv.Shutdown(ctx); err != nil {
+		logger.Error(fmt.Sprintf("Server shutdown failed: %s\n", err))
+	}
+
 	gRPCServer.GracefulStop()
+
 	return nil
 }

@@ -3,6 +3,7 @@ package middleware
 import (
 	genAuth "2024_1_TeaStealers/internal/pkg/auth/delivery/grpc/gen"
 	"2024_1_TeaStealers/internal/pkg/jwt"
+	"2024_1_TeaStealers/internal/pkg/metrics"
 	"context"
 	"log"
 	"net/http"
@@ -27,8 +28,9 @@ func NewAuthMiddleware(grpcConn *grpc.ClientConn, logger *zap.Logger) *AuthMiddl
 }
 
 // JwtMiddleware is a middleware function that handles JWT authentication.
-func (md *AuthMiddleware) JwtMiddleware(next http.Handler) http.Handler {
+func (md *AuthMiddleware) JwtMiddleware(next http.Handler, metrics metrics.MetricsHTTP) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		start := time.Now()
 		cookie, err := r.Cookie(CookieName)
 		if err != nil {
 			w.WriteHeader(http.StatusUnauthorized)
@@ -64,9 +66,13 @@ func (md *AuthMiddleware) JwtMiddleware(next http.Handler) http.Handler {
 		ctx := context.WithValue(r.Context(), "requestId", uuid.NewV4().String())
 		resp, err := md.client.CheckAuth(ctx, &genAuth.CheckAuthRequest{Id: id, Level: int64(level)})
 		if err != nil {
+			metrics.IncreaseHits("401", "GET", "/api/check_auth (middleware)")
 			w.WriteHeader(http.StatusUnauthorized)
+			dur := time.Since(start)
+			metrics.AddDurationToHandlerTimings("/api/check_auth (middleware)", "GET", dur)
 			return
 		}
+		metrics.IncreaseHits("200", "GET", "/api/check_auth (middleware)")
 
 		if !resp.Authorized {
 			w.WriteHeader(http.StatusUnauthorized)
@@ -74,7 +80,8 @@ func (md *AuthMiddleware) JwtMiddleware(next http.Handler) http.Handler {
 		}
 
 		r = r.WithContext(context.WithValue(r.Context(), CookieName, id))
-
+		dur := time.Since(start)
+		metrics.AddDurationToHandlerTimings("/api/check_auth (middleware)", "GET", dur)
 		next.ServeHTTP(w, r)
 	})
 }
