@@ -29,6 +29,7 @@ message CreateCompanyResponse {
   string Description = 6;
   string DateCreation = 7;
   string IsDeleted = 8;
+  int32 RespCode = 9;
 }
 
 message GetCompanyByIdRequest {
@@ -42,6 +43,7 @@ message GetCompanyByIdResponse {
   int32 YearFounded = 4;
   string Phone = 5;
   string Description = 6;
+  int32 RespCode = 7;
 }
 
 message UpdateCompanyPhotoRequest {
@@ -51,6 +53,7 @@ message UpdateCompanyPhotoRequest {
 
 message UpdateCompanyPhotoResponse {
   string Filename = 1;
+  int32 RespCode = 2;
 }
 
 enum ClassHouse {
@@ -93,6 +96,7 @@ message CreateComplexResponse {
   bool Security = 14;
   string DateCreation = 15;
   bool IsDeleted = 16;
+  int32 RespCode = 17;
 }
 
 message GetComplexByIdRequest {
@@ -114,6 +118,7 @@ message GetComplexByIdResponse {
   ClassHouse ClassHousing = 12;
   bool Parking = 13;
   bool Security = 14;
+  int32 RespCode = 15;
 }
 
 message UpdateComplexPhotoRequest {
@@ -123,4 +128,5 @@ message UpdateComplexPhotoRequest {
 
 message UpdateComplexPhotoResponse {
   string Filename = 1;
+  int32 RespCode = 2;
 }

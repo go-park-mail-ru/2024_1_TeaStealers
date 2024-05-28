@@ -169,7 +169,7 @@ func main() {
 	advert.Handle("/{id}/donate", metricmW.MetricsMiddleware(jwtMd.JwtMiddleware(http.HandlerFunc(advertHandler.UpdatePriority), metricmW), 3, "id")).Methods(http.MethodPost, http.MethodOptions)
 	advert.Handle("/{id}/rating", metricmW.MetricsMiddleware(http.HandlerFunc(advertHandler.GetPriority), 0, "")).Methods(http.MethodGet, http.MethodOptions)
 
-	userRepo := userR.NewRepository(db)
+	userRepo := userR.NewRepository(db, metricmW)
 	userUsecase := userUc.NewUserUsecase(userRepo)
 	userHandler := userH.NewClientUserHandler(grcpConnUsers)
 	userHandlerPhoto := userH.NewUserHandlerPhoto(userUsecase)

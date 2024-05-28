@@ -70,12 +70,11 @@ func run() (err error) {
 			logger.Error(fmt.Sprintf("HTTP server listen: %s\n", err))
 		}
 	}()
-
-	authRepo := authR.NewRepository(db, logger)
-	authUsecase := authUc.NewAuthUsecase(authRepo, logger)
-	authHandler := grpcAuth.NewServerAuthHandler(authUsecase, logger)
 	metricMw := metricsMw.Create()
 	metricMw.RegisterMetrics()
+	authRepo := authR.NewRepository(db, logger, metricMw)
+	authUsecase := authUc.NewAuthUsecase(authRepo, logger)
+	authHandler := grpcAuth.NewServerAuthHandler(authUsecase, logger)
 
 	gRPCServer := grpc.NewServer(grpc.UnaryInterceptor(metricMw.ServerMetricsInterceptor))
 	genAuth.RegisterAuthServer(gRPCServer, authHandler)

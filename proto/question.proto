@@ -17,7 +17,7 @@ message UploadAnswerRequest {
 }
 
 message UploadAnswerResponse {
-
+  int32 RespCode = 2;
 }
 
 message GetQuestionsByThemeRequest {
@@ -32,4 +32,5 @@ message QuestionResp {
 
 message GetQuestionsByThemeResponse {
     repeated QuestionResp Questions = 1;
+    int32 RespCode = 2;
 }

@@ -127,7 +127,7 @@ func (h *AdvertsServerHandler) GetAdvertById(ctx context.Context, reqAdv *genAdv
 		IsAgent: advert.IsAgent, Metro: advert.Metro, Address: advert.Address, AddressPoint: advert.AddressPoint,
 		PriceHistory: priceHistory, Images: images, HouseProp: houseProperties, FlatProperties: flatProperties,
 		YearCreation: int32(advert.YearCreation), Material: material, ComplexProperties: complexProperties,
-		DateCreation: advert.DateCreation.String()}, nil
+		DateCreation: advert.DateCreation.String(), RespCode: StatusOk}, nil
 
 }
 
@@ -264,7 +264,7 @@ func (h *AdvertsServerHandler) IncreasePriority(ctx context.Context, reqAdv *gen
 	newPriority, err := h.uc.UpdatePriority(ctx, reqAdv.AdvertId, reqAdv.Amount)
 	if err != nil {
 		h.logger.Error(ctx.Value("requestId").(string) + " " + err.Error())
-		return nil, err
+		return &genAdverts.IncreasePriorityResponse{RespCode: StatusBadRequest}, err
 	}
 
 	return &genAdverts.IncreasePriorityResponse{Amount: newPriority}, nil
@@ -276,7 +276,7 @@ func (h *AdvertsServerHandler) GetPriority(ctx context.Context, reqAdv *genAdver
 	priority, err := h.uc.GetPriority(ctx, reqAdv.AdvertId)
 	if err != nil {
 		h.logger.Error(ctx.Value("requestId").(string) + " " + err.Error())
-		return nil, err
+		return &genAdverts.GetPriorityResponse{RespCode: StatusBadRequest}, err
 	}
 
 	return &genAdverts.GetPriorityResponse{Amount: priority}, nil
@@ -605,7 +605,7 @@ func (h *AdvertsServerHandler) GetRectangleAdvertsList(ctx context.Context, req 
 
 	if err != nil {
 		log.Println(err)
-		return nil, err
+		return &genAdverts.GetRectangleAdvertsListResponse{RespCode: StatusBadRequest}, err
 	}
 
 	protoAdverts := make([]*gen.AdvertRectangleData, 0, len(advList.Adverts))
@@ -625,7 +625,7 @@ func (h *AdvertsServerHandler) GetRectangleAdvertsList(ctx context.Context, req 
 		protoAdverts = append(protoAdverts, &genAdverts.AdvertRectangleData{Id: advert.ID, AdvertType: advert.TypeAdvert, TypeSale: advert.TypeSale, Title: advert.Title, Description: advert.Description, Price: int64(advert.Price), Phone: advert.Phone, IsLiked: advert.IsLiked, Address: advert.Address, AddressPoint: advert.AddressPoint, Photo: advert.Photo, HouseProp: houseProperties, FlatProperties: flatProperties, DateCreation: advert.DateCreation.String(), Rating: advert.Rating})
 	}
 
-	return &genAdverts.GetRectangleAdvertsListResponse{Adverts: protoAdverts, Info: &genAdverts.PageInfo{TotalElements: int64(advList.PageInfo.TotalElements), TotalPages: int64(advList.PageInfo.TotalPages), PageSize: int64(advList.PageInfo.PageSize), CurrentPage: int64(advList.PageInfo.CurrentPage)}}, nil
+	return &genAdverts.GetRectangleAdvertsListResponse{Adverts: protoAdverts, Info: &genAdverts.PageInfo{TotalElements: int64(advList.PageInfo.TotalElements), TotalPages: int64(advList.PageInfo.TotalPages), PageSize: int64(advList.PageInfo.PageSize), CurrentPage: int64(advList.PageInfo.CurrentPage)}, RespCode: StatusOk}, nil
 }
 
 func (h *AdvertsServerHandler) GetRectangleAdvertsByUser(ctx context.Context, req *genAdverts.GetUserAdvertsRequest) (*genAdverts.GetUserAdvertsResponse, error) {

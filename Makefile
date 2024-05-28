@@ -44,11 +44,10 @@ dev-compose-down:
 
 coverage:
 	go test -json ./... -coverprofile coverprofile_.tmp -coverpkg=./... ; \
-	cat coverprofile_.tmp |grep -v auth.go| grep -v interfaces.go | grep -v docs.go| grep -v cors.go| grep -v transaction.go| grep -v main.go > coverprofile.tmp ; \
+	cat coverprofile_.tmp | grep -Ev 'auth.go|interfaces.go|docs.go|cors.go|transaction.go|main.go|\.pb\.go|\_easyjson\.go' > coverprofile.tmp ; \
 	rm coverprofile_.tmp ; \
 	go tool cover -html coverprofile.tmp ; \
 	go tool cover -func coverprofile.tmp
-
 swagger:
 	swag init -g cmd/main/main.go
 

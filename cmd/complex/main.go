@@ -75,11 +75,12 @@ func run() (err error) {
 		}
 	}()
 
-	complexRepo := complexR.NewRepository(db, logger)
-	complexUsecase := complexUc.NewComplexUsecase(complexRepo, logger)
-	complexHandler := grpcComplex.NewComplexServerHandler(complexUsecase, logger)
 	metricMw := metricsMw.Create()
 	metricMw.RegisterMetrics()
+	complexRepo := complexR.NewRepository(db, logger, metricMw)
+	complexUsecase := complexUc.NewComplexUsecase(complexRepo, logger)
+	complexHandler := grpcComplex.NewComplexServerHandler(complexUsecase, logger)
+
 	gRPCServer := grpc.NewServer(grpc.UnaryInterceptor(metricMw.ServerMetricsInterceptor))
 	genComplex.RegisterComplexServer(gRPCServer, complexHandler)
 

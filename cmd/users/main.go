@@ -75,11 +75,12 @@ func run() (err error) {
 		}
 	}()
 
-	usersRepo := UsersR.NewRepository(db)
-	usersUsecase := UsersUc.NewUserUsecase(usersRepo)
-	usersHandler := grpcUsers.NewUserServerHandler(usersUsecase)
 	metricMw := metricsMw.Create()
 	metricMw.RegisterMetrics()
+	usersRepo := UsersR.NewRepository(db, metricMw)
+	usersUsecase := UsersUc.NewUserUsecase(usersRepo)
+	usersHandler := grpcUsers.NewUserServerHandler(usersUsecase)
+
 	gRPCServer := grpc.NewServer(grpc.UnaryInterceptor(metricMw.ServerMetricsInterceptor))
 	genUsers.RegisterUsersServer(gRPCServer, usersHandler)
 

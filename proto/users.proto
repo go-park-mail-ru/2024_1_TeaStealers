@@ -20,6 +20,7 @@ message GetUserResponse {
   string Phone = 5;
   string Email = 6;
   string Photo = 7;
+  int32 RespCode = 3;
 }
 
 message UpdateUserInfoRequest {
@@ -33,4 +34,5 @@ message UpdateUserInfoRequest {
 
 message UpdateUserInfoResponse {
   bool Updated = 1;
+  int32 RespCode = 2;
 }
