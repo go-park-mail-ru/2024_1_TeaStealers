@@ -34,7 +34,7 @@ func (h *QuestionServerHandler) GetQuestionsByTheme(ctx context.Context, req *ge
 	response := &genQuestion.GetQuestionsByThemeResponse{}
 	response.Questions = make([]*genQuestion.QuestionResp, 0, len(questions))
 	for _, question := range questions {
-		response.Questions = append(response.Questions, &genQuestion.QuestionResp{Id: int64(question.ID), QuestionText: question.QuestionText, MaxMark: question.MaxMark})
+		response.Questions = append(response.Questions, &genQuestion.QuestionResp{Id: question.ID, QuestionText: question.QuestionText, MaxMark: question.MaxMark})
 	}
 
 	return response, nil

@@ -22,10 +22,11 @@ type respError struct {
 	Message string `json:"message"`
 }
 
-type responser interface {
-	MarshalJSON() ([]byte, error)
-	UnmarshalJSON(data []byte) error
-}
+// неиспользуемый интерфейс, ругается линтер
+// type responser interface {
+//	MarshalJSON() ([]byte, error)
+//	UnmarshalJSON(data []byte) error
+//}
 
 // WriteError prints error in json
 func WriteError(w http.ResponseWriter, statusCode int, message string) {
@@ -117,14 +118,14 @@ func TruncSlash(methodName string, count int) (string, error) {
 	// Join the remaining elements of the slice back into a string using `/` as the separator
 	newMethodName := strings.Join(parts, `/`)
 	trSlash := `/`
-	newMethodName = newMethodName + trSlash
+	newMethodName += trSlash
 	newMethodName = "https://" + newMethodName
 
 	return newMethodName, nil
 }
 
 func ReplaceURLPart(url string, position int, replacement string) (string, error) {
-	position = position - 1
+	position--
 	if position < 0 {
 		return "", errors.New("position must be non-negative")
 	}

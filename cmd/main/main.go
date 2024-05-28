@@ -52,7 +52,7 @@ func main() {
 	cfg := config.MustLoad()
 	_ = godotenv.Load()
 	logger := zap.Must(zap.NewDevelopment())
-	db, err := sql.Open("postgres", fmt.Sprintf("postgres://%v:%v@%v:%v/%v?sslmode=disable",
+	db, err := sql.Open("postgres", fmt.Sprintf("postgres:// %v:%v@%v:%v/%v?sslmode=disable",
 		os.Getenv("DB_USER"),
 		os.Getenv("DB_PASS"),
 		os.Getenv("DB_HOST"),
@@ -68,7 +68,7 @@ func main() {
 		log.Println(err)
 	}
 
-	//http.Handle("/metrics", promhttp.Handler())
+	// http.Handle("/metrics", promhttp.Handler())
 
 	r := mux.NewRouter().PathPrefix("/api").Subrouter()
 	r.Use(middleware.CORSMiddleware, middleware.AccessLogMiddleware)
@@ -81,7 +81,7 @@ func main() {
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
 	)
 	if err != nil {
-		log.Fatalf("cant connect to grpc")
+		log.Println("cant connect to grpc")
 	}
 	defer grcpConnAuth.Close()
 
@@ -89,17 +89,17 @@ func main() {
 		fmt.Sprintf("%s:%d", cfg.GRPC.QuestionContainerIP, cfg.GRPC.QuestionPort),
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
 	)
-	if err != nil {
-		log.Fatalf("cant connect to grpc")
-	}
 	defer grcpConnQuestion.Close()
+	if err != nil {
+		log.Println("cant connect to grpc")
+	}
 
 	grcpConnComplex, err := grpc.Dial(
 		fmt.Sprintf("%s:%d", cfg.GRPC.ComplexContainerIP, cfg.GRPC.ComplexPort),
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
 	)
 	if err != nil {
-		log.Fatalf("cant connect to grpc")
+		log.Println("cant connect to grpc")
 	}
 	defer grcpConnComplex.Close()
 

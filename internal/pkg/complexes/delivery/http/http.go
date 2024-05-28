@@ -60,7 +60,7 @@ func (h *ComplexClientHandler) CreateComplex(w http.ResponseWriter, r *http.Requ
 	}
 
 	newComplex, err := h.client.CreateComplex(r.Context(), &genComplex.CreateComplexRequest{CompanyId: data.CompanyId, Name: data.Name, Address: data.Address, Description: data.Description, DateBeginBuild: data.DateBeginBuild.String(), DateEndBuild: data.DateEndBuild.String(), WithoutFinishingOption: data.WithoutFinishingOption, FinishingOption: data.FinishingOption, PreFinishingOption: data.PreFinishingOption, ClassHousing: classHousing, Parking: data.Parking, Security: data.Security})
-	//newComplex.Sanitize()
+	// newComplex.Sanitize()
 	if err != nil {
 		log.Println(err)
 		utils.WriteError(w, http.StatusBadRequest, "data already is used")
@@ -158,7 +158,7 @@ func (h *ComplexClientHandler) GetComplexById(w http.ResponseWriter, r *http.Req
 		utils.WriteError(w, http.StatusBadRequest, err.Error())
 		return
 	}
-	//complexData.Sanitize()
+	// complexData.Sanitize()
 
 	if err = utils.WriteResponse(w, http.StatusOK, complexData); err != nil {
 		utils.WriteError(w, http.StatusInternalServerError, err.Error())
@@ -185,7 +185,7 @@ func (h *ComplexClientHandler) CreateCompany(w http.ResponseWriter, r *http.Requ
 		utils.WriteError(w, http.StatusBadRequest, "data already is used")
 		return
 	}
-	//newCompany.Sanitize()
+	// newCompany.Sanitize()
 
 	if err = utils.WriteResponse(w, http.StatusCreated, newCompany); err != nil {
 		utils.WriteError(w, http.StatusInternalServerError, err.Error())
@@ -280,7 +280,7 @@ func (h *ComplexClientHandler) GetCompanyById(w http.ResponseWriter, r *http.Req
 		utils.WriteError(w, http.StatusBadRequest, err.Error())
 		return
 	}
-	//companyData.Sanitize()
+	// companyData.Sanitize()
 
 	if err = utils.WriteResponse(w, http.StatusOK, companyData); err != nil {
 		utils.WriteError(w, http.StatusInternalServerError, err.Error())

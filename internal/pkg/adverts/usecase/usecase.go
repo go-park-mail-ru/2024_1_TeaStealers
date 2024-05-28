@@ -427,7 +427,7 @@ func (u *AdvertUsecase) GetRectangleAdvertsList(ctx context.Context, advertFilte
 		return nil, err
 	}
 
-	//utils.LogSucces(u.logger, ctx.Value("requestId").(string), utils.UsecaseLayer, adverts.GetRectangleAdvertsListMethod)
+	// utils.LogSucces(u.logger, ctx.Value("requestId").(string), utils.UsecaseLayer, adverts.GetRectangleAdvertsListMethod)
 	return foundAdverts, nil
 }
 
@@ -474,12 +474,14 @@ func (u *AdvertUsecase) GetPriority(ctx context.Context, advertId int64) (priori
 	}()
 
 	if priority, err = u.repo.GetPriority(ctx, tx, advertId); err != nil {
-		//utils.LogError(u.logger, ctx.Value("requestId").(string), utils.UsecaseLayer, adverts.GetRectangleAdvertsListMethod, err)
+		// utils.LogError(u.logger, ctx.Value("requestId").(string), utils.UsecaseLayer, adverts.GetRectangleAdvertsListMethod, err)
 		return 0, err
 	}
-	err = tx.Commit()
+	if err = tx.Commit(); err != nil {
+		return 0, nil
+	}
 
-	//utils.LogSucces(u.logger, ctx.Value("requestId").(string), utils.UsecaseLayer, adverts.GetRectangleAdvertsListMethod)
+	// utils.LogSucces(u.logger, ctx.Value("requestId").(string), utils.UsecaseLayer, adverts.GetRectangleAdvertsListMethod)
 	return priority, nil
 }
 

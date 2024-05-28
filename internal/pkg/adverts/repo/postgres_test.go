@@ -6,7 +6,6 @@ import (
 	"context"
 	"database/sql"
 	"errors"
-	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/satori/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
@@ -1825,7 +1824,7 @@ func (suite *AdvertRepoTestSuite) TestChangeTypeAdvert() {
 }
 
 func (suite *AdvertRepoTestSuite) setupMockChangeTypeAdvert(advertType models.AdvertTypeAdvert,
-	advertId, buildingId, flatId, HouseId int64, whatExp []bool,
+	advertId, buildingId, flatId, houseId int64, whatExp []bool,
 	expError []error, whatExpCheck []bool, expErrorCheck []error) {
 	if whatExp[0] {
 		query := `SELECT 			CASE
@@ -1860,7 +1859,7 @@ END AS type_advert FROM advert AS a LEFT JOIN advert_type_flat AS atf ON a.id=at
 
 		escapedQuery := regexp.QuoteMeta(queryDeleteFlatById)
 		// rows := sqlmock.NewRows([]string{"id"})
-		// rows = rows.AddRow(HouseId)
+		// rows = rows.AddRow(houseId)
 
 		suite.mock.ExpectExec(escapedQuery).
 			WillReturnError(expError[9]).WithArgs(sqlmock.AnyArg()).
@@ -1872,7 +1871,7 @@ END AS type_advert FROM advert AS a LEFT JOIN advert_type_flat AS atf ON a.id=at
 
 		escapedQuery := regexp.QuoteMeta(queryDeleteAdvertTypeFlat)
 		// rows := sqlmock.NewRows([]string{"id"})
-		// rows = rows.AddRow(HouseId)
+		// rows = rows.AddRow(houseId)
 
 		suite.mock.ExpectExec(escapedQuery).
 			WillReturnError(expError[11]).WithArgs(sqlmock.AnyArg(), sqlmock.AnyArg()).
@@ -1884,7 +1883,7 @@ END AS type_advert FROM advert AS a LEFT JOIN advert_type_flat AS atf ON a.id=at
 
 		escapedQuery := regexp.QuoteMeta(query)
 		rows := sqlmock.NewRows([]string{"id"})
-		rows = rows.AddRow(HouseId)
+		rows = rows.AddRow(houseId)
 
 		suite.mock.ExpectQuery(escapedQuery).
 			WillReturnError(expErrorCheck[0]).WithArgs(sqlmock.AnyArg()).
@@ -1896,7 +1895,7 @@ END AS type_advert FROM advert AS a LEFT JOIN advert_type_flat AS atf ON a.id=at
 	VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id`
 		escapedQuery := regexp.QuoteMeta(queryInsertHouse)
 		rows := sqlmock.NewRows([]string{"id"})
-		rows = rows.AddRow(HouseId)
+		rows = rows.AddRow(houseId)
 
 		suite.mock.ExpectQuery(escapedQuery).
 			WillReturnError(expError[4]).WithArgs(sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(),
@@ -1909,7 +1908,7 @@ END AS type_advert FROM advert AS a LEFT JOIN advert_type_flat AS atf ON a.id=at
 
 		escapedQuery := regexp.QuoteMeta(queryInsertTypeHouse)
 		// rows := sqlmock.NewRows([]string{"id"})
-		// rows = rows.AddRow(HouseId)
+		// rows = rows.AddRow(houseId)
 
 		suite.mock.ExpectExec(escapedQuery).
 			WillReturnError(expError[6]).WithArgs(sqlmock.AnyArg(), sqlmock.AnyArg()).
@@ -1921,7 +1920,7 @@ END AS type_advert FROM advert AS a LEFT JOIN advert_type_flat AS atf ON a.id=at
 
 		escapedQuery := regexp.QuoteMeta(queryDeleteHouseById)
 		// rows := sqlmock.NewRows([]string{"id"})
-		// rows = rows.AddRow(HouseId)
+		// rows = rows.AddRow(houseId)
 
 		suite.mock.ExpectExec(escapedQuery).
 			WillReturnError(expError[10]).WithArgs(sqlmock.AnyArg()).
@@ -1933,7 +1932,7 @@ END AS type_advert FROM advert AS a LEFT JOIN advert_type_flat AS atf ON a.id=at
 
 		escapedQuery := regexp.QuoteMeta(queryRestoreAdvertTypeHouse)
 		// rows := sqlmock.NewRows([]string{"id"})
-		// rows = rows.AddRow(HouseId)
+		// rows = rows.AddRow(houseId)
 
 		suite.mock.ExpectExec(escapedQuery).
 			WillReturnError(expError[14]).WithArgs(sqlmock.AnyArg(), sqlmock.AnyArg()).
@@ -1941,11 +1940,11 @@ END AS type_advert FROM advert AS a LEFT JOIN advert_type_flat AS atf ON a.id=at
 	}
 
 	if whatExp[2] {
-		querySelectBuildingIdByHouse := `SELECT b.id AS buildingid, h.id AS houseid  FROM advert AS a JOIN advert_type_house AS at ON at.advert_id=a.id JOIN house AS h ON h.id=at.house_id JOIN building AS b ON h.building_id=b.id WHERE a.id=$1`
+		querySelectBuildingIdByHouse := `SELECT b.id AS buildingid, h.id AS houseId  FROM advert AS a JOIN advert_type_house AS at ON at.advert_id=a.id JOIN house AS h ON h.id=at.house_id JOIN building AS b ON h.building_id=b.id WHERE a.id=$1`
 
 		escapedQuery := regexp.QuoteMeta(querySelectBuildingIdByHouse)
 		rows := sqlmock.NewRows([]string{"bid", "hid"})
-		rows = rows.AddRow(buildingId, HouseId)
+		rows = rows.AddRow(buildingId, houseId)
 
 		suite.mock.ExpectQuery(escapedQuery).
 			WillReturnError(expError[2]).WithArgs(sqlmock.AnyArg()).
@@ -1956,7 +1955,7 @@ END AS type_advert FROM advert AS a LEFT JOIN advert_type_flat AS atf ON a.id=at
 
 		escapedQuery = regexp.QuoteMeta(escapedQuery)
 		rows := sqlmock.NewRows([]string{"id"})
-		rows = rows.AddRow(HouseId)
+		rows = rows.AddRow(houseId)
 
 		suite.mock.ExpectQuery(escapedQuery).
 			WillReturnError(expError[8]).WithArgs(sqlmock.AnyArg()).
@@ -1968,7 +1967,7 @@ END AS type_advert FROM advert AS a LEFT JOIN advert_type_flat AS atf ON a.id=at
 
 		escapedQuery := regexp.QuoteMeta(queryDeleteAdvertTypeHouse)
 		// rows := sqlmock.NewRows([]string{"id"})
-		// rows = rows.AddRow(HouseId)
+		// rows = rows.AddRow(houseId)
 
 		suite.mock.ExpectExec(escapedQuery).
 			WillReturnError(expError[12]).WithArgs(sqlmock.AnyArg(), sqlmock.AnyArg()).
@@ -2006,7 +2005,7 @@ END AS type_advert FROM advert AS a LEFT JOIN advert_type_flat AS atf ON a.id=at
 
 		escapedQuery := regexp.QuoteMeta(queryInsertTypeFlat)
 		// rows := sqlmock.NewRows([]string{"id"})
-		// rows = rows.AddRow(HouseId)
+		// rows = rows.AddRow(houseId)
 
 		suite.mock.ExpectExec(escapedQuery).
 			WillReturnError(expError[5]).WithArgs(sqlmock.AnyArg(), sqlmock.AnyArg()).
@@ -2030,7 +2029,7 @@ END AS type_advert FROM advert AS a LEFT JOIN advert_type_flat AS atf ON a.id=at
 
 		escapedQuery := regexp.QuoteMeta(queryRestoreAdvertTypeFlat)
 		// rows := sqlmock.NewRows([]string{"id"})
-		// rows = rows.AddRow(HouseId)
+		// rows = rows.AddRow(houseId)
 
 		suite.mock.ExpectExec(escapedQuery).
 			WillReturnError(expError[13]).WithArgs(sqlmock.AnyArg(), sqlmock.AnyArg()).

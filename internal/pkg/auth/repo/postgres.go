@@ -23,11 +23,11 @@ func NewRepository(db *sql.DB, logger *zap.Logger) *AuthRepo {
 func (r *AuthRepo) BeginTx(ctx context.Context) (models.Transaction, error) {
 	tx, err := r.db.BeginTx(ctx, nil)
 	if err != nil {
-		//utils.LogError(r.logger, ctx.Value("requestId").(string), utils.RepositoryLayer, auth.BeginTxMethod, err)
+		// utils.LogError(r.logger, ctx.Value("requestId").(string), utils.RepositoryLayer, auth.BeginTxMethod, err)
 		return nil, err
 	}
 
-	//utils.LogSucces(r.logger, ctx.Value("requestId").(string), utils.RepositoryLayer, auth.BeginTxMethod)
+	// utils.LogSucces(r.logger, ctx.Value("requestId").(string), utils.RepositoryLayer, auth.BeginTxMethod)
 	return tx, nil
 }
 
@@ -38,7 +38,7 @@ func (r *AuthRepo) CreateUser(ctx context.Context, user *models.User) (*models.U
 	var lastInsertID int64
 
 	if err := r.db.QueryRowContext(ctx, insert, user.Email, user.Phone, user.PasswordHash).Scan(&lastInsertID); err != nil {
-		//utils.LogError(r.logger, ctx.Value("requestId").(string), utils.RepositoryLayer, auth.CreateUserMethod, err)
+		// utils.LogError(r.logger, ctx.Value("requestId").(string), utils.RepositoryLayer, auth.CreateUserMethod, err)
 		return nil, err
 	}
 
@@ -48,12 +48,12 @@ func (r *AuthRepo) CreateUser(ctx context.Context, user *models.User) (*models.U
 
 	newUser := &models.User{ID: lastInsertID}
 	if err := res.Scan(&newUser.Email, &newUser.Phone, &newUser.PasswordHash, &newUser.LevelUpdate); err != nil {
-		//utils.LogError(r.logger, ctx.Value("requestId").(string), utils.RepositoryLayer, auth.CreateUserMethod, err)
+		// utils.LogError(r.logger, ctx.Value("requestId").(string), utils.RepositoryLayer, auth.CreateUserMethod, err)
 		return nil,
 			err
 	}
 
-	//utils.LogSucces(r.logger, ctx.Value("requestId").(string), utils.RepositoryLayer, auth.CreateUserMethod)
+	// utils.LogSucces(r.logger, ctx.Value("requestId").(string), utils.RepositoryLayer, auth.CreateUserMethod)
 	return newUser, nil
 }
 
@@ -85,7 +85,7 @@ func (r *AuthRepo) CheckUser(ctx context.Context, login string, passwordHash str
 	}
 
 	if user.PasswordHash != passwordHash {
-		//r.logger.Error(err.Error())
+		// r.logger.Error(err.Error())
 		// utils.LogError(r.logger, ctx.Value("requestId").(string), utils.UsecaseLayer, auth.CheckUserMethod, errors.New("password hash not equal"))
 		return nil, errors.New("wrong password")
 	}

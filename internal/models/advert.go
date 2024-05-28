@@ -300,7 +300,7 @@ type AdvertRectangleData struct {
 	// DateCreation is the date when the advert was created.
 	DateCreation time.Time `json:"dateCreation"`
 	// Rating is the rating of the advert.
-	//Rating string `json:"rating"`
+	// Rating string `json:"rating"`
 }
 
 func (advRectDat *AdvertRectangleData) Sanitize() {
