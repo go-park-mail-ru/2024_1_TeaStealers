@@ -123,6 +123,21 @@ func (mr *MockAdvertUsecaseMockRecorder) GetExistBuildingByAddress(ctx, address 
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetExistBuildingByAddress", reflect.TypeOf((*MockAdvertUsecase)(nil).GetExistBuildingByAddress), ctx, address)
 }
 
+// GetPriority mocks base method.
+func (m *MockAdvertUsecase) GetPriority(ctx context.Context, advertId int64) (int64, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetPriority", ctx, advertId)
+	ret0, _ := ret[0].(int64)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetPriority indicates an expected call of GetPriority.
+func (mr *MockAdvertUsecaseMockRecorder) GetPriority(ctx, advertId interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPriority", reflect.TypeOf((*MockAdvertUsecase)(nil).GetPriority), ctx, advertId)
+}
+
 // GetRectangleAdvertsByComplexId mocks base method.
 func (m *MockAdvertUsecase) GetRectangleAdvertsByComplexId(ctx context.Context, pageSize, offset int, comlexId int64) ([]*models.AdvertRectangleData, error) {
 	m.ctrl.T.Helper()
@@ -226,6 +241,21 @@ func (mr *MockAdvertUsecaseMockRecorder) UpdateAdvertById(ctx, advertUpdateData 
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateAdvertById", reflect.TypeOf((*MockAdvertUsecase)(nil).UpdateAdvertById), ctx, advertUpdateData)
 }
 
+// UpdatePriority mocks base method.
+func (m *MockAdvertUsecase) UpdatePriority(ctx context.Context, advertId, priority int64) (int64, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpdatePriority", ctx, advertId, priority)
+	ret0, _ := ret[0].(int64)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// UpdatePriority indicates an expected call of UpdatePriority.
+func (mr *MockAdvertUsecaseMockRecorder) UpdatePriority(ctx, advertId, priority interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdatePriority", reflect.TypeOf((*MockAdvertUsecase)(nil).UpdatePriority), ctx, advertId, priority)
+}
+
 // MockAdvertRepo is a mock of AdvertRepo interface.
 type MockAdvertRepo struct {
 	ctrl     *gomock.Controller
@@ -279,18 +309,18 @@ func (mr *MockAdvertRepoMockRecorder) ChangeTypeAdvert(ctx, tx, advertId interfa
 }
 
 // CheckExistsBuilding mocks base method.
-func (m *MockAdvertRepo) CheckExistsBuilding(ctx context.Context, adress *models.AddressData) (*models.Building, error) {
+func (m *MockAdvertRepo) CheckExistsBuilding(ctx context.Context, address *models.AddressData) (*models.Building, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CheckExistsBuilding", ctx, adress)
+	ret := m.ctrl.Call(m, "CheckExistsBuilding", ctx, address)
 	ret0, _ := ret[0].(*models.Building)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // CheckExistsBuilding indicates an expected call of CheckExistsBuilding.
-func (mr *MockAdvertRepoMockRecorder) CheckExistsBuilding(ctx, adress interface{}) *gomock.Call {
+func (mr *MockAdvertRepoMockRecorder) CheckExistsBuilding(ctx, address interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CheckExistsBuilding", reflect.TypeOf((*MockAdvertRepo)(nil).CheckExistsBuilding), ctx, adress)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CheckExistsBuilding", reflect.TypeOf((*MockAdvertRepo)(nil).CheckExistsBuilding), ctx, address)
 }
 
 // CheckExistsBuildingData mocks base method.
@@ -557,6 +587,21 @@ func (mr *MockAdvertRepoMockRecorder) GetHouseAdvertById(ctx, id interface{}) *g
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetHouseAdvertById", reflect.TypeOf((*MockAdvertRepo)(nil).GetHouseAdvertById), ctx, id)
 }
 
+// GetPriority mocks base method.
+func (m *MockAdvertRepo) GetPriority(ctx context.Context, tx models.Transaction, advertId int64) (int64, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetPriority", ctx, tx, advertId)
+	ret0, _ := ret[0].(int64)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetPriority indicates an expected call of GetPriority.
+func (mr *MockAdvertRepoMockRecorder) GetPriority(ctx, tx, advertId interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPriority", reflect.TypeOf((*MockAdvertRepo)(nil).GetPriority), ctx, tx, advertId)
+}
+
 // GetRectangleAdverts mocks base method.
 func (m *MockAdvertRepo) GetRectangleAdverts(ctx context.Context, advertFilter models.AdvertFilter) (*models.AdvertDataPage, error) {
 	m.ctrl.T.Helper()
@@ -747,4 +792,19 @@ func (m *MockAdvertRepo) UpdateHouseAdvertById(ctx context.Context, tx models.Tr
 func (mr *MockAdvertRepoMockRecorder) UpdateHouseAdvertById(ctx, tx, advertUpdateData interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateHouseAdvertById", reflect.TypeOf((*MockAdvertRepo)(nil).UpdateHouseAdvertById), ctx, tx, advertUpdateData)
+}
+
+// UpdatePriority mocks base method.
+func (m *MockAdvertRepo) UpdatePriority(ctx context.Context, tx models.Transaction, advertId, newPriority int64) (int64, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpdatePriority", ctx, tx, advertId, newPriority)
+	ret0, _ := ret[0].(int64)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// UpdatePriority indicates an expected call of UpdatePriority.
+func (mr *MockAdvertRepoMockRecorder) UpdatePriority(ctx, tx, advertId, newPriority interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdatePriority", reflect.TypeOf((*MockAdvertRepo)(nil).UpdatePriority), ctx, tx, advertId, newPriority)
 }
