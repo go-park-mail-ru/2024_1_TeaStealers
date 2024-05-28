@@ -6,6 +6,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/satori/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
@@ -295,10 +296,10 @@ func (suite *AdvertRepoTestSuite) setupMockCreateAdvert(newAdvert *models.Advert
 	if expExec {
 		query := `INSERT INTO advert (user_id, type_placement, title, description, phone, is_agent, priority) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id`
 		escapedQuery := regexp.QuoteMeta(query)
-		//suite.mock.ExpectExec(escapedQuery).
-		//		WillReturnError(errExec).WillReturnResult(sqlmock.NewResult(advId, 1)).WithArgs(
-		//			newAdvert.UserID, newAdvert.AdvertTypeSale, newAdvert.Title, newAdvert.Description,
-		//			newAdvert.Phone, newAdvert.IsAgent, newAdvert.Priority)
+		// suite.mock.ExpectExec(escapedQuery).
+		// 		WillReturnError(errExec).WillReturnResult(sqlmock.NewResult(advId, 1)).WithArgs(
+		// 			newAdvert.UserID, newAdvert.AdvertTypeSale, newAdvert.Title, newAdvert.Description,
+		// 			newAdvert.Phone, newAdvert.IsAgent, newAdvert.Priority)
 		/*
 			suite.mock.ExpectExec(query).
 				WillReturnResult(sqlmock.NewResult(1, 1)).WillReturnError(nil).
@@ -644,7 +645,7 @@ func (suite *AdvertRepoTestSuite) setupMockCreateStreet(prId int64, townName str
 func (suite *AdvertRepoTestSuite) TestCreateHouseAddress() {
 	type args struct {
 		strId     int64
-		houseAdr  string
+		houseadr  string
 		errQuery1 error
 		errQuery2 error
 		expQuery1 bool
@@ -663,7 +664,7 @@ func (suite *AdvertRepoTestSuite) TestCreateHouseAddress() {
 			name: "successful found house address",
 			args: args{
 				strId:     100,
-				houseAdr:  "adr",
+				houseadr:  "adr",
 				errQuery1: nil,
 				errQuery2: nil,
 				expQuery1: true,
@@ -678,7 +679,7 @@ func (suite *AdvertRepoTestSuite) TestCreateHouseAddress() {
 			name: "fail create house address",
 			args: args{
 				strId:     100,
-				houseAdr:  "adr",
+				houseadr:  "adr",
 				errQuery1: errors.New("some error"),
 				errQuery2: errors.New("some error"),
 				expQuery1: true,
@@ -693,7 +694,7 @@ func (suite *AdvertRepoTestSuite) TestCreateHouseAddress() {
 			name: "create house address",
 			args: args{
 				strId:     100,
-				houseAdr:  "adr",
+				houseadr:  "adr",
 				errQuery1: errors.New("some error"),
 				errQuery2: nil,
 				expQuery1: true,
@@ -713,11 +714,11 @@ func (suite *AdvertRepoTestSuite) TestCreateHouseAddress() {
 			if err != nil {
 				suite.T().Fatal("Error beginning transaction:", err)
 			}
-			suite.setupMockCreateHouseAddress(tt.args.strId, tt.args.houseAdr, tt.want.newId, tt.args.errQuery1, tt.args.errQuery2,
+			suite.setupMockCreateHouseAddress(tt.args.strId, tt.args.houseadr, tt.want.newId, tt.args.errQuery1, tt.args.errQuery2,
 				tt.args.expQuery1, tt.args.expQuery2)
 			logger := zap.Must(zap.NewDevelopment())
 			rep := repo.NewRepository(suite.db, logger)
-			strId, gotErr := rep.CreateHouseAddress(context.WithValue(context.Background(), "requestId", uuid.NewV4().String()), tx, tt.args.strId, tt.args.houseAdr)
+			strId, gotErr := rep.CreateHouseAddress(context.WithValue(context.Background(), "requestId", uuid.NewV4().String()), tx, tt.args.strId, tt.args.houseadr)
 			suite.Assert().Equal(tt.want.err, gotErr)
 			suite.Assert().Equal(tt.want.newId, strId)
 			suite.Assert().NoError(suite.mock.ExpectationsWereMet())
@@ -1091,7 +1092,7 @@ func (suite *AdvertRepoTestSuite) TestCheckExistsBuilding() {
 	}
 }
 
-func (suite *AdvertRepoTestSuite) setupMockCheckExistsBuilding(Adr models.AddressData, build models.Building,
+func (suite *AdvertRepoTestSuite) setupMockCheckExistsBuilding(adr models.AddressData, build models.Building,
 	errExec1 error, expExec1 bool) {
 	if expExec1 {
 		query := `SELECT b.id, b.address_id, b.floor, b.material_building, b.year_creation FROM building AS b JOIN address AS a ON b.address_id=a.id JOIN house_name AS h ON a.house_name_id=h.id JOIN street AS s ON h.street_id=s.id JOIN town AS t ON s.town_id=t.id JOIN province AS p ON t.province_id=p.id WHERE p.name=$1 AND t.name=$2 AND s.name=$3 AND h.name=$4;`
@@ -1101,7 +1102,7 @@ func (suite *AdvertRepoTestSuite) setupMockCheckExistsBuilding(Adr models.Addres
 			build.YearCreation)
 
 		suite.mock.ExpectQuery(escapedQuery).
-			WillReturnError(errExec1).WithArgs(Adr.Province, Adr.Town, Adr.Street, Adr.House).
+			WillReturnError(errExec1).WithArgs(adr.Province, adr.Town, adr.Street, adr.House).
 			WillReturnRows(rows)
 	}
 }
@@ -1184,7 +1185,7 @@ func (suite *AdvertRepoTestSuite) TestCheckExistsBuildingData() {
 	}
 }
 
-func (suite *AdvertRepoTestSuite) setupMockCheckExistsBuildingData(Adr models.AddressData, build models.BuildingData,
+func (suite *AdvertRepoTestSuite) setupMockCheckExistsBuildingData(adr models.AddressData, build models.BuildingData,
 	errExec1 error, expExec1 bool) {
 	if expExec1 {
 		query := `SELECT b.floor, b.material_building, b.year_creation, COALESCE(c.name, '') 
@@ -1197,7 +1198,7 @@ func (suite *AdvertRepoTestSuite) setupMockCheckExistsBuildingData(Adr models.Ad
 		rows = rows.AddRow(build.Floor, build.Material, build.YearCreation, build.ComplexName)
 
 		suite.mock.ExpectQuery(escapedQuery).
-			WillReturnError(errExec1).WithArgs(Adr.Province, Adr.Town, Adr.Street, Adr.House).
+			WillReturnError(errExec1).WithArgs(adr.Province, adr.Town, adr.Street, adr.House).
 			WillReturnRows(rows)
 	}
 }
@@ -1428,17 +1429,17 @@ func (suite *AdvertRepoTestSuite) TestSelectImages() {
 	}
 }
 
-func (suite *AdvertRepoTestSuite) setupMockSelectImages(advId int64, Imresp []*models.ImageResp,
+func (suite *AdvertRepoTestSuite) setupMockSelectImages(advId int64, imresp []*models.ImageResp,
 	errExec1 error, expExec1 bool) {
 	if expExec1 {
 		selectQuery := `SELECT id, photo, priority FROM image WHERE advert_id = $1 AND is_deleted = false`
 
 		escapedQuery := regexp.QuoteMeta(selectQuery)
 		rows := sqlmock.NewRows([]string{"id", "photo", "priority"})
-		if Imresp != nil {
+		if imresp != nil {
 
-			rows = rows.AddRow(Imresp[0].ID, Imresp[0].Photo, Imresp[0].Priority)
-			rows = rows.AddRow(Imresp[1].ID, Imresp[1].Photo, Imresp[1].Priority)
+			rows = rows.AddRow(imresp[0].ID, imresp[0].Photo, imresp[0].Priority)
+			rows = rows.AddRow(imresp[1].ID, imresp[1].Photo, imresp[1].Priority)
 
 		}
 		suite.mock.ExpectQuery(escapedQuery).
@@ -1518,16 +1519,16 @@ func (suite *AdvertRepoTestSuite) TestSelectPriceChanges() {
 	}
 }
 
-func (suite *AdvertRepoTestSuite) setupMockSelectPriceChanges(advId int64, Imresp []*models.PriceChangeData,
+func (suite *AdvertRepoTestSuite) setupMockSelectPriceChanges(advId int64, imresp []*models.PriceChangeData,
 	errExec1 error, expExec1 bool) {
 	if expExec1 {
 		selectQuery := `SELECT price, created_at FROM price_change WHERE advert_id = $1 AND is_deleted = false`
 
 		escapedQuery := regexp.QuoteMeta(selectQuery)
 		rows := sqlmock.NewRows([]string{"price", "created_at"})
-		if Imresp != nil {
-			rows = rows.AddRow(Imresp[0].Price, Imresp[0].DateCreation)
-			rows = rows.AddRow(Imresp[1].Price, Imresp[1].DateCreation)
+		if imresp != nil {
+			rows = rows.AddRow(imresp[0].Price, imresp[0].DateCreation)
+			rows = rows.AddRow(imresp[1].Price, imresp[1].DateCreation)
 		}
 		suite.mock.ExpectQuery(escapedQuery).
 			WillReturnError(errExec1).WithArgs(advId).
@@ -2487,7 +2488,7 @@ func (suite *AdvertRepoTestSuite) setupMockGetHouseAdvertById(advId int64, adver
 						Address:      "123 Main Street",
 						AddressPoint: "40.7128° N, 74.0060° W",
 						YearCreation: 2000,
-						//DateCreation: time.Now(),
+						// DateCreation: time.Now(),
 						IsDeleted: false,
 					},
 					errExec:  nil,
@@ -2509,7 +2510,7 @@ func (suite *AdvertRepoTestSuite) setupMockGetHouseAdvertById(advId int64, adver
 						Address:      "123 Main Street",
 						AddressPoint: "40.7128° N, 74.0060° W",
 						YearCreation: 2000,
-						//DateCreation: time.Now(),
+						// DateCreation: time.Now(),
 						IsDeleted: false,
 					},
 					errExec:  errors.New("error"),
@@ -2657,7 +2658,7 @@ func (suite *AdvertRepoTestSuite) setupMockGetHouseAdvertById(advId int64, adver
 				want: want{
 					build: &models.BuildingData{
 						ID: uuid.NewV4(),
-						//ComplexID:    uuid.NewV4(),
+						// ComplexID:    uuid.NewV4(),
 						Floor:        2,
 						Material:     models.MaterialStalinsky,
 						Address:      "address",
@@ -2678,7 +2679,7 @@ func (suite *AdvertRepoTestSuite) setupMockGetHouseAdvertById(advId int64, adver
 				want: want{
 					build: &models.BuildingData{
 						ID: uuid.NewV4(),
-						//ComplexID:    uuid.NewV4(),
+						// ComplexID:    uuid.NewV4(),
 						Floor:        2,
 						Material:     models.MaterialStalinsky,
 						Address:      "address",
@@ -2894,7 +2895,7 @@ func (suite *AdvertRepoTestSuite) setupMockGetHouseAdvertById(advId int64, adver
 						IsAgent:      true,
 						Address:      "123 Main St, Cityville",
 						AddressPoint: "Coordinates",
-						//Images:       []*models.ImageResp{},
+						// Images:       []*models.ImageResp{},
 						HouseProperties: &models.HouseProperties{
 							CeilingHeight: 2.7,
 							SquareArea:    200.5,
@@ -2911,9 +2912,9 @@ func (suite *AdvertRepoTestSuite) setupMockGetHouseAdvertById(advId int64, adver
 							PhotoCompany: "luxury_estates.jpg",
 							NameCompany:  "Elite Realty",
 						},
-						//YearCreation: time.Now().Year(),
+						// YearCreation: time.Now().Year(),
 						Material: "Brick",
-						//DateCreation: time.Now(),
+						// DateCreation: time.Now(),
 					},
 					err: nil,
 				},
@@ -3532,7 +3533,7 @@ func (suite *UserRepoTestSuite) TestAdvertRepo_GetFlatAdvertById() {
 		IsAgent:      true,
 		Address:      "123 Main St, Cityville",
 		AddressPoint: "Coordinates",
-		//Images:       []*models.ImageResp{},
+		// Images:       []*models.ImageResp{},
 		FlatProperties: &models.FlatProperties{
 			CeilingHeight:     2.7,
 			FloorGeneral:      3,
@@ -3548,9 +3549,9 @@ func (suite *UserRepoTestSuite) TestAdvertRepo_GetFlatAdvertById() {
 			PhotoCompany: "luxury_estates.jpg",
 			NameCompany:  "Elite Realty",
 		},
-		//YearCreation: time.Now().Year(),
+		// YearCreation: time.Now().Year(),
 		Material: "Brick",
-		//DateCreation: time.Now(),
+		// DateCreation: time.Now(),
 	}
 	query := regexp.QuoteMeta(`
 	SELECT
@@ -3658,7 +3659,7 @@ func (suite *UserRepoTestSuite) TestAdvertRepo_GetRectangleAdvertsByUserId() {
 		Price:       100000,
 		Phone:       "123-456-7890",
 		Address:     "123 Main St, Cityville",
-		//Images:       []*models.ImageResp{},
+		// Images:       []*models.ImageResp{},
 		FlatProperties: &models.FlatRectangleProperties{
 			FloorGeneral:  3,
 			RoomCount:     2,
@@ -3666,7 +3667,7 @@ func (suite *UserRepoTestSuite) TestAdvertRepo_GetRectangleAdvertsByUserId() {
 			Floor:         2,
 		},
 
-		//DateCreation: time.Now(),
+		// DateCreation: time.Now(),
 	}
 	queryBaseAdvert := regexp.QuoteMeta(`
         SELECT
@@ -3770,7 +3771,7 @@ func (suite *UserRepoTestSuite) TestAdvertRepo_GetRectangleAdvertsByComplexId() 
 		Price:       100000,
 		Phone:       "123-456-7890",
 		Address:     "123 Main St, Cityville",
-		//Images:       []*models.ImageResp{},
+		// Images:       []*models.ImageResp{},
 		FlatProperties: &models.FlatRectangleProperties{
 			FloorGeneral:  3,
 			RoomCount:     2,
@@ -3778,7 +3779,7 @@ func (suite *UserRepoTestSuite) TestAdvertRepo_GetRectangleAdvertsByComplexId() 
 			Floor:         2,
 		},
 
-		//DateCreation: time.Now(),
+		// DateCreation: time.Now(),
 	}
 	queryBaseAdvert := regexp.QuoteMeta(`
         SELECT
