@@ -8,13 +8,13 @@ import (
 )
 
 type MetricsHTTP interface {
-	IncreaseHits(string, string)
-	IncreaseErr(string, string, string)
-	AddDurationToHistogram(string, string, time.Duration)
-	IncreaseExtSystemErr(string, string)
-	ServerMetricsInterceptor(context.Context,
-		interface{},
-		*grpc.UnaryServerInfo,
-		grpc.UnaryHandler) (interface{}, error)
-	ServerMetricsMiddleware(next http.Handler, urlTruncCount int, replacePos int, altName string) http.Handler
+	IncreaseHits(status, method, path string)
+	AddDurationToHandlerTimings(path, method string, duration time.Duration)
+	AddDurationToMicroserviceTimings(mcrserviceMethod string, duration time.Duration)
+	AddDurationToQueryTimings(repoMethod, queryName string, duration time.Duration)
+	IncreaseExtSystemErr(systemName, errorType string)
+	ServerMetricsInterceptor(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error)
+	MetricsMiddleware(next http.Handler, replacePos int, altName string) http.Handler
+	RegisterMetrics()
+	UpdatePSS()
 }

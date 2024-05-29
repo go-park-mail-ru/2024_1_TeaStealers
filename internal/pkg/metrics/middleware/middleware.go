@@ -3,112 +3,175 @@ package middleware
 import (
 	"2024_1_TeaStealers/internal/pkg/metrics"
 	"2024_1_TeaStealers/internal/pkg/utils"
+	"bufio"
+	"bytes"
 	"context"
-	"fmt"
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/collectors"
 	"google.golang.org/grpc"
+	"io/ioutil"
+	"log"
 	"net/http"
+	"strconv"
+	"strings"
 	"time"
 )
 
 type GrpcMiddleware struct {
-	totalErrors        *prometheus.CounterVec
-	totalHits          *prometheus.CounterVec
-	responseStatusHits *prometheus.CounterVec
-	requestTimings     *prometheus.HistogramVec
-	extSystemErrors    *prometheus.CounterVec
+	TotalHitsHandler      *prometheus.CounterVec   // все хиты хэндлера
+	HitsHandlerStatusCode *prometheus.CounterVec   // хиты хэндлеров с разделением по кодам
+	HandlerTimings        *prometheus.HistogramVec // тайминги по хэндлерам
+	MicroserviceTimings   *prometheus.HistogramVec // тайминги микросервисов
+	QueryTimings          *prometheus.HistogramVec // тайминги запросов
+	ExtSystemErrors       *prometheus.CounterVec   // ошибки запросов / микросервисов
+	PssGauge              *prometheus.Gauge        // PSS
 }
 
 func Create() metrics.MetricsHTTP {
-	labelErrors := []string{"status_code", "path", "method"}
-	totalErrors := prometheus.NewCounterVec(prometheus.CounterOpts{
-		Name: "http_requests_errors_total",
-		Help: "number_of_all_errors",
-	}, labelErrors)
-	prometheus.MustRegister(totalErrors)
-
-	labelHits := []string{"path", "method"}
-	totalHits := prometheus.NewCounterVec(prometheus.CounterOpts{
-		Name: "http_requests_total",
-		Help: "number_of_all_requests",
-	}, labelHits)
-	prometheus.MustRegister(totalHits)
+	labelResponseHits := []string{"path", "method"}
+	totalHitsHandler := prometheus.NewCounterVec(prometheus.CounterOpts{
+		Name: "http_requests_status_total_hits",
+		Help: "number_of_method_total_hits",
+	}, labelResponseHits)
 
 	labelResponseStatusHits := []string{"status_code", "path", "method"}
-	responseStatusHits := prometheus.NewCounterVec(prometheus.CounterOpts{
-		Name: "http_requests_status_hits_total",
+	HitsHandlerStatusCode := prometheus.NewCounterVec(prometheus.CounterOpts{
+		Name: "http_requests_status_hits_handler",
 		Help: "number_of_requests_by_status_code",
 	}, labelResponseStatusHits)
-	prometheus.MustRegister(responseStatusHits)
 
 	labelLatency := []string{"path", "method"}
-	requestTimings := prometheus.NewHistogramVec(prometheus.HistogramOpts{
+	HandlerTimings := prometheus.NewHistogramVec(prometheus.HistogramOpts{
 		Name:    "http_request_latency_seconds",
 		Help:    "Latency of HTTP requests.",
 		Buckets: prometheus.DefBuckets,
 	}, labelLatency)
-	prometheus.MustRegister(requestTimings)
+
+	labelLatencymicro := []string{"microservice_method"}
+	microserviceTimings := prometheus.NewHistogramVec(prometheus.HistogramOpts{
+		Name:    "microservice_request_latency_seconds",
+		Help:    "Latency of microservice requests.",
+		Buckets: prometheus.DefBuckets,
+	}, labelLatencymicro)
+
+	labelLatencyQuery := []string{"repo_method", "query_name"}
+	QueryTimings := prometheus.NewHistogramVec(prometheus.HistogramOpts{
+		Name:    "query_request_latency_seconds",
+		Help:    "Latency of microservice requests.",
+		Buckets: prometheus.DefBuckets,
+	}, labelLatencyQuery)
 
 	labelExtSystemErrors := []string{"system_name", "error_type"}
-	extSystemErrors := prometheus.NewCounterVec(prometheus.CounterOpts{
+	ExtSystemErrors := prometheus.NewCounterVec(prometheus.CounterOpts{
 		Name: "external_system_errors_total",
 		Help: "number_of_external_system_errors",
 	}, labelExtSystemErrors)
-	prometheus.MustRegister(extSystemErrors)
+
+	pssGauge := prometheus.NewGauge(
+		prometheus.GaugeOpts{
+			Name: "process_proportional_set_size_bytes",
+			Help: "Proportional Set Size (PSS) of the process in bytes.",
+		},
+	)
 
 	return &GrpcMiddleware{
-		totalErrors:        totalErrors,
-		totalHits:          totalHits,
-		responseStatusHits: responseStatusHits,
-		requestTimings:     requestTimings,
-		extSystemErrors:    extSystemErrors,
+		TotalHitsHandler:      totalHitsHandler,
+		HitsHandlerStatusCode: HitsHandlerStatusCode,
+		HandlerTimings:        HandlerTimings,
+		MicroserviceTimings:   microserviceTimings,
+		QueryTimings:          QueryTimings,
+		ExtSystemErrors:       ExtSystemErrors,
+		PssGauge:              &pssGauge,
 	}
 }
 
-func (m *GrpcMiddleware) IncreaseHits(method, path string) {
-	m.totalHits.WithLabelValues(path, method).Inc()
+func (m *GrpcMiddleware) RegisterMetrics() {
+	prometheus.MustRegister(m.TotalHitsHandler)
+	prometheus.MustRegister(m.HitsHandlerStatusCode)
+	prometheus.MustRegister(m.HandlerTimings)
+	prometheus.MustRegister(m.MicroserviceTimings)
+	prometheus.MustRegister(m.QueryTimings)
+	prometheus.MustRegister(m.ExtSystemErrors)
+	prometheus.MustRegister(*m.PssGauge)
+	reg := prometheus.NewRegistry()
+	err := reg.Register(collectors.NewGoCollector())
+	if err != nil {
+		log.Println(err)
+	}
+	if err = reg.Register(collectors.NewProcessCollector(collectors.ProcessCollectorOpts{})); err != nil {
+		log.Println(err)
+	}
 }
 
-func (m *GrpcMiddleware) IncreaseErr(statusCode, method, path string) {
-	m.totalErrors.WithLabelValues(statusCode, path, method).Inc()
-	m.responseStatusHits.WithLabelValues(statusCode, path, method).Inc()
+func (m *GrpcMiddleware) UpdatePSS() {
+	for {
+		pss, err := GetPSS()
+		if err != nil {
+			log.Printf("Error getting PSS: %v", err)
+			continue
+		}
+		(*m.PssGauge).Set(float64(pss) * 1024) // convert to bytes
+		time.Sleep(10 * time.Second)           // Adjust the frequency as needed
+	}
 }
 
-func (m *GrpcMiddleware) AddDurationToHistogram(method, path string, duration time.Duration) {
-	m.requestTimings.WithLabelValues(path, method).Observe(duration.Seconds())
+func (m *GrpcMiddleware) IncreaseHits(status, method, path string) {
+	m.TotalHitsHandler.WithLabelValues(path, method).Inc()
+	m.HitsHandlerStatusCode.WithLabelValues(status, path, method).Inc()
+}
+
+func (m *GrpcMiddleware) AddDurationToHandlerTimings(path, method string, duration time.Duration) {
+	m.HandlerTimings.WithLabelValues(path, method).Observe(duration.Seconds())
+}
+
+func (m *GrpcMiddleware) AddDurationToMicroserviceTimings(mcrserviceMethod string, duration time.Duration) {
+	m.MicroserviceTimings.WithLabelValues(mcrserviceMethod).Observe(duration.Seconds())
+}
+
+func (m *GrpcMiddleware) AddDurationToQueryTimings(repoMethod, queryName string, duration time.Duration) {
+	m.QueryTimings.WithLabelValues(repoMethod, queryName).Observe(duration.Seconds())
 }
 
 func (m *GrpcMiddleware) IncreaseExtSystemErr(systemName, errorType string) {
-	m.extSystemErrors.WithLabelValues(systemName, errorType).Inc()
+	m.ExtSystemErrors.WithLabelValues(systemName, errorType).Inc()
 }
 
 func (m *GrpcMiddleware) ServerMetricsInterceptor(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
+	startTime := time.Now()
+	resp, err := handler(ctx, req)
+	duration := time.Since(startTime)
 
-	start := time.Now()
-	h, err := handler(ctx, req)
-	tm := time.Since(start)
-	if err != nil { // todo - ошибка не всегда означает 500, надо подумать как различать
-		m.IncreaseErr("500", info.FullMethod, "")
+	m.AddDurationToMicroserviceTimings(info.FullMethod, duration)
+
+	respCode, err2 := utils.GetValueFromInterface(resp, "RespCode")
+	if err2 != nil {
+		return resp, err
 	}
-	m.IncreaseHits(info.FullMethod, "")
-	m.AddDurationToHistogram(info.FullMethod, "", tm)
-	return h, err
+
+	var intCode int32
+	var ok bool
+	if intCode, ok = respCode.(int32); !ok {
+		return resp, err
+	}
+
+	strCode := strconv.Itoa(int(intCode))
+	m.IncreaseHits(strCode, "", info.FullMethod)
+
+	return resp, err
 }
 
-func (m *GrpcMiddleware) ServerMetricsMiddleware(next http.Handler, urlTruncCount int, replacePos int, altName string) http.Handler {
+func (m *GrpcMiddleware) MetricsMiddleware(next http.Handler, replacePos int, altName string) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		rwCode := &responseWriter{ResponseWriter: w, statusCode: http.StatusOK}
 
 		start := time.Now()
-		ww := &responseWriter{ResponseWriter: w}
-		next.ServeHTTP(ww, r)
+		next.ServeHTTP(rwCode, r)
 		tm := time.Since(start)
-		methodName, err1 := utils.TruncSlash(r.URL.String(), urlTruncCount)
-		methodName, err2 := utils.ReplaceURLPart(methodName, replacePos, altName)
-		if err1 == nil && err2 == nil {
-			m.IncreaseHits(methodName, r.Method)
-			m.AddDurationToHistogram(methodName, r.Method, tm)
-			m.IncreaseErr(fmt.Sprintf("%d", ww.statusCode), r.Method, methodName)
-		}
+
+		statusCode := rwCode.statusCode
+
+		m.IncreaseHits(strconv.Itoa(statusCode), r.Method, utils.ReplaceURLPart(r.URL.String(), altName, replacePos))
+		m.AddDurationToHandlerTimings(r.URL.String(), r.Method, tm)
 	})
 }
 
@@ -120,4 +183,34 @@ type responseWriter struct {
 func (rw *responseWriter) WriteHeader(code int) {
 	rw.statusCode = code
 	rw.ResponseWriter.WriteHeader(code)
+}
+
+func GetPSS() (int64, error) {
+	data, err := ioutil.ReadFile("/proc/self/smaps")
+	if err != nil {
+		return 0, err
+	}
+
+	var pss int64
+	scanner := bufio.NewScanner(bytes.NewReader(data))
+	for scanner.Scan() {
+		line := scanner.Text()
+		if strings.HasPrefix(line, "Pss:") {
+			fields := strings.Fields(line)
+			if len(fields) < 2 {
+				continue
+			}
+			value, err := strconv.ParseInt(fields[1], 10, 64)
+			if err != nil {
+				return 0, err
+			}
+			pss += value
+		}
+	}
+
+	if err := scanner.Err(); err != nil {
+		return 0, err
+	}
+
+	return pss, nil
 }

@@ -17,7 +17,6 @@ services:
       - ${DB_PORT}:5432
     networks:
       - tean-network
-  
   #migrate:
   #  build: .
   #  depends_on:
@@ -27,8 +26,7 @@ services:
   #    "until pg_isready -h db -p 5432 -U postgres; do echo waiting for db; sleep 2; done; migrate -path=/migrations -database postgres://postgres@db:5432/mydb?sslmode=disable up"
   #  ]
   #  volumes:
-  #    - ./migrations:/migrations 
-  
+  #    - ./migrations:/migrations
   main:
     depends_on:
       - db
@@ -55,6 +53,8 @@ services:
     restart: always
     expose:
       - "${GRPC_AUTH_PORT}"
+    ports:
+      - '8091:8091'
     depends_on:
       - db
     networks:
@@ -70,6 +70,8 @@ services:
     restart: always
     expose:
       - "${GRPC_USER_PORT}"
+    ports:
+      - '8092:8092'
     depends_on:
       - db
     networks:
@@ -77,7 +79,7 @@ services:
 
   tean-advert:
     env_file:
-       - ./.env
+      - ./.env
     container_name: ${GRPC_ADVERT_CONTAINER_IP}
     build:
       context: .
@@ -85,14 +87,16 @@ services:
     restart: always
     expose:
       - "${GRPC_ADVERT_PORT}"
+    ports:
+      - '8090:8090'
     depends_on:
       - db
     networks:
       - tean-network
-  
+
   tean-question:
     env_file:
-       - ./.env
+      - ./.env
     container_name: ${GRPC_QUESTION_CONTAINER_IP}
     build:
       context: .
@@ -100,14 +104,16 @@ services:
     restart: always
     expose:
       - "${GRPC_QUESTION_PORT}"
+    ports:
+      - '8094:8094'
     depends_on:
       - db
     networks:
       - tean-network
-  
+
   tean-complex:
     env_file:
-       - ./.env
+      - ./.env
     container_name: ${GRPC_COMPLEX_CONTAINER_IP}
     build:
       context: .
@@ -115,6 +121,8 @@ services:
     restart: always
     expose:
       - "${GRPC_COMPLEX_PORT}"
+    ports:
+      - '8095:8095'
     depends_on:
       - db
     networks:
@@ -158,8 +166,8 @@ services:
     ports:
       - "3000:3000"
     environment:
-          - GF_SECURITY_ADMIN_USER=root
-          - GF_SECURITY_ADMIN_PASSWORD=root
+      - GF_SECURITY_ADMIN_USER=root
+      - GF_SECURITY_ADMIN_PASSWORD=root
     networks:
       - tean-network
 

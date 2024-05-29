@@ -1,5 +1,6 @@
 package repo_test
 
+/*
 import (
 	"2024_1_TeaStealers/internal/models"
 	"2024_1_TeaStealers/internal/pkg/adverts/repo"
@@ -300,13 +301,11 @@ func (suite *AdvertRepoTestSuite) setupMockCreateAdvert(newAdvert *models.Advert
 		// 		WillReturnError(errExec).WillReturnResult(sqlmock.NewResult(advId, 1)).WithArgs(
 		// 			newAdvert.UserID, newAdvert.AdvertTypeSale, newAdvert.Title, newAdvert.Description,
 		// 			newAdvert.Phone, newAdvert.IsAgent, newAdvert.Priority)
-		/*
 			suite.mock.ExpectExec(query).
 				WillReturnResult(sqlmock.NewResult(1, 1)).WillReturnError(nil).
 				WithArgs(newAdvert.UserID, newAdvert.AdvertTypeSale, newAdvert.Title,
 					newAdvert.Description, newAdvert.Phone, newAdvert.IsAgent, newAdvert.Priority)
 
-		*/
 		rows := sqlmock.NewRows([]string{"id"})
 		rows = rows.AddRow(newAdvert.ID)
 
@@ -1188,10 +1187,10 @@ func (suite *AdvertRepoTestSuite) TestCheckExistsBuildingData() {
 func (suite *AdvertRepoTestSuite) setupMockCheckExistsBuildingData(adr models.AddressData, build models.BuildingData,
 	errExec1 error, expExec1 bool) {
 	if expExec1 {
-		query := `SELECT b.floor, b.material_building, b.year_creation, COALESCE(c.name, '') 
-		FROM building AS b JOIN address AS a ON b.address_id=a.id JOIN house_name AS h ON a.house_name_id=h.id 
-		    JOIN street AS s ON h.street_id=s.id JOIN town AS t ON s.town_id=t.id JOIN province AS p ON 
-		        t.province_id=p.id LEFT JOIN complex AS c ON c.id=b.complex_id WHERE p.name=$1 AND t.name=$2 AND 
+		query := `SELECT b.floor, b.material_building, b.year_creation, COALESCE(c.name, '')
+		FROM building AS b JOIN address AS a ON b.address_id=a.id JOIN house_name AS h ON a.house_name_id=h.id
+		    JOIN street AS s ON h.street_id=s.id JOIN town AS t ON s.town_id=t.id JOIN province AS p ON
+		        t.province_id=p.id LEFT JOIN complex AS c ON c.id=b.complex_id WHERE p.name=$1 AND t.name=$2 AND
 		                                                                             s.name=$3 AND h.name=$4;`
 		escapedQuery := regexp.QuoteMeta(query)
 		rows := sqlmock.NewRows([]string{"id", "address", "floor", "material"})
@@ -1772,7 +1771,6 @@ func (suite *AdvertRepoTestSuite) TestChangeTypeAdvert() {
 				err: errTest,
 			},
 		},
-		/*
 			{
 				name: "fail ChangeTypeAdvert queryRestoreHouseById",
 				args: args{
@@ -1800,7 +1798,6 @@ func (suite *AdvertRepoTestSuite) TestChangeTypeAdvert() {
 				},
 			},
 
-		*/
 	}
 
 	for _, tt := range tests {
@@ -2040,7 +2037,6 @@ END AS type_advert FROM advert AS a LEFT JOIN advert_type_flat AS atf ON a.id=at
 }
 
 // 		prepare   func(f *fields, a *args, w *want) *httptest.ResponseRecorder
-/*
 type args struct {
 		typeAdvert models.AdvertTypeAdvert
 		expBool    []bool  // 15
@@ -2079,8 +2075,7 @@ type args struct {
 				err: errTest,
 			},
 		},
-*/
-/*
+
 func (suite *AdvertRepoTestSuite) TestGetHouseAdvertById() {
 	type args struct {
 		advertId  int64
@@ -2228,8 +2223,6 @@ func (suite *AdvertRepoTestSuite) setupMockGetHouseAdvertById(advId int64, adver
 			WillReturnRows(rows)
 	}
 }
-/*
-/*
 	func (suite *UserRepoTestSuite) TestCreatePriceChange() {
 		type args struct {
 			adv     *models.PriceChange

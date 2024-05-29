@@ -32,6 +32,7 @@ message IncreasePriorityRequest {
 
 message IncreasePriorityResponse {
   int64 Amount = 1;
+  int32 RespCode = 2;
 }
 
 message GetPriorityRequest {
@@ -40,6 +41,7 @@ message GetPriorityRequest {
 
 message GetPriorityResponse {
   int64 Amount = 1;
+  int32 RespCode = 2;
 }
 
 message GetAdvertByIdRequest {

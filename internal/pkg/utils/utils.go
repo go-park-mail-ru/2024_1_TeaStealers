@@ -3,10 +3,10 @@ package utils
 import (
 	"crypto/sha1"
 	"encoding/hex"
-	"errors"
 	"fmt"
 	"io"
 	"net/http"
+	"reflect"
 	"strings"
 	"time"
 )
@@ -96,51 +96,45 @@ func StringToTime(layout, value string) (time.Time, error) {
 	return t, nil
 }
 
-func TruncSlash(methodName string, count int) (string, error) {
-	if count < 0 {
-		return methodName, nil
-	}
-	methodName = strings.TrimPrefix(methodName, "https://")
+func ReplaceURLPart(url string, replacement string, index int) string {
+	parts := strings.Split(url, "/")
 
-	slashes := strings.Count(methodName, `/`)
-	if slashes < count {
-		return "", fmt.Errorf("methodName contains %d slashes, but count is %d", slashes, count)
+	if index >= 0 && index < len(parts) {
+		parts[index] = replacement
 	}
 
-	// Split the methodName string into a slice of strings using `/` as the separator
-	parts := strings.Split(methodName, `?`)
-
-	parts = strings.Split(parts[0], `/`)
-
-	// parts = parts[:len(parts)-count-1]
-
-	// Join the remaining elements of the slice back into a string using `/` as the separator
-	newMethodName := strings.Join(parts, `/`)
-	trSlash := `/`
-	newMethodName += trSlash
-	newMethodName = "https://" + newMethodName
-
-	return newMethodName, nil
+	replacedURL := strings.Join(parts, "/")
+	return replacedURL
 }
 
-func ReplaceURLPart(url string, position int, replacement string) (string, error) {
-	position--
-	if position < 0 {
-		return "", errors.New("position must be non-negative")
-	}
-	url = strings.TrimPrefix(url, "https://")
-	parts := strings.Split(url, `/`)
+func GetValueFromInterface(i interface{}, fieldName string) (interface{}, error) {
+	value := reflect.ValueOf(i)
 
-	if len(parts) <= position {
-		return "", fmt.Errorf("URL contains %d parts, but position is %d", len(parts), position)
+	if value.Kind() == reflect.Ptr {
+		if value.IsNil() {
+			return nil, fmt.Errorf("nil pointer value")
+		}
+		value = value.Elem()
 	}
 
-	// Replace the part at the specified position
-	parts[position] = replacement
+	if value.Kind() == reflect.Struct {
+		fieldValue := value.FieldByName(fieldName)
+		if fieldValue.IsValid() {
+			return fieldValue.Interface(), nil
+		} else {
+			return nil, fmt.Errorf("field %s not found", fieldName)
+		}
+	}
 
-	// Join the parts back into a string using `/` as the separator
-	newURL := strings.Join(parts, `/`)
-	newURL = "https://" + newURL
+	if value.Kind() == reflect.Map && value.Type().Key().Kind() == reflect.String {
+		mapKey := reflect.ValueOf(fieldName)
+		fieldValue := value.MapIndex(mapKey)
+		if fieldValue.IsValid() {
+			return fieldValue.Interface(), nil
+		} else {
+			return nil, fmt.Errorf("key %s not found in map", fieldName)
+		}
+	}
 
-	return newURL, nil
+	return nil, fmt.Errorf("unsupported value type: %s", value.Type().String())
 }

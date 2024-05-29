@@ -53,7 +53,7 @@ func (h *AuthServerHandler) SignUp(ctx context.Context, req *genAuth.SignUpReque
 
 		h.logger.Error(err.Error())
 		// utils.LogErrorResponse(h.logger, ctx.Value("requestId").(string), utils.DeliveryLayer, SignUpMethod, err, http.StatusBadRequest)
-		return nil, errors.New("error signup")
+		return &genAuth.SignUpInResponse{RespCode: 400}, errors.New("error signup")
 	}
 
 	newUser.Sanitize()
@@ -64,7 +64,7 @@ func (h *AuthServerHandler) SignUp(ctx context.Context, req *genAuth.SignUpReque
 	h.logger.Info("success logIn")
 
 	// utils.LogSuccesResponse(h.logger, ctx.Value("requestId").(string), utils.DeliveryLayer, SignUpMethod)
-	return &genAuth.SignUpInResponse{Token: token, Exp: dateString}, nil
+	return &genAuth.SignUpInResponse{Token: token, Exp: dateString, RespCode: 200}, nil
 
 }
 
@@ -90,7 +90,7 @@ func (h *AuthServerHandler) Login(ctx context.Context, req *genAuth.SignInReques
 
 	if err != nil {
 		utils.LogErrorResponse(h.logger, requestID[0], utils.DeliveryLayer, LoginMethod, err, http.StatusBadRequest)
-		return nil, errors.New("error login")
+		return &genAuth.SignUpInResponse{RespCode: 400}, errors.New("error login")
 	}
 
 	layout := "2006-01-02 15:04:05"
@@ -98,7 +98,7 @@ func (h *AuthServerHandler) Login(ctx context.Context, req *genAuth.SignInReques
 
 	h.logger.Info("success signUp")
 	utils.LogSuccesResponse(h.logger, requestID[0], utils.DeliveryLayer, LoginMethod)
-	return &genAuth.SignUpInResponse{Token: token, Exp: dateString}, nil
+	return &genAuth.SignUpInResponse{Token: token, Exp: dateString, RespCode: 200}, nil
 }
 
 func (h *AuthServerHandler) CheckAuth(ctx context.Context, req *genAuth.CheckAuthRequest) (*genAuth.CheckAuthResponse, error) {
@@ -108,11 +108,11 @@ func (h *AuthServerHandler) CheckAuth(ctx context.Context, req *genAuth.CheckAut
 	if err != nil {
 		h.logger.Error(err.Error())
 		// utils.LogErrorResponse(h.logger, ctx.Value("requestId").(string), utils.DeliveryLayer, CheckAuthMethod, err, http.StatusUnauthorized)
-		return nil, errors.New("user not exists")
+		return &genAuth.CheckAuthResponse{RespCode: 400}, errors.New("user not exists")
 	}
 	h.logger.Info("success checkAuth")
 	// utils.LogSuccesResponse(h.logger, ctx.Value("requestId").(string), utils.DeliveryLayer, CheckAuthMethod)
-	return &genAuth.CheckAuthResponse{Authorized: true}, nil
+	return &genAuth.CheckAuthResponse{Authorized: true, RespCode: 200}, nil
 }
 
 func (h *AuthServerHandler) UpdateUserPassword(ctx context.Context, req *genAuth.UpdatePasswordRequest) (*genAuth.UpdatePasswordResponse, error) {
@@ -127,7 +127,7 @@ func (h *AuthServerHandler) UpdateUserPassword(ctx context.Context, req *genAuth
 
 	token, exp, err := h.uc.UpdateUserPassword(ctx, data)
 	if err != nil {
-		return nil, err
+		return &genAuth.UpdatePasswordResponse{RespCode: 400}, err
 	}
-	return &genAuth.UpdatePasswordResponse{Updated: true, Token: token, Exp: exp.String()}, nil
+	return &genAuth.UpdatePasswordResponse{Updated: true, Token: token, Exp: exp.String(), RespCode: 200}, nil
 }

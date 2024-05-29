@@ -45,21 +45,21 @@ func (h *ComplexServerHandler) CreateComplex(ctx context.Context, req *genComple
 	newComplex, err := h.uc.CreateComplex(ctx, &data)
 	if err != nil {
 		log.Println(err)
-		return nil, err
+		return &genComplex.CreateComplexResponse{RespCode: 400}, err
 	}
 	newComplex.Sanitize()
 
-	return &genComplex.CreateComplexResponse{}, nil
+	return &genComplex.CreateComplexResponse{RespCode: 200}, nil
 }
 
 func (h *ComplexServerHandler) UpdateComplexPhoto(ctx context.Context, req *genComplex.UpdateComplexPhotoRequest) (*genComplex.UpdateComplexPhotoResponse, error) {
 	fileName, err := h.uc.UpdateComplexPhoto(ctx, req.ComplexId, req.FileName)
 	if err != nil {
 		log.Println(err)
-		return nil, err
+		return &genComplex.UpdateComplexPhotoResponse{RespCode: 400}, err
 	}
 
-	return &genComplex.UpdateComplexPhotoResponse{Filename: fileName}, nil
+	return &genComplex.UpdateComplexPhotoResponse{Filename: fileName, RespCode: 200}, nil
 }
 
 // GetComplexById handles the request for getting complex by id
@@ -67,7 +67,7 @@ func (h *ComplexServerHandler) GetComplexById(ctx context.Context, req *genCompl
 	complexData, err := h.uc.GetComplexById(ctx, req.Id)
 	if err != nil {
 		log.Println(err)
-		return nil, err
+		return &genComplex.GetComplexByIdResponse{RespCode: 400}, err
 	}
 
 	var classHousing genComplex.ClassHouse
@@ -85,7 +85,7 @@ func (h *ComplexServerHandler) GetComplexById(ctx context.Context, req *genCompl
 		classHousing = genComplex.ClassHouse_CLASS_HOUSE_COMFORT
 	}
 
-	return &genComplex.GetComplexByIdResponse{Id: complexData.ID, CompanyId: complexData.CompanyId, Name: complexData.Name, Address: complexData.Address, Photo: complexData.Photo, Description: complexData.Description, DateBeginBuild: complexData.DateBeginBuild.String(), DateEndBuild: complexData.DateEndBuild.String(), WithoutFinishingOption: complexData.WithoutFinishingOption, FinishingOption: complexData.FinishingOption, PreFinishingOption: complexData.PreFinishingOption, ClassHousing: classHousing, Parking: complexData.Parking, Security: complexData.Security}, nil
+	return &genComplex.GetComplexByIdResponse{Id: complexData.ID, CompanyId: complexData.CompanyId, Name: complexData.Name, Address: complexData.Address, Photo: complexData.Photo, Description: complexData.Description, DateBeginBuild: complexData.DateBeginBuild.String(), DateEndBuild: complexData.DateEndBuild.String(), WithoutFinishingOption: complexData.WithoutFinishingOption, FinishingOption: complexData.FinishingOption, PreFinishingOption: complexData.PreFinishingOption, ClassHousing: classHousing, Parking: complexData.Parking, Security: complexData.Security, RespCode: 200}, nil
 }
 
 func (h *ComplexServerHandler) CreateCompany(ctx context.Context, req *genComplex.CreateCompanyRequest) (*genComplex.CreateCompanyResponse, error) {
@@ -95,21 +95,21 @@ func (h *ComplexServerHandler) CreateCompany(ctx context.Context, req *genComple
 	newCompany, err := h.uc.CreateCompany(ctx, &data)
 	if err != nil {
 		log.Println(err)
-		return nil, err
+		return &genComplex.CreateCompanyResponse{RespCode: 400}, err
 	}
 	newCompany.Sanitize()
 
-	return &genComplex.CreateCompanyResponse{}, nil
+	return &genComplex.CreateCompanyResponse{RespCode: 200}, nil
 }
 
 func (h *ComplexServerHandler) UpdateCompanyPhoto(ctx context.Context, req *genComplex.UpdateCompanyPhotoRequest) (*genComplex.UpdateCompanyPhotoResponse, error) {
 	fileName, err := h.uc.UpdateCompanyPhoto(ctx, req.CompanyId, req.FileName)
 	if err != nil {
 		log.Println(err)
-		return nil, err
+		return &genComplex.UpdateCompanyPhotoResponse{RespCode: 400}, err
 	}
 
-	return &genComplex.UpdateCompanyPhotoResponse{Filename: fileName}, nil
+	return &genComplex.UpdateCompanyPhotoResponse{Filename: fileName, RespCode: 200}, nil
 }
 
 // GetCompanyById handles the request for getting company by id
@@ -118,8 +118,8 @@ func (h *ComplexServerHandler) GetCompanyById(ctx context.Context, req *genCompl
 	companyData, err := h.uc.GetCompanyById(ctx, req.Id)
 	if err != nil {
 		log.Println(err)
-		return nil, err
+		return &genComplex.GetCompanyByIdResponse{RespCode: 400}, err
 	}
 
-	return &genComplex.GetCompanyByIdResponse{Id: companyData.ID, Name: companyData.Name, Photo: companyData.Photo, YearFounded: int32(companyData.YearFounded), Phone: companyData.Phone, Description: companyData.Description}, nil
+	return &genComplex.GetCompanyByIdResponse{Id: companyData.ID, Name: companyData.Name, Photo: companyData.Photo, YearFounded: int32(companyData.YearFounded), Phone: companyData.Phone, Description: companyData.Description, RespCode: 200}, nil
 }

@@ -5,8 +5,11 @@ import (
 	genUsers "2024_1_TeaStealers/internal/pkg/users/delivery/grpc/gen"
 	UsersR "2024_1_TeaStealers/internal/pkg/users/repo"
 	UsersUc "2024_1_TeaStealers/internal/pkg/users/usecase"
+	"context"
+	"errors"
 	"github.com/gorilla/mux"
 	"net/http"
+	"time"
 
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"go.uber.org/zap"
@@ -37,7 +40,6 @@ func main() {
 func run() (err error) {
 	_ = godotenv.Load()
 	logger := zap.Must(zap.NewDevelopment())
-
 	db, err := sql.Open("postgres", fmt.Sprintf("postgres://%v:%v@%v:%v/%v?sslmode=disable",
 		os.Getenv("DB_USER"),
 		os.Getenv("DB_PASS"),
@@ -57,11 +59,29 @@ func run() (err error) {
 	r := mux.NewRouter().PathPrefix("/api").Subrouter()
 	r.PathPrefix("/metrics").Handler(promhttp.Handler())
 	http.Handle("/", r)
+	httpSrv := &http.Server{
+		Addr:              ":8092",
+		Handler:           r,
+		ReadHeaderTimeout: 10 * time.Second,
+		ReadTimeout:       10 * time.Second,
+		WriteTimeout:      10 * time.Second,
+	}
 
-	usersRepo := UsersR.NewRepository(db)
+	go func() {
+
+		logger.Info("Starting HTTP server for metrics on :8092")
+		if err := httpSrv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
+			logger.Error(fmt.Sprintf("HTTP server listen: %s\n", err))
+		}
+	}()
+
+	metricMw := metricsMw.Create()
+	metricMw.RegisterMetrics()
+	go metricMw.UpdatePSS()
+	usersRepo := UsersR.NewRepository(db, metricMw)
 	usersUsecase := UsersUc.NewUserUsecase(usersRepo)
 	usersHandler := grpcUsers.NewUserServerHandler(usersUsecase)
-	metricMw := metricsMw.Create()
+
 	gRPCServer := grpc.NewServer(grpc.UnaryInterceptor(metricMw.ServerMetricsInterceptor))
 	genUsers.RegisterUsersServer(gRPCServer, usersHandler)
 
@@ -80,6 +100,15 @@ func run() (err error) {
 	signal.Notify(stop, syscall.SIGTERM, syscall.SIGINT)
 
 	<-stop
+	logger.Info(fmt.Sprintf("Received signal: %v\n", stop))
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+	if err := httpSrv.Shutdown(ctx); err != nil {
+		logger.Error(fmt.Sprintf("Server shutdown failed: %s\n", err))
+	}
+
 	gRPCServer.GracefulStop()
+
 	return nil
 }

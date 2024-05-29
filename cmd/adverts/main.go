@@ -4,28 +4,27 @@ import (
 	genAdverts "2024_1_TeaStealers/internal/pkg/adverts/delivery/grpc/gen"
 	advertsR "2024_1_TeaStealers/internal/pkg/adverts/repo"
 	advertsUc "2024_1_TeaStealers/internal/pkg/adverts/usecase"
-	"net/http"
-
-	"github.com/gorilla/mux"
-
-	"github.com/prometheus/client_golang/prometheus/promhttp"
-
+	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 	"log"
 	"net"
+	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
+	"github.com/gorilla/mux"
 	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
 	"go.uber.org/zap"
+	"google.golang.org/grpc"
 
 	grpcAdverts "2024_1_TeaStealers/internal/pkg/adverts/delivery/grpc"
 	metricsMw "2024_1_TeaStealers/internal/pkg/metrics/middleware"
-
-	"google.golang.org/grpc"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
 func main() {
@@ -55,18 +54,36 @@ func run() (err error) {
 	}
 
 	r := mux.NewRouter().PathPrefix("/api").Subrouter()
-	r.PathPrefix("/metrics").Handler(promhttp.Handler())
+	r.Handle("/metrics", promhttp.Handler())
 	http.Handle("/", r)
+	httpSrv := &http.Server{
+		Addr:              ":8093",
+		Handler:           r,
+		ReadHeaderTimeout: 10 * time.Second,
+		ReadTimeout:       10 * time.Second,
+		WriteTimeout:      10 * time.Second,
+	}
 
-	advertsRepo := advertsR.NewRepository(db, logger)
+	go func() {
+
+		logger.Info("Starting HTTP server for metrics on :8093")
+		if err := httpSrv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
+			logger.Error(fmt.Sprintf("HTTP server listen: %s\n", err))
+		}
+	}()
+
+	metricMw := metricsMw.Create()
+	metricMw.RegisterMetrics()
+	go metricMw.UpdatePSS()
+	advertsRepo := advertsR.NewRepository(db, logger, metricMw)
 	advertsUsecase := advertsUc.NewAdvertUsecase(advertsRepo, logger)
 	authHandler := grpcAdverts.NewServerAdvertsHandler(advertsUsecase, logger)
-	metricMw := metricsMw.Create()
+
 	gRPCServer := grpc.NewServer(grpc.UnaryInterceptor(metricMw.ServerMetricsInterceptor))
 	genAdverts.RegisterAdvertsServer(gRPCServer, authHandler)
 
 	go func() {
-		logger.Info(fmt.Sprintf("Start server on %s\n", ":8083"))
+		logger.Info("Starting gRPC server on :8083")
 		listener, err := net.Listen("tcp", ":8083")
 		if err != nil {
 			log.Fatal(err)
@@ -80,6 +97,15 @@ func run() (err error) {
 	signal.Notify(stop, syscall.SIGTERM, syscall.SIGINT)
 
 	<-stop
+	logger.Info(fmt.Sprintf("Received signal: %v\n", stop))
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+	if err := httpSrv.Shutdown(ctx); err != nil {
+		logger.Error(fmt.Sprintf("Server shutdown failed: %s\n", err))
+	}
+
 	gRPCServer.GracefulStop()
+
 	return nil
 }
