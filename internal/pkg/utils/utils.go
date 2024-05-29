@@ -3,8 +3,6 @@ package utils
 import (
 	"crypto/sha1"
 	"encoding/hex"
-	"encoding/json"
-	"errors"
 	"fmt"
 	"io"
 	"net/http"
