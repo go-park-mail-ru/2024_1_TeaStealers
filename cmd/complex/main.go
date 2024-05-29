@@ -77,6 +77,7 @@ func run() (err error) {
 
 	metricMw := metricsMw.Create()
 	metricMw.RegisterMetrics()
+	go metricMw.UpdatePSS()
 	complexRepo := complexR.NewRepository(db, logger, metricMw)
 	complexUsecase := complexUc.NewComplexUsecase(complexRepo, logger)
 	complexHandler := grpcComplex.NewComplexServerHandler(complexUsecase, logger)

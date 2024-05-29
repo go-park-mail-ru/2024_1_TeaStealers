@@ -74,6 +74,7 @@ func run() (err error) {
 
 	metricMw := metricsMw.Create()
 	metricMw.RegisterMetrics()
+	go metricMw.UpdatePSS()
 	advertsRepo := advertsR.NewRepository(db, logger, metricMw)
 	advertsUsecase := advertsUc.NewAdvertUsecase(advertsRepo, logger)
 	authHandler := grpcAdverts.NewServerAdvertsHandler(advertsUsecase, logger)

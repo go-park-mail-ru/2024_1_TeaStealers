@@ -72,6 +72,7 @@ func run() (err error) {
 	}()
 	metricMw := metricsMw.Create()
 	metricMw.RegisterMetrics()
+	go metricMw.UpdatePSS()
 	authRepo := authR.NewRepository(db, logger, metricMw)
 	authUsecase := authUc.NewAuthUsecase(authRepo, logger)
 	authHandler := grpcAuth.NewServerAuthHandler(authUsecase, logger)

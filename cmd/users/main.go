@@ -77,6 +77,7 @@ func run() (err error) {
 
 	metricMw := metricsMw.Create()
 	metricMw.RegisterMetrics()
+	go metricMw.UpdatePSS()
 	usersRepo := UsersR.NewRepository(db, metricMw)
 	usersUsecase := UsersUc.NewUserUsecase(usersRepo)
 	usersHandler := grpcUsers.NewUserServerHandler(usersUsecase)

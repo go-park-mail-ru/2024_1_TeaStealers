@@ -71,7 +71,7 @@ func main() {
 	}
 	metricmW := metricsMw.Create()
 	metricmW.RegisterMetrics()
-
+	go metricmW.UpdatePSS()
 	r := mux.NewRouter().PathPrefix("/api").Subrouter()
 	r.Use(middleware.CORSMiddleware, middleware.AccessLogMiddleware)
 	r.HandleFunc("/ping", pingPongHandler).Methods(http.MethodGet)

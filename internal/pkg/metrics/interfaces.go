@@ -16,4 +16,5 @@ type MetricsHTTP interface {
 	ServerMetricsInterceptor(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error)
 	MetricsMiddleware(next http.Handler, replacePos int, altName string) http.Handler
 	RegisterMetrics()
+	UpdatePSS()
 }

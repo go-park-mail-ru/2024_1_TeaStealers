@@ -3,11 +3,17 @@ package middleware
 import (
 	"2024_1_TeaStealers/internal/pkg/metrics"
 	"2024_1_TeaStealers/internal/pkg/utils"
+	"bufio"
+	"bytes"
 	"context"
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/collectors"
 	"google.golang.org/grpc"
+	"io/ioutil"
+	"log"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -18,6 +24,7 @@ type GrpcMiddleware struct {
 	MicroserviceTimings   *prometheus.HistogramVec // тайминги микросервисов
 	QueryTimings          *prometheus.HistogramVec // тайминги запросов
 	ExtSystemErrors       *prometheus.CounterVec   // ошибки запросов / микросервисов
+	PssGauge              *prometheus.Gauge        // PSS
 }
 
 func Create() metrics.MetricsHTTP {
@@ -60,6 +67,13 @@ func Create() metrics.MetricsHTTP {
 		Help: "number_of_external_system_errors",
 	}, labelExtSystemErrors)
 
+	pssGauge := prometheus.NewGauge(
+		prometheus.GaugeOpts{
+			Name: "process_proportional_set_size_bytes",
+			Help: "Proportional Set Size (PSS) of the process in bytes.",
+		},
+	)
+
 	return &GrpcMiddleware{
 		TotalHitsHandler:      totalHitsHandler,
 		HitsHandlerStatusCode: HitsHandlerStatusCode,
@@ -67,6 +81,7 @@ func Create() metrics.MetricsHTTP {
 		MicroserviceTimings:   microserviceTimings,
 		QueryTimings:          QueryTimings,
 		ExtSystemErrors:       ExtSystemErrors,
+		PssGauge:              &pssGauge,
 	}
 }
 
@@ -77,6 +92,27 @@ func (m *GrpcMiddleware) RegisterMetrics() {
 	prometheus.MustRegister(m.MicroserviceTimings)
 	prometheus.MustRegister(m.QueryTimings)
 	prometheus.MustRegister(m.ExtSystemErrors)
+	prometheus.MustRegister(*m.PssGauge)
+	reg := prometheus.NewRegistry()
+	err := reg.Register(collectors.NewGoCollector())
+	if err != nil {
+		log.Println(err)
+	}
+	if err = reg.Register(collectors.NewProcessCollector(collectors.ProcessCollectorOpts{})); err != nil {
+		log.Println(err)
+	}
+}
+
+func (m *GrpcMiddleware) UpdatePSS() {
+	for {
+		pss, err := GetPSS()
+		if err != nil {
+			log.Printf("Error getting PSS: %v", err)
+			continue
+		}
+		(*m.PssGauge).Set(float64(pss) * 1024) // convert to bytes
+		time.Sleep(10 * time.Second)           // Adjust the frequency as needed
+	}
 }
 
 func (m *GrpcMiddleware) IncreaseHits(status, method, path string) {
@@ -147,4 +183,34 @@ type responseWriter struct {
 func (rw *responseWriter) WriteHeader(code int) {
 	rw.statusCode = code
 	rw.ResponseWriter.WriteHeader(code)
+}
+
+func GetPSS() (int64, error) {
+	data, err := ioutil.ReadFile("/proc/self/smaps")
+	if err != nil {
+		return 0, err
+	}
+
+	var pss int64
+	scanner := bufio.NewScanner(bytes.NewReader(data))
+	for scanner.Scan() {
+		line := scanner.Text()
+		if strings.HasPrefix(line, "Pss:") {
+			fields := strings.Fields(line)
+			if len(fields) < 2 {
+				continue
+			}
+			value, err := strconv.ParseInt(fields[1], 10, 64)
+			if err != nil {
+				return 0, err
+			}
+			pss += value
+		}
+	}
+
+	if err := scanner.Err(); err != nil {
+		return 0, err
+	}
+
+	return pss, nil
 }

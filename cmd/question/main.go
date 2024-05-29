@@ -80,6 +80,7 @@ func run() (err error) {
 	questionHandler := grpcQuestion.NewQuestionServerHandler(questionUsecase, logger)
 	metricMw := metricsMw.Create()
 	metricMw.RegisterMetrics()
+	go metricMw.UpdatePSS()
 	gRPCServer := grpc.NewServer(grpc.UnaryInterceptor(metricMw.ServerMetricsInterceptor))
 	genQuestion.RegisterQuestionServer(gRPCServer, questionHandler)
 
