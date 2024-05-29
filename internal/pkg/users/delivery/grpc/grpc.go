@@ -29,13 +29,13 @@ func (h *UserServerHandler) GetCurUser(ctx context.Context, req *genUsers.GetUse
 
 	userInfo, err := h.uc.GetUser(ctx, userId)
 	if err != nil {
-		return nil, errors.New("user is not exists")
+		return &genUsers.GetUserResponse{RespCode: 400}, errors.New("user is not exists")
 	}
 	userInfo.Sanitize()
 
 	return &genUsers.GetUserResponse{FirstName: userInfo.FirstName, Surname: userInfo.SecondName,
 		DateBirthday: userInfo.DateBirthday.String(), Phone: userInfo.Phone, Email: userInfo.Email,
-		Photo: userInfo.Photo}, nil
+		Photo: userInfo.Photo, RespCode: 200}, nil
 }
 
 func (h *UserServerHandler) UpdateUserInfo(ctx context.Context, req *genUsers.UpdateUserInfoRequest) (*genUsers.UpdateUserInfoResponse, error) {
@@ -48,28 +48,9 @@ func (h *UserServerHandler) UpdateUserInfo(ctx context.Context, req *genUsers.Up
 
 	user, err := h.uc.UpdateUserInfo(ctx, userId, data)
 	if err != nil {
-		return nil, err
+		return &genUsers.UpdateUserInfoResponse{RespCode: 400}, err
 	}
 	user.Sanitize()
 
-	return &genUsers.UpdateUserInfoResponse{Updated: true}, nil
-}
-
-func (h *UserServerHandler) UpdateUserPassword(ctx context.Context, req *genUsers.UpdatePasswordRequest) (*genUsers.UpdatePasswordResponse, error) {
-	ctx = context.WithValue(ctx, "requestId", uuid.NewV4().String())
-
-	userId := req.Id
-
-	data := &models.UserUpdatePassword{
-		ID:          userId,
-		OldPassword: req.OldPassword,
-		NewPassword: req.NewPassword,
-	}
-	data.Sanitize()
-
-	token, exp, err := h.uc.UpdateUserPassword(ctx, data)
-	if err != nil {
-		return nil, err
-	}
-	return &genUsers.UpdatePasswordResponse{Updated: true, Token: token, Exp: exp.String()}, nil
+	return &genUsers.UpdateUserInfoResponse{Updated: true, RespCode: 200}, nil
 }

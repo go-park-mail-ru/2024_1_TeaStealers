@@ -7,7 +7,6 @@ option go_package = "./internal/pkg/users/delivery/grpc/gen/;gen";
 service Users {
   rpc GetCurUser(GetUserRequest) returns (GetUserResponse) {}
   rpc UpdateUserInfo(UpdateUserInfoRequest) returns (UpdateUserInfoResponse) {}
-  rpc UpdateUserPassword(UpdatePasswordRequest) returns (UpdatePasswordResponse) {}
 }
 
 message GetUserRequest {
@@ -21,6 +20,7 @@ message GetUserResponse {
   string Phone = 5;
   string Email = 6;
   string Photo = 7;
+  int32 RespCode = 3;
 }
 
 message UpdateUserInfoRequest {
@@ -34,16 +34,5 @@ message UpdateUserInfoRequest {
 
 message UpdateUserInfoResponse {
   bool Updated = 1;
-}
-
-message UpdatePasswordRequest {
-  int64 Id = 1;
-  string OldPassword = 2;
-  string NewPassword = 3;
-}
-
-message UpdatePasswordResponse {
-  bool Updated = 1;
-  string Token= 2;
-  string Exp= 3;
+  int32 RespCode = 2;
 }

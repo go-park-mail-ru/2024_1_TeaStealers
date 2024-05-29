@@ -3,23 +3,36 @@ package utils
 import (
 	"crypto/sha1"
 	"encoding/hex"
-	"encoding/json"
-	"errors"
 	"fmt"
 	"io"
 	"net/http"
+	"reflect"
 	"strings"
 	"time"
 )
 
+type respSuccess struct {
+	StatusCode int         `json:"statusCode"`
+	Message    string      `json:"message,omitempty"`
+	Payload    interface{} `json:"payload"`
+}
+
+type respError struct {
+	Message string `json:"message"`
+}
+
+// неиспользуемый интерфейс, ругается линтер
+type responser interface {
+	MarshalJSON() ([]byte, error)
+	UnmarshalJSON(data []byte) error
+}
+
 // WriteError prints error in json
 func WriteError(w http.ResponseWriter, statusCode int, message string) {
-	errorResponse := struct {
-		Message string `json:"message"`
-	}{
+	errorResponse := respError{
 		Message: message,
 	}
-	resp, err := json.Marshal(errorResponse)
+	resp, err := errorResponse.MarshalJSON()
 	if err != nil {
 		return
 	}
@@ -30,15 +43,11 @@ func WriteError(w http.ResponseWriter, statusCode int, message string) {
 
 // WriteResponse writes a JSON response with the specified status code and data.
 func WriteResponse(w http.ResponseWriter, statusCode int, response interface{}) error {
-	respSuccess := struct {
-		StatusCode int         `json:"statusCode"`
-		Message    string      `json:"message,omitempty"`
-		Payload    interface{} `json:"payload"`
-	}{
+	respSuccess := respSuccess{
 		StatusCode: statusCode,
 		Payload:    response,
 	}
-	resp, err := json.Marshal(respSuccess)
+	resp, err := respSuccess.MarshalJSON()
 	if err != nil {
 		return err
 	}
@@ -49,14 +58,14 @@ func WriteResponse(w http.ResponseWriter, statusCode int, response interface{}) 
 }
 
 // ReadRequestData reads and parses the request body into the provided structure.
-func ReadRequestData(r *http.Request, request interface{}) error {
+func ReadRequestData(r *http.Request, request responser) error {
 	data, err := io.ReadAll(r.Body)
 	if err != nil {
 		return err
 	}
 	defer r.Body.Close()
 
-	if err := json.Unmarshal(data, &request); err != nil {
+	if err := request.UnmarshalJSON(data); err != nil {
 		return err
 	}
 	return nil
@@ -87,27 +96,45 @@ func StringToTime(layout, value string) (time.Time, error) {
 	return t, nil
 }
 
-func TruncSlash(methodName string, count int) (string, error) {
-	if count < 0 {
-		return "", errors.New("count must be non-negative")
+func ReplaceURLPart(url string, replacement string, index int) string {
+	parts := strings.Split(url, "/")
+
+	if index >= 0 && index < len(parts) {
+		parts[index] = replacement
 	}
 
-	slashes := strings.Count(methodName, `/`)
-	if slashes < count {
-		return "", fmt.Errorf("methodName contains %d slashes, but count is %d", slashes, count)
+	replacedURL := strings.Join(parts, "/")
+	return replacedURL
+}
+
+func GetValueFromInterface(i interface{}, fieldName string) (interface{}, error) {
+	value := reflect.ValueOf(i)
+
+	if value.Kind() == reflect.Ptr {
+		if value.IsNil() {
+			return nil, fmt.Errorf("nil pointer value")
+		}
+		value = value.Elem()
 	}
 
-	// Split the methodName string into a slice of strings using `/` as the separator
-	parts := strings.Split(methodName, `?`)
+	if value.Kind() == reflect.Struct {
+		fieldValue := value.FieldByName(fieldName)
+		if fieldValue.IsValid() {
+			return fieldValue.Interface(), nil
+		} else {
+			return nil, fmt.Errorf("field %s not found", fieldName)
+		}
+	}
 
-	parts = strings.Split(parts[0], `/`)
+	if value.Kind() == reflect.Map && value.Type().Key().Kind() == reflect.String {
+		mapKey := reflect.ValueOf(fieldName)
+		fieldValue := value.MapIndex(mapKey)
+		if fieldValue.IsValid() {
+			return fieldValue.Interface(), nil
+		} else {
+			return nil, fmt.Errorf("key %s not found in map", fieldName)
+		}
+	}
 
-	// parts = parts[:len(parts)-count-1]
-
-	// Join the remaining elements of the slice back into a string using `/` as the separator
-	newMethodName := strings.Join(parts, `/`)
-	trSlash := `/`
-	newMethodName = newMethodName + trSlash
-
-	return newMethodName, nil
+	return nil, fmt.Errorf("unsupported value type: %s", value.Type().String())
 }
