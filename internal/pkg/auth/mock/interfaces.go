@@ -37,31 +37,17 @@ func (m *MockAuthUsecase) EXPECT() *MockAuthUsecaseMockRecorder {
 }
 
 // CheckAuth mocks base method.
-func (m *MockAuthUsecase) CheckAuth(arg0 context.Context, arg1 int64) error {
+func (m *MockAuthUsecase) CheckAuth(ctx context.Context, id int64, jwtLevel int) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CheckAuth", arg0, arg1)
+	ret := m.ctrl.Call(m, "CheckAuth", ctx, id, jwtLevel)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // CheckAuth indicates an expected call of CheckAuth.
-func (mr *MockAuthUsecaseMockRecorder) CheckAuth(arg0, arg1 interface{}) *gomock.Call {
+func (mr *MockAuthUsecaseMockRecorder) CheckAuth(ctx, id, jwtLevel interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CheckAuth", reflect.TypeOf((*MockAuthUsecase)(nil).CheckAuth), arg0, arg1)
-}
-
-// GetUserLevelById mocks base method.
-func (m *MockAuthUsecase) GetUserLevelById(ctx context.Context, id int64, level int) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetUserLevelById", ctx, id, level)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// GetUserLevelById indicates an expected call of GetUserLevelById.
-func (mr *MockAuthUsecaseMockRecorder) GetUserLevelById(ctx, id, level interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUserLevelById", reflect.TypeOf((*MockAuthUsecase)(nil).GetUserLevelById), ctx, id, level)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CheckAuth", reflect.TypeOf((*MockAuthUsecase)(nil).CheckAuth), ctx, id, jwtLevel)
 }
 
 // Login mocks base method.
@@ -96,6 +82,22 @@ func (m *MockAuthUsecase) SignUp(arg0 context.Context, arg1 *models.UserSignUpDa
 func (mr *MockAuthUsecaseMockRecorder) SignUp(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SignUp", reflect.TypeOf((*MockAuthUsecase)(nil).SignUp), arg0, arg1)
+}
+
+// UpdateUserPassword mocks base method.
+func (m *MockAuthUsecase) UpdateUserPassword(arg0 context.Context, arg1 *models.UserUpdatePassword) (string, time.Time, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpdateUserPassword", arg0, arg1)
+	ret0, _ := ret[0].(string)
+	ret1, _ := ret[1].(time.Time)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
+}
+
+// UpdateUserPassword indicates an expected call of UpdateUserPassword.
+func (mr *MockAuthUsecaseMockRecorder) UpdateUserPassword(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateUserPassword", reflect.TypeOf((*MockAuthUsecase)(nil).UpdateUserPassword), arg0, arg1)
 }
 
 // MockAuthRepo is a mock of AuthRepo interface.
@@ -134,6 +136,20 @@ func (m *MockAuthRepo) CheckUser(ctx context.Context, login, passwordHash string
 func (mr *MockAuthRepoMockRecorder) CheckUser(ctx, login, passwordHash interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CheckUser", reflect.TypeOf((*MockAuthRepo)(nil).CheckUser), ctx, login, passwordHash)
+}
+
+// CheckUserPassword mocks base method.
+func (m *MockAuthRepo) CheckUserPassword(arg0 context.Context, arg1 int64, arg2 string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CheckUserPassword", arg0, arg1, arg2)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// CheckUserPassword indicates an expected call of CheckUserPassword.
+func (mr *MockAuthRepoMockRecorder) CheckUserPassword(arg0, arg1, arg2 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CheckUserPassword", reflect.TypeOf((*MockAuthRepo)(nil).CheckUserPassword), arg0, arg1, arg2)
 }
 
 // CreateUser mocks base method.
@@ -179,4 +195,19 @@ func (m *MockAuthRepo) GetUserLevelById(ctx context.Context, id int64) (int, err
 func (mr *MockAuthRepoMockRecorder) GetUserLevelById(ctx, id interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUserLevelById", reflect.TypeOf((*MockAuthRepo)(nil).GetUserLevelById), ctx, id)
+}
+
+// UpdateUserPassword mocks base method.
+func (m *MockAuthRepo) UpdateUserPassword(arg0 context.Context, arg1 int64, arg2 string) (int, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpdateUserPassword", arg0, arg1, arg2)
+	ret0, _ := ret[0].(int)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// UpdateUserPassword indicates an expected call of UpdateUserPassword.
+func (mr *MockAuthRepoMockRecorder) UpdateUserPassword(arg0, arg1, arg2 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateUserPassword", reflect.TypeOf((*MockAuthRepo)(nil).UpdateUserPassword), arg0, arg1, arg2)
 }

@@ -97,15 +97,17 @@ func (h *UserHandlerPhoto) UpdateUserInfo(w http.ResponseWriter, r *http.Request
 		utils.WriteError(w, http.StatusBadRequest, "incorrect id")
 		return
 	}
-	data := &models.UserUpdateData{}
+
+	data := models.UserUpdateData{}
 
 	if err := utils.ReadRequestData(r, &data); err != nil {
 		utils.WriteError(w, http.StatusBadRequest, "incorrect data format")
 		return
 	}
+
 	data.Sanitize()
 
-	user, err := h.uc.UpdateUserInfo(r.Context(), id, data)
+	user, err := h.uc.UpdateUserInfo(r.Context(), id, &data)
 	if err != nil {
 		utils.WriteError(w, http.StatusBadRequest, err.Error())
 		return
