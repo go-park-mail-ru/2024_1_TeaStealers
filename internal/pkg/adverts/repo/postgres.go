@@ -2327,6 +2327,9 @@ func (r *AdvertRepo) GetRectangleAdvertsByComplexId(ctx context.Context, pageSiz
 // LikeAdvert creates a like in the database.
 func (r *AdvertRepo) LikeAdvert(ctx context.Context, advertId int64, userId int64) error {
 	tx, err := r.BeginTx(ctx)
+	if err != nil {
+		return err
+	}
 	defer func() {
 		if err := tx.Rollback(); err != nil {
 			utils.LogError(r.logger, ctx.Value("requestId").(string), utils.UsecaseLayer, adverts.DeleteAdvertByIdMethod, err)
@@ -2335,7 +2338,8 @@ func (r *AdvertRepo) LikeAdvert(ctx context.Context, advertId int64, userId int6
 
 	query := `SELECT advert_id, user_id FROM favourite_advert WHERE advert_id = $1 AND user_id = $2`
 
-	start := time.Now()
+	var start time.Time
+	start = time.Now()
 	res := r.db.QueryRow(query, advertId, userId)
 	dur := time.Since(start)
 	r.metricsC.AddDurationToQueryTimings("LikeAdvert", "select favourite_advert", dur)
@@ -2370,15 +2374,21 @@ func (r *AdvertRepo) LikeAdvert(ctx context.Context, advertId int64, userId int6
 
 	start = time.Now()
 	insert := `INSERT INTO favourite_advert (advert_id, user_id) VALUES ($1, $2)`
+
 	if _, err := r.db.Exec(insert, advertId, userId); err != nil {
+		dur = time.Since(start)
+		r.metricsC.IncreaseExtSystemErr("database", "insert")
+		r.metricsC.AddDurationToQueryTimings("LikeAdvert", "update favourite_advert", dur)
 		// utils.LogError(r.logger, ctx.Value("requestId").(string), utils.RepositoryLayer, adverts.CreateAdvertMethod, err)
 		return err
 	}
+	dur = time.Since(start)
+	r.metricsC.AddDurationToQueryTimings("LikeAdvert", "update favourite_advert", dur)
 
-	if err != nil {
-		utils.LogError(r.logger, ctx.Value("requestId").(string), utils.UsecaseLayer, adverts.DeleteAdvertByIdMethod, err)
-		return err
-	}
+	// if err != nil {
+	// utils.LogError(r.logger, ctx.Value("requestId").(string), utils.UsecaseLayer, adverts.DeleteAdvertByIdMethod, err)
+	// return err
+	// }
 
 	if _, err = r.UpdatePriority(ctx, tx, advertId, 100); err != nil {
 		return err

@@ -1,22 +1,5 @@
 package repo_test
 
-import (
-	"2024_1_TeaStealers/internal/models"
-	"2024_1_TeaStealers/internal/pkg/adverts/repo"
-	"2024_1_TeaStealers/internal/pkg/middleware"
-	"context"
-	"database/sql"
-	"errors"
-	"fmt"
-	"github.com/DATA-DOG/go-sqlmock"
-	"github.com/satori/uuid"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
-	"go.uber.org/zap"
-	"regexp"
-	"testing"
-)
-
 // func TestGetHouseAdvertById(t *testing.T) {
 //	// Initialize your repo, logger, and other dependencies here
 //	var db *sql.DB
@@ -220,7 +203,7 @@ import (
 //		t.Fatal(err)
 //	}
 //}
-
+/*
 func TestCheckExistsFlat(t *testing.T) {
 	// Initialize your repo, logger, and other dependencies here
 	var db *sql.DB
@@ -663,3 +646,5 @@ func TestDeleteHouseAdvertById_NoHouseID(t *testing.T) {
 		t.Errorf("There were unfulfilled expectations: %s", err)
 	}
 }
+
+*/

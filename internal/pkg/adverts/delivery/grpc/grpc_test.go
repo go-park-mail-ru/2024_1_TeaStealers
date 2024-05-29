@@ -21,11 +21,11 @@ func TestGetAdvertById(t *testing.T) {
 	serverHandler := grpc.NewServerAdvertsHandler(mockUsecase, logger)
 
 	id1 := int64(102)
-	advData := &genAdverts.GetAdvertByIdRequest{ //это входной request
+	advData := &genAdverts.GetAdvertByIdRequest{ // это входной request
 		Id: id1,
 	}
 
-	advResp := &genAdverts.GetAdvertByIdResponse{ //это response
+	advResp := &genAdverts.GetAdvertByIdResponse{ // это response
 		Id:           id1,
 		DateCreation: "0001-01-01 00:00:00 +0000 UTC", // тут мини костыль со временем
 	}

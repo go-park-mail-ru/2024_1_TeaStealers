@@ -111,5 +111,4 @@ func run() (err error) {
 	gRPCServer.GracefulStop()
 
 	return nil
-	return nil
 }

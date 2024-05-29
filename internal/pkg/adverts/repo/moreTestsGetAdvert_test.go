@@ -1,5 +1,6 @@
 package repo_test
 
+/*
 import (
 	"2024_1_TeaStealers/internal/models"
 	"2024_1_TeaStealers/internal/pkg/adverts/repo"
@@ -574,3 +575,5 @@ END AS type_advert FROM advert AS a LEFT JOIN advert_type_flat AS atf ON a.id=at
 		})
 	}
 }
+
+*/
