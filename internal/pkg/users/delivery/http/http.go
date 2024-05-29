@@ -50,12 +50,14 @@ func (h *UserClientHandler) UpdateUserInfo(w http.ResponseWriter, r *http.Reques
 		utils.WriteError(w, http.StatusBadRequest, "incorrect id")
 		return
 	}
-	data := &models.UserUpdateData{}
+
+	data := models.UserUpdateData{}
 
 	if err := utils.ReadRequestData(r, &data); err != nil {
 		utils.WriteError(w, http.StatusBadRequest, "incorrect data format")
 		return
 	}
+
 	data.Sanitize()
 
 	resp, err := h.client.UpdateUserInfo(r.Context(), &genUsers.UpdateUserInfoRequest{Id: uId,

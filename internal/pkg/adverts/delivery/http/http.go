@@ -453,6 +453,7 @@ func (h *AdvertsClientHandler) GetAdvertById(w http.ResponseWriter, r *http.Requ
 // UpdatePriority handles the request for updatin advert priority
 func (h *AdvertsClientHandler) UpdatePriority(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
+
 	id := vars["id"]
 	if id == "" {
 		utils.LogErrorResponse(h.logger, r.Context().Value("requestId").(string), utils.DeliveryLayer, GetAdvertByIdMethod, errors.New("error with id advert"), http.StatusBadRequest)

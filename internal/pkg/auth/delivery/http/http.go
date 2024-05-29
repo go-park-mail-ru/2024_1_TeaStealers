@@ -99,6 +99,7 @@ func (h *AuthClientHandler) Login(w http.ResponseWriter, r *http.Request) {
 		utils.WriteError(w, http.StatusBadRequest, err.Error())
 		return
 	}
+
 	data.Sanitize()
 
 	md := metadata.New(map[string]string{"requestId": r.Context().Value("requestId").(string)})
@@ -185,7 +186,7 @@ func (h *AuthClientHandler) UpdateUserPassword(w http.ResponseWriter, r *http.Re
 		return
 	}
 
-	data := &models.UserUpdatePassword{
+	data := models.UserUpdatePassword{
 		ID: uId,
 	}
 
@@ -193,6 +194,7 @@ func (h *AuthClientHandler) UpdateUserPassword(w http.ResponseWriter, r *http.Re
 		utils.WriteError(w, http.StatusBadRequest, "incorrect data format")
 		return
 	}
+
 	data.Sanitize()
 
 	resp, err := h.client.UpdateUserPassword(r.Context(), &genAuth.UpdatePasswordRequest{Id: uId,

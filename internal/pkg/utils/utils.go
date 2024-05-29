@@ -3,7 +3,6 @@ package utils
 import (
 	"crypto/sha1"
 	"encoding/hex"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -23,10 +22,10 @@ type respError struct {
 }
 
 // неиспользуемый интерфейс, ругается линтер
-// type responser interface {
-//	MarshalJSON() ([]byte, error)
-//	UnmarshalJSON(data []byte) error
-//}
+type responser interface {
+	MarshalJSON() ([]byte, error)
+	UnmarshalJSON(data []byte) error
+}
 
 // WriteError prints error in json
 func WriteError(w http.ResponseWriter, statusCode int, message string) {
@@ -59,14 +58,14 @@ func WriteResponse(w http.ResponseWriter, statusCode int, response interface{}) 
 }
 
 // ReadRequestData reads and parses the request body into the provided structure.
-func ReadRequestData(r *http.Request, request interface{}) error {
+func ReadRequestData(r *http.Request, request responser) error {
 	data, err := io.ReadAll(r.Body)
 	if err != nil {
 		return err
 	}
 	defer r.Body.Close()
 
-	if err := json.Unmarshal(data, &request); err != nil {
+	if err := request.UnmarshalJSON(data); err != nil {
 		return err
 	}
 	return nil

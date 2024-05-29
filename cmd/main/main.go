@@ -52,7 +52,7 @@ func main() {
 	cfg := config.MustLoad()
 	_ = godotenv.Load()
 	logger := zap.Must(zap.NewDevelopment())
-	db, err := sql.Open("postgres", fmt.Sprintf("postgres:// %v:%v@%v:%v/%v?sslmode=disable",
+	db, err := sql.Open("postgres", fmt.Sprintf("postgres://%v:%v@%v:%v/%v?sslmode=disable",
 		os.Getenv("DB_USER"),
 		os.Getenv("DB_PASS"),
 		os.Getenv("DB_HOST"),
