@@ -4,6 +4,7 @@ package adverts
 import (
 	"2024_1_TeaStealers/internal/models"
 	"context"
+	"github.com/jackc/pgx/v4"
 )
 
 const (
@@ -62,7 +63,7 @@ type AdvertUsecase interface {
 
 // AdvertRepo represents the repository interface for adverts.
 type AdvertRepo interface {
-	BeginTx(ctx context.Context) (models.Transaction, error)
+	BeginTx(ctx context.Context, txOptions pgx.TxOptions) (pgx.Tx, error)
 	CreateAdvertTypeHouse(ctx context.Context, tx models.Transaction, newAdvertType *models.HouseTypeAdvert) error
 	CreateAdvertTypeFlat(ctx context.Context, tx models.Transaction, newAdvertType *models.FlatTypeAdvert) error
 	CreateAdvert(ctx context.Context, tx models.Transaction, newAdvert *models.Advert) (int64, error)

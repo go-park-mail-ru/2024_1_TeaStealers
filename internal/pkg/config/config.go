@@ -24,11 +24,11 @@ type HTTPServer struct {
 }
 
 type Database struct {
-	DBName string `env:"POSTGRES_DB" env-required:"true"`
-	DBPass string `env:"POSTGRES_PASSWORD" env-required:"true"`
+	DBName string `env:"DB_NAME" env-required:"true"`
+	DBPass string `env:"DB_PASS" env-required:"true"`
 	DBHost string `env:"DB_HOST" env-default:"0.0.0.0"`
 	DBPort int    `env:"DB_PORT" env-required:"true"`
-	DBUser string `env:"POSTGRES_USER" env-required:"true"`
+	DBUser string `env:"DB_USER" env-required:"true"`
 }
 
 type GRPC struct {

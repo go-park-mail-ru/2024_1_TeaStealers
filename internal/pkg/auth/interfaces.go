@@ -4,6 +4,7 @@ package auth
 import (
 	"2024_1_TeaStealers/internal/models"
 	"context"
+	"github.com/jackc/pgx/v4"
 	"time"
 )
 
@@ -34,4 +35,5 @@ type AuthRepo interface {
 	GetUserLevelById(ctx context.Context, id int64) (int, error)
 	UpdateUserPassword(context.Context, int64, string) (int, error)
 	CheckUserPassword(context.Context, int64, string) error
+	BeginTx(ctx context.Context, txOptions pgx.TxOptions) (pgx.Tx, error)
 }

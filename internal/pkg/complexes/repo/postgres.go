@@ -2,9 +2,11 @@ package repo
 
 import (
 	"2024_1_TeaStealers/internal/models"
+	"2024_1_TeaStealers/internal/pkg/config/dbPool"
 	"2024_1_TeaStealers/internal/pkg/metrics"
 	"context"
-	"database/sql"
+	"github.com/jackc/pgx/v4"
+	"github.com/jackc/pgx/v4/pgxpool"
 	"log"
 	"time"
 
@@ -13,18 +15,18 @@ import (
 
 // ComplexRepo represents a repository for complex changes.
 type ComplexRepo struct {
-	db       *sql.DB
+	db       *pgxpool.Pool
 	logger   *zap.Logger
 	metricsC metrics.MetricsHTTP
 }
 
 // NewRepository creates a new instance of ComplexRepo.
-func NewRepository(db *sql.DB, logger *zap.Logger, metrics metrics.MetricsHTTP) *ComplexRepo {
-	return &ComplexRepo{db: db, logger: logger, metricsC: metrics}
+func NewRepository(logger *zap.Logger, metrics metrics.MetricsHTTP) *ComplexRepo {
+	return &ComplexRepo{db: dbPool.GetDBPool(), logger: logger, metricsC: metrics}
 }
 
-func (r *ComplexRepo) BeginTx(ctx context.Context) (models.Transaction, error) {
-	tx, err := r.db.BeginTx(ctx, nil)
+func (r *ComplexRepo) BeginTx(ctx context.Context, txOptions pgx.TxOptions) (pgx.Tx, error) {
+	tx, err := r.db.BeginTx(ctx, txOptions)
 	if err != nil {
 		return nil, err
 	}
@@ -39,7 +41,7 @@ func (r *ComplexRepo) CreateComplex(ctx context.Context, complex *models.Complex
 
 	var dur time.Duration
 	start := time.Now()
-	if err := r.db.QueryRowContext(ctx, insert, complex.CompanyId, complex.Name,
+	if err := r.db.QueryRow(ctx, insert, complex.CompanyId, complex.Name,
 		complex.Address, complex.Description, complex.DateBeginBuild, complex.DateEndBuild, complex.WithoutFinishingOption,
 		complex.FinishingOption, complex.PreFinishingOption, complex.ClassHousing, complex.Parking, complex.Security).Scan(&id); err != nil {
 		dur = time.Since(start)
@@ -53,7 +55,7 @@ func (r *ComplexRepo) CreateComplex(ctx context.Context, complex *models.Complex
 	query := `SELECT company_id, name, address, photo, description, date_begin_build, date_end_build, without_finishing_option, finishing_option, pre_finishing_option, class_housing, parking, security FROM complex WHERE id = $1`
 
 	start = time.Now()
-	res := r.db.QueryRow(query, id)
+	res := r.db.QueryRow(ctx, query, id)
 	dur = time.Since(start)
 	r.metricsC.AddDurationToQueryTimings("CreateComplex", "select complex", dur)
 
@@ -70,7 +72,7 @@ func (r *ComplexRepo) UpdateComplexPhoto(ctx context.Context, id int64, fileName
 	query := `UPDATE complex SET photo = $1 WHERE id = $2`
 	var dur time.Duration
 	start := time.Now()
-	if _, err := r.db.Exec(query, fileName, id); err != nil {
+	if _, err := r.db.Exec(ctx, query, fileName, id); err != nil {
 		dur = time.Since(start)
 		r.metricsC.AddDurationToQueryTimings("UpdateComplexPhoto", "update complex", dur)
 		r.metricsC.IncreaseExtSystemErr("database", "update")
@@ -90,7 +92,7 @@ func (r *ComplexRepo) GetComplexById(ctx context.Context, complexId int64) (*mod
 
 	var dur time.Duration
 	start := time.Now()
-	res := r.db.QueryRowContext(ctx, query, complexId)
+	res := r.db.QueryRow(ctx, query, complexId)
 	dur = time.Since(start)
 	r.metricsC.AddDurationToQueryTimings("GetComplexById", "select complex", dur)
 
@@ -109,7 +111,7 @@ func (r *ComplexRepo) CreateCompany(ctx context.Context, company *models.Company
 	insert := `INSERT INTO company (name, photo, creation_year, phone, description) VALUES ($1, '', $2, $3, $4) RETURNING id`
 	var dur time.Duration
 	start := time.Now()
-	if err := r.db.QueryRowContext(ctx, insert, company.Name, company.YearFounded, company.Phone, company.Description).Scan(&company.ID); err != nil {
+	if err := r.db.QueryRow(ctx, insert, company.Name, company.YearFounded, company.Phone, company.Description).Scan(&company.ID); err != nil {
 		dur = time.Since(start)
 		r.metricsC.AddDurationToQueryTimings("CreateCompany", "insert company", dur)
 		r.metricsC.IncreaseExtSystemErr("database", "inser")
@@ -122,7 +124,7 @@ func (r *ComplexRepo) CreateCompany(ctx context.Context, company *models.Company
 	query := `SELECT id, name, creation_year, phone, description FROM company WHERE id = $1`
 
 	start = time.Now()
-	res := r.db.QueryRow(query, company.ID)
+	res := r.db.QueryRow(ctx, query, company.ID)
 	dur = time.Since(start)
 	r.metricsC.AddDurationToQueryTimings("CreateCompany", "select company", dur)
 
@@ -141,7 +143,7 @@ func (r *ComplexRepo) UpdateCompanyPhoto(ctx context.Context, id int64, fileName
 
 	var dur time.Duration
 	start := time.Now()
-	if _, err := r.db.Exec(query, fileName, id); err != nil {
+	if _, err := r.db.Exec(ctx, query, fileName, id); err != nil {
 		dur = time.Since(start)
 		r.metricsC.AddDurationToQueryTimings("UpdateCompanyPhoto", "update company", dur)
 		r.metricsC.IncreaseExtSystemErr("database", "update")
@@ -162,7 +164,7 @@ func (r *ComplexRepo) GetCompanyById(ctx context.Context, companyId int64) (*mod
 
 	var dur time.Duration
 	start := time.Now()
-	res := r.db.QueryRowContext(ctx, query, companyId)
+	res := r.db.QueryRow(ctx, query, companyId)
 	dur = time.Since(start)
 	r.metricsC.AddDurationToQueryTimings("GetCompanyById", "select company", dur)
 

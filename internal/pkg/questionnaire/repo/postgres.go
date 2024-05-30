@@ -2,34 +2,32 @@ package repo
 
 import (
 	"2024_1_TeaStealers/internal/models"
+	"2024_1_TeaStealers/internal/pkg/config/dbPool"
 	"2024_1_TeaStealers/internal/pkg/middleware"
 	"context"
-	"database/sql"
 	"fmt"
+	"github.com/jackc/pgx/v4/pgxpool"
 
 	"go.uber.org/zap"
 )
 
 // AdvertRepo represents a repository for adverts changes.
 type QuestionRepo struct {
-	db     *sql.DB
+	db     *pgxpool.Pool
 	logger *zap.Logger
 }
 
 // NewRepository creates a new instance of AdvertRepo.
-func NewRepository(db *sql.DB, logger *zap.Logger) *QuestionRepo {
-	return &QuestionRepo{db: db, logger: logger}
+func NewRepository(logger *zap.Logger) *QuestionRepo {
+	return &QuestionRepo{db: dbPool.GetDBPool(), logger: logger}
 }
 
-// StoreAnswer creates a new Answer in the database on question.
 func (r *QuestionRepo) StoreAnswer(ctx context.Context, newAnswer *models.QuestionAnswer) error {
 	insert := `INSERT INTO question_answer (user_id, question_id, mark) VALUES ($1, $2, $3)`
-	if _, err := r.db.ExecContext(ctx, insert, newAnswer.UserID, newAnswer.QuestionID, newAnswer.Mark); err != nil {
-		// utils.LogError(r.logger, ctx.Value("requestId").(string), utils.RepositoryLayer, adverts.CreateAdvertTypeMethod, err)
+	if _, err := r.db.Exec(ctx, insert, newAnswer.UserID, newAnswer.QuestionID, newAnswer.Mark); err != nil {
 		return err
 	}
-
-	// utils.LogSucces(r.logger, ctx.Value("requestId").(string), utils.RepositoryLayer, adverts.CreateAdvertTypeMethod)
+	r.logger.Info("answer stored successfully")
 	return nil
 }
 
@@ -40,7 +38,7 @@ func (r *QuestionRepo) SelectQuestionsByTheme(ctx context.Context, theme *models
 	id := ctx.Value(middleware.CookieName)
 	IdUser, _ := id.(int64)
 
-	rows, err := r.db.Query(queryAllAnswersByThemeAndUser, *theme, IdUser)
+	rows, err := r.db.Query(ctx, queryAllAnswersByThemeAndUser, *theme, IdUser)
 
 	if err != nil {
 		// utils.LogError(r.logger, ctx.Value("requestId").(string), utils.RepositoryLayer, adverts.GetRectangleAdvertsByUserIdMethod, err)
@@ -79,7 +77,7 @@ func (r *QuestionRepo) SelectAnswerStatistics(ctx context.Context) ([]*models.Th
         ORDER BY q.theme, q.question_text, qa.mark
     `
 
-	rows, err := r.db.QueryContext(ctx, query)
+	rows, err := r.db.Query(ctx, query)
 	if err != nil {
 		return nil, fmt.Errorf("failed to query database: %w", err)
 	}

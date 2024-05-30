@@ -2,10 +2,12 @@ package repo
 
 import (
 	"2024_1_TeaStealers/internal/models"
+	"2024_1_TeaStealers/internal/pkg/config/dbPool"
 	"2024_1_TeaStealers/internal/pkg/metrics"
 	"context"
-	"database/sql"
 	"errors"
+	"github.com/jackc/pgx/v4"
+	"github.com/jackc/pgx/v4/pgxpool"
 	"time"
 
 	"go.uber.org/zap"
@@ -13,18 +15,18 @@ import (
 
 // AuthRepo represents a repository for authentication.
 type AuthRepo struct {
-	db       *sql.DB
+	db       *pgxpool.Pool
 	logger   *zap.Logger
 	metricsC metrics.MetricsHTTP
 }
 
 // NewRepository creates a new instance of AuthRepo.
-func NewRepository(db *sql.DB, logger *zap.Logger, metrics metrics.MetricsHTTP) *AuthRepo {
-	return &AuthRepo{db: db, logger: logger, metricsC: metrics}
+func NewRepository(logger *zap.Logger, metrics metrics.MetricsHTTP) *AuthRepo {
+	return &AuthRepo{db: dbPool.GetDBPool(), logger: logger, metricsC: metrics}
 }
 
-func (r *AuthRepo) BeginTx(ctx context.Context) (models.Transaction, error) {
-	tx, err := r.db.BeginTx(ctx, nil)
+func (r *AuthRepo) BeginTx(ctx context.Context, txOptions pgx.TxOptions) (pgx.Tx, error) {
+	tx, err := r.db.BeginTx(ctx, txOptions)
 	if err != nil {
 		// utils.LogError(r.logger, ctx.Value("requestId").(string), utils.RepositoryLayer, auth.BeginTxMethod, err)
 		return nil, err
@@ -40,7 +42,7 @@ func (r *AuthRepo) CreateUser(ctx context.Context, user *models.User) (*models.U
 	var lastInsertID int64
 	var dur time.Duration
 	start := time.Now()
-	if err := r.db.QueryRowContext(ctx, insert, user.Email, user.Phone, user.PasswordHash).Scan(&lastInsertID); err != nil {
+	if err := r.db.QueryRow(ctx, insert, user.Email, user.Phone, user.PasswordHash).Scan(&lastInsertID); err != nil {
 		dur = time.Since(start)
 		r.metricsC.AddDurationToQueryTimings("CreateUser", "insert user_data", dur)
 		r.metricsC.IncreaseExtSystemErr("database", "insert")
@@ -53,7 +55,7 @@ func (r *AuthRepo) CreateUser(ctx context.Context, user *models.User) (*models.U
 	query := `SELECT email, phone, password_hash, level_update FROM user_data WHERE id = $1`
 
 	start = time.Now()
-	res := r.db.QueryRow(query, lastInsertID)
+	res := r.db.QueryRow(ctx, query, lastInsertID)
 	dur = time.Since(start)
 	r.metricsC.AddDurationToQueryTimings("CreateUser", "select user_data", dur)
 
@@ -74,7 +76,7 @@ func (r *AuthRepo) GetUserByLogin(ctx context.Context, login string) (*models.Us
 	var dur time.Duration
 	start := time.Now()
 
-	res := r.db.QueryRowContext(ctx, query, login)
+	res := r.db.QueryRow(ctx, query, login)
 	dur = time.Since(start)
 	r.metricsC.AddDurationToQueryTimings("GetUserByLogin", "select user_data", dur)
 
@@ -118,7 +120,7 @@ func (r *AuthRepo) GetUserLevelById(ctx context.Context, id int64) (int, error) 
 	query := `SELECT level_update FROM user_data WHERE id = $1`
 	var dur time.Duration
 	start := time.Now()
-	res := r.db.QueryRow(query, id)
+	res := r.db.QueryRow(ctx, query, id)
 	dur = time.Since(start)
 	r.metricsC.AddDurationToQueryTimings("GetUserLevelById", "select user_data", dur)
 
@@ -139,7 +141,7 @@ func (r *AuthRepo) UpdateUserPassword(ctx context.Context, id int64, newPassword
 	query := `UPDATE user_data SET password_hash=$1, level_update = level_update+1 WHERE id = $2`
 	var dur time.Duration
 	start := time.Now()
-	if _, err := r.db.Exec(query, newPasswordHash, id); err != nil {
+	if _, err := r.db.Exec(ctx, query, newPasswordHash, id); err != nil {
 		dur = time.Since(start)
 		r.metricsC.AddDurationToQueryTimings("UpdateUserPassword", "select user_data", dur)
 		r.metricsC.IncreaseExtSystemErr("database", "select")
@@ -152,7 +154,7 @@ func (r *AuthRepo) UpdateUserPassword(ctx context.Context, id int64, newPassword
 	level := 0
 
 	start = time.Now()
-	res := r.db.QueryRow(querySelect, id)
+	res := r.db.QueryRow(ctx, querySelect, id)
 	dur = time.Since(start)
 	r.metricsC.AddDurationToQueryTimings("UpdateUserPassword", "select user_data", dur)
 
@@ -168,7 +170,7 @@ func (r *AuthRepo) CheckUserPassword(ctx context.Context, id int64, passwordHash
 	querySelect := `SELECT password_hash FROM user_data WHERE id = $1`
 	var dur time.Duration
 	start := time.Now()
-	res := r.db.QueryRow(querySelect, id)
+	res := r.db.QueryRow(ctx, querySelect, id)
 	dur = time.Since(start)
 	r.metricsC.AddDurationToQueryTimings("CheckUserPassword", "select user_data", dur)
 	if err := res.Scan(&passwordHashCur); err != nil {

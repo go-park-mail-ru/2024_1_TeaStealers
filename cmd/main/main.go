@@ -7,6 +7,7 @@ import (
 	authH "2024_1_TeaStealers/internal/pkg/auth/delivery/http"
 	complexH "2024_1_TeaStealers/internal/pkg/complexes/delivery/http"
 	"2024_1_TeaStealers/internal/pkg/config"
+	"2024_1_TeaStealers/internal/pkg/config/dbPool"
 	imageH "2024_1_TeaStealers/internal/pkg/images/delivery/http"
 	imageR "2024_1_TeaStealers/internal/pkg/images/repo"
 	imageUc "2024_1_TeaStealers/internal/pkg/images/usecase"
@@ -19,7 +20,6 @@ import (
 	userR "2024_1_TeaStealers/internal/pkg/users/repo"
 	userUc "2024_1_TeaStealers/internal/pkg/users/usecase"
 	"context"
-	"database/sql"
 	"errors"
 	"fmt"
 	"log"
@@ -51,20 +51,17 @@ import (
 // @schemes http https
 func main() {
 	cfg := config.MustLoad()
+	maxConns := int32(10)
 	_ = godotenv.Load()
 	logger := zap.Must(zap.NewDevelopment())
-
-	db, err := sql.Open("postgres", fmt.Sprintf("postgres://%v:%v@%v:%v/%v?sslmode=disable",
-		os.Getenv("DB_USER"),
-		os.Getenv("DB_PASS"),
-		os.Getenv("DB_HOST"),
-		os.Getenv("DB_PORT"),
-		os.Getenv("DB_NAME")))
-	if err != nil {
-		panic("failed to connect database" + err.Error())
-	}
-
-	if err = db.Ping(); err != nil {
+	dbPool.InitDatabasePool(fmt.Sprintf("postgres://%v:%v@%v:%v/%v?sslmode=disable",
+		cfg.Database.DBUser,
+		cfg.Database.DBPass,
+		cfg.Database.DBHost,
+		cfg.Database.DBPort,
+		cfg.Database.DBName), maxConns)
+	pool := dbPool.GetDBPool()
+	if err := pool.Ping(context.Background()); err != nil {
 		log.Println("fail ping postgres")
 		err = fmt.Errorf("error happened in db.Ping: %w", err)
 		log.Println(err)
@@ -137,7 +134,7 @@ func main() {
 	auth.Handle("/logout", metricmW.MetricsMiddleware(jwtMd.JwtMiddleware(http.HandlerFunc(authHandler.Logout), metricmW), 0, "")).Methods(http.MethodGet, http.MethodOptions)
 	auth.Handle("/check_auth", metricmW.MetricsMiddleware(jwtMd.JwtMiddleware(http.HandlerFunc(authHandler.CheckAuth), metricmW), 0, "")).Methods(http.MethodGet, http.MethodOptions)
 
-	statRepo := statsR.NewRepository(db, logger)
+	statRepo := statsR.NewRepository(logger)
 	statUsecase := statsUc.NewQuestionnaireUsecase(statRepo, logger)
 	statHandler := statsH.NewQuestionnaireClientHandler(grcpConnQuestion, statUsecase, logger)
 	stat := r.PathPrefix("/stat").Subrouter()
@@ -145,11 +142,11 @@ func main() {
 	stat.Handle("/theme", metricmW.MetricsMiddleware(jwtMd.JwtMiddleware(http.HandlerFunc(statHandler.GetAnswerStatistics), metricmW), 0, "")).Methods(http.MethodGet, http.MethodOptions)
 	stat.Handle("/{theme}/questions", metricmW.MetricsMiddleware(jwtMd.JwtMiddleware(http.HandlerFunc(statHandler.GetQuestionsByTheme), metricmW), 3, "theme")).Methods(http.MethodGet, http.MethodOptions)
 
-	advertRepo := advertsR.NewRepository(db, logger, metricmW)
+	advertRepo := advertsR.NewRepository(logger, metricmW)
 	advertUsecase := advertsUc.NewAdvertUsecase(advertRepo, logger)
 	advertHandler := advertsH.NewAdvertsClientHandler(grcpConnAdverts, grcpConnComplex, advertUsecase, logger)
 
-	imageRepo := imageR.NewRepository(db, logger)
+	imageRepo := imageR.NewRepository(logger)
 	imageUsecase := imageUc.NewImageUsecase(imageRepo, logger)
 	imageHandler := imageH.NewImageHandler(imageUsecase, logger)
 
@@ -172,7 +169,7 @@ func main() {
 	advert.Handle("/{id}/donate", metricmW.MetricsMiddleware(jwtMd.JwtMiddleware(http.HandlerFunc(advertHandler.UpdatePriority), metricmW), 3, "id")).Methods(http.MethodPost, http.MethodOptions)
 	advert.Handle("/{id}/rating", metricmW.MetricsMiddleware(http.HandlerFunc(advertHandler.GetPriority), 0, "")).Methods(http.MethodGet, http.MethodOptions)
 
-	userRepo := userR.NewRepository(db, metricmW)
+	userRepo := userR.NewRepository(metricmW)
 	userUsecase := userUc.NewUserUsecase(userRepo)
 	userHandler := userH.NewClientUserHandler(grcpConnUsers)
 	userHandlerPhoto := userH.NewUserHandlerPhoto(userUsecase)

@@ -3,11 +3,14 @@ package repo
 import (
 	"2024_1_TeaStealers/internal/models"
 	"2024_1_TeaStealers/internal/pkg/adverts"
+	"2024_1_TeaStealers/internal/pkg/config/dbPool"
 	"2024_1_TeaStealers/internal/pkg/metrics"
 	"2024_1_TeaStealers/internal/pkg/utils"
 	"context"
 	"database/sql"
 	"fmt"
+	"github.com/jackc/pgx/v4"
+	"github.com/jackc/pgx/v4/pgxpool"
 	"log"
 	"strconv"
 	"time"
@@ -18,18 +21,18 @@ import (
 
 // AdvertRepo represents a repository for adverts changes.
 type AdvertRepo struct {
-	db       *sql.DB
+	db       *pgxpool.Pool
 	logger   *zap.Logger
 	metricsC metrics.MetricsHTTP
 }
 
 // NewRepository creates a new instance of AdvertRepo.
-func NewRepository(db *sql.DB, logger *zap.Logger, metrics metrics.MetricsHTTP) *AdvertRepo {
-	return &AdvertRepo{db: db, logger: logger, metricsC: metrics}
+func NewRepository(logger *zap.Logger, metrics metrics.MetricsHTTP) *AdvertRepo {
+	return &AdvertRepo{db: dbPool.GetDBPool(), logger: logger, metricsC: metrics}
 }
 
-func (r *AdvertRepo) BeginTx(ctx context.Context) (models.Transaction, error) {
-	tx, err := r.db.BeginTx(ctx, nil)
+func (r *AdvertRepo) BeginTx(ctx context.Context, txOptions pgx.TxOptions) (pgx.Tx, error) {
+	tx, err := r.db.BeginTx(ctx, txOptions)
 	if err != nil {
 		utils.LogError(r.logger, ctx.Value("requestId").(string), utils.RepositoryLayer, adverts.BeginTxMethod, err)
 		return nil, err
@@ -43,7 +46,7 @@ func (r *AdvertRepo) BeginTx(ctx context.Context) (models.Transaction, error) {
 func (r *AdvertRepo) CreateAdvertTypeHouse(ctx context.Context, tx models.Transaction, newAdvertType *models.HouseTypeAdvert) error {
 	insert := `INSERT INTO advert_type_house (house_id, advert_id) VALUES ($1, $2)`
 	start := time.Now()
-	if _, err := tx.ExecContext(ctx, insert, newAdvertType.HouseID, newAdvertType.AdvertID); err != nil {
+	if _, err := tx.Exec(ctx, insert, newAdvertType.HouseID, newAdvertType.AdvertID); err != nil {
 		dur := time.Since(start)
 		r.metricsC.AddDurationToQueryTimings("CreateAdvertTypeHouse", "insert advert_type_house", dur)
 		r.metricsC.IncreaseExtSystemErr("database", "insert")
@@ -61,7 +64,7 @@ func (r *AdvertRepo) CreateAdvertTypeHouse(ctx context.Context, tx models.Transa
 func (r *AdvertRepo) CreateAdvertTypeFlat(ctx context.Context, tx models.Transaction, newAdvertType *models.FlatTypeAdvert) error {
 	insert := `INSERT INTO advert_type_flat (flat_id, advert_id) VALUES ($1, $2)`
 	start := time.Now()
-	if _, err := tx.ExecContext(ctx, insert, newAdvertType.FlatID, newAdvertType.AdvertID); err != nil {
+	if _, err := tx.Exec(ctx, insert, newAdvertType.FlatID, newAdvertType.AdvertID); err != nil {
 		dur := time.Since(start)
 		r.metricsC.AddDurationToQueryTimings("CreateAdvertTypeFlat", "insert advert_type_flat", dur)
 		r.metricsC.IncreaseExtSystemErr("database", "insert")
@@ -79,7 +82,7 @@ func (r *AdvertRepo) CreateAdvert(ctx context.Context, tx models.Transaction, ne
 	insert := `INSERT INTO advert (user_id, type_placement, title, description, phone, is_agent, priority) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id`
 	var idAdvert int64
 	start := time.Now()
-	if err := tx.QueryRowContext(ctx, insert, newAdvert.UserID, newAdvert.AdvertTypeSale, newAdvert.Title, newAdvert.Description, newAdvert.Phone, newAdvert.IsAgent, newAdvert.Priority).Scan(&idAdvert); err != nil {
+	if err := tx.QueryRow(ctx, insert, newAdvert.UserID, newAdvert.AdvertTypeSale, newAdvert.Title, newAdvert.Description, newAdvert.Phone, newAdvert.IsAgent, newAdvert.Priority).Scan(&idAdvert); err != nil {
 		dur := time.Since(start)
 		r.metricsC.AddDurationToQueryTimings("CreateAdvert", "insert advert", dur)
 		r.metricsC.IncreaseExtSystemErr("database", "insert")
@@ -103,7 +106,7 @@ func (r *AdvertRepo) UpdatePriority(ctx context.Context, tx models.Transaction, 
 
 	update := `UPDATE advert SET priority = $1 WHERE id=$2`
 	start := time.Now()
-	if _, err := tx.Exec(update, priority+newPriority, advertId); err != nil {
+	if _, err := tx.Exec(ctx, update, priority+newPriority, advertId); err != nil {
 		dur := time.Since(start)
 		r.metricsC.AddDurationToQueryTimings("UpdatePriority", "update advert", dur)
 		r.metricsC.IncreaseExtSystemErr("database", "update")
@@ -122,7 +125,7 @@ func (r *AdvertRepo) UpdatePriority(ctx context.Context, tx models.Transaction, 
 func (r *AdvertRepo) GetPriority(ctx context.Context, tx models.Transaction, advertId int64) (int64, error) {
 	query := `SELECT priority FROM advert WHERE id=$1`
 	start := time.Now()
-	res := tx.QueryRowContext(ctx, query, advertId)
+	res := tx.QueryRow(ctx, query, advertId)
 	dur := time.Since(start)
 	r.metricsC.AddDurationToQueryTimings("GetPriority", "select priority", dur)
 
@@ -141,7 +144,7 @@ func (r *AdvertRepo) GetPriority(ctx context.Context, tx models.Transaction, adv
 func (r *AdvertRepo) CreateProvince(ctx context.Context, tx models.Transaction, name string) (int64, error) {
 	query := `SELECT id FROM province WHERE name=$1`
 	start := time.Now()
-	res := r.db.QueryRow(query, name)
+	res := r.db.QueryRow(ctx, query, name)
 	dur := time.Since(start)
 	r.metricsC.AddDurationToQueryTimings("CreateProvince", "select province", dur)
 
@@ -155,7 +158,7 @@ func (r *AdvertRepo) CreateProvince(ctx context.Context, tx models.Transaction, 
 
 	insert := `INSERT INTO province (name) VALUES ($1) RETURNING id`
 	start = time.Now()
-	if err := tx.QueryRowContext(ctx, insert, name).Scan(&provinceId); err != nil {
+	if err := tx.QueryRow(ctx, insert, name).Scan(&provinceId); err != nil {
 		dur = time.Since(start)
 		r.metricsC.AddDurationToQueryTimings("CreateProvince", "insert province", dur)
 		r.metricsC.IncreaseExtSystemErr("database", "insert")
@@ -173,7 +176,7 @@ func (r *AdvertRepo) CreateProvince(ctx context.Context, tx models.Transaction, 
 func (r *AdvertRepo) CreateTown(ctx context.Context, tx models.Transaction, idProvince int64, name string) (int64, error) {
 	query := `SELECT id FROM town WHERE name=$1 AND province_id=$2`
 	start := time.Now()
-	res := r.db.QueryRow(query, name, idProvince)
+	res := r.db.QueryRow(ctx, query, name, idProvince)
 	dur := time.Since(start)
 	r.metricsC.AddDurationToQueryTimings("CreateTown", "select town", dur)
 
@@ -187,7 +190,7 @@ func (r *AdvertRepo) CreateTown(ctx context.Context, tx models.Transaction, idPr
 
 	insert := `INSERT INTO town (name, province_id) VALUES ($1, $2) RETURNING id`
 	start = time.Now()
-	if err := tx.QueryRowContext(ctx, insert, name, idProvince).Scan(&townId); err != nil {
+	if err := tx.QueryRow(ctx, insert, name, idProvince).Scan(&townId); err != nil {
 		dur = time.Since(start)
 		r.metricsC.AddDurationToQueryTimings("CreateTown", "insert town", dur)
 		r.metricsC.IncreaseExtSystemErr("database", "insert")
@@ -206,7 +209,7 @@ func (r *AdvertRepo) CreateTown(ctx context.Context, tx models.Transaction, idPr
 func (r *AdvertRepo) CreateStreet(ctx context.Context, tx models.Transaction, idTown int64, name string) (int64, error) {
 	query := `SELECT id FROM street WHERE name=$1 AND town_id=$2`
 	start := time.Now()
-	res := r.db.QueryRow(query, name, idTown)
+	res := r.db.QueryRow(ctx, query, name, idTown)
 	dur := time.Since(start)
 	r.metricsC.AddDurationToQueryTimings("CreateStreet", "select street", dur)
 
@@ -220,7 +223,7 @@ func (r *AdvertRepo) CreateStreet(ctx context.Context, tx models.Transaction, id
 
 	insert := `INSERT INTO street (name, town_id) VALUES ($1, $2) RETURNING id`
 	start = time.Now()
-	if err := tx.QueryRowContext(ctx, insert, name, idTown).Scan(&streetId); err != nil {
+	if err := tx.QueryRow(ctx, insert, name, idTown).Scan(&streetId); err != nil {
 		dur = time.Since(start)
 		r.metricsC.AddDurationToQueryTimings("CreateStreet", "insert street", dur)
 		r.metricsC.IncreaseExtSystemErr("database", "insert")
@@ -238,7 +241,7 @@ func (r *AdvertRepo) CreateStreet(ctx context.Context, tx models.Transaction, id
 func (r *AdvertRepo) CreateHouseAddress(ctx context.Context, tx models.Transaction, idStreet int64, name string) (int64, error) {
 	query := `SELECT id FROM house_name WHERE name=$1 AND street_id=$2`
 	start := time.Now()
-	res := r.db.QueryRow(query, name, idStreet)
+	res := r.db.QueryRow(ctx, query, name, idStreet)
 	dur := time.Since(start)
 	r.metricsC.AddDurationToQueryTimings("CreateHouseAddress", "select house_name", dur)
 
@@ -251,7 +254,7 @@ func (r *AdvertRepo) CreateHouseAddress(ctx context.Context, tx models.Transacti
 
 	insert := `INSERT INTO house_name (name, street_id) VALUES ($1, $2) RETURNING id`
 	start = time.Now()
-	if err := tx.QueryRowContext(ctx, insert, name, idStreet).Scan(&houseId); err != nil {
+	if err := tx.QueryRow(ctx, insert, name, idStreet).Scan(&houseId); err != nil {
 		dur = time.Since(start)
 		r.metricsC.AddDurationToQueryTimings("CreateHouseAddress", "insert house_name", dur)
 		r.metricsC.IncreaseExtSystemErr("database", "insert")
@@ -270,7 +273,7 @@ func (r *AdvertRepo) CreateHouseAddress(ctx context.Context, tx models.Transacti
 func (r *AdvertRepo) CreateAddress(ctx context.Context, tx models.Transaction, idHouse int64, metro string, address_point string) (int64, error) {
 	query := `SELECT id FROM address WHERE house_name_id=$1`
 	start := time.Now()
-	res := r.db.QueryRow(query, idHouse)
+	res := r.db.QueryRow(ctx, query, idHouse)
 	dur := time.Since(start)
 	r.metricsC.AddDurationToQueryTimings("CreateAddress", "select address", dur)
 
@@ -283,7 +286,7 @@ func (r *AdvertRepo) CreateAddress(ctx context.Context, tx models.Transaction, i
 
 	insert := `INSERT INTO address (metro, house_name_id, address_point) VALUES ($1, $2, $3) RETURNING id`
 	start = time.Now()
-	if err := tx.QueryRowContext(ctx, insert, metro, idHouse, address_point).Scan(&addressId); err != nil {
+	if err := tx.QueryRow(ctx, insert, metro, idHouse, address_point).Scan(&addressId); err != nil {
 		dur = time.Since(start)
 		r.metricsC.AddDurationToQueryTimings("CreateAddress", "insert address", dur)
 		r.metricsC.IncreaseExtSystemErr("database", "insert")
@@ -302,7 +305,7 @@ func (r *AdvertRepo) CreateAddress(ctx context.Context, tx models.Transaction, i
 func (r *AdvertRepo) CreatePriceChange(ctx context.Context, tx models.Transaction, newPriceChange *models.PriceChange) error {
 	insert := `INSERT INTO price_change (advert_id, price) VALUES ($1, $2)`
 	start := time.Now()
-	if _, err := tx.ExecContext(ctx, insert, newPriceChange.AdvertID, newPriceChange.Price); err != nil {
+	if _, err := tx.Exec(ctx, insert, newPriceChange.AdvertID, newPriceChange.Price); err != nil {
 		dur := time.Since(start)
 		r.metricsC.AddDurationToQueryTimings("CreatePriceChange", "insert price_change", dur)
 		r.metricsC.IncreaseExtSystemErr("database", "insert")
@@ -322,7 +325,7 @@ func (r *AdvertRepo) CreateBuilding(ctx context.Context, tx models.Transaction, 
 	insert := `INSERT INTO building (floor, material_building, address_id, year_creation) VALUES ($1, $2, $3, $4) RETURNING id`
 	var idBuilding int64
 	start := time.Now()
-	if err := tx.QueryRowContext(ctx, insert, newBuilding.Floor, newBuilding.Material, newBuilding.AddressID, newBuilding.YearCreation).Scan(&idBuilding); err != nil {
+	if err := tx.QueryRow(ctx, insert, newBuilding.Floor, newBuilding.Material, newBuilding.AddressID, newBuilding.YearCreation).Scan(&idBuilding); err != nil {
 		dur := time.Since(start)
 		r.metricsC.AddDurationToQueryTimings("CreateBuilding", "insert building", dur)
 		r.metricsC.IncreaseExtSystemErr("database", "insert")
@@ -343,7 +346,7 @@ func (r *AdvertRepo) CheckExistsBuilding(ctx context.Context, adress *models.Add
 
 	building := &models.Building{}
 	start := time.Now()
-	res := r.db.QueryRowContext(ctx, query, adress.Province, adress.Town, adress.Street, adress.House)
+	res := r.db.QueryRow(ctx, query, adress.Province, adress.Town, adress.Street, adress.House)
 	dur := time.Since(start)
 	r.metricsC.AddDurationToQueryTimings("CheckExistsBuilding", "select building_hard", dur)
 
@@ -363,7 +366,7 @@ func (r *AdvertRepo) CheckExistsBuildingData(ctx context.Context, adress *models
 
 	building := &models.BuildingData{}
 	start := time.Now()
-	res := r.db.QueryRowContext(ctx, query, adress.Province, adress.Town, adress.Street, adress.House)
+	res := r.db.QueryRow(ctx, query, adress.Province, adress.Town, adress.Street, adress.House)
 	dur := time.Since(start)
 	r.metricsC.AddDurationToQueryTimings("CheckExistsBuildingData", "select building_hard", dur)
 
@@ -382,7 +385,7 @@ func (r *AdvertRepo) CreateHouse(ctx context.Context, tx models.Transaction, new
 	insert := `INSERT INTO house (building_id, ceiling_height, square_area, square_house, bedroom_count, status_area_house, cottage, status_home_house) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id`
 	var lastInsertID int64
 	start := time.Now()
-	if err := tx.QueryRowContext(ctx, insert, newHouse.BuildingID, newHouse.CeilingHeight, newHouse.SquareArea, newHouse.SquareHouse, newHouse.BedroomCount, newHouse.StatusArea, newHouse.Cottage, newHouse.StatusHome).Scan(&lastInsertID); err != nil {
+	if err := tx.QueryRow(ctx, insert, newHouse.BuildingID, newHouse.CeilingHeight, newHouse.SquareArea, newHouse.SquareHouse, newHouse.BedroomCount, newHouse.StatusArea, newHouse.Cottage, newHouse.StatusHome).Scan(&lastInsertID); err != nil {
 		dur := time.Since(start)
 		r.metricsC.AddDurationToQueryTimings("CreateHouse", "insert house", dur)
 		r.metricsC.IncreaseExtSystemErr("database", "insert")
@@ -400,7 +403,7 @@ func (r *AdvertRepo) CreateFlat(ctx context.Context, tx models.Transaction, newF
 	insert := `INSERT INTO flat (building_id, floor, ceiling_height, square_general, bedroom_count, square_residential, apartament) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id`
 	var idFlat int64
 	start := time.Now()
-	if err := tx.QueryRowContext(ctx, insert, newFlat.BuildingID, newFlat.Floor, newFlat.CeilingHeight, newFlat.SquareGeneral, newFlat.RoomCount, newFlat.SquareResidential, newFlat.Apartment).Scan(&idFlat); err != nil {
+	if err := tx.QueryRow(ctx, insert, newFlat.BuildingID, newFlat.Floor, newFlat.CeilingHeight, newFlat.SquareGeneral, newFlat.RoomCount, newFlat.SquareResidential, newFlat.Apartment).Scan(&idFlat); err != nil {
 		dur := time.Since(start)
 		r.metricsC.AddDurationToQueryTimings("CreateFlat", "insert flat", dur)
 		r.metricsC.IncreaseExtSystemErr("database", "insert")
@@ -418,7 +421,7 @@ func (r *AdvertRepo) CreateFlat(ctx context.Context, tx models.Transaction, newF
 func (r *AdvertRepo) SelectImages(ctx context.Context, advertId int64) ([]*models.ImageResp, error) {
 	selectQuery := `SELECT id, photo, priority FROM image WHERE advert_id = $1 AND is_deleted = false`
 	start := time.Now()
-	rows, err := r.db.Query(selectQuery, advertId)
+	rows, err := r.db.Query(ctx, selectQuery, advertId)
 	dur := time.Since(start)
 	r.metricsC.AddDurationToQueryTimings("SelectImages", "select image", dur)
 
@@ -455,7 +458,7 @@ func (r *AdvertRepo) SelectImages(ctx context.Context, advertId int64) ([]*model
 func (r *AdvertRepo) SelectPriceChanges(ctx context.Context, advertId int64) ([]*models.PriceChangeData, error) {
 	selectQuery := `SELECT price, created_at FROM price_change WHERE advert_id = $1 AND is_deleted = false`
 	start := time.Now()
-	rows, err := r.db.Query(selectQuery, advertId)
+	rows, err := r.db.Query(ctx, selectQuery, advertId)
 	dur := time.Since(start)
 	r.metricsC.AddDurationToQueryTimings("SelectPriceChanges", "select price_change", dur)
 	if err != nil {
@@ -494,7 +497,7 @@ func (r *AdvertRepo) GetTypeAdvertById(ctx context.Context, id int64) (*models.A
 END AS type_advert FROM advert AS a LEFT JOIN advert_type_house AS ath ON a.id=ath.advert_id LEFT JOIN advert_type_flat AS atf ON a.id=atf.advert_id WHERE a.id=$1`
 
 	start := time.Now()
-	res := r.db.QueryRowContext(ctx, query, id)
+	res := r.db.QueryRow(ctx, query, id)
 	dur := time.Since(start)
 	r.metricsC.AddDurationToQueryTimings("GetTypeAdvertById", "select advert_hard", dur)
 
@@ -591,7 +594,7 @@ func (r *AdvertRepo) GetHouseAdvertById(ctx context.Context, id int64) (*models.
 	}
 
 	start := time.Now()
-	res := r.db.QueryRowContext(ctx, query, id, userId)
+	res := r.db.QueryRow(ctx, query, id, userId)
 	dur := time.Since(start)
 	r.metricsC.AddDurationToQueryTimings("GetHouseAdvertById", "select advert_hard", dur)
 
@@ -680,7 +683,7 @@ func (r *AdvertRepo) CheckExistsFlat(ctx context.Context, advertId int64) (*mode
 
 	flat := &models.Flat{}
 	start := time.Now()
-	res := r.db.QueryRowContext(ctx, query, advertId)
+	res := r.db.QueryRow(ctx, query, advertId)
 	dur := time.Since(start)
 	r.metricsC.AddDurationToQueryTimings("CheckExistsFlat", "select advert_hard", dur)
 	if err := res.Scan(&flat.ID); err != nil {
@@ -699,7 +702,7 @@ func (r *AdvertRepo) CheckExistsHouse(ctx context.Context, advertId int64) (*mod
 
 	house := &models.House{}
 	start := time.Now()
-	res := r.db.QueryRowContext(ctx, query, advertId)
+	res := r.db.QueryRow(ctx, query, advertId)
 	dur := time.Since(start)
 	r.metricsC.AddDurationToQueryTimings("CheckExistsHouse", "select advert_hard", dur)
 
@@ -727,7 +730,7 @@ func (r *AdvertRepo) DeleteFlatAdvertById(ctx context.Context, tx models.Transac
         WHERE a.id=$1;`
 
 	start := time.Now()
-	res := tx.QueryRowContext(ctx, queryGetIdTables, advertId)
+	res := tx.QueryRow(ctx, queryGetIdTables, advertId)
 	dur := time.Since(start)
 	r.metricsC.AddDurationToQueryTimings("DeleteFlatAdvertById", "select advert_hard", dur)
 
@@ -745,7 +748,7 @@ func (r *AdvertRepo) DeleteFlatAdvertById(ctx context.Context, tx models.Transac
 	queryDeleteImages := `UPDATE image SET is_deleted=true WHERE advert_id=$1;`
 
 	start = time.Now()
-	if _, err := tx.Exec(queryDeleteAdvertById, advertId); err != nil {
+	if _, err := tx.Exec(ctx, queryDeleteAdvertById, advertId); err != nil {
 		dur = time.Since(start)
 		r.metricsC.AddDurationToQueryTimings("DeleteFlatAdvertById", "update advert", dur)
 		r.metricsC.IncreaseExtSystemErr("database", "update")
@@ -756,7 +759,7 @@ func (r *AdvertRepo) DeleteFlatAdvertById(ctx context.Context, tx models.Transac
 	r.metricsC.AddDurationToQueryTimings("DeleteFlatAdvertById", "update advert", dur)
 
 	start = time.Now()
-	if _, err := tx.Exec(queryDeleteAdvertTypeById, advertId, flatId); err != nil {
+	if _, err := tx.Exec(ctx, queryDeleteAdvertTypeById, advertId, flatId); err != nil {
 		dur = time.Since(start)
 		r.metricsC.AddDurationToQueryTimings("DeleteFlatAdvertById", "update advert_type_flat", dur)
 		r.metricsC.IncreaseExtSystemErr("database", "update")
@@ -767,7 +770,7 @@ func (r *AdvertRepo) DeleteFlatAdvertById(ctx context.Context, tx models.Transac
 	r.metricsC.AddDurationToQueryTimings("DeleteFlatAdvertById", "update advert_type_flat", dur)
 
 	start = time.Now()
-	if _, err := tx.Exec(queryDeleteFlatById, flatId); err != nil {
+	if _, err := tx.Exec(ctx, queryDeleteFlatById, flatId); err != nil {
 		dur = time.Since(start)
 		r.metricsC.AddDurationToQueryTimings("DeleteFlatAdvertById", "update flat", dur)
 		r.metricsC.IncreaseExtSystemErr("database", "update")
@@ -778,7 +781,7 @@ func (r *AdvertRepo) DeleteFlatAdvertById(ctx context.Context, tx models.Transac
 	r.metricsC.AddDurationToQueryTimings("DeleteFlatAdvertById", "update flat", dur)
 
 	start = time.Now()
-	if _, err := tx.Exec(queryDeletePriceChanges, advertId); err != nil {
+	if _, err := tx.Exec(ctx, queryDeletePriceChanges, advertId); err != nil {
 		dur = time.Since(start)
 		r.metricsC.AddDurationToQueryTimings("DeleteFlatAdvertById", "update price_change", dur)
 		r.metricsC.IncreaseExtSystemErr("database", "update")
@@ -789,7 +792,7 @@ func (r *AdvertRepo) DeleteFlatAdvertById(ctx context.Context, tx models.Transac
 	r.metricsC.AddDurationToQueryTimings("DeleteFlatAdvertById", "update price_change", dur)
 
 	start = time.Now()
-	if _, err := tx.Exec(queryDeleteImages, advertId); err != nil {
+	if _, err := tx.Exec(ctx, queryDeleteImages, advertId); err != nil {
 		dur = time.Since(start)
 		r.metricsC.AddDurationToQueryTimings("DeleteFlatAdvertById", "update image", dur)
 		r.metricsC.IncreaseExtSystemErr("database", "update")
@@ -817,7 +820,7 @@ func (r *AdvertRepo) DeleteHouseAdvertById(ctx context.Context, tx models.Transa
         WHERE a.id=$1;`
 
 	start := time.Now()
-	res := tx.QueryRowContext(ctx, queryGetIdTables, advertId)
+	res := tx.QueryRow(ctx, queryGetIdTables, advertId)
 	dur := time.Since(start)
 	r.metricsC.AddDurationToQueryTimings("DeleteHouseAdvertById", "select advert_hard", dur)
 
@@ -834,7 +837,7 @@ func (r *AdvertRepo) DeleteHouseAdvertById(ctx context.Context, tx models.Transa
 	queryDeleteImages := `UPDATE image SET is_deleted=true WHERE advert_id=$1;`
 
 	start = time.Now()
-	if _, err := tx.Exec(queryDeleteAdvertById, advertId); err != nil {
+	if _, err := tx.Exec(ctx, queryDeleteAdvertById, advertId); err != nil {
 		dur = time.Since(start)
 		r.metricsC.AddDurationToQueryTimings("DeleteHouseAdvertById", "update advert", dur)
 		r.metricsC.IncreaseExtSystemErr("database", "update")
@@ -845,7 +848,7 @@ func (r *AdvertRepo) DeleteHouseAdvertById(ctx context.Context, tx models.Transa
 	r.metricsC.AddDurationToQueryTimings("DeleteHouseAdvertById", "update advert", dur)
 
 	start = time.Now()
-	if _, err := tx.Exec(queryDeleteAdvertTypeById, advertId, houseId); err != nil {
+	if _, err := tx.Exec(ctx, queryDeleteAdvertTypeById, advertId, houseId); err != nil {
 		dur = time.Since(start)
 		r.metricsC.AddDurationToQueryTimings("DeleteHouseAdvertById", "update advert_type_house", dur)
 		r.metricsC.IncreaseExtSystemErr("database", "update")
@@ -856,7 +859,7 @@ func (r *AdvertRepo) DeleteHouseAdvertById(ctx context.Context, tx models.Transa
 	r.metricsC.AddDurationToQueryTimings("DeleteHouseAdvertById", "update advert_type_house", dur)
 
 	start = time.Now()
-	if _, err := tx.Exec(queryDeleteHouseById, houseId); err != nil {
+	if _, err := tx.Exec(ctx, queryDeleteHouseById, houseId); err != nil {
 		dur = time.Since(start)
 		r.metricsC.AddDurationToQueryTimings("DeleteHouseAdvertById", "update house", dur)
 		r.metricsC.IncreaseExtSystemErr("database", "update")
@@ -867,7 +870,7 @@ func (r *AdvertRepo) DeleteHouseAdvertById(ctx context.Context, tx models.Transa
 	r.metricsC.AddDurationToQueryTimings("DeleteHouseAdvertById", "update house", dur)
 
 	start = time.Now()
-	if _, err := tx.Exec(queryDeletePriceChanges, advertId); err != nil {
+	if _, err := tx.Exec(ctx, queryDeletePriceChanges, advertId); err != nil {
 		dur = time.Since(start)
 		r.metricsC.AddDurationToQueryTimings("DeleteHouseAdvertById", "update price_change", dur)
 		r.metricsC.IncreaseExtSystemErr("database", "update")
@@ -878,7 +881,7 @@ func (r *AdvertRepo) DeleteHouseAdvertById(ctx context.Context, tx models.Transa
 	r.metricsC.AddDurationToQueryTimings("DeleteHouseAdvertById", "update price_change", dur)
 
 	start = time.Now()
-	if _, err := tx.Exec(queryDeleteImages, advertId); err != nil {
+	if _, err := tx.Exec(ctx, queryDeleteImages, advertId); err != nil {
 		dur = time.Since(start)
 		r.metricsC.AddDurationToQueryTimings("DeleteHouseAdvertById", "update image", dur)
 		r.metricsC.IncreaseExtSystemErr("database", "update")
@@ -918,7 +921,7 @@ END AS type_advert FROM advert AS a LEFT JOIN advert_type_flat AS atf ON a.id=at
 	queryRestoreAdvertTypeHouse := `UPDATE advert_type_house SET is_deleted=false WHERE advert_id=$1 AND house_id=$2;`
 
 	var advertType models.AdvertTypeAdvert
-	res := r.db.QueryRowContext(ctx, query, advertId)
+	res := r.db.QueryRow(ctx, query, advertId)
 	var dur time.Duration
 	start := time.Now()
 	if err := res.Scan(&advertType); err != nil {
@@ -935,7 +938,7 @@ END AS type_advert FROM advert AS a LEFT JOIN advert_type_flat AS atf ON a.id=at
 	switch advertType {
 	case models.AdvertTypeFlat:
 		start = time.Now()
-		res = r.db.QueryRowContext(ctx, querySelectBuildingIdByFlat, advertId)
+		res = r.db.QueryRow(ctx, querySelectBuildingIdByFlat, advertId)
 		dur = time.Since(start)
 		r.metricsC.AddDurationToQueryTimings("ChangeTypeAdvert", "select advert", dur)
 
@@ -948,7 +951,7 @@ END AS type_advert FROM advert AS a LEFT JOIN advert_type_flat AS atf ON a.id=at
 		}
 
 		start = time.Now()
-		if _, err := tx.Exec(queryDeleteFlatById, flatId); err != nil {
+		if _, err := tx.Exec(ctx, queryDeleteFlatById, flatId); err != nil {
 			dur = time.Since(start)
 			r.metricsC.AddDurationToQueryTimings("ChangeTypeAdvert", "update flat", dur)
 			r.metricsC.IncreaseExtSystemErr("database", "update")
@@ -959,7 +962,7 @@ END AS type_advert FROM advert AS a LEFT JOIN advert_type_flat AS atf ON a.id=at
 		r.metricsC.AddDurationToQueryTimings("ChangeTypeAdvert", "update flat", dur)
 
 		start = time.Now()
-		if _, err := tx.Exec(queryDeleteAdvertTypeFlat, advertId, flatId); err != nil {
+		if _, err := tx.Exec(ctx, queryDeleteAdvertTypeFlat, advertId, flatId); err != nil {
 			dur = time.Since(start)
 			r.metricsC.AddDurationToQueryTimings("ChangeTypeAdvert", "update advert_type_flat", dur)
 			r.metricsC.IncreaseExtSystemErr("database", "update")
@@ -975,7 +978,7 @@ END AS type_advert FROM advert AS a LEFT JOIN advert_type_flat AS atf ON a.id=at
 			house := &models.House{}
 
 			start = time.Now()
-			err := tx.QueryRowContext(ctx, queryInsertHouse, buildingId, house.CeilingHeight, house.SquareArea, house.SquareHouse, house.BedroomCount, models.StatusAreaDNP, house.Cottage, models.StatusHomeCompleteNeed).Scan(&id)
+			err := tx.QueryRow(ctx, queryInsertHouse, buildingId, house.CeilingHeight, house.SquareArea, house.SquareHouse, house.BedroomCount, models.StatusAreaDNP, house.Cottage, models.StatusHomeCompleteNeed).Scan(&id)
 			if err != nil {
 				dur = time.Since(start)
 				r.metricsC.AddDurationToQueryTimings("ChangeTypeAdvert", "insert house", dur)
@@ -987,7 +990,7 @@ END AS type_advert FROM advert AS a LEFT JOIN advert_type_flat AS atf ON a.id=at
 			r.metricsC.AddDurationToQueryTimings("ChangeTypeAdvert", "insert house", dur)
 
 			start = time.Now()
-			if _, err := tx.Exec(queryInsertTypeHouse, advertId, id); err != nil {
+			if _, err := tx.Exec(ctx, queryInsertTypeHouse, advertId, id); err != nil {
 				dur = time.Since(start)
 				r.metricsC.AddDurationToQueryTimings("ChangeTypeAdvert", "insert advert_type_house", dur)
 				r.metricsC.IncreaseExtSystemErr("database", "insert")
@@ -1000,7 +1003,7 @@ END AS type_advert FROM advert AS a LEFT JOIN advert_type_flat AS atf ON a.id=at
 		} else {
 
 			start = time.Now()
-			if _, err := tx.Exec(queryRestoreHouseById, house.ID); err != nil {
+			if _, err := tx.Exec(ctx, queryRestoreHouseById, house.ID); err != nil {
 				dur = time.Since(start)
 				r.metricsC.AddDurationToQueryTimings("ChangeTypeAdvert", "update house", dur)
 				r.metricsC.IncreaseExtSystemErr("database", "update")
@@ -1011,7 +1014,7 @@ END AS type_advert FROM advert AS a LEFT JOIN advert_type_flat AS atf ON a.id=at
 			r.metricsC.AddDurationToQueryTimings("ChangeTypeAdvert", "update house", dur)
 
 			start = time.Now()
-			if _, err := tx.Exec(queryRestoreAdvertTypeHouse, advertId, house.ID); err != nil {
+			if _, err := tx.Exec(ctx, queryRestoreAdvertTypeHouse, advertId, house.ID); err != nil {
 				dur = time.Since(start)
 				r.metricsC.AddDurationToQueryTimings("ChangeTypeAdvert", "update advert_type_house", dur)
 				r.metricsC.IncreaseExtSystemErr("database", "update")
@@ -1025,7 +1028,7 @@ END AS type_advert FROM advert AS a LEFT JOIN advert_type_flat AS atf ON a.id=at
 	case models.AdvertTypeHouse:
 
 		start = time.Now()
-		res := r.db.QueryRowContext(ctx, querySelectBuildingIdByHouse, advertId)
+		res := r.db.QueryRow(ctx, querySelectBuildingIdByHouse, advertId)
 		dur = time.Since(start)
 		r.metricsC.AddDurationToQueryTimings("ChangeTypeAdvert", "select advert_hard", dur)
 
@@ -1038,7 +1041,7 @@ END AS type_advert FROM advert AS a LEFT JOIN advert_type_flat AS atf ON a.id=at
 		}
 
 		start = time.Now()
-		if _, err := tx.Exec(queryDeleteHouseById, houseId); err != nil {
+		if _, err := tx.Exec(ctx, queryDeleteHouseById, houseId); err != nil {
 			dur = time.Since(start)
 			r.metricsC.AddDurationToQueryTimings("ChangeTypeAdvert", "update house", dur)
 			r.metricsC.IncreaseExtSystemErr("database", "update")
@@ -1049,7 +1052,7 @@ END AS type_advert FROM advert AS a LEFT JOIN advert_type_flat AS atf ON a.id=at
 		r.metricsC.AddDurationToQueryTimings("ChangeTypeAdvert", "update house", dur)
 
 		start = time.Now()
-		if _, err := tx.Exec(queryDeleteAdvertTypeHouse, advertId, houseId); err != nil {
+		if _, err := tx.Exec(ctx, queryDeleteAdvertTypeHouse, advertId, houseId); err != nil {
 			dur = time.Since(start)
 			r.metricsC.AddDurationToQueryTimings("ChangeTypeAdvert", "update advert_type_house", dur)
 			r.metricsC.IncreaseExtSystemErr("database", "update")
@@ -1064,7 +1067,7 @@ END AS type_advert FROM advert AS a LEFT JOIN advert_type_flat AS atf ON a.id=at
 			var id int64
 			flat = &models.Flat{}
 			start = time.Now()
-			err := tx.QueryRowContext(ctx, queryInsertFlat, buildingId, flat.Floor, flat.CeilingHeight, flat.SquareGeneral, flat.RoomCount, flat.SquareResidential, flat.Apartment).Scan(&id)
+			err := tx.QueryRow(ctx, queryInsertFlat, buildingId, flat.Floor, flat.CeilingHeight, flat.SquareGeneral, flat.RoomCount, flat.SquareResidential, flat.Apartment).Scan(&id)
 			if err != nil {
 				dur = time.Since(start)
 				r.metricsC.AddDurationToQueryTimings("ChangeTypeAdvert", "insert flat", dur)
@@ -1077,7 +1080,7 @@ END AS type_advert FROM advert AS a LEFT JOIN advert_type_flat AS atf ON a.id=at
 			r.metricsC.AddDurationToQueryTimings("ChangeTypeAdvert", "insert flat", dur)
 
 			start = time.Now()
-			if _, err := tx.Exec(queryInsertTypeFlat, advertId, id); err != nil {
+			if _, err := tx.Exec(ctx, queryInsertTypeFlat, advertId, id); err != nil {
 				dur = time.Since(start)
 				r.metricsC.AddDurationToQueryTimings("ChangeTypeAdvert", "insert advert_type_flat", dur)
 				r.metricsC.IncreaseExtSystemErr("database", "insert")
@@ -1090,7 +1093,7 @@ END AS type_advert FROM advert AS a LEFT JOIN advert_type_flat AS atf ON a.id=at
 		} else {
 
 			start = time.Now()
-			if _, err := tx.Exec(queryRestoreFlatById, flat.ID); err != nil {
+			if _, err := tx.Exec(ctx, queryRestoreFlatById, flat.ID); err != nil {
 				dur = time.Since(start)
 				r.metricsC.AddDurationToQueryTimings("ChangeTypeAdvert", "update flat", dur)
 				r.metricsC.IncreaseExtSystemErr("database", "update")
@@ -1102,7 +1105,7 @@ END AS type_advert FROM advert AS a LEFT JOIN advert_type_flat AS atf ON a.id=at
 			r.metricsC.AddDurationToQueryTimings("ChangeTypeAdvert", "update flat", dur)
 
 			start = time.Now()
-			if _, err := tx.Exec(queryRestoreAdvertTypeFlat, advertId, flat.ID); err != nil {
+			if _, err := tx.Exec(ctx, queryRestoreAdvertTypeFlat, advertId, flat.ID); err != nil {
 				dur = time.Since(start)
 				r.metricsC.AddDurationToQueryTimings("ChangeTypeAdvert", "update advert_type_flat", dur)
 				r.metricsC.IncreaseExtSystemErr("database", "update")
@@ -1145,7 +1148,7 @@ func (r *AdvertRepo) UpdateHouseAdvertById(ctx context.Context, tx models.Transa
         WHERE a.id=$1;`
 
 	start := time.Now()
-	res := tx.QueryRowContext(ctx, queryGetIdTables, advertUpdateData.ID)
+	res := tx.QueryRow(ctx, queryGetIdTables, advertUpdateData.ID)
 	dur := time.Since(start)
 	r.metricsC.AddDurationToQueryTimings("UpdateHouseAdvertById", "select advert_hard", dur)
 
@@ -1192,7 +1195,7 @@ func (r *AdvertRepo) UpdateHouseAdvertById(ctx context.Context, tx models.Transa
 	queryUpdateHouseById := `UPDATE house SET ceiling_height=$1, square_area=$2, square_house=$3, bedroom_count=$4, status_area_house=$5, cottage=$6, status_home_house=$7 WHERE id=$8;`
 
 	start = time.Now()
-	if _, err := tx.Exec(queryUpdateAdvertById, advertUpdateData.TypeSale, advertUpdateData.Title, advertUpdateData.Description, advertUpdateData.Phone, advertUpdateData.IsAgent, advertUpdateData.ID); err != nil {
+	if _, err := tx.Exec(ctx, queryUpdateAdvertById, advertUpdateData.TypeSale, advertUpdateData.Title, advertUpdateData.Description, advertUpdateData.Phone, advertUpdateData.IsAgent, advertUpdateData.ID); err != nil {
 		dur = time.Since(start)
 		r.metricsC.AddDurationToQueryTimings("UpdateHouseAdvertById", "update advert", dur)
 		r.metricsC.IncreaseExtSystemErr("database", "update")
@@ -1204,7 +1207,7 @@ func (r *AdvertRepo) UpdateHouseAdvertById(ctx context.Context, tx models.Transa
 	r.metricsC.AddDurationToQueryTimings("UpdateHouseAdvertById", "update advert", dur)
 
 	start = time.Now()
-	if _, err := tx.Exec(queryUpdateBuildingById, advertUpdateData.HouseProperties.Floor, advertUpdateData.Material, id, advertUpdateData.YearCreation, buildingId); err != nil {
+	if _, err := tx.Exec(ctx, queryUpdateBuildingById, advertUpdateData.HouseProperties.Floor, advertUpdateData.Material, id, advertUpdateData.YearCreation, buildingId); err != nil {
 		dur = time.Since(start)
 		r.metricsC.AddDurationToQueryTimings("UpdateHouseAdvertById", "update building", dur)
 		r.metricsC.IncreaseExtSystemErr("database", "update")
@@ -1215,7 +1218,7 @@ func (r *AdvertRepo) UpdateHouseAdvertById(ctx context.Context, tx models.Transa
 	r.metricsC.AddDurationToQueryTimings("UpdateHouseAdvertById", "update building", dur)
 
 	start = time.Now()
-	if _, err := tx.Exec(queryUpdateHouseById, advertUpdateData.HouseProperties.CeilingHeight, advertUpdateData.HouseProperties.SquareArea, advertUpdateData.HouseProperties.SquareHouse, advertUpdateData.HouseProperties.BedroomCount, advertUpdateData.HouseProperties.StatusArea, advertUpdateData.HouseProperties.Cottage, advertUpdateData.HouseProperties.StatusHome, houseId); err != nil {
+	if _, err := tx.Exec(ctx, queryUpdateHouseById, advertUpdateData.HouseProperties.CeilingHeight, advertUpdateData.HouseProperties.SquareArea, advertUpdateData.HouseProperties.SquareHouse, advertUpdateData.HouseProperties.BedroomCount, advertUpdateData.HouseProperties.StatusArea, advertUpdateData.HouseProperties.Cottage, advertUpdateData.HouseProperties.StatusHome, houseId); err != nil {
 		dur = time.Since(start)
 		r.metricsC.AddDurationToQueryTimings("UpdateHouseAdvertById", "update house", dur)
 		r.metricsC.IncreaseExtSystemErr("database", "update")
@@ -1229,7 +1232,7 @@ func (r *AdvertRepo) UpdateHouseAdvertById(ctx context.Context, tx models.Transa
 		queryInsertPriceChange := `INSERT INTO price_change (advert_id, price)
             VALUES ($1, $2)`
 		start = time.Now()
-		if _, err := tx.Exec(queryInsertPriceChange, advertUpdateData.ID, advertUpdateData.Price); err != nil {
+		if _, err := tx.Exec(ctx, queryInsertPriceChange, advertUpdateData.ID, advertUpdateData.Price); err != nil {
 			dur = time.Since(start)
 			r.metricsC.AddDurationToQueryTimings("UpdateHouseAdvertById", "insert price_change", dur)
 			r.metricsC.IncreaseExtSystemErr("database", "insert")
@@ -1271,7 +1274,7 @@ func (r *AdvertRepo) UpdateFlatAdvertById(ctx context.Context, tx models.Transac
         WHERE a.id=$1;`
 
 	start := time.Now()
-	res := tx.QueryRowContext(ctx, queryGetIdTables, advertUpdateData.ID)
+	res := tx.QueryRow(ctx, queryGetIdTables, advertUpdateData.ID)
 	dur := time.Since(start)
 	r.metricsC.AddDurationToQueryTimings("UpdateFlatAdvertById", "select advert_hard", dur)
 
@@ -1318,7 +1321,7 @@ func (r *AdvertRepo) UpdateFlatAdvertById(ctx context.Context, tx models.Transac
 	queryUpdateFlatById := `UPDATE flat SET floor=$1, ceiling_height=$2, square_general=$3, bedroom_count=$4, square_residential=$5, apartament=$6 WHERE id=$7;`
 
 	start = time.Now()
-	if _, err := tx.Exec(queryUpdateAdvertById, advertUpdateData.TypeSale, advertUpdateData.Title, advertUpdateData.Description, advertUpdateData.Phone, advertUpdateData.IsAgent, advertUpdateData.ID); err != nil {
+	if _, err := tx.Exec(ctx, queryUpdateAdvertById, advertUpdateData.TypeSale, advertUpdateData.Title, advertUpdateData.Description, advertUpdateData.Phone, advertUpdateData.IsAgent, advertUpdateData.ID); err != nil {
 		dur = time.Since(start)
 		r.metricsC.AddDurationToQueryTimings("UpdateFlatAdvertById", "update advert", dur)
 		r.metricsC.IncreaseExtSystemErr("database", "update")
@@ -1329,7 +1332,7 @@ func (r *AdvertRepo) UpdateFlatAdvertById(ctx context.Context, tx models.Transac
 	r.metricsC.AddDurationToQueryTimings("UpdateFlatAdvertById", "update advert", dur)
 
 	start = time.Now()
-	if _, err := tx.Exec(queryUpdateBuildingById, advertUpdateData.FlatProperties.FloorGeneral, advertUpdateData.Material, id, advertUpdateData.YearCreation, buildingId); err != nil {
+	if _, err := tx.Exec(ctx, queryUpdateBuildingById, advertUpdateData.FlatProperties.FloorGeneral, advertUpdateData.Material, id, advertUpdateData.YearCreation, buildingId); err != nil {
 		dur = time.Since(start)
 		r.metricsC.AddDurationToQueryTimings("UpdateFlatAdvertById", "update building", dur)
 		r.metricsC.IncreaseExtSystemErr("database", "update")
@@ -1341,7 +1344,7 @@ func (r *AdvertRepo) UpdateFlatAdvertById(ctx context.Context, tx models.Transac
 	r.metricsC.AddDurationToQueryTimings("UpdateFlatAdvertById", "update building", dur)
 
 	start = time.Now()
-	if _, err := tx.Exec(queryUpdateFlatById, advertUpdateData.FlatProperties.Floor, advertUpdateData.FlatProperties.CeilingHeight, advertUpdateData.FlatProperties.SquareGeneral, advertUpdateData.FlatProperties.RoomCount, advertUpdateData.FlatProperties.SquareResidential, advertUpdateData.FlatProperties.Apartment, flatId); err != nil {
+	if _, err := tx.Exec(ctx, queryUpdateFlatById, advertUpdateData.FlatProperties.Floor, advertUpdateData.FlatProperties.CeilingHeight, advertUpdateData.FlatProperties.SquareGeneral, advertUpdateData.FlatProperties.RoomCount, advertUpdateData.FlatProperties.SquareResidential, advertUpdateData.FlatProperties.Apartment, flatId); err != nil {
 		dur = time.Since(start)
 		r.metricsC.AddDurationToQueryTimings("UpdateFlatAdvertById", "update flat", dur)
 		r.metricsC.IncreaseExtSystemErr("database", "update")
@@ -1355,7 +1358,7 @@ func (r *AdvertRepo) UpdateFlatAdvertById(ctx context.Context, tx models.Transac
 		queryInsertPriceChange := `INSERT INTO price_change (advert_id, price)
             VALUES ($1, $2)`
 		start = time.Now()
-		if _, err := tx.Exec(queryInsertPriceChange, advertUpdateData.ID, advertUpdateData.Price); err != nil {
+		if _, err := tx.Exec(ctx, queryInsertPriceChange, advertUpdateData.ID, advertUpdateData.Price); err != nil {
 			dur = time.Since(start)
 			r.metricsC.AddDurationToQueryTimings("UpdateFlatAdvertById", "insert price_change", dur)
 			r.metricsC.IncreaseExtSystemErr("database", "insert")
@@ -1451,7 +1454,7 @@ func (r *AdvertRepo) GetFlatAdvertById(ctx context.Context, id int64) (*models.A
 	}
 
 	start := time.Now()
-	res := r.db.QueryRowContext(ctx, query, id, userId)
+	res := r.db.QueryRow(ctx, query, id, userId)
 	dur := time.Since(start)
 	r.metricsC.AddDurationToQueryTimings("GetFlatAdvertById", "select advert_hard", dur)
 
@@ -1619,7 +1622,7 @@ func (r *AdvertRepo) GetSquareAdverts(ctx context.Context, pageSize, offset int)
 
 	var dur time.Duration
 	start := time.Now()
-	rows, err := r.db.Query(queryBaseAdvert, pageSize, offset)
+	rows, err := r.db.Query(ctx, queryBaseAdvert, pageSize, offset)
 	if err != nil {
 		dur = time.Since(start)
 		r.metricsC.AddDurationToQueryTimings("GetSquareAdverts", "select advert_hard", dur)
@@ -1645,7 +1648,7 @@ func (r *AdvertRepo) GetSquareAdverts(ctx context.Context, pageSize, offset int)
 			var squareGeneral float64
 			var floor, floorGeneral, roomCount int
 			start = time.Now()
-			row := r.db.QueryRowContext(ctx, queryFlat, squareAdvert.ID)
+			row := r.db.QueryRow(ctx, queryFlat, squareAdvert.ID)
 			dur = time.Since(start)
 			r.metricsC.AddDurationToQueryTimings("GetSquareAdverts", "select advert_hard", dur)
 
@@ -1665,7 +1668,7 @@ func (r *AdvertRepo) GetSquareAdverts(ctx context.Context, pageSize, offset int)
 			var squareHouse, squareArea float64
 			var bedroomCount, floor int
 			start = time.Now()
-			row := r.db.QueryRowContext(ctx, queryHouse, squareAdvert.ID)
+			row := r.db.QueryRow(ctx, queryHouse, squareAdvert.ID)
 			dur = time.Since(start)
 			r.metricsC.AddDurationToQueryTimings("GetSquareAdverts", "select advert_hard", dur)
 			if err := row.Scan(&metro, &houseName, &street, &town, &province, &cottage, &squareHouse, &squareArea, &bedroomCount, &floor); err != nil {
@@ -1829,7 +1832,7 @@ func (r *AdvertRepo) GetRectangleAdverts(ctx context.Context, advertFilter model
 
 	var dur time.Duration
 	start := time.Now()
-	rowCountQuery := r.db.QueryRowContext(ctx, queryCount, append([]interface{}{advertFilter.MinPrice, advertFilter.MaxPrice, advertFilter.Address}, argsForQuery...)...)
+	rowCountQuery := r.db.QueryRow(ctx, queryCount, append([]interface{}{advertFilter.MinPrice, advertFilter.MaxPrice, advertFilter.Address}, argsForQuery...)...)
 	dur = time.Since(start)
 	r.metricsC.AddDurationToQueryTimings("GetRectangleAdverts", "select advert_hard", dur)
 
@@ -1841,7 +1844,7 @@ func (r *AdvertRepo) GetRectangleAdverts(ctx context.Context, advertFilter model
 
 	argsForQuery = append(argsForQuery, advertFilter.Page, advertFilter.Offset)
 	start = time.Now()
-	rows, err := r.db.Query(queryBaseAdvert, append([]interface{}{advertFilter.MinPrice, advertFilter.MaxPrice, advertFilter.Address}, argsForQuery...)...)
+	rows, err := r.db.Query(ctx, queryBaseAdvert, append([]interface{}{advertFilter.MinPrice, advertFilter.MaxPrice, advertFilter.Address}, argsForQuery...)...)
 	dur = time.Since(start)
 	r.metricsC.AddDurationToQueryTimings("GetRectangleAdverts", "select advert_hard", dur)
 	if err != nil {
@@ -1873,7 +1876,7 @@ func (r *AdvertRepo) GetRectangleAdverts(ctx context.Context, advertFilter model
 			var squareGeneral float64
 			var floor, floorGeneral int
 			start = time.Now()
-			row := r.db.QueryRowContext(ctx, queryFlat, rectangleAdvert.ID)
+			row := r.db.QueryRow(ctx, queryFlat, rectangleAdvert.ID)
 			dur = time.Since(start)
 			r.metricsC.AddDurationToQueryTimings("GetRectangleAdverts", "select advert_hard", dur)
 
@@ -1894,7 +1897,7 @@ func (r *AdvertRepo) GetRectangleAdverts(ctx context.Context, advertFilter model
 			var floor int
 
 			start = time.Now()
-			row := r.db.QueryRowContext(ctx, queryHouse, rectangleAdvert.ID)
+			row := r.db.QueryRow(ctx, queryHouse, rectangleAdvert.ID)
 			dur = time.Since(start)
 			r.metricsC.AddDurationToQueryTimings("GetRectangleAdverts", "select advert_hard", dur)
 			if err := row.Scan(&rectangleAdvert.AddressPoint, &metro, &houseName, &street, &town, &province, &cottage, &squareHouse, &squareArea, &floor); err != nil {
@@ -2049,7 +2052,7 @@ func (r *AdvertRepo) GetRectangleAdvertsByUserId(ctx context.Context, pageSize, 
 
 	var dur time.Duration
 	start := time.Now()
-	rows, err := r.db.Query(queryBaseAdvert, userId, pageSize, offset)
+	rows, err := r.db.Query(ctx, queryBaseAdvert, userId, pageSize, offset)
 	dur = time.Since(start)
 	r.metricsC.AddDurationToQueryTimings("GetRectangleAdvertsByUserId", "select advert_hard", dur)
 
@@ -2082,7 +2085,7 @@ func (r *AdvertRepo) GetRectangleAdvertsByUserId(ctx context.Context, pageSize, 
 			var squareGeneral float64
 			var floor, floorGeneral int
 			start = time.Now()
-			row := r.db.QueryRowContext(ctx, queryFlat, rectangleAdvert.ID)
+			row := r.db.QueryRow(ctx, queryFlat, rectangleAdvert.ID)
 			dur = time.Since(start)
 			r.metricsC.AddDurationToQueryTimings("GetRectangleAdvertsByUserId", "select advert_hard", dur)
 
@@ -2102,7 +2105,7 @@ func (r *AdvertRepo) GetRectangleAdvertsByUserId(ctx context.Context, pageSize, 
 			var squareHouse, squareArea float64
 			var floor int
 			start = time.Now()
-			row := r.db.QueryRowContext(ctx, queryHouse, rectangleAdvert.ID)
+			row := r.db.QueryRow(ctx, queryHouse, rectangleAdvert.ID)
 			dur = time.Since(start)
 			r.metricsC.AddDurationToQueryTimings("GetRectangleAdvertsByUserId", "select advert_hard", dur)
 
@@ -2239,7 +2242,7 @@ func (r *AdvertRepo) GetRectangleAdvertsByComplexId(ctx context.Context, pageSiz
 
 	var dur time.Duration
 	start := time.Now()
-	rows, err := r.db.Query(queryBaseAdvert, complexId, pageSize, offset)
+	rows, err := r.db.Query(ctx, queryBaseAdvert, complexId, pageSize, offset)
 	dur = time.Since(start)
 	r.metricsC.AddDurationToQueryTimings("GetRectangleAdvertsByComplexId", "select advert_hard", dur)
 	if err != nil {
@@ -2271,7 +2274,7 @@ func (r *AdvertRepo) GetRectangleAdvertsByComplexId(ctx context.Context, pageSiz
 			var floor, floorGeneral int
 
 			start = time.Now()
-			row := r.db.QueryRowContext(ctx, queryFlat, rectangleAdvert.ID)
+			row := r.db.QueryRow(ctx, queryFlat, rectangleAdvert.ID)
 			dur = time.Since(start)
 			r.metricsC.AddDurationToQueryTimings("GetRectangleAdvertsByComplexId", "select advert_hard", dur)
 
@@ -2291,7 +2294,7 @@ func (r *AdvertRepo) GetRectangleAdvertsByComplexId(ctx context.Context, pageSiz
 			var squareHouse, squareArea float64
 			var floor int
 			start = time.Now()
-			row := r.db.QueryRowContext(ctx, queryHouse, rectangleAdvert.ID)
+			row := r.db.QueryRow(ctx, queryHouse, rectangleAdvert.ID)
 			dur = time.Since(start)
 			r.metricsC.AddDurationToQueryTimings("GetRectangleAdvertsByComplexId", "select advert_hard", dur)
 
@@ -2326,12 +2329,12 @@ func (r *AdvertRepo) GetRectangleAdvertsByComplexId(ctx context.Context, pageSiz
 
 // LikeAdvert creates a like in the database.
 func (r *AdvertRepo) LikeAdvert(ctx context.Context, advertId int64, userId int64) error {
-	tx, err := r.BeginTx(ctx)
+	tx, err := r.BeginTx(ctx, pgx.TxOptions{})
 	if err != nil {
 		return err
 	}
 	defer func() {
-		if err := tx.Rollback(); err != nil {
+		if err := tx.Rollback(ctx); err != nil {
 			utils.LogError(r.logger, ctx.Value("requestId").(string), utils.UsecaseLayer, adverts.DeleteAdvertByIdMethod, err)
 		}
 	}()
@@ -2340,7 +2343,7 @@ func (r *AdvertRepo) LikeAdvert(ctx context.Context, advertId int64, userId int6
 
 	var start time.Time
 	start = time.Now()
-	res := r.db.QueryRow(query, advertId, userId)
+	res := r.db.QueryRow(ctx, query, advertId, userId)
 	dur := time.Since(start)
 	r.metricsC.AddDurationToQueryTimings("LikeAdvert", "select favourite_advert", dur)
 
@@ -2350,7 +2353,7 @@ func (r *AdvertRepo) LikeAdvert(ctx context.Context, advertId int64, userId int6
 
 		update := `UPDATE favourite_advert SET is_deleted = false WHERE advert_id = $1 AND user_id = $2`
 		start = time.Now()
-		if _, err := r.db.Exec(update, adId, usId); err != nil {
+		if _, err := r.db.Exec(ctx, update, adId, usId); err != nil {
 			dur = time.Since(start)
 			r.metricsC.AddDurationToQueryTimings("LikeAdvert", "update favourite_advert", dur)
 			r.metricsC.IncreaseExtSystemErr("database", "select")
@@ -2364,7 +2367,7 @@ func (r *AdvertRepo) LikeAdvert(ctx context.Context, advertId int64, userId int6
 		if _, err = r.UpdatePriority(ctx, tx, advertId, 100); err != nil {
 			return err
 		}
-		if err := tx.Commit(); err != nil {
+		if err := tx.Commit(ctx); err != nil {
 			return err
 		}
 		// utils.LogError(r.logger, ctx.Value("requestId").(string), utils.RepositoryLayer, adverts.CreateAdvertMethod, err)
@@ -2375,7 +2378,7 @@ func (r *AdvertRepo) LikeAdvert(ctx context.Context, advertId int64, userId int6
 	start = time.Now()
 	insert := `INSERT INTO favourite_advert (advert_id, user_id) VALUES ($1, $2)`
 
-	if _, err := r.db.Exec(insert, advertId, userId); err != nil {
+	if _, err := r.db.Exec(ctx, insert, advertId, userId); err != nil {
 		dur = time.Since(start)
 		r.metricsC.IncreaseExtSystemErr("database", "insert")
 		r.metricsC.AddDurationToQueryTimings("LikeAdvert", "update favourite_advert", dur)
@@ -2394,7 +2397,7 @@ func (r *AdvertRepo) LikeAdvert(ctx context.Context, advertId int64, userId int6
 		return err
 	}
 
-	if err := tx.Commit(); err != nil {
+	if err := tx.Commit(ctx); err != nil {
 		return err
 	}
 
@@ -2405,26 +2408,26 @@ func (r *AdvertRepo) LikeAdvert(ctx context.Context, advertId int64, userId int6
 // DislikeAdvert set dislike in the database.
 func (r *AdvertRepo) DislikeAdvert(ctx context.Context, advertId int64, userId int64) error {
 	query := `SELECT advert_id, user_id FROM favourite_advert WHERE advert_id = $1 AND user_id = $2`
-	tx, err := r.BeginTx(ctx)
+	tx, err := r.BeginTx(ctx, pgx.TxOptions{})
 	if err != nil {
 		// utils.LogError(r.logger, ctx.Value("requestId").(string), utils.UsecaseLayer, adverts.DeleteAdvertByIdMethod, err)
 		return err
 	}
 	defer func() {
-		if err := tx.Rollback(); err != nil {
+		if err := tx.Rollback(ctx); err != nil {
 			// utils.LogError(r.logger, ctx.Value("requestId").(string), utils.UsecaseLayer, adverts.DeleteAdvertByIdMethod, err)
 		}
 	}()
 	var dur time.Duration
 	start := time.Now()
-	res := r.db.QueryRow(query, advertId, userId)
+	res := r.db.QueryRow(ctx, query, advertId, userId)
 	dur = time.Since(start)
 	r.metricsC.AddDurationToQueryTimings("DislikeAdvert", "select favourite_advert", dur)
 	var adId, usId int64
 	if err := res.Scan(&adId, &usId); err == nil {
 		update := `UPDATE favourite_advert SET is_deleted = true WHERE advert_id = $1 AND user_id = $2`
 		start = time.Now()
-		if _, err := r.db.Exec(update, advertId, usId); err != nil {
+		if _, err := r.db.Exec(ctx, update, advertId, usId); err != nil {
 			dur = time.Since(start)
 			r.metricsC.AddDurationToQueryTimings("DislikeAdvert", "update favourite_advert", dur)
 			r.metricsC.IncreaseExtSystemErr("database", "select")
@@ -2439,7 +2442,7 @@ func (r *AdvertRepo) DislikeAdvert(ctx context.Context, advertId int64, userId i
 			return err
 		}
 
-		if err := tx.Commit(); err != nil {
+		if err := tx.Commit(ctx); err != nil {
 			return err
 		}
 	}
@@ -2555,7 +2558,7 @@ func (r *AdvertRepo) GetRectangleAdvertsLikedByUserId(ctx context.Context, pageS
             a.created_at DESC;`
 
 	start := time.Now()
-	rows, err := r.db.Query(queryBaseAdvert, userId, pageSize, offset)
+	rows, err := r.db.Query(ctx, queryBaseAdvert, userId, pageSize, offset)
 	dur := time.Since(start)
 	r.metricsC.AddDurationToQueryTimings("GetRectangleAdvertsLikedByUserId", "select advert_hard", dur)
 
@@ -2587,7 +2590,7 @@ func (r *AdvertRepo) GetRectangleAdvertsLikedByUserId(ctx context.Context, pageS
 			var squareGeneral float64
 			var floor, floorGeneral int
 			start = time.Now()
-			row := r.db.QueryRowContext(ctx, queryFlat, rectangleAdvert.ID)
+			row := r.db.QueryRow(ctx, queryFlat, rectangleAdvert.ID)
 			dur = time.Since(start)
 			r.metricsC.AddDurationToQueryTimings("GetRectangleAdvertsLikedByUserId", "select advert_hard", dur)
 
@@ -2607,7 +2610,7 @@ func (r *AdvertRepo) GetRectangleAdvertsLikedByUserId(ctx context.Context, pageS
 			var squareHouse, squareArea float64
 			var floor int
 			start = time.Now()
-			row := r.db.QueryRowContext(ctx, queryHouse, rectangleAdvert.ID)
+			row := r.db.QueryRow(ctx, queryHouse, rectangleAdvert.ID)
 			dur = time.Since(start)
 			r.metricsC.AddDurationToQueryTimings("GetRectangleAdvertsLikedByUserId", "select advert_hard", dur)
 
@@ -2645,7 +2648,7 @@ func (r *AdvertRepo) SelectCountLikes(ctx context.Context, id int64) (int64, err
 	query := `SELECT COUNT (*) FROM favourite_advert WHERE advert_id=$1 AND is_deleted=false;`
 
 	start := time.Now()
-	res := r.db.QueryRow(query, id)
+	res := r.db.QueryRow(ctx, query, id)
 	dur := time.Since(start)
 	r.metricsC.AddDurationToQueryTimings("SelectCountLikes", "select favourite_advert", dur)
 
@@ -2664,7 +2667,7 @@ func (r *AdvertRepo) SelectCountLikes(ctx context.Context, id int64) (int64, err
 func (r *AdvertRepo) SelectCountViews(ctx context.Context, id int64) (int64, error) {
 	query := `SELECT COUNT (*) FROM statistic_view_advert WHERE advert_id=$1`
 	start := time.Now()
-	res := r.db.QueryRow(query, id)
+	res := r.db.QueryRow(ctx, query, id)
 	dur := time.Since(start)
 	r.metricsC.AddDurationToQueryTimings("SelectCountLikes", "select statistic_view_advert", dur)
 
@@ -2683,18 +2686,18 @@ func (r *AdvertRepo) SelectCountViews(ctx context.Context, id int64) (int64, err
 func (r *AdvertRepo) CreateView(ctx context.Context, advertId int64, userId int64) error {
 	query := `SELECT advert_id, user_id FROM statistic_view_advert WHERE advert_id = $1 AND user_id = $2`
 
-	tx, err := r.BeginTx(ctx)
+	tx, err := r.BeginTx(ctx, pgx.TxOptions{})
 	if err != nil {
 		// utils.LogError(r.logger, ctx.Value("requestId").(string), utils.UsecaseLayer, adverts.DeleteAdvertByIdMethod, err)
 		return err
 	}
 	defer func() {
-		if err := tx.Rollback(); err != nil {
+		if err := tx.Rollback(ctx); err != nil {
 			// utils.LogError(r.logger, ctx.Value("requestId").(string), utils.UsecaseLayer, adverts.DeleteAdvertByIdMethod, err)
 		}
 	}()
 	start := time.Now()
-	res := r.db.QueryRow(query, advertId, userId)
+	res := r.db.QueryRow(ctx, query, advertId, userId)
 	dur := time.Since(start)
 	r.metricsC.AddDurationToQueryTimings("CreateView", "select statistic_view_advert", dur)
 	r.metricsC.IncreaseExtSystemErr("database", "select")
@@ -2707,7 +2710,7 @@ func (r *AdvertRepo) CreateView(ctx context.Context, advertId int64, userId int6
 
 	insert := `INSERT INTO statistic_view_advert (advert_id, user_id) VALUES ($1, $2)`
 	start = time.Now()
-	if _, err := r.db.Exec(insert, advertId, userId); err != nil {
+	if _, err := r.db.Exec(ctx, insert, advertId, userId); err != nil {
 		dur = time.Since(start)
 		r.metricsC.AddDurationToQueryTimings("CreateView", "insert statistic_view_advert", dur)
 		r.metricsC.IncreaseExtSystemErr("database", "insert")
@@ -2722,7 +2725,7 @@ func (r *AdvertRepo) CreateView(ctx context.Context, advertId int64, userId int6
 		return err
 	}
 
-	if err := tx.Commit(); err != nil {
+	if err := tx.Commit(ctx); err != nil {
 		return err
 	}
 

@@ -3,13 +3,14 @@ package models
 
 import (
 	"context"
-	"database/sql"
+	"github.com/jackc/pgconn"
+	"github.com/jackc/pgx/v4"
 )
 
 type Transaction interface {
-	Commit() error
-	Rollback() error
-	QueryRowContext(ctx context.Context, query string, args ...any) *sql.Row
-	ExecContext(ctx context.Context, query string, args ...any) (sql.Result, error)
-	Exec(query string, args ...any) (sql.Result, error)
+	Commit(ctx context.Context) error
+	Rollback(ctx context.Context) error
+	Query(ctx context.Context, sql string, args ...interface{}) (pgx.Rows, error)
+	Exec(ctx context.Context, sql string, arguments ...interface{}) (pgconn.CommandTag, error)
+	QueryRow(ctx context.Context, sql string, args ...interface{}) pgx.Row
 }

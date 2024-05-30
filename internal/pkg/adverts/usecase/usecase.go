@@ -5,6 +5,7 @@ import (
 	"2024_1_TeaStealers/internal/pkg/adverts"
 	"2024_1_TeaStealers/internal/pkg/utils"
 	"context"
+	"github.com/jackc/pgx/v4"
 
 	"go.uber.org/zap"
 )
@@ -22,14 +23,14 @@ func NewAdvertUsecase(repo adverts.AdvertRepo, logger *zap.Logger) *AdvertUsecas
 
 // CreateFlatAdvert handles the creation advert process.
 func (u *AdvertUsecase) CreateFlatAdvert(ctx context.Context, data *models.AdvertFlatCreateData) (*models.Advert, error) {
-	tx, err := u.repo.BeginTx(ctx)
+	tx, err := u.repo.BeginTx(ctx, pgx.TxOptions{})
 	if err != nil {
 		utils.LogError(u.logger, ctx.Value("requestId").(string), utils.UsecaseLayer, adverts.CreateHouseAdvertMethod, err)
 		return nil, err
 	}
 
 	defer func() {
-		if err := tx.Rollback(); err != nil {
+		if err := tx.Rollback(ctx); err != nil {
 			utils.LogError(u.logger, ctx.Value("requestId").(string), utils.UsecaseLayer, adverts.CreateHouseAdvertMethod, err)
 		}
 	}()
@@ -132,7 +133,7 @@ func (u *AdvertUsecase) CreateFlatAdvert(ctx context.Context, data *models.Adver
 		return nil, err
 	}
 
-	err = tx.Commit()
+	err = tx.Commit(ctx)
 	if err != nil {
 		utils.LogError(u.logger, ctx.Value("requestId").(string), utils.UsecaseLayer, adverts.CreateHouseAdvertMethod, err)
 		return nil, err
@@ -144,14 +145,14 @@ func (u *AdvertUsecase) CreateFlatAdvert(ctx context.Context, data *models.Adver
 
 // CreateHouseAdvert handles the creation advert process.
 func (u *AdvertUsecase) CreateHouseAdvert(ctx context.Context, data *models.AdvertHouseCreateData) (*models.Advert, error) {
-	tx, err := u.repo.BeginTx(ctx)
+	tx, err := u.repo.BeginTx(ctx, pgx.TxOptions{})
 	if err != nil {
 		utils.LogError(u.logger, ctx.Value("requestId").(string), utils.UsecaseLayer, adverts.CreateHouseAdvertMethod, err)
 		return nil, err
 	}
 
 	defer func() {
-		if err := tx.Rollback(); err != nil {
+		if err := tx.Rollback(ctx); err != nil {
 			utils.LogError(u.logger, ctx.Value("requestId").(string), utils.UsecaseLayer, adverts.CreateHouseAdvertMethod, err)
 		}
 	}()
@@ -255,7 +256,7 @@ func (u *AdvertUsecase) CreateHouseAdvert(ctx context.Context, data *models.Adve
 		return nil, err
 	}
 
-	err = tx.Commit()
+	err = tx.Commit(ctx)
 	if err != nil {
 		utils.LogError(u.logger, ctx.Value("requestId").(string), utils.UsecaseLayer, adverts.CreateHouseAdvertMethod, err)
 		return nil, err
@@ -320,14 +321,14 @@ func (u *AdvertUsecase) GetAdvertById(ctx context.Context, id int64) (foundAdver
 // UpdateAdvertById handles the updating advert process.
 func (u *AdvertUsecase) UpdateAdvertById(ctx context.Context, advertUpdateData *models.AdvertUpdateData) (err error) {
 	typeAdvert := advertUpdateData.TypeAdvert
-	tx, err := u.repo.BeginTx(ctx)
+	tx, err := u.repo.BeginTx(ctx, pgx.TxOptions{})
 	if err != nil {
 		utils.LogError(u.logger, ctx.Value("requestId").(string), utils.UsecaseLayer, adverts.UpdateAdvertByIdMethod, err)
 		return err
 	}
 
 	defer func() {
-		if err := tx.Rollback(); err != nil {
+		if err := tx.Rollback(ctx); err != nil {
 			utils.LogError(u.logger, ctx.Value("requestId").(string), utils.UsecaseLayer, adverts.UpdateAdvertByIdMethod, err)
 		}
 	}()
@@ -357,7 +358,7 @@ func (u *AdvertUsecase) UpdateAdvertById(ctx context.Context, advertUpdateData *
 			return err
 		}
 	}
-	err = tx.Commit()
+	err = tx.Commit(ctx)
 	if err != nil {
 		utils.LogError(u.logger, ctx.Value("requestId").(string), utils.UsecaseLayer, adverts.UpdateAdvertByIdMethod, err)
 		return err
@@ -369,14 +370,14 @@ func (u *AdvertUsecase) UpdateAdvertById(ctx context.Context, advertUpdateData *
 
 // DeleteAdvertById handles the deleting advert process.
 func (u *AdvertUsecase) DeleteAdvertById(ctx context.Context, advertId int64) (err error) {
-	tx, err := u.repo.BeginTx(ctx)
+	tx, err := u.repo.BeginTx(ctx, pgx.TxOptions{})
 	if err != nil {
 		utils.LogError(u.logger, ctx.Value("requestId").(string), utils.UsecaseLayer, adverts.DeleteAdvertByIdMethod, err)
 		return err
 	}
 
 	defer func() {
-		if err := tx.Rollback(); err != nil {
+		if err := tx.Rollback(ctx); err != nil {
 			utils.LogError(u.logger, ctx.Value("requestId").(string), utils.UsecaseLayer, adverts.DeleteAdvertByIdMethod, err)
 		}
 	}()
@@ -399,7 +400,7 @@ func (u *AdvertUsecase) DeleteAdvertById(ctx context.Context, advertId int64) (e
 			return err
 		}
 	}
-	err = tx.Commit()
+	err = tx.Commit(ctx)
 	if err != nil {
 		utils.LogError(u.logger, ctx.Value("requestId").(string), utils.UsecaseLayer, adverts.DeleteAdvertByIdMethod, err)
 		return err
@@ -433,14 +434,14 @@ func (u *AdvertUsecase) GetRectangleAdvertsList(ctx context.Context, advertFilte
 
 // UpdatePriority handles the updating advert priority.
 func (u *AdvertUsecase) UpdatePriority(ctx context.Context, advertId int64, priority int64) (newPriority int64, err error) {
-	tx, err := u.repo.BeginTx(ctx)
+	tx, err := u.repo.BeginTx(ctx, pgx.TxOptions{})
 	if err != nil {
 		utils.LogError(u.logger, ctx.Value("requestId").(string), utils.UsecaseLayer, adverts.DeleteAdvertByIdMethod, err)
 		return 0, err
 	}
 
 	defer func() {
-		if err := tx.Rollback(); err != nil {
+		if err := tx.Rollback(ctx); err != nil {
 			utils.LogError(u.logger, ctx.Value("requestId").(string), utils.UsecaseLayer, adverts.DeleteAdvertByIdMethod, err)
 		}
 	}()
@@ -449,7 +450,7 @@ func (u *AdvertUsecase) UpdatePriority(ctx context.Context, advertId int64, prio
 		utils.LogError(u.logger, ctx.Value("requestId").(string), utils.UsecaseLayer, adverts.GetRectangleAdvertsListMethod, err)
 		return 0, err
 	}
-	err = tx.Commit()
+	err = tx.Commit(ctx)
 	if err != nil {
 		utils.LogError(u.logger, ctx.Value("requestId").(string), utils.UsecaseLayer, adverts.GetRectangleAdvertsListMethod, err)
 		return 0, err
@@ -461,14 +462,14 @@ func (u *AdvertUsecase) UpdatePriority(ctx context.Context, advertId int64, prio
 
 // GetPriority handles the getting advert priority.
 func (u *AdvertUsecase) GetPriority(ctx context.Context, advertId int64) (priority int64, err error) {
-	tx, err := u.repo.BeginTx(ctx)
+	tx, err := u.repo.BeginTx(ctx, pgx.TxOptions{})
 	if err != nil {
 		utils.LogError(u.logger, ctx.Value("requestId").(string), utils.UsecaseLayer, adverts.DeleteAdvertByIdMethod, err)
 		return 0, err
 	}
 
 	defer func() {
-		if err := tx.Rollback(); err != nil {
+		if err := tx.Rollback(ctx); err != nil {
 			utils.LogError(u.logger, ctx.Value("requestId").(string), utils.UsecaseLayer, adverts.DeleteAdvertByIdMethod, err)
 		}
 	}()
@@ -477,7 +478,7 @@ func (u *AdvertUsecase) GetPriority(ctx context.Context, advertId int64) (priori
 		// utils.LogError(u.logger, ctx.Value("requestId").(string), utils.UsecaseLayer, adverts.GetRectangleAdvertsListMethod, err)
 		return 0, err
 	}
-	if err = tx.Commit(); err != nil {
+	if err = tx.Commit(ctx); err != nil {
 		return 0, nil
 	}
 

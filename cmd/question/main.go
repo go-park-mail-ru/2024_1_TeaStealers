@@ -75,7 +75,7 @@ func run() (err error) {
 		}
 	}()
 
-	questionRepo := questionR.NewRepository(db, logger)
+	questionRepo := questionR.NewRepository(logger)
 	questionUsecase := questionUc.NewQuestionnaireUsecase(questionRepo, logger)
 	questionHandler := grpcQuestion.NewQuestionServerHandler(questionUsecase, logger)
 	metricMw := metricsMw.Create()

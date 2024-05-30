@@ -1,6 +1,8 @@
 package main
 
 import (
+	"2024_1_TeaStealers/internal/pkg/config"
+	"2024_1_TeaStealers/internal/pkg/config/dbPool"
 	metricsMw "2024_1_TeaStealers/internal/pkg/metrics/middleware"
 	genUsers "2024_1_TeaStealers/internal/pkg/users/delivery/grpc/gen"
 	UsersR "2024_1_TeaStealers/internal/pkg/users/repo"
@@ -14,7 +16,6 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"go.uber.org/zap"
 
-	"database/sql"
 	"fmt"
 	"log"
 	"net"
@@ -40,17 +41,17 @@ func main() {
 func run() (err error) {
 	_ = godotenv.Load()
 	logger := zap.Must(zap.NewDevelopment())
-	db, err := sql.Open("postgres", fmt.Sprintf("postgres://%v:%v@%v:%v/%v?sslmode=disable",
-		os.Getenv("DB_USER"),
-		os.Getenv("DB_PASS"),
-		os.Getenv("DB_HOST"),
-		os.Getenv("DB_PORT"),
-		os.Getenv("DB_NAME")))
-	if err != nil {
-		panic("failed to connect database" + err.Error())
-	}
+	cfg := config.MustLoad()
+	maxConns := int32(10) // todo надо подобрать и объяснить
+	dbPool.InitDatabasePool(fmt.Sprintf("postgres://%v:%v@%v:%v/%v?sslmode=disable",
+		cfg.Database.DBUser,
+		cfg.Database.DBPass,
+		cfg.Database.DBHost,
+		cfg.Database.DBPort,
+		cfg.Database.DBName), maxConns)
+	pool := dbPool.GetDBPool()
 
-	if err = db.Ping(); err != nil {
+	if err = pool.Ping(context.Background()); err != nil {
 		log.Println("fail ping postgres")
 		err = fmt.Errorf("error happened in db.Ping: %w", err)
 		log.Println(err)
@@ -78,7 +79,7 @@ func run() (err error) {
 	metricMw := metricsMw.Create()
 	metricMw.RegisterMetrics()
 	go metricMw.UpdatePSS()
-	usersRepo := UsersR.NewRepository(db, metricMw)
+	usersRepo := UsersR.NewRepository(metricMw)
 	usersUsecase := UsersUc.NewUserUsecase(usersRepo)
 	usersHandler := grpcUsers.NewUserServerHandler(usersUsecase)
 

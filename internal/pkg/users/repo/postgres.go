@@ -2,22 +2,24 @@ package repo
 
 import (
 	"2024_1_TeaStealers/internal/models"
+	"2024_1_TeaStealers/internal/pkg/config/dbPool"
 	"2024_1_TeaStealers/internal/pkg/metrics"
 	"context"
 	"database/sql"
 	"fmt"
+	"github.com/jackc/pgx/v4/pgxpool"
 	"time"
 )
 
 // UserRepo represents a repository for user.
 type UserRepo struct {
-	db       *sql.DB
+	db       *pgxpool.Pool
 	metricsC metrics.MetricsHTTP
 }
 
 // NewRepository creates a new instance of UserRepo.
-func NewRepository(db *sql.DB, metrics metrics.MetricsHTTP) *UserRepo {
-	return &UserRepo{db: db, metricsC: metrics}
+func NewRepository(metrics metrics.MetricsHTTP) *UserRepo {
+	return &UserRepo{db: dbPool.GetDBPool(), metricsC: metrics}
 }
 
 func (r *UserRepo) GetUserById(ctx context.Context, id int64) (*models.User, error) {
@@ -27,8 +29,8 @@ func (r *UserRepo) GetUserById(ctx context.Context, id int64) (*models.User, err
 
 	var dur time.Duration
 	start := time.Now()
-	res := r.db.QueryRow(query, id)
-	resProfile := r.db.QueryRow(queryProfile, id)
+	res := r.db.QueryRow(ctx, query, id)
+	resProfile := r.db.QueryRow(ctx, queryProfile, id)
 	dur = time.Since(start)
 	r.metricsC.AddDurationToQueryTimings("GetUserById", "select user_profile_data", dur)
 
@@ -63,7 +65,7 @@ func (r *UserRepo) UpdateUserPhoto(ctx context.Context, id int64, fileName strin
 	query := `INSERT INTO user_profile_data (user_id, first_name, surname, birthdate, photo)  VALUES ($1, ' ', ' ', '0001-01-01T00:00:00Z', $2) ON CONFLICT (user_id) DO UPDATE SET photo = EXCLUDED.photo;`
 	var dur time.Duration
 	start := time.Now()
-	if _, err := r.db.Exec(query, id, fileName); err != nil {
+	if _, err := r.db.Exec(ctx, query, id, fileName); err != nil {
 		dur = time.Since(start)
 		r.metricsC.AddDurationToQueryTimings("UpdateUserPhoto", "select user_data", dur)
 		r.metricsC.IncreaseExtSystemErr("database", "insert")
@@ -79,7 +81,7 @@ func (r *UserRepo) DeleteUserPhoto(ctx context.Context, id int64) error {
 	query := `UPDATE user_data SET photo = '' WHERE id = $1`
 	var dur time.Duration
 	start := time.Now()
-	if _, err := r.db.Query(query, id); err != nil {
+	if _, err := r.db.Query(ctx, query, id); err != nil {
 		dur = time.Since(start)
 		r.metricsC.AddDurationToQueryTimings("DeleteUserPhoto", "update user_data", dur)
 		r.metricsC.IncreaseExtSystemErr("database", "update")
@@ -101,7 +103,7 @@ func (r *UserRepo) UpdateUserInfo(ctx context.Context, id int64, data *models.Us
 
 	var dur time.Duration
 	start := time.Now()
-	if _, err := r.db.Exec(query, id, data.FirstName, data.SecondName); err != nil {
+	if _, err := r.db.Exec(ctx, query, id, data.FirstName, data.SecondName); err != nil {
 		dur = time.Since(start)
 		r.metricsC.AddDurationToQueryTimings("UpdateUserInfo", "insert user_profile_data", dur)
 		r.metricsC.IncreaseExtSystemErr("database", "insert")
@@ -118,7 +120,7 @@ func (r *UserRepo) UpdateUserInfo(ctx context.Context, id int64, data *models.Us
     `
 
 	start = time.Now()
-	_, err := r.db.ExecContext(ctx, updateQuery, data.Phone, data.Email, id)
+	_, err := r.db.Exec(ctx, updateQuery, data.Phone, data.Email, id)
 	dur = time.Since(start)
 	r.metricsC.AddDurationToQueryTimings("UpdateUserInfo", "update user_data", dur)
 

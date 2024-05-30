@@ -4,6 +4,7 @@ package complex
 import (
 	"2024_1_TeaStealers/internal/models"
 	"context"
+	"github.com/jackc/pgx/v4"
 )
 
 // ComplexUsecase represents the usecase interface for complexes.
@@ -21,7 +22,7 @@ type ComplexRepo interface {
 	CreateComplex(ctx context.Context, company *models.Complex) (*models.Complex, error)
 	UpdateComplexPhoto(ctx context.Context, id int64, fileName string) (string, error)
 	GetComplexById(ctx context.Context, complexId int64) (*models.ComplexData, error)
-	BeginTx(ctx context.Context) (models.Transaction, error)
+	BeginTx(ctx context.Context, txOptions pgx.TxOptions) (pgx.Tx, error)
 	CreateCompany(ctx context.Context, company *models.Company) (*models.Company, error)
 	UpdateCompanyPhoto(ctx context.Context, id int64, fileName string) (string, error)
 	GetCompanyById(ctx context.Context, companyId int64) (*models.CompanyData, error)

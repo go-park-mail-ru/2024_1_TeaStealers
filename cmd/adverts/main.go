@@ -4,8 +4,9 @@ import (
 	genAdverts "2024_1_TeaStealers/internal/pkg/adverts/delivery/grpc/gen"
 	advertsR "2024_1_TeaStealers/internal/pkg/adverts/repo"
 	advertsUc "2024_1_TeaStealers/internal/pkg/adverts/usecase"
+	"2024_1_TeaStealers/internal/pkg/config"
+	"2024_1_TeaStealers/internal/pkg/config/dbPool"
 	"context"
-	"database/sql"
 	"errors"
 	"fmt"
 	"log"
@@ -37,17 +38,17 @@ func run() (err error) {
 	_ = godotenv.Load()
 	logger := zap.Must(zap.NewDevelopment())
 
-	db, err := sql.Open("postgres", fmt.Sprintf("postgres://%v:%v@%v:%v/%v?sslmode=disable",
-		os.Getenv("DB_USER"),
-		os.Getenv("DB_PASS"),
-		os.Getenv("DB_HOST"),
-		os.Getenv("DB_PORT"),
-		os.Getenv("DB_NAME")))
-	if err != nil {
-		panic("failed to connect database" + err.Error())
-	}
+	cfg := config.MustLoad()
+	maxConns := int32(10) // todo надо подобрать и объяснить
+	dbPool.InitDatabasePool(fmt.Sprintf("postgres://%v:%v@%v:%v/%v?sslmode=disable",
+		cfg.Database.DBUser,
+		cfg.Database.DBPass,
+		cfg.Database.DBHost,
+		cfg.Database.DBPort,
+		cfg.Database.DBName), maxConns)
+	pool := dbPool.GetDBPool()
 
-	if err = db.Ping(); err != nil {
+	if err = pool.Ping(context.Background()); err != nil {
 		log.Println("fail ping postgres")
 		err = fmt.Errorf("error happened in db.Ping: %w", err)
 		log.Println(err)
@@ -75,7 +76,7 @@ func run() (err error) {
 	metricMw := metricsMw.Create()
 	metricMw.RegisterMetrics()
 	go metricMw.UpdatePSS()
-	advertsRepo := advertsR.NewRepository(db, logger, metricMw)
+	advertsRepo := advertsR.NewRepository(logger, metricMw)
 	advertsUsecase := advertsUc.NewAdvertUsecase(advertsRepo, logger)
 	authHandler := grpcAdverts.NewServerAdvertsHandler(advertsUsecase, logger)
 
