@@ -8,7 +8,7 @@
 * [Шагаев Максим](https://github.com/Maxorella)
 
 ### Ссылки
-* [tean.homes](http://5.35.16.157) - деплой приложения
+* [tean.homes](http://tean.homes) - деплой приложения
 * [frontend](https://github.com/frontend-park-mail-ru/2024_1_TeaStealers) - репозиторий фронтенда
 
 ### Как запустить
