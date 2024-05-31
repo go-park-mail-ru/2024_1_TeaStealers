@@ -198,7 +198,7 @@ func (h *AdvertsServerHandler) UpdateAdvertById(ctx context.Context, reqAdv *gen
 	}
 
 	if reqAdv.FlatProperties != nil {
-		flatPropert = &models.FlatProperties{CeilingHeight: reqAdv.HouseProp.CeilingHeight,
+		flatPropert = &models.FlatProperties{CeilingHeight: reqAdv.FlatProperties.CeilingHeight,
 			FloorGeneral: int(reqAdv.FlatProperties.FloorGeneral), RoomCount: int(reqAdv.FlatProperties.RoomCount),
 			SquareResidential: reqAdv.FlatProperties.SquareResidential, SquareGeneral: reqAdv.FlatProperties.SquareGeneral,
 			Apartment: reqAdv.FlatProperties.Apartment, Floor: int(reqAdv.HouseProp.Floor)}
