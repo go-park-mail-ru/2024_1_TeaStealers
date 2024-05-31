@@ -201,7 +201,7 @@ func (h *AdvertsServerHandler) UpdateAdvertById(ctx context.Context, reqAdv *gen
 		flatPropert = &models.FlatProperties{CeilingHeight: reqAdv.FlatProperties.CeilingHeight,
 			FloorGeneral: int(reqAdv.FlatProperties.FloorGeneral), RoomCount: int(reqAdv.FlatProperties.RoomCount),
 			SquareResidential: reqAdv.FlatProperties.SquareResidential, SquareGeneral: reqAdv.FlatProperties.SquareGeneral,
-			Apartment: reqAdv.FlatProperties.Apartment, Floor: int(reqAdv.HouseProp.Floor)}
+			Apartment: reqAdv.FlatProperties.Apartment, Floor: int(reqAdv.FlatProperties.Floor)}
 	}
 
 	updData := &models.AdvertUpdateData{
