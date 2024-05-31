@@ -1329,6 +1329,7 @@ func (r *AdvertRepo) UpdateFlatAdvertById(ctx context.Context, tx models.Transac
 	r.metricsC.AddDurationToQueryTimings("UpdateFlatAdvertById", "update advert", dur)
 
 	start = time.Now()
+
 	if _, err := tx.Exec(queryUpdateBuildingById, advertUpdateData.FlatProperties.FloorGeneral, advertUpdateData.Material, id, advertUpdateData.YearCreation, buildingId); err != nil {
 		dur = time.Since(start)
 		r.metricsC.AddDurationToQueryTimings("UpdateFlatAdvertById", "update building", dur)

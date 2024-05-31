@@ -907,6 +907,7 @@ func (h *AdvertsClientHandler) GetRectangleAdvertsList(w http.ResponseWriter, r 
 			Phone:        adv.Phone,
 			TypeSale:     adv.TypeSale,
 			Address:      adv.Address,
+			AddressPoint: adv.AddressPoint,
 			IsLiked:      adv.IsLiked,
 			Price:        int(adv.Price),
 			DateCreation: tCr,

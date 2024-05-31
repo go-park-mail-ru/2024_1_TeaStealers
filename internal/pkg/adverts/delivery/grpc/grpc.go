@@ -197,6 +197,13 @@ func (h *AdvertsServerHandler) UpdateAdvertById(ctx context.Context, reqAdv *gen
 			Cottage: reqAdv.HouseProp.Cottage, StatusHome: statusHome, Floor: int(reqAdv.HouseProp.Floor)}
 	}
 
+	if reqAdv.FlatProperties != nil {
+		flatPropert = &models.FlatProperties{CeilingHeight: reqAdv.HouseProp.CeilingHeight,
+			FloorGeneral: int(reqAdv.FlatProperties.FloorGeneral), RoomCount: int(reqAdv.FlatProperties.RoomCount),
+			SquareResidential: reqAdv.FlatProperties.SquareResidential, SquareGeneral: reqAdv.FlatProperties.SquareGeneral,
+			Apartment: reqAdv.FlatProperties.Apartment, Floor: int(reqAdv.HouseProp.Floor)}
+	}
+
 	updData := &models.AdvertUpdateData{
 		ID:          reqAdv.Id,
 		TypeAdvert:  reqAdv.AdvertType,
@@ -407,6 +414,10 @@ func (h *AdvertsServerHandler) GetExistBuildingByAddress(ctx context.Context, re
 	if err != nil {
 		h.logger.Error(ctx.Value("requestId").(string) + " " + err.Error())
 		return &genAdverts.GetExistBuildingByAddressResponse{RespCode: StatusBadRequest}, err
+	}
+
+	if gotBuilding == nil {
+		return &genAdverts.GetExistBuildingByAddressResponse{RespCode: StatusOk}, nil
 	}
 
 	var mater genAdverts.MaterialBuilding
