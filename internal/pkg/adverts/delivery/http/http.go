@@ -564,30 +564,59 @@ func (h *AdvertsClientHandler) UpdateAdvertById(w http.ResponseWriter, r *http.R
 
 	data.ID = advertId
 
-	var statusArea genAdverts.StatusAreaHouse
-	switch data.HouseProperties.StatusArea {
-	case "IHC":
-		statusArea = genAdverts.StatusAreaHouse_STATUS_AREA_IHC
-	case "DNP":
-		statusArea = genAdverts.StatusAreaHouse_STATUS_AREA_DNP
-	case "G":
-		statusArea = genAdverts.StatusAreaHouse_STATUS_AREA_G
-	case "F":
-		statusArea = genAdverts.StatusAreaHouse_STATUS_AREA_F
-	case "PSP":
-		statusArea = genAdverts.StatusAreaHouse_STATUS_AREA_PSP
+	var houseProp *genAdverts.HouseProperties
+	var flatProp *genAdverts.FlatProperties
+
+	if data.HouseProperties != nil {
+
+		var statusArea genAdverts.StatusAreaHouse
+		switch data.HouseProperties.StatusArea {
+		case "IHC":
+			statusArea = genAdverts.StatusAreaHouse_STATUS_AREA_IHC
+		case "DNP":
+			statusArea = genAdverts.StatusAreaHouse_STATUS_AREA_DNP
+		case "G":
+			statusArea = genAdverts.StatusAreaHouse_STATUS_AREA_G
+		case "F":
+			statusArea = genAdverts.StatusAreaHouse_STATUS_AREA_F
+		case "PSP":
+			statusArea = genAdverts.StatusAreaHouse_STATUS_AREA_PSP
+		}
+
+		var statusHome genAdverts.StatusHomeHouse
+		switch data.HouseProperties.StatusHome {
+		case "Live":
+			statusHome = genAdverts.StatusHomeHouse_STATUS_HOME_LIVE
+		case "RepairNeed":
+			statusHome = genAdverts.StatusHomeHouse_STATUS_HOME_REPAIR_NEED
+		case "CompleteNeed":
+			statusHome = genAdverts.StatusHomeHouse_STATUS_HOME_COMPLETE_NEED
+		case "Renovation":
+			statusHome = genAdverts.StatusHomeHouse_STATUS_HOME_RENOVATION
+		}
+
+		houseProp = &genAdverts.HouseProperties{
+			CeilingHeight: data.HouseProperties.CeilingHeight,
+			SquareArea:    data.HouseProperties.SquareArea,
+			SquareHouse:   data.HouseProperties.SquareHouse,
+			BedroomCount:  int32(data.HouseProperties.BedroomCount),
+			StatusArea:    statusArea,
+			Cottage:       data.HouseProperties.Cottage,
+			StatusHome:    statusHome,
+			Floor:         int32(data.HouseProperties.Floor),
+		}
 	}
 
-	var statusHome genAdverts.StatusHomeHouse
-	switch data.HouseProperties.StatusHome {
-	case "Live":
-		statusHome = genAdverts.StatusHomeHouse_STATUS_HOME_LIVE
-	case "RepairNeed":
-		statusHome = genAdverts.StatusHomeHouse_STATUS_HOME_REPAIR_NEED
-	case "CompleteNeed":
-		statusHome = genAdverts.StatusHomeHouse_STATUS_HOME_COMPLETE_NEED
-	case "Renovation":
-		statusHome = genAdverts.StatusHomeHouse_STATUS_HOME_RENOVATION
+	if data.FlatProperties != nil {
+		flatProp = &genAdverts.FlatProperties{
+			Floor:             int32(data.FlatProperties.Floor),
+			CeilingHeight:     data.FlatProperties.CeilingHeight,
+			SquareGeneral:     data.FlatProperties.SquareGeneral,
+			RoomCount:         int32(data.FlatProperties.RoomCount),
+			SquareResidential: data.FlatProperties.SquareResidential,
+			Apartment:         data.FlatProperties.Apartment,
+			FloorGeneral:      int32(data.FlatProperties.FloorGeneral),
+		}
 	}
 
 	var mater genAdverts.MaterialBuilding
@@ -614,34 +643,6 @@ func (h *AdvertsClientHandler) UpdateAdvertById(w http.ResponseWriter, r *http.R
 		mater = genAdverts.MaterialBuilding_MATERIAL_GAS_SILICATE_BLOCK
 	case models.MaterialFoamConcreteBlock:
 		mater = genAdverts.MaterialBuilding_MATERIAL_FOAM_CONCRETE_BLOCK
-	}
-
-	var houseProp *genAdverts.HouseProperties
-	var flatProp *genAdverts.FlatProperties
-
-	if data.HouseProperties != nil {
-		houseProp = &genAdverts.HouseProperties{
-			CeilingHeight: data.HouseProperties.CeilingHeight,
-			SquareArea:    data.HouseProperties.SquareArea,
-			SquareHouse:   data.HouseProperties.SquareHouse,
-			BedroomCount:  int32(data.HouseProperties.BedroomCount),
-			StatusArea:    statusArea,
-			Cottage:       data.HouseProperties.Cottage,
-			StatusHome:    statusHome,
-			Floor:         int32(data.HouseProperties.Floor),
-		}
-	}
-
-	if data.FlatProperties != nil {
-		flatProp = &genAdverts.FlatProperties{
-			Floor:             int32(data.FlatProperties.Floor),
-			CeilingHeight:     data.FlatProperties.CeilingHeight,
-			SquareGeneral:     data.FlatProperties.SquareGeneral,
-			RoomCount:         int32(data.FlatProperties.RoomCount),
-			SquareResidential: data.FlatProperties.SquareResidential,
-			Apartment:         data.FlatProperties.Apartment,
-			FloorGeneral:      int32(data.FlatProperties.FloorGeneral),
-		}
 	}
 
 	resp, err := h.client.UpdateAdvertById(r.Context(), &genAdverts.UpdateAdvertByIdRequest{
