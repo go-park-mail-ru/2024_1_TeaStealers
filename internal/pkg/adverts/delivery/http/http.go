@@ -616,6 +616,34 @@ func (h *AdvertsClientHandler) UpdateAdvertById(w http.ResponseWriter, r *http.R
 		mater = genAdverts.MaterialBuilding_MATERIAL_FOAM_CONCRETE_BLOCK
 	}
 
+	var houseProp *genAdverts.HouseProperties
+	var flatProp *genAdverts.FlatProperties
+
+	if data.HouseProperties != nil {
+		houseProp = &genAdverts.HouseProperties{
+			CeilingHeight: data.HouseProperties.CeilingHeight,
+			SquareArea:    data.HouseProperties.SquareArea,
+			SquareHouse:   data.HouseProperties.SquareHouse,
+			BedroomCount:  int32(data.HouseProperties.BedroomCount),
+			StatusArea:    statusArea,
+			Cottage:       data.HouseProperties.Cottage,
+			StatusHome:    statusHome,
+			Floor:         int32(data.HouseProperties.Floor),
+		}
+	}
+
+	if data.FlatProperties != nil {
+		flatProp = &genAdverts.FlatProperties{
+			Floor:             int32(data.FlatProperties.Floor),
+			CeilingHeight:     data.FlatProperties.CeilingHeight,
+			SquareGeneral:     data.FlatProperties.SquareGeneral,
+			RoomCount:         int32(data.FlatProperties.RoomCount),
+			SquareResidential: data.FlatProperties.SquareResidential,
+			Apartment:         data.FlatProperties.Apartment,
+			FloorGeneral:      int32(data.FlatProperties.FloorGeneral),
+		}
+	}
+
 	resp, err := h.client.UpdateAdvertById(r.Context(), &genAdverts.UpdateAdvertByIdRequest{
 		Id:          advertId,
 		AdvertType:  data.TypeAdvert,
@@ -627,27 +655,10 @@ func (h *AdvertsClientHandler) UpdateAdvertById(w http.ResponseWriter, r *http.R
 		Address: &genAdverts.AddressData{Province: data.Address.Province,
 			Town: data.Address.Town, Street: data.Address.Street, House: data.Address.House,
 			Metro: data.Address.Metro, AddressPoint: data.Address.AddressPoint},
-		HouseProp: &genAdverts.HouseProperties{
-			CeilingHeight: data.HouseProperties.CeilingHeight,
-			SquareArea:    data.HouseProperties.SquareArea,
-			SquareHouse:   data.HouseProperties.SquareHouse,
-			BedroomCount:  int32(data.HouseProperties.BedroomCount),
-			StatusArea:    statusArea,
-			Cottage:       data.HouseProperties.Cottage,
-			StatusHome:    statusHome,
-			Floor:         int32(data.HouseProperties.Floor),
-		},
-		FlatProperties: &genAdverts.FlatProperties{
-			Floor:             int32(data.FlatProperties.Floor),
-			CeilingHeight:     data.FlatProperties.CeilingHeight,
-			SquareGeneral:     data.FlatProperties.SquareGeneral,
-			RoomCount:         int32(data.FlatProperties.RoomCount),
-			SquareResidential: data.FlatProperties.SquareResidential,
-			Apartment:         data.FlatProperties.Apartment,
-			FloorGeneral:      int32(data.FlatProperties.FloorGeneral),
-		},
-		YearCreation: int32(data.YearCreation),
-		Material:     mater,
+		HouseProp:      houseProp,
+		FlatProperties: flatProp,
+		YearCreation:   int32(data.YearCreation),
+		Material:       mater,
 	})
 
 	if err != nil {
