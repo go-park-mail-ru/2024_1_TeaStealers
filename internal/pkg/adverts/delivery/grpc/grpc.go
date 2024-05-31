@@ -224,6 +224,7 @@ func (h *AdvertsServerHandler) UpdateAdvertById(ctx context.Context, reqAdv *gen
 		HouseProperties: housePropert,
 		FlatProperties:  flatPropert,
 		Material:        materl,
+		YearCreation:    int(reqAdv.YearCreation),
 	}
 
 	err := h.uc.UpdateAdvertById(ctx, updData)

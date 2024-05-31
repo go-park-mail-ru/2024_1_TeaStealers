@@ -650,6 +650,7 @@ func (h *AdvertsClientHandler) UpdateAdvertById(w http.ResponseWriter, r *http.R
 		AdvertType:  data.TypeAdvert,
 		TypeSale:    data.TypeSale,
 		Title:       data.Title,
+		Phone:       data.Phone,
 		Description: data.Description,
 		Price:       data.Price,
 		IsAgent:     data.IsAgent,
