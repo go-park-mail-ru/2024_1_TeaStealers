@@ -8,13 +8,11 @@ services:
       context: .
       dockerfile: ./build/postgres.Dockerfile
     volumes:
-      - type: volume
-        source: postgresdb-data
-        target: /var/lib/postgresql/data
+      - postgresdb-data:/var/lib/postgresql/data
     env_file:
       - ./.env
     ports:
-      - ${DB_PORT}:5432
+      - "${DB_PORT}:5432"
     networks:
       - tean-network
   #migrate:
