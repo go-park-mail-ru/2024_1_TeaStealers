@@ -15,14 +15,14 @@ VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id`
 
 Конфиг пула создаётся в "2024_1_TeaStealers/internal/pkg/config", и вызывается в main каждого микросервиса.
 
-max_connections поставим немного больше, чем потенциально все сервисы могут установить одновременно.
-max_connections = 150.
-Сервис(repo) - количество соединений:
-adverts - 50
-users - 30
-auth - 30
-complexes - 10
-images - 20
+max_connections поставим немного больше, чем потенциально все сервисы могут установить одновременно. <br />
+max_connections = 150. <br />
+Сервис(repo) - количество соединений: <br />
+adverts - 50 <br />
+users - 30 <br />
+auth - 30 <br />
+complexes - 10 <br />
+images - 20 <br />
 questionnaire - 5
 
 в сумме получается: 145
@@ -43,7 +43,7 @@ statement_timeout = 15s
 lock_timeout = 15s
 ```
 
-В случае DOS-атаки, злоумышленники будут получать timeout и сервер не будет нагружен слишком большим запросом долго.
+В случае DOS-атаки, злоумышленники будут получать timeout и сервер не будет нагружен слишком большим запросом долго. <br />
 В случае DDOS-атаки, пул соединений у микросервиса будет израсходован злоумышленниками и микросервис не будет работать. (ещё зависит какой тип запроса будет к базе во время атаки)
 
 
@@ -87,4 +87,37 @@ log_disconnections = on
 
 # Журналирует создание временных файлов запросами.
 log_temp_files = 0
+```
+
+## Скрипт для создания пользователя
+Находится в initdb.sql
+Приведу переменные, которые в env находятся:
+```
+JWT_SECRET=some_secret
+DB_HOST=db
+DB_NAME=test
+DB_PORT=5432
+DB_USER=test
+DB_PASS=test
+POSTGRES_USER=serv_acc
+POSTGRES_PASSWORD=randomPasswordSec
+POSTGRES_DB=test
+BASE_DIR=/Users/maksimshagaev/GolandProjects/Papka
+
+GRPC_AUTH_PORT=8081
+GRPC_AUTH_CONTAINER_IP=tean-auth
+
+GRPC_USER_PORT=8082
+GRPC_USER_CONTAINER_IP=tean-user
+
+GRPC_ADVERT_PORT=8083
+GRPC_ADVERT_CONTAINER_IP=tean-advert
+
+GRPC_QUESTION_PORT=8084
+GRPC_QUESTION_CONTAINER_IP=tean-question
+
+GRPC_COMPLEX_PORT=8085
+GRPC_COMPLEX_CONTAINER_IP=tean-complex
+
+GRAFANA_DIR=/Users/maksimshagaev/GolandProjects/Papka
 ```

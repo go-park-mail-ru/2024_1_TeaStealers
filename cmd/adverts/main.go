@@ -40,6 +40,12 @@ func run() (err error) {
 
 	cfg := config.MustLoad()
 	maxConns := int32(50) // todo надо подобрать и объяснить
+	logger.Info(fmt.Sprintf("postgres://%v:%v@%v:%v/%v?sslmode=disable",
+		cfg.Database.DBUser,
+		cfg.Database.DBPass,
+		cfg.Database.DBHost,
+		cfg.Database.DBPort,
+		cfg.Database.DBName))
 	dbPool.InitDatabasePool(fmt.Sprintf("postgres://%v:%v@%v:%v/%v?sslmode=disable",
 		cfg.Database.DBUser,
 		cfg.Database.DBPass,
