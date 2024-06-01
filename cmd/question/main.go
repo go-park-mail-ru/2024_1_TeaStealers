@@ -1,6 +1,8 @@
 package main
 
 import (
+	"2024_1_TeaStealers/internal/pkg/config"
+	"2024_1_TeaStealers/internal/pkg/config/dbPool"
 	genQuestion "2024_1_TeaStealers/internal/pkg/questionnaire/delivery/grpc/gen"
 	questionR "2024_1_TeaStealers/internal/pkg/questionnaire/repo"
 	questionUc "2024_1_TeaStealers/internal/pkg/questionnaire/usecase"
@@ -12,7 +14,6 @@ import (
 
 	"github.com/gorilla/mux"
 
-	"database/sql"
 	"fmt"
 	"log"
 	"net"
@@ -39,18 +40,17 @@ func main() {
 func run() (err error) {
 	_ = godotenv.Load()
 	logger := zap.Must(zap.NewDevelopment())
+	maxConns := int32(5)
+	cfg := config.MustLoad()
+	dbPool.InitDatabasePool(fmt.Sprintf("postgres://%v:%v@%v:%v/%v?sslmode=disable",
+		cfg.Database.DBUser,
+		cfg.Database.DBPass,
+		cfg.Database.DBHost,
+		cfg.Database.DBPort,
+		cfg.Database.DBName), maxConns)
+	pool := dbPool.GetDBPool()
 
-	db, err := sql.Open("postgres", fmt.Sprintf("postgres://%v:%v@%v:%v/%v?sslmode=disable",
-		os.Getenv("DB_USER"),
-		os.Getenv("DB_PASS"),
-		os.Getenv("DB_HOST"),
-		os.Getenv("DB_PORT"),
-		os.Getenv("DB_NAME")))
-	if err != nil {
-		panic("failed to connect database" + err.Error())
-	}
-
-	if err = db.Ping(); err != nil {
+	if err = pool.Ping(context.Background()); err != nil {
 		log.Println("fail ping postgres")
 		err = fmt.Errorf("error happened in db.Ping: %w", err)
 		log.Println(err)
@@ -108,6 +108,7 @@ func run() (err error) {
 	}
 
 	gRPCServer.GracefulStop()
+	dbPool.CloseDBPool()
 
 	return nil
 }

@@ -40,7 +40,7 @@ func run() (err error) {
 	logger := zap.Must(zap.NewDevelopment())
 
 	cfg := config.MustLoad()
-	maxConns := int32(10) // todo надо подобрать и объяснить
+	maxConns := int32(30) // todo надо подобрать и объяснить
 	dbPool.InitDatabasePool(fmt.Sprintf("postgres://%v:%v@%v:%v/%v?sslmode=disable",
 		cfg.Database.DBUser,
 		cfg.Database.DBPass,
@@ -105,6 +105,7 @@ func run() (err error) {
 	}
 
 	gRPCServer.GracefulStop()
+	dbPool.CloseDBPool()
 
 	return nil
 }

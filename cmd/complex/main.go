@@ -110,6 +110,6 @@ func run() (err error) {
 	}
 
 	gRPCServer.GracefulStop()
-
+	dbPool.CloseDBPool()
 	return nil
 }

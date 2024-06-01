@@ -51,7 +51,7 @@ import (
 // @schemes http https
 func main() {
 	cfg := config.MustLoad()
-	maxConns := int32(10)
+	maxConns := int32(20)
 	_ = godotenv.Load()
 	logger := zap.Must(zap.NewDevelopment())
 	dbPool.InitDatabasePool(fmt.Sprintf("postgres://%v:%v@%v:%v/%v?sslmode=disable",
@@ -220,6 +220,7 @@ func main() {
 
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
+	dbPool.CloseDBPool()
 
 	if err := srv.Shutdown(ctx); err != nil {
 		logger.Error(fmt.Sprintf("Server shutdown failed: %s\n", err))
