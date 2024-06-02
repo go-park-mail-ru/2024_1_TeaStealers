@@ -2,7 +2,6 @@ package main
 
 import (
 	genAdverts "2024_1_TeaStealers/internal/pkg/adverts/delivery/grpc/gen"
-	advertsH "2024_1_TeaStealers/internal/pkg/adverts/delivery/http"
 	advertsR "2024_1_TeaStealers/internal/pkg/adverts/repo"
 	advertsUc "2024_1_TeaStealers/internal/pkg/adverts/usecase"
 	"context"
@@ -93,9 +92,6 @@ func run() (err error) {
 			log.Fatal(err)
 		}
 	}()
-
-	r.Handle("/test/count/{id}", advertsH.GetAdvertByIdCount(db, logger)).Methods(http.MethodGet, http.MethodOptions)
-	r.Handle("/test/fast/{id}", advertsH.GetAdvertById(db, logger)).Methods(http.MethodGet, http.MethodOptions)
 
 	stop := make(chan os.Signal, 1)
 	signal.Notify(stop, syscall.SIGTERM, syscall.SIGINT)

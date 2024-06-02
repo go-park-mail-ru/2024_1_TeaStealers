@@ -80,6 +80,9 @@ func main() {
 	r.HandleFunc("/ping", pingPongHandler).Methods(http.MethodGet)
 	r.PathPrefix("/docs/").Handler(httpSwagger.WrapHandler)
 	r.PathPrefix("/metrics").Handler(promhttp.Handler())
+	r.Handle("/test/count/{id}", advertsH.GetAdvertByIdCount(db, logger)).Methods(http.MethodGet, http.MethodOptions)
+	r.Handle("/test/fast/{id}", advertsH.GetAdvertById(db, logger)).Methods(http.MethodGet, http.MethodOptions)
+
 	grcpConnAuth, err := grpc.Dial(
 		fmt.Sprintf("%s:%d", cfg.GRPC.AuthContainerIP, cfg.GRPC.AuthPort),
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
