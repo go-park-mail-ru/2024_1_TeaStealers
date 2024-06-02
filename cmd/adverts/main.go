@@ -94,8 +94,8 @@ func run() (err error) {
 		}
 	}()
 
-	r.Handle("/test/count/{id}", advertsH.GetAdvertByIdCount(db)).Methods(http.MethodGet, http.MethodOptions)
-	r.Handle("/test/fast/{id}", advertsH.GetAdvertById(db)).Methods(http.MethodGet, http.MethodOptions)
+	r.Handle("/test/count/{id}", advertsH.GetAdvertByIdCount(db, logger)).Methods(http.MethodGet, http.MethodOptions)
+	r.Handle("/test/fast/{id}", advertsH.GetAdvertById(db, logger)).Methods(http.MethodGet, http.MethodOptions)
 
 	stop := make(chan os.Signal, 1)
 	signal.Notify(stop, syscall.SIGTERM, syscall.SIGINT)
