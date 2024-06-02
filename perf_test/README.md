@@ -27,80 +27,82 @@ postgresql и отправляет туда запросы на заполнен
 нагрузочных тестирований. Результаты тестирования:
 ```
 Test Result count likes:
-Running 30s test @ http://tean.homes/api/test/count/63671
+Running 30s test @ https://tean.homes/api/test/count/49904
   4 threads and 100 connections
   Thread Stats   Avg      Stdev     Max   +/- Stdev
-    Latency     6.84ms    7.50ms 292.36ms   98.86%
-    Req/Sec     3.95k   362.91     7.73k    91.58%
-  471336 requests in 30.03s, 146.52MB read
-  Non-2xx or 3xx responses: 471336
-Requests/sec:  15697.20
-Transfer/sec:      4.88MB
+    Latency   858.05ms  345.62ms   1.95s    69.02%
+    Req/Sec    30.12     18.04   171.00     61.70%
+  3336 requests in 30.08s, 2.62MB read
+  Socket errors: connect 0, read 0, write 0, timeout 36
+  Non-2xx or 3xx responses: 589
+Requests/sec:    110.89
+Transfer/sec:     89.17KB
 
 Test Result fast get:
-Running 30s test @ http://tean.homes/api/test/fast/63671
+Running 30s test @ https://tean.homes/api/test/fast/49904
   4 threads and 100 connections
   Thread Stats   Avg      Stdev     Max   +/- Stdev
-    Latency     6.75ms    7.03ms 306.08ms   98.93%
-    Req/Sec     3.94k   315.80     7.83k    89.33%
-  470087 requests in 30.02s, 146.13MB read
-  Non-2xx or 3xx responses: 470087
-Requests/sec:  15657.21
-Transfer/sec:      4.87MB
+    Latency   426.88ms  488.40ms   1.99s    78.86%
+    Req/Sec   113.30     96.96   570.00     79.16%
+  12585 requests in 30.09s, 10.85MB read
+  Socket errors: connect 0, read 0, write 0, timeout 18
+Requests/sec:    418.25
+Transfer/sec:    369.22KB
 
 
 
 
 Test Result count likes:
-Running 30s test @ http://tean.homes/api/test/count/97774
+Running 30s test @ https://tean.homes/api/test/count/26971
   4 threads and 100 connections
   Thread Stats   Avg      Stdev     Max   +/- Stdev
-    Latency     6.76ms    7.59ms 323.87ms   99.09%
-    Req/Sec     3.94k   316.76     6.50k    82.67%
-  470002 requests in 30.03s, 146.10MB read
-  Non-2xx or 3xx responses: 470002
-Requests/sec:  15653.68
-Transfer/sec:      4.87MB
+    Latency   853.42ms  362.77ms   1.98s    68.19%
+    Req/Sec    30.05     16.83   121.00     62.88%
+  3373 requests in 30.09s, 2.62MB read
+  Socket errors: connect 0, read 0, write 0, timeout 31
+  Non-2xx or 3xx responses: 633
+Requests/sec:    112.08
+Transfer/sec:     89.23KB
 
 Test Result fast get:
-Running 30s test @ http://tean.homes/api/test/fast/97774
+Running 30s test @ https://tean.homes/api/test/fast/26971
   4 threads and 100 connections
   Thread Stats   Avg      Stdev     Max   +/- Stdev
-    Latency     6.69ms    6.18ms 277.93ms   98.83%
-    Req/Sec     3.92k   328.46     7.07k    86.42%
-  468659 requests in 30.02s, 145.68MB read
-  Non-2xx or 3xx responses: 468659
-Requests/sec:  15610.25
-Transfer/sec:      4.85MB
+    Latency   421.86ms  486.15ms   2.00s    79.09%
+    Req/Sec   116.45     97.45   580.00     76.38%
+  12591 requests in 30.09s, 10.81MB read
+  Socket errors: connect 0, read 0, write 0, timeout 20
+Requests/sec:    418.48
+Transfer/sec:    367.79KB
 
 
 
 
 Test Result count likes:
-Running 30s test @ http://tean.homes/api/test/count/80434
+Running 30s test @ https://tean.homes/api/test/count/58075
   4 threads and 100 connections
   Thread Stats   Avg      Stdev     Max   +/- Stdev
-    Latency     6.73ms    6.76ms 295.81ms   98.89%
-    Req/Sec     3.94k   323.75     7.30k    88.75%
-  470922 requests in 30.02s, 146.39MB read
-  Non-2xx or 3xx responses: 470922
-Requests/sec:  15685.08
-Transfer/sec:      4.88MB
+    Latency   857.43ms  363.62ms   1.97s    67.62%
+    Req/Sec    29.93     16.27   101.00     63.05%
+  3347 requests in 30.06s, 2.45MB read
+  Socket errors: connect 0, read 0, write 0, timeout 34
+  Non-2xx or 3xx responses: 626
+Requests/sec:    111.36
+Transfer/sec:     83.38KB
 
-Test Result fast get:
-Running 30s test @ http://tean.homes/api/test/fast/80434
+aTest Result fast get:
+Running 30s test @ https://tean.homes/api/test/fast/58075
   4 threads and 100 connections
   Thread Stats   Avg      Stdev     Max   +/- Stdev
-    Latency     6.85ms    7.19ms 312.27ms   99.05%
-    Req/Sec     3.87k   284.24     6.45k    86.91%
-  461453 requests in 30.02s, 143.44MB read
-  Non-2xx or 3xx responses: 461453
-Requests/sec:  15369.38
-Transfer/sec:      4.78MB
+    Latency   421.35ms  486.06ms   1.97s    78.89%
+    Req/Sec   117.75    110.11   575.00     80.77%
+  12421 requests in 30.04s, 9.95MB read
+Requests/sec:    413.51
+Transfer/sec:    339.20KB
 ```
 Здесь в Test Result count likes написана статистика для запросов через подсчёт лайков через смежную таблицу,
 а в Test Result fast get, получение из аттрибута likes в advert.
 
-Как можно заметить, есть разница примерно на 40-50, но на последнем в 300 запросов в секунду.
+Как можно заметить, есть разница в 4 раза по количеству запросов в секунду!
 Из этого можно сделать вывод, что разница между способами сильно зависит от того, как много лайков у объявления,
 следовательно, на больших объёмах данных данная оптимизация значительно улучшит работу сервиса.

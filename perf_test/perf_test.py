@@ -213,7 +213,7 @@ def main_bench():
         database_name = 'tean'
         database_user = 'tean_user'
 
-        query = "SELECT * FROM advert WHERE id = 1400;"
+        query = "SELECT * FROM advert;"
         psql_command = (
             f"docker exec -i {container_name} psql -U {database_user} -d {database_name} -c \"{query}\""
         )
@@ -231,7 +231,7 @@ def main_bench():
 
         id = random.randint(1, total_test_insert)
         psql_command = (
-            f"cd /home/root/wrk-test/wrk && wrk -t4 -c100 -d30s http://tean.homes/api/test/count/{id}"
+            f"cd /home/root/wrk-test/wrk && wrk -t4 -c100 -d30s https://tean.homes/api/test/count/{id}"
         )
 
         result, error = execute_remote_command(ssh_client, psql_command)
@@ -244,7 +244,7 @@ def main_bench():
             print(result)
 
         psql_command = (
-            f"cd /home/root/wrk-test/wrk && wrk -t4 -c100 -d30s http://tean.homes/api/test/fast/{id}"
+            f"cd /home/root/wrk-test/wrk && wrk -t4 -c100 -d30s https://tean.homes/api/test/fast/{id}"
         )
 
         result, error = execute_remote_command(ssh_client, psql_command)
