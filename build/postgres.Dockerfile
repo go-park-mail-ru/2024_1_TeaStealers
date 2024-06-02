@@ -9,7 +9,7 @@ RUN apt-cache show postgresql-auto-explain | grep -E "Version:\s" | awk '{print 
 # Копируем файлы во временную директорию
 COPY HW2/inituser.sql /tmp/inituser.sql
 COPY HW2/initdb.sql /tmp/initdb.sql
-COPY db/migrations/*.sql /tmp/
+# COPY db/migrations/*.sql /tmp/
 
 # Создаем объединенный файл SQL
 RUN cat /tmp/*.sql >> /docker-entrypoint-initdb.d/combined.sql && \
