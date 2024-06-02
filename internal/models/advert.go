@@ -33,6 +33,8 @@ type Advert struct {
 	IsAgent bool `json:"isAgent"`
 	// Priority is the priority level of the advert.
 	Priority int `json:"priority"`
+
+	Likes int `json:"likes"`
 	// DateCreation is the date when the advert was created.
 	DateCreation time.Time `json:"-"`
 	// IsDeleted is a flag indicating whether the advert is deleted.
