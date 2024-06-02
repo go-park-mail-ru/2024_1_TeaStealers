@@ -213,7 +213,7 @@ def main_bench():
         database_name = 'tean'
         database_user = 'tean_user'
 
-        query = "SELECT COUNT(*) FROM favourite_advert;"
+        query = "SELECT * FROM advert WHERE id = 1400;"
         psql_command = (
             f"docker exec -i {container_name} psql -U {database_user} -d {database_name} -c \"{query}\""
         )
@@ -261,5 +261,5 @@ def main_bench():
 
 
 if __name__ == "__main__":
-    main()
+    # main()
     main_bench()

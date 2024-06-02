@@ -28,7 +28,7 @@ func GetAdvertByIdCount(db *sql.DB) http.HandlerFunc {
 		err = row.Scan(&advert.ID, &advert.UserID, &advert.AdvertTypeSale, &advert.Title, &advert.Description, &advert.Phone, &advert.IsAgent, &advert.Priority, &advert.DateCreation, &advert.IsDeleted)
 		if err != nil {
 			if err == sql.ErrNoRows {
-				http.Error(w, "Advert not found", http.StatusNotFound)
+				http.Error(w, "Advert not found", http.StatusBadRequest)
 				return
 			}
 			http.Error(w, fmt.Sprintf("Error getting advert: %v", err), http.StatusInternalServerError)
